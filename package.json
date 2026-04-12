@@ -1,0 +1,49 @@
+{
+  "name": "nextjs-project",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "supabase:login": "supabase login",
+    "supabase:link": "node scripts/supabase-link.mjs",
+    "supabase:push": "supabase db push",
+    "seed:admin": "node scripts/seed-admin.mjs",
+    "seed:catalog": "tsx scripts/seed-catalog.ts",
+    "seed:electronics": "tsx scripts/seed-electronics.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.103.0",
+    "canvas-confetti": "^1.9.4",
+    "framer-motion": "^12.38.0",
+    "isomorphic-dompurify": "^3.8.0",
+    "next": "16.2.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-international-phone": "^4.8.0",
+    "react-range": "^1.10.0",
+    "react-rating-stars-component": "^2.2.0",
+    "react-select": "^5.10.2",
+    "resend": "^6.10.0",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.3",
+    "pg": "^8.14.1",
+    "supabase": "^2.89.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* Radstore / Shopify theme tokens (subset) — matches storefront CSS variables */
+:root {
+  --background: #ffffff;
+  --foreground: #1c1d1d;
+  --colorBody: #ffffff;
+  --colorTextBody: #1c1d1d;
+  --colorBorder: #e8e8e1;
+  --colorBtnPrimary: #111111;
+  --colorBtnPrimaryText: #ffffff;
+  --colorAnnouncement: #1c1d1d;
+  --colorAnnouncementText: #ffffff;
+  --colorNav: #ffffff;
+  --colorNavText: #1c1d1d;
+  --colorFooter: #111111;
+  --colorFooterText: #ffffff;
+  --colorHeroText: #ffffff;
+  --typeBaseSize: 15px;
+  --typeBaseLineHeight: 1.6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--colorBody);
+  color: var(--colorTextBody);
+  font-family: var(--font-jost), var(--font-geist-sans), system-ui, sans-serif;
+  font-size: var(--typeBaseSize);
+  line-height: var(--typeBaseLineHeight);
+}
+
+/* Shopify theme layout — https://radstore.pk structure */
+.page-container {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* Radstore: .transition-body wraps main + footer; keep visible (see layout). */
+[data-transitions="true"] .transition-body {
+  opacity: 1;
+}
+
+.main-content {
+  display: block;
+  min-height: 300px;
+}
+
+/* react-international-phone — one shell with profile form inputs (no double box) */
+.profile-phone-field .react-international-phone-input-container {
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid #d4d4d8;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.profile-phone-field:focus-within .react-international-phone-input-container {
+  border-color: #171717;
+  box-shadow: 0 0 0 3px rgba(23, 23, 23, 0.12);
+}
+
+.profile-phone-field .react-international-phone-country-selector-button {
+  height: 42px !important;
+  min-width: 3.25rem;
+  padding-inline: 0.5rem;
+  border: none !important;
+  border-right: 1px solid #d4d4d8 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+.profile-phone-field .react-international-phone-input {
+  height: 42px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding-left: 0.75rem !important;
+}
+
+.profile-phone-field .react-international-phone-input:focus {
+  outline: none !important;
+}
