@@ -91,30 +91,3 @@ export function ShopCollectionsMenu() {
   );
 }
 
-export function ShopCollectionsMobileList({ onNavigate }: { onNavigate?: () => void }) {
-  const links = useNavCollections();
-  return (
-    <div className="flex flex-col gap-3 border-t border-neutral-100 pt-4">
-      <Link
-        href="/collections"
-        className="text-base font-semibold tracking-tight text-neutral-950"
-        onClick={onNavigate}
-      >
-        Shop
-      </Link>
-      <div className="flex flex-col gap-1 pl-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Collections</p>
-        {links.map((l) => (
-          <Link
-            key={l.slug}
-            href={`/collections/${l.slug}`}
-            className="py-1 text-[15px] font-medium text-neutral-800"
-            onClick={onNavigate}
-          >
-            {l.name}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}

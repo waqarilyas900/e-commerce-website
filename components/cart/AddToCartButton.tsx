@@ -38,7 +38,7 @@ export function AddToCartButton({
       <Link
         href={`/products/${product.slug}`}
         className={
-          "inline-flex cursor-pointer items-center justify-center rounded-md border border-neutral-900 bg-transparent px-4 py-2 text-center text-xs font-semibold text-neutral-900 transition-colors hover:bg-neutral-950 hover:text-white sm:text-sm " +
+          "inline-flex cursor-pointer items-center justify-center rounded-md border border-neutral-900 bg-transparent px-4 py-2 text-center text-xs font-semibold capitalize text-neutral-900 transition-colors hover:bg-neutral-950 hover:text-white sm:text-sm " +
           className
         }
       >

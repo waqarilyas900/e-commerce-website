@@ -11,6 +11,12 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
       title: "Contact information",
       fields: [
         {
+          id: "shipping_country",
+          label: "Country/Region",
+          type: "country",
+          colSpan: 2,
+        },
+        {
           id: "email",
           label: "Email",
           type: "email",
@@ -40,6 +46,7 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
           type: "phone",
           required: true,
           colSpan: 2,
+          meta: { lockCountry: true },
         },
       ],
     },

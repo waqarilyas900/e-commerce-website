@@ -13,6 +13,8 @@ export type PlaceOrderPayload = {
   shipping_city: string;
   shipping_postal_code: string;
   shipping_province: string;
+  /** ISO 3166-1 alpha-2; storefront sends PK only. */
+  shipping_country?: string;
   customer_note?: string;
   currency?: string;
   items: { variant_id: string; quantity: number }[];
@@ -97,6 +99,7 @@ export async function POST(req: Request) {
     shipping_city: incoming.shipping_city,
     shipping_postal_code: incoming.shipping_postal_code,
     shipping_province: incoming.shipping_province,
+    shipping_country: incoming.shipping_country ?? "PK",
     customer_note: incoming.customer_note,
     currency: incoming.currency,
     items: incoming.items,

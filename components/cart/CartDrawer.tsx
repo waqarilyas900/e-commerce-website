@@ -129,7 +129,7 @@ export function CartDrawer() {
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[80]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -150,7 +150,12 @@ export function CartDrawer() {
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
           />
           <motion.aside
-            className="absolute right-0 top-0 z-50 flex h-screen w-full max-w-lg flex-col overflow-hidden bg-white px-6 py-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-xl"
+            className="absolute inset-y-0 right-0 z-[81] flex min-h-0 w-full max-w-lg flex-col overflow-hidden bg-white px-6 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-xl"
+            style={{
+              willChange: "transform",
+              maxHeight: "100dvh",
+              paddingBottom: "max(1.25rem, env(safe-area-inset-bottom, 0px))",
+            }}
             initial={{ x: "100%", opacity: 0.98 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{
@@ -185,7 +190,6 @@ export function CartDrawer() {
                     opacity: { duration: 0.4, ease: easeSilk },
                   }
             }
-            style={{ willChange: "transform" }}
           >
             <motion.div
               className="flex items-center justify-between border-b border-neutral-200 pb-5"
@@ -225,7 +229,7 @@ export function CartDrawer() {
               }}
             >
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto">
+                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain [overscroll-behavior-y:contain]">
                   {resolvedLines.length === 0 ? (
                     <motion.p
                       className="text-sm text-neutral-600"
@@ -323,7 +327,7 @@ export function CartDrawer() {
 
                 {showRecommendations && recommended.length > 0 ? (
                   <div className="mt-4 shrink-0 border-t border-neutral-200 pt-5">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                    <h3 className="text-[11px] font-semibold capitalize tracking-[0.18em] text-neutral-500">
                       You might like
                     </h3>
                     <div className="mt-3 grid grid-cols-12 gap-3">
@@ -338,7 +342,7 @@ export function CartDrawer() {
 
             {lines.length > 0 ? (
               <motion.div
-                className="mt-auto border-t border-neutral-200 pt-5"
+                className="mt-auto shrink-0 border-t border-neutral-200 bg-white pt-5"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={
@@ -347,7 +351,7 @@ export function CartDrawer() {
                     : { delay: 0.14, duration: 0.4, ease: easeSilk }
                 }
               >
-                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-neutral-900">
+                <div className="flex items-center justify-between text-xs font-semibold capitalize tracking-[0.2em] text-neutral-900">
                   <span>Subtotal</span>
                   <span className="tabular-nums">{formatPkr(subtotal)}</span>
                 </div>
@@ -358,7 +362,7 @@ export function CartDrawer() {
                   <Link
                     href="/checkout"
                     onClick={closeCart}
-                    className="mt-5 flex w-full items-center justify-center rounded-md bg-black px-5 py-3 text-base font-semibold text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985]"
+                    className="mt-5 flex w-full items-center justify-center rounded-md bg-black px-5 py-3 text-base font-semibold capitalize text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985]"
                   >
                     Check out
                   </Link>

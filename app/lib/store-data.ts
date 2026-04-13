@@ -35,6 +35,18 @@ export function productsBySlugs(slugs: string[]): Product[] {
 
 export const policyPages = [
   {
+    slug: "size-charts",
+    title: "Size Charts",
+    content:
+      "Use our size guides on each product page to find your fit. When in doubt, size up for a relaxed fit or contact support for measurements.",
+  },
+  {
+    slug: "about",
+    title: "About us",
+    content:
+      "We are focused on quality, fair pricing, and support you can reach. Thank you for shopping with us.",
+  },
+  {
     slug: "shipping",
     title: "Shipping Policy",
     content:

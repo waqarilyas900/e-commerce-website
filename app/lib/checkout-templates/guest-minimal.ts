@@ -15,6 +15,12 @@ export const GUEST_MINIMAL_CHECKOUT: CheckoutTemplateDef = {
       description: "Minimal fields — still maps to the same order API.",
       fields: [
         {
+          id: "shipping_country",
+          label: "Country/Region",
+          type: "country",
+          colSpan: 2,
+        },
+        {
           id: "email",
           label: "Email",
           type: "email",
@@ -41,6 +47,7 @@ export const GUEST_MINIMAL_CHECKOUT: CheckoutTemplateDef = {
           type: "phone",
           required: true,
           colSpan: 2,
+          meta: { lockCountry: true },
         },
         {
           id: "shipping_street",

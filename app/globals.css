@@ -35,6 +35,23 @@ body {
   line-height: var(--typeBaseLineHeight);
 }
 
+/* Title case: first letter of each word (Hello World). Override with `uppercase` or `normal-case` on the element when needed. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-transform: capitalize;
+  }
+
+  button,
+  input[type="submit"] {
+    text-transform: capitalize;
+  }
+}
+
 /* Shopify theme layout — https://radstore.pk structure */
 .page-container {
   display: block;
@@ -50,6 +67,36 @@ body {
 .main-content {
   display: block;
   min-height: 300px;
+}
+
+/* Home collection rails — scrollbar hidden until user scrolls (see .rail-scroll--interacting) */
+.rail-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.rail-scroll::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+.rail-scroll.rail-scroll--interacting {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(23, 23, 23, 0.35) transparent;
+  -ms-overflow-style: auto;
+}
+.rail-scroll.rail-scroll--interacting::-webkit-scrollbar {
+  display: block;
+  height: 6px;
+}
+.rail-scroll.rail-scroll--interacting::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rail-scroll.rail-scroll--interacting::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(23, 23, 23, 0.28);
+}
+.rail-scroll.rail-scroll--interacting::-webkit-scrollbar-thumb:hover {
+  background: rgba(23, 23, 23, 0.4);
 }
 
 /* react-international-phone — one shell with profile form inputs (no double box) */

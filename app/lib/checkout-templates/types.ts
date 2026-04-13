@@ -8,7 +8,8 @@ export type CheckoutFieldType =
   | "email"
   | "phone"
   | "textarea"
-  | "select";
+  | "select"
+  | "country";
 
 export type CheckoutSelectOption = { value: string; label: string };
 
@@ -25,6 +26,8 @@ export type CheckoutFieldDef = {
   /** e.g. show “Use my location” next to street */
   meta?: {
     locationButton?: boolean;
+    /** Phone field: lock to default country (Pakistan), no country dropdown. */
+    lockCountry?: boolean;
   };
 };
 

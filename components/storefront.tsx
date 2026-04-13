@@ -2,19 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { HeaderAccount } from "@/components/auth/HeaderAccount";
 import { HeaderSearchPopover } from "@/components/HeaderSearchPopover";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
-import {
-  primaryNavLinkClass,
-  ShopCollectionsMenu,
-  ShopCollectionsMobileList,
-} from "@/components/navigation/shop-collections-menu";
+import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
+import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
 import {
   bundles,
   collections,
@@ -30,7 +26,7 @@ export function TopStrip() {
       id="shopify-section-announcement-bar"
       className="shopify-section shopify-section-group-header-group flex h-[37px] w-full shrink-0 items-center justify-center overflow-hidden bg-[#1c1d1d] px-4 text-center text-[13px] font-medium leading-none tracking-wide text-white"
     >
-      <span className="block max-w-full truncate px-1">{announcement}</span>
+      <span className="block max-w-full truncate px-1 capitalize">{announcement}</span>
     </div>
   );
 }
@@ -95,7 +91,7 @@ export function Header() {
               priority
               className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
             />
-            <span className="hidden min-w-0 max-h-[3rem] truncate text-center text-sm font-semibold uppercase leading-tight tracking-wide text-neutral-900 sm:inline md:text-base">
+            <span className="hidden min-w-0 max-h-[3rem] truncate text-center text-sm font-semibold capitalize leading-tight tracking-wide text-neutral-900 sm:inline md:text-base">
               {storeName}
             </span>
           </Link>
@@ -132,64 +128,7 @@ export function Header() {
         </div>
       </header>
 
-      <AnimatePresence>
-        {isMobileNavOpen ? (
-          <motion.div
-            className="fixed inset-0 z-30 md:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <button
-              type="button"
-              className="absolute inset-0 bg-black/35"
-              aria-label="Close menu"
-              onClick={() => setIsMobileNavOpen(false)}
-            />
-            <motion.nav
-              className="absolute left-0 top-0 flex h-full w-[min(88vw,300px)] flex-col gap-4 bg-white p-6 shadow-xl"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 35 }}
-            >
-              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Site navigation
-              </p>
-              <ShopCollectionsMobileList onNavigate={() => setIsMobileNavOpen(false)} />
-              <Link
-                href="/collections/sale"
-                className="text-[15px] font-semibold tracking-tight text-neutral-950"
-                onClick={() => setIsMobileNavOpen(false)}
-              >
-                <span aria-hidden className="mr-1">⚡</span>
-                Sale
-              </Link>
-              <Link
-                href="/bundles"
-                className="text-[15px] font-semibold tracking-tight text-neutral-950"
-                onClick={() => setIsMobileNavOpen(false)}
-              >
-                <span aria-hidden className="mr-1">🔥</span>
-                Bundle Deals
-              </Link>
-              <button
-                type="button"
-                className="text-left"
-                onClick={() => {
-                  setIsMobileNavOpen(false);
-                  setSearchOpen(true);
-                }}
-              >
-                Search
-              </button>
-              <Link href="/contact" onClick={() => setIsMobileNavOpen(false)}>
-                Contact
-              </Link>
-            </motion.nav>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <MobileNavDrawer open={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
 
       <CartDrawer />
     </>
@@ -207,7 +146,7 @@ export function Hero() {
       >
         <div className="absolute inset-0 bg-black/30" />
         <div className="relative flex min-h-[430px] flex-col justify-end p-7 text-white sm:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em]">Brand New</p>
+          <p className="text-xs font-semibold capitalize tracking-[0.2em]">Brand New</p>
           <h1 className="mt-2 max-w-xl text-3xl font-semibold tracking-tight sm:text-5xl">
             {featuredSlides[0].title}
           </h1>
@@ -216,7 +155,7 @@ export function Hero() {
           </p>
           <Link
             href={featuredSlides[0].href}
-            className="mt-5 w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold text-black"
+            className="mt-5 w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold capitalize text-black"
           >
             {featuredSlides[0].cta}
           </Link>
@@ -227,7 +166,7 @@ export function Hero() {
           <Link
             key={slide.title}
             href={slide.href}
-            className="rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-50"
+            className="rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium capitalize text-neutral-900 hover:bg-neutral-50"
           >
             {slide.title}
           </Link>
@@ -264,10 +203,16 @@ export function CategoryHighlights() {
 export function ProductCard({
   product,
   showAddToCart = true,
+  rail = false,
+  /** Grids (collections, search): 2-line title clamp so row heights stay even with stretch layout. */
+  clampTitle = false,
 }: {
   product: Product;
   /** Set false on the home page to hide quick-add (use PDP or other pages to purchase). */
   showAddToCart?: boolean;
+  /** Home horizontal rail: stable card height + 2-line title clamp. */
+  rail?: boolean;
+  clampTitle?: boolean;
 }) {
   if (!product?.slug) {
     return null;
@@ -300,7 +245,11 @@ export function ProductCard({
         </p>
         <Link
           href={`/products/${product.slug}`}
-          className="block text-sm font-semibold leading-snug text-neutral-900"
+          className={
+            rail || clampTitle
+              ? "block min-h-[2.5rem] line-clamp-2 text-sm font-semibold leading-snug text-neutral-900"
+              : "block text-sm font-semibold leading-snug text-neutral-900"
+          }
         >
           {product.name}
         </Link>
@@ -341,17 +290,113 @@ export function ProductCard({
   );
 }
 
+/**
+ * ~1 full card + peek of next (reference store). Visible ≈ W + gap + W/2 → W = (viewport pad − gap) / 1.5
+ * ul uses px-4 → 2rem horizontal; gap-3 → 0.75rem
+ */
+const RAIL_COL =
+  "w-[calc((100vw-2.75rem)/1.5)] max-w-[232px] shrink-0 sm:w-[200px] sm:max-w-none md:w-[220px]";
+const RAIL_SNAP = "snap-start snap-always";
+/** Product tile in the home rail (same as `${RAIL_COL} ${RAIL_SNAP} flex flex-col`). */
+const RAIL_ITEM = `${RAIL_COL} ${RAIL_SNAP} flex flex-col`;
+/** Compact “View all” control (centered in column; not full card height). */
+const RAIL_VIEW_ALL_BTN =
+  "flex aspect-square w-[min(7rem,78%)] max-w-[120px] flex-col items-center justify-center rounded-md border border-neutral-200 bg-white px-2 py-2 text-center text-neutral-900 shadow-sm transition hover:border-neutral-300 hover:shadow";
+const RAIL_PREVIEW = 4;
+
+const RAIL_SCROLL_HIDE_MS = 700;
+
+/** Horizontal rail: scrollbar only while user is scrolling; hidden after scroll stops. */
+function RailScrollStrip({ children }: { children: ReactNode }) {
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [barVisible, setBarVisible] = useState(false);
+
+  const scheduleHide = useCallback(() => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setBarVisible(false), RAIL_SCROLL_HIDE_MS);
+  }, []);
+
+  const onScroll = useCallback(() => {
+    setBarVisible(true);
+    scheduleHide();
+  }, [scheduleHide]);
+
+  useEffect(
+    () => () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    },
+    [],
+  );
+
+  const railUlClass =
+    "rail-scroll -mx-4 flex list-none items-stretch gap-3 overflow-x-auto scroll-px-4 scroll-smooth px-4 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-4 sm:px-0 sm:scroll-px-0";
+
+  return (
+    <ul
+      onScroll={onScroll}
+      className={barVisible ? `${railUlClass} rail-scroll--interacting` : railUlClass}
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
+      {children}
+    </ul>
+  );
+}
+
 export function ProductSection({
   title,
   items,
   viewAllHref = "/collections",
   showAddToCart = true,
+  layout = "grid",
+  totalProductCount,
 }: {
   title: string;
   items: Product[];
   viewAllHref?: string;
   showAddToCart?: boolean;
+  /** Home collection rails: horizontal scroll + trailing “View all” tile. */
+  layout?: "grid" | "rail";
+  /** Full collection (or sale) size for the rail “View all” tile; defaults to `items.length`. */
+  totalProductCount?: number;
 }) {
+  const count = totalProductCount ?? items.length;
+  const railItems = layout === "rail" ? items.slice(0, RAIL_PREVIEW) : items;
+
+  if (layout === "rail") {
+    return (
+      <section className="bg-neutral-100/80">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold tracking-tight text-neutral-900">{title}</h2>
+          </div>
+          <RailScrollStrip>
+            {railItems.map((product) => (
+              <li key={product.id} className={RAIL_ITEM}>
+                <div className="flex h-full min-h-0 flex-1 flex-col">
+                  <ProductCard product={product} showAddToCart={showAddToCart} rail />
+                </div>
+              </li>
+            ))}
+            <li
+              className={`${RAIL_COL} ${RAIL_SNAP} flex flex-col items-center justify-center`}
+            >
+              <Link
+                href={viewAllHref}
+                aria-label={`View all ${count} product${count === 1 ? "" : "s"} in ${title}`}
+                className={RAIL_VIEW_ALL_BTN}
+              >
+                <span className="text-sm font-semibold tracking-tight">View all</span>
+                <span className="mt-1 text-[11px] leading-tight text-neutral-500">
+                  {count} product{count === 1 ? "" : "s"}
+                </span>
+              </Link>
+            </li>
+          </RailScrollStrip>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
       <div className="mb-4 flex items-end justify-between gap-4">
@@ -360,7 +405,7 @@ export function ProductSection({
           View all
         </Link>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 items-stretch">
         {items.map((product) => (
           <ProductCard key={product.id} product={product} showAddToCart={showAddToCart} />
         ))}
@@ -395,7 +440,7 @@ export function WhyShop() {
           </p>
           <Link
             href={whyShop.ctaHref}
-            className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-semibold text-white"
+            className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-semibold capitalize text-white"
           >
             {whyShop.ctaLabel}
           </Link>
@@ -406,136 +451,14 @@ export function WhyShop() {
   );
 }
 
-export function Footer() {
-  const { storeName, footer } = useStoreBrand();
-  const mailto = `mailto:${footer.supportEmail}`;
-
-  return (
-    <div id="shopify-section-footer" className="shopify-section shopify-section-footer">
-      <footer
-        className="site-footer border-t border-white/10 bg-[var(--colorFooter)] text-[var(--colorFooterText)]"
-        data-section-id="sections--footer"
-        data-section-type="footer"
-      >
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-14 lg:px-8">
-          <div className="grid gap-12 md:grid-cols-2 md:gap-16 lg:gap-24">
-            <div className="footer-block footer-block--text">
-              <h2 className="footer__title text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--colorFooterText)]">
-                Need help?
-              </h2>
-              <p className="mt-5 text-[15px] leading-relaxed text-white/85">
-                Reach us at
-              </p>
-              <a
-                href={mailto}
-                className="mt-1 inline-block text-[15px] font-medium uppercase tracking-wide text-[var(--colorFooterText)] underline-offset-4 hover:underline"
-              >
-                {footer.supportEmail}
-              </a>
-              <p className="mt-5 text-[15px] leading-relaxed text-white/85">
-                Call/Whatsapp :{" "}
-                <span className="font-medium text-[var(--colorFooterText)]">{footer.phone}</span>
-              </p>
-              <p className="mt-2 text-[15px] leading-relaxed text-white/75">
-                {footer.hoursLine}
-              </p>
-            </div>
-
-            <div className="footer-block footer-block--link_list">
-              <h2 className="footer__title flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--colorFooterText)]">
-                <span>Explore</span>
-                <span className="text-base leading-none" aria-hidden>
-                  ⚡
-                </span>
-              </h2>
-              <ul className="footer__linklist mt-5 grid list-none gap-2.5 pl-0 text-[15px] text-white/90 sm:grid-cols-2 sm:gap-x-10">
-                {footer.exploreLinks.map((item) => (
-                  <li key={item.href + item.label}>
-                    <Link
-                      href={item.href}
-                      className="transition-colors hover:text-white hover:underline"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-12 border-t border-white/10 pt-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
-              Policies
-            </p>
-            <ul className="mt-4 flex list-none flex-wrap gap-x-6 gap-y-2 pl-0 text-xs text-white/70">
-              <li>
-                <Link
-                  href="/policies/returns"
-                  className="transition-colors hover:text-white hover:underline"
-                >
-                  Returns & Exchanges
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/policies/shipping"
-                  className="transition-colors hover:text-white hover:underline"
-                >
-                  Shipping Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/policies/terms"
-                  className="transition-colors hover:text-white hover:underline"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/policies/privacy"
-                  className="transition-colors hover:text-white hover:underline"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="mt-10 flex flex-col items-center gap-4 border-t border-white/10 pt-8 sm:flex-row sm:justify-between">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/dummy-logo.svg"
-                alt=""
-                width={34}
-                height={34}
-                className="brightness-0 invert opacity-90"
-              />
-              <span className="text-sm font-semibold uppercase tracking-[0.12em] text-white/95">
-                {storeName}
-              </span>
-            </div>
-            <p className="text-xs text-white/55">Instagram · Facebook</p>
-          </div>
-        </div>
-
-        <div className="border-t border-white/10 bg-black/40">
-          <div className="mx-auto max-w-7xl px-4 py-4 text-center text-xs text-white/50 sm:px-6 lg:px-8">
-            © {new Date().getFullYear()} {storeName} · All Rights Reserved
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
+export { Footer } from "./site-footer";
 
 export function BundleSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
       <div className="mb-4 flex items-end justify-between">
         <h2 className="text-xl font-semibold tracking-tight">Bundle Deals</h2>
-        <Link href="/bundles" className="text-sm font-semibold text-neutral-900">
+        <Link href="/bundles" className="text-sm font-semibold capitalize text-neutral-900">
           View all
         </Link>
       </div>
@@ -546,7 +469,7 @@ export function BundleSection() {
             href="/bundles"
             className="rounded-xl border border-neutral-200 bg-white p-5"
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
               {bundle.discountLabel}
             </p>
             <p className="mt-1 text-lg font-semibold">{bundle.name}</p>

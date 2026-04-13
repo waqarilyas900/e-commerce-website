@@ -32,7 +32,7 @@ export default async function AccountOrdersPage() {
   return (
     <div className="w-full">
       <header className="border-b border-neutral-200/90 pb-8">
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
           <Link href="/account" className="hover:underline">
             Account
           </Link>{" "}
@@ -83,22 +83,22 @@ export default async function AccountOrdersPage() {
           <div className="overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-sm ring-1 ring-neutral-950/[0.04]">
             <div className="hidden border-b border-neutral-200 bg-neutral-50/95 px-4 py-3 sm:px-6 lg:grid lg:grid-cols-12 lg:gap-4 lg:px-8">
               <div className="lg:col-span-4">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                <span className="text-[11px] font-semibold capitalize tracking-wider text-neutral-500">
                   Order
                 </span>
               </div>
               <div className="lg:col-span-3">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                <span className="text-[11px] font-semibold capitalize tracking-wider text-neutral-500">
                   Date
                 </span>
               </div>
               <div className="lg:col-span-3">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                <span className="text-[11px] font-semibold capitalize tracking-wider text-neutral-500">
                   Status
                 </span>
               </div>
               <div className="text-right lg:col-span-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                <span className="text-[11px] font-semibold capitalize tracking-wider text-neutral-500">
                   Total
                 </span>
               </div>

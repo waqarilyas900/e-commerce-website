@@ -3,7 +3,7 @@ import { ProfileForm } from "./profile-form";
 export default function AccountProfilePage() {
   return (
     <>
-      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
         <a href="/account" className="hover:underline">
           Account
         </a>{" "}

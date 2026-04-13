@@ -30,6 +30,8 @@ export default async function Home() {
             items={rail.items}
             viewAllHref={rail.viewAllHref}
             showAddToCart={false}
+            layout="rail"
+            totalProductCount={rail.totalProductCount}
           />
         ))}
         <WhyShop />

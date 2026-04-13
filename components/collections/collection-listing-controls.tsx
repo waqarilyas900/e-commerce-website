@@ -61,6 +61,10 @@ const sortSelectStyles: StylesConfig<AppSelectOption, false, GroupBase<AppSelect
     color: state.isFocused ? "#171717" : "#525252",
   }),
   indicatorSeparator: () => ({ display: "none" }),
+  container: (provided) => ({
+    ...provided,
+    width: "100%",
+  }),
 };
 
 const SORT_OPTIONS: { id: CollectionSortId; label: string }[] = [
@@ -173,13 +177,13 @@ function CollectionSidebar({
 
 function ProductCardSkeleton() {
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white">
-      <div className="h-60 animate-pulse bg-neutral-100" />
-      <div className="space-y-2 p-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white">
+      <div className="h-60 shrink-0 animate-pulse bg-neutral-100" />
+      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
         <div className="h-3 w-28 animate-pulse rounded bg-neutral-100" />
         <div className="h-4 w-full max-w-[90%] animate-pulse rounded bg-neutral-100" />
         <div className="h-3 w-24 animate-pulse rounded bg-neutral-100" />
-        <div className="mt-2 h-9 w-full animate-pulse rounded-md bg-neutral-100" />
+        <div className="mt-auto h-9 w-full animate-pulse rounded-md bg-neutral-100" />
       </div>
     </div>
   );
@@ -237,18 +241,17 @@ export function CollectionListingControls({
     [baseParams, pushInTransition],
   );
 
-  const firstRow = products.slice(0, 3);
-  const rest = products.slice(3);
+  const skeletonCount = Math.max(6, products.length > 0 ? products.length : 6);
 
   return (
     <>
-      {/* Filter (left) + sort (right) — reference layout */}
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Reference: Filter + Sort equal half-width columns, aligned to listing grid below */}
+      <div className="mb-8 grid grid-cols-2 gap-3">
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
           disabled={isListPending}
-          className="inline-flex w-full max-w-[200px] cursor-pointer items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex w-full min-w-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -264,7 +267,7 @@ export function CollectionListingControls({
           </svg>
           Filter
         </button>
-        <div className="w-full min-w-0 sm:w-auto sm:min-w-[260px]">
+        <div className="min-w-0">
           <AppSelect
             aria-label="Sort products"
             options={sortOptions}
@@ -279,51 +282,76 @@ export function CollectionListingControls({
         </div>
       </div>
 
-      {/* Row 1: sidebar (1/4) + product strip (3/4 as 3 columns) */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-4 lg:gap-6">
-        <aside className="min-w-0 border-t border-neutral-100 pt-6 lg:border-t-0 lg:pt-0">
-          <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
-        </aside>
-
-        <div
-          className="min-w-0 lg:col-span-3"
-          aria-busy={isListPending}
-          aria-live="polite"
-        >
-          {isListPending ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({
-                length: Math.max(3, products.length > 0 ? products.length : 6),
-              }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
+      {!isListPending && products.length === 0 ? (
+        <>
+          {/* Empty: keep nav + message (reference-style flow on small screens) */}
+          <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-6 md:grid-cols-3 lg:hidden">
+            <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
             </div>
-          ) : products.length === 0 ? (
-            <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
+            <div className="col-span-2 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600 md:col-span-2">
               No products match your filters.
             </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {firstRow.map((product) => (
-                <div key={product.id} className="min-w-0">
-                  <ProductCard product={product} showAddToCart={false} />
-                </div>
-              ))}
+          </div>
+          <div className="hidden gap-6 lg:grid lg:grid-cols-4">
+            <aside className="min-w-0">
+              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+            </aside>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600 lg:col-span-3">
+              No products match your filters.
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/*
+            Below lg (reference): one grid — cell 1 = collection links, then products in flow
+            (row 1: nav | p1 [ | p2 on md ], then products continue; not a full-height sidebar column).
+            lg+: sidebar column + 3-col product grid.
+          */}
+          <div
+            className="grid grid-cols-2 items-stretch gap-4 sm:gap-6 md:grid-cols-3 lg:hidden"
+            aria-busy={isListPending}
+            aria-live="polite"
+          >
+            <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+            </div>
+            {isListPending
+              ? Array.from({ length: skeletonCount }).map((_, i) => (
+                  <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
+                    <ProductCardSkeleton />
+                  </div>
+                ))
+              : products.map((product) => (
+                  <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
+                    <ProductCard product={product} showAddToCart={false} clampTitle />
+                  </div>
+                ))}
+          </div>
 
-      {/* Row 2+: four products per row */}
-      {!isListPending && rest.length > 0 ? (
-        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-8 lg:grid-cols-4 lg:gap-6">
-          {rest.map((product) => (
-            <div key={product.id} className="min-w-0">
-              <ProductCard product={product} showAddToCart={false} />
+          <div className="hidden gap-6 lg:grid lg:grid-cols-4" aria-busy={isListPending} aria-live="polite">
+            <aside className="min-w-0 self-start">
+              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+            </aside>
+            <div className="min-w-0 lg:col-span-3">
+              <div className="grid min-w-0 grid-cols-2 items-stretch gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-3">
+                {isListPending
+                  ? Array.from({ length: skeletonCount }).map((_, i) => (
+                      <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCardSkeleton />
+                      </div>
+                    ))
+                  : products.map((product) => (
+                      <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCard product={product} showAddToCart={false} clampTitle />
+                      </div>
+                    ))}
+              </div>
             </div>
-          ))}
-        </div>
-      ) : null}
+          </div>
+        </>
+      )}
 
       <CollectionFilterDrawer
         open={filterOpen}

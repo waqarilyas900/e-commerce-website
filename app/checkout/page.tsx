@@ -9,6 +9,10 @@ import { PAKISTAN_STANDARD_CHECKOUT } from "@/app/lib/checkout-templates";
 import { PAKISTAN_PROVINCE_OPTIONS } from "@/app/lib/checkout-templates/pakistan-provinces";
 import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { CheckoutChrome } from "@/components/checkout/checkout-chrome";
+import {
+  CheckoutOrderSummaryAccordion,
+  CheckoutPolicyFooterLinks,
+} from "@/components/checkout/checkout-order-summary-accordion";
 import { CheckoutTemplateFields } from "@/components/checkout/checkout-template-fields";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
 import { createClient } from "@/lib/supabase/client";
@@ -18,6 +22,9 @@ const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
 
 /** Flat delivery fee in PKR (matches server `place_order` shipping in paisa). */
 const DELIVERY_CHARGE = 500;
+
+/** ISO 3166-1 alpha-2 — must match `place_order` (Pakistan-only storefront). */
+const SHIPPING_COUNTRY_CODE = "PK";
 
 function readNames(meta: Record<string, unknown>) {
   const first = typeof meta.first_name === "string" ? meta.first_name.trim() : "";
@@ -101,7 +108,25 @@ export default function CheckoutPage() {
   const [locError, setLocError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const [topSummaryOpen, setTopSummaryOpen] = useState(false);
+  const [bottomSummaryOpen, setBottomSummaryOpen] = useState(false);
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountApplied, setDiscountApplied] = useState(false);
+  const [discountNotice, setDiscountNotice] = useState<string | null>(null);
+
   const grandTotal = subtotal + DELIVERY_CHARGE;
+
+  const applyDiscount = useCallback(() => {
+    const c = discountCode.trim();
+    if (!c) {
+      setDiscountNotice("Enter a discount code first.");
+      return;
+    }
+    setDiscountApplied(true);
+    setDiscountNotice(
+      "If this code is valid, any discount will be confirmed when the order is processed.",
+    );
+  }, [discountCode]);
 
   const applyGeocode = useCallback((addr: NominatimAddress) => {
     const parts = [
@@ -247,6 +272,7 @@ export default function CheckoutPage() {
           shipping_city: formValues.shipping_city?.trim() ?? "",
           shipping_postal_code: formValues.shipping_postal_code?.trim() ?? "",
           shipping_province: formValues.shipping_province ?? "",
+          shipping_country: SHIPPING_COUNTRY_CODE,
           currency: STORE_CURRENCY_CODE,
           items,
         }),
@@ -309,162 +335,164 @@ export default function CheckoutPage() {
 
   return (
     <CheckoutChrome mode="checkout">
-      <main id="MainContent" className="pb-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
-            Checkout
-          </h1>
-          <div className="flex flex-wrap gap-2 sm:justify-end">
-            <button
-              type="button"
-              onClick={() => openCart()}
-              className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50"
-            >
-              Back to cart
-            </button>
-            <Link
-              href="/collections"
-              className="inline-flex items-center justify-center rounded-full border border-neutral-900 bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
-            >
-              Continue shopping
-            </Link>
+      <main id="MainContent" className="pb-12">
+        <div className="mx-auto w-full max-w-2xl">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+              Checkout
+            </h1>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-2">
+              <button
+                type="button"
+                onClick={() => openCart()}
+                className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-3 py-2 text-xs font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                Back to cart
+              </button>
+              <Link
+                href="/collections"
+                className="inline-flex items-center justify-center rounded-full border border-neutral-900 bg-neutral-950 px-3 py-2 text-center text-xs font-semibold capitalize text-white shadow-sm transition hover:bg-neutral-800 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                Continue shopping
+              </Link>
+            </div>
           </div>
-        </div>
 
-        <form id="checkout-form" onSubmit={onSubmit} className="mt-8">
-          <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
-            <div className="lg:col-span-8">
-              <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8">
-                <h2 className="text-lg font-semibold text-neutral-900">Delivery details</h2>
-                <p className="mt-1 text-sm text-neutral-600">Enter where we send your order</p>
-                <p className="mt-3 text-xs leading-relaxed text-neutral-600">
-                  {signedIn ? (
-                    <>
-                      You&apos;re signed in — this order will show in{" "}
-                      <Link
-                        href="/account/orders"
-                        className="font-medium text-neutral-900 underline"
-                      >
-                        your orders
-                      </Link>{" "}
-                      after checkout. You can still edit delivery details below.
-                    </>
-                  ) : (
-                    <>
-                      Delivery and cash on delivery details are required. You do not need an
-                      account to place an order.{" "}
-                      <Link href="/login" className="font-medium text-neutral-900 underline">
-                        Sign in
-                      </Link>{" "}
-                      is optional — it lets you save addresses and view order history.
-                    </>
-                  )}
-                </p>
+          <form id="checkout-form" onSubmit={onSubmit} className="mt-6 space-y-5">
+            <CheckoutOrderSummaryAccordion
+              id="co-summary-top"
+              expanded={topSummaryOpen}
+              onToggle={() => setTopSummaryOpen((o) => !o)}
+              lines={resolvedLines}
+              subtotal={subtotal}
+              shipping={DELIVERY_CHARGE}
+              total={grandTotal}
+              discountCode={discountCode}
+              onDiscountCodeChange={(v) => {
+                setDiscountCode(v);
+                setDiscountNotice(null);
+              }}
+              onApplyDiscount={applyDiscount}
+              discountApplied={discountApplied}
+              discountNotice={discountNotice}
+            />
 
-                <CheckoutTemplateFields
-                  template={CHECKOUT_TEMPLATE}
-                  values={formValues}
-                  onChange={(id, value) => {
-                    setField(id, value);
-                    if (id === "phone") setFormError(null);
-                  }}
-                  inputClassName={inputClass}
-                  phoneError={formError}
-                  locError={locError}
-                  locLoading={locLoading}
-                  onUseLocation={useMyLocation}
-                />
-              </div>
+            <div
+              className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8"
+              aria-label="Delivery and contact"
+            >
+              <h2 className="hidden text-lg font-semibold text-neutral-900 sm:block">Delivery details</h2>
+              <p className="mt-1 hidden text-sm text-neutral-600 sm:block">Enter where we send your order</p>
+              <p className="mt-3 hidden text-xs leading-relaxed text-neutral-600 sm:block">
+                {signedIn ? (
+                  <>
+                    You&apos;re signed in — this order will show in{" "}
+                    <Link
+                      href="/account/orders"
+                      className="font-medium text-neutral-900 underline"
+                    >
+                      your orders
+                    </Link>{" "}
+                    after checkout. You can still edit delivery details below.
+                  </>
+                ) : (
+                  <>
+                    Delivery and cash on delivery details are required. You do not need an account
+                    to place an order.{" "}
+                    <Link href="/login" className="font-medium text-neutral-900 underline">
+                      Sign in
+                    </Link>{" "}
+                    is optional — it lets you save addresses and view order history.
+                  </>
+                )}
+              </p>
+
+              <CheckoutTemplateFields
+                template={CHECKOUT_TEMPLATE}
+                values={formValues}
+                onChange={(id, value) => {
+                  setField(id, value);
+                  if (id === "phone") setFormError(null);
+                }}
+                inputClassName={inputClass}
+                rootClassName="mt-0 space-y-8"
+                phoneError={formError}
+                locError={locError}
+                locLoading={locLoading}
+                onUseLocation={useMyLocation}
+              />
             </div>
 
-            <aside className="lg:col-span-4">
-              <div className="sticky top-6 space-y-6 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-900">
-                  Order summary
-                </h2>
-
-                <ul className="space-y-4 border-b border-neutral-200 pb-4">
-                  {resolvedLines.map(({ line, product, unitPrice, variantLabel }) => {
-                    const lineTotal = unitPrice * line.quantity;
-                    return (
-                      <li key={line.variantId} className="flex gap-3 text-sm">
-                        <div
-                          className="h-14 w-11 shrink-0 overflow-hidden rounded border border-neutral-200 bg-cover bg-center"
-                          style={{ backgroundImage: `url(${product.image})` }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium leading-tight text-neutral-900">{product.name}</p>
-                          {variantLabel ? (
-                            <p className="mt-0.5 text-xs text-neutral-600">{variantLabel}</p>
-                          ) : null}
-                          <p className="mt-0.5 text-xs text-neutral-600">Qty {line.quantity}</p>
-                          <p className="mt-1 text-xs tabular-nums text-neutral-800">
-                            {formatPkr(unitPrice)} × {line.quantity} = {formatPkr(lineTotal)}
-                          </p>
-                        </div>
-                        <p className="shrink-0 tabular-nums font-medium text-neutral-900">
-                          {formatPkr(lineTotal)}
-                        </p>
-                      </li>
-                    );
-                  })}
-                </ul>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-neutral-700">
-                    <span>Subtotal</span>
-                    <span className="tabular-nums">{formatPkr(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-700">
-                    <span>Delivery charges</span>
-                    <span className="tabular-nums">{formatPkr(DELIVERY_CHARGE)}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
-                    <span>Total amount</span>
-                    <span className="tabular-nums">{formatPkr(grandTotal)}</span>
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-neutral-50 px-3 py-3 text-xs leading-relaxed text-neutral-700">
-                  <p className="font-semibold text-neutral-900">Estimated delivery</p>
-                  <p className="mt-1">
-                    3–5 business days — your order will be delivered within 3–5 days after
-                    confirmation.
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900">Payment method</p>
-                  <div className="mt-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                    <p className="text-sm font-medium text-neutral-900">Cash on delivery</p>
-                    <p className="mt-1 text-xs text-neutral-600">
-                      You will pay when the order is delivered to your address.
-                    </p>
-                  </div>
-                </div>
-
-                <MoneyBackBadge />
-
-                {submitError ? (
-                  <p
-                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-                    role="alert"
-                  >
-                    {submitError}
-                  </p>
-                ) : null}
-
-                <button
-                  type="submit"
-                  disabled={placing}
-                  className="w-full rounded-full bg-neutral-950 px-5 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {placing ? "Placing order…" : "Place order"}
-                </button>
+            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+              <h2 className="text-base font-semibold text-neutral-900">Shipping method</h2>
+              <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-sm">
+                <span className="text-neutral-800">
+                  Standard delivery — orders are dispatched within 3–5 business days
+                </span>
+                <span className="shrink-0 tabular-nums font-semibold text-neutral-900">
+                  {formatPkr(DELIVERY_CHARGE)}
+                </span>
               </div>
-            </aside>
-          </div>
-        </form>
+              <p className="mt-3 text-xs text-neutral-600">
+                Estimated delivery: 3–5 business days after confirmation.
+              </p>
+            </section>
+
+            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+              <h2 className="text-base font-semibold text-neutral-900">Payment</h2>
+              <p className="mt-1 text-xs text-neutral-500">
+                All transactions are secure and encrypted.
+              </p>
+              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3">
+                <p className="text-sm font-semibold text-neutral-900">Cash on Delivery (COD)</p>
+                <p className="mt-1 text-xs text-neutral-600">
+                  Pay when your order arrives at your delivery address.
+                </p>
+              </div>
+            </section>
+
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+              <MoneyBackBadge />
+            </div>
+
+            <CheckoutOrderSummaryAccordion
+              id="co-summary-bottom"
+              expanded={bottomSummaryOpen}
+              onToggle={() => setBottomSummaryOpen((o) => !o)}
+              lines={resolvedLines}
+              subtotal={subtotal}
+              shipping={DELIVERY_CHARGE}
+              total={grandTotal}
+              discountCode={discountCode}
+              onDiscountCodeChange={(v) => {
+                setDiscountCode(v);
+                setDiscountNotice(null);
+              }}
+              onApplyDiscount={applyDiscount}
+              discountApplied={discountApplied}
+              discountNotice={discountNotice}
+            />
+
+            {submitError ? (
+              <p
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+                role="alert"
+              >
+                {submitError}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={placing}
+              className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {placing ? "Placing order…" : "Complete order"}
+            </button>
+
+            <CheckoutPolicyFooterLinks />
+          </form>
+        </div>
       </main>
     </CheckoutChrome>
   );

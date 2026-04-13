@@ -34,7 +34,7 @@ export function ActiveWearBlock() {
 
           <div className="feature-row__item feature-row__callout-text feature-row__text flex flex-col justify-center px-0 py-10 md:px-10 md:py-12 lg:px-14 lg:py-16">
             <div className="feature-row__content larger-text max-w-lg">
-              <p className="subtitle text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+              <p className="subtitle text-xs font-semibold capitalize tracking-[0.2em] text-neutral-500">
                 {featured.eyebrow}
               </p>
               <h2 className="h3 mt-3 text-3xl font-semibold tracking-tight text-[#1c1d1d] md:text-[34px] md:leading-tight">

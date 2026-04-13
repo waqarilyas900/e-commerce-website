@@ -206,7 +206,7 @@ export function HeaderAccount() {
               </span>
             ) : (
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-900 text-[11px] font-semibold uppercase tracking-wide text-white ring-2 transition hover:ring-neutral-400 ${menuOpen ? "ring-neutral-500" : "ring-transparent"}`}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-900 text-[11px] font-semibold normal-case tracking-wide text-white ring-2 transition hover:ring-neutral-400 ${menuOpen ? "ring-neutral-500" : "ring-transparent"}`}
               >
                 {initials}
               </span>

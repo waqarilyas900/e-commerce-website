@@ -27,12 +27,14 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
               height={40}
               className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
             />
-            <span className="truncate text-sm font-semibold uppercase tracking-wide text-neutral-900 sm:text-base">
+            <span className="truncate text-sm font-semibold capitalize tracking-wide text-neutral-900 sm:text-base">
               {storeName}
             </span>
           </Link>
           <div
-            className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold sm:text-sm ${
+            className={`shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold sm:flex sm:text-sm ${
+              isComplete ? "flex" : "hidden sm:flex"
+            } ${
               isComplete
                 ? "border-emerald-300 bg-emerald-50 text-emerald-900"
                 : "border-emerald-200 bg-emerald-50 text-emerald-900"
@@ -73,7 +75,7 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
       </header>
 
       {!isComplete ? (
-        <div className="border-b border-neutral-200 bg-white">
+        <div className="hidden border-b border-neutral-200 bg-white sm:block">
           <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-xs text-neutral-700 sm:text-sm">
               <span className="font-medium text-neutral-900">Delivery across Pakistan</span>

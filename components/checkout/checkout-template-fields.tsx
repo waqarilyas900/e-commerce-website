@@ -8,6 +8,8 @@ type Props = {
   values: Record<string, string>;
   onChange: (id: string, value: string) => void;
   inputClassName: string;
+  /** Root stack spacing (default matches checkout: mt-8 between sections). */
+  rootClassName?: string;
   phoneError?: string | null;
   locError?: string | null;
   locLoading?: boolean;
@@ -19,16 +21,17 @@ export function CheckoutTemplateFields({
   values,
   onChange,
   inputClassName,
+  rootClassName = "mt-8 space-y-8",
   phoneError,
   locError,
   locLoading,
   onUseLocation,
 }: Props) {
   return (
-    <div className="mt-8 space-y-8">
+    <div className={rootClassName}>
       {template.sections.map((section) => (
         <section key={section.id}>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-900">
+          <h3 className="text-sm font-semibold capitalize tracking-wide text-neutral-900">
             {section.title}
           </h3>
           {section.description ? (
@@ -39,6 +42,25 @@ export function CheckoutTemplateFields({
               const span = field.colSpan === 2 ? "sm:col-span-2" : "";
               const v = values[field.id] ?? "";
 
+              if (field.type === "country") {
+                return (
+                  <div key={field.id} className={span}>
+                    <label htmlFor={`co-${field.id}`} className="mb-1 block text-sm font-medium">
+                      {field.label}
+                    </label>
+                    <select
+                      id={`co-${field.id}`}
+                      value="PK"
+                      disabled
+                      title="Orders ship within Pakistan only"
+                      className={`${inputClassName} cursor-not-allowed bg-neutral-50 text-neutral-800`}
+                    >
+                      <option value="PK">Pakistan</option>
+                    </select>
+                  </div>
+                );
+              }
+
               if (field.type === "phone") {
                 return (
                   <div key={field.id} className={span}>
@@ -48,6 +70,7 @@ export function CheckoutTemplateFields({
                     <ProfilePhoneField
                       id={`co-${field.id}`}
                       value={v}
+                      lockCountry={field.meta?.lockCountry}
                       onChange={(next) => {
                         onChange(field.id, next);
                       }}

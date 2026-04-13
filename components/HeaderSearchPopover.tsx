@@ -174,7 +174,7 @@ export function HeaderSearchPopover({ open, onOpenChange }: Props) {
                   className="pt-5"
                   data-testid="visual-search-results-container"
                 >
-                  <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                  <h2 className="text-xs font-semibold capitalize tracking-[0.12em] text-neutral-500">
                     Popular Search Terms
                   </h2>
                   <div className="mt-3 flex flex-wrap gap-2">

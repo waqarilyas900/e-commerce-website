@@ -53,7 +53,7 @@ export default async function BundlesPage() {
             >
               <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
                     {bundle.discountLabel}
                   </p>
                   <h2 className="text-2xl font-semibold tracking-tight">{bundle.name}</h2>
@@ -61,7 +61,7 @@ export default async function BundlesPage() {
                 <AddBundleButton lines={lines} />
               </div>
               <p className="mb-5 text-sm text-neutral-600">{bundle.description}</p>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3">
                 {cards.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

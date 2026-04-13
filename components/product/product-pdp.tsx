@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import ReactStars from "react-rating-stars-component";
+import { AnimatePresence, motion } from "framer-motion";
 import { AddToCartVariantButton } from "@/components/cart/AddToCartVariantButton";
 import { AppSelect } from "@/components/ui/app-select";
 import type {
@@ -11,6 +12,7 @@ import type {
   DbProductVariantRow,
 } from "@/app/lib/db/types";
 import { formatPkr } from "@/app/lib/format-currency";
+import { useCart } from "@/app/providers/cart-provider";
 
 function firstImage(images: unknown): string {
   if (Array.isArray(images) && images.length > 0 && typeof images[0] === "string") {
@@ -48,6 +50,8 @@ type Props = {
 };
 
 export function ProductPdp({ product, collectionLabel, variants, assets }: Props) {
+  const { isOpen: cartDrawerOpen } = useCart();
+
   const keys = useMemo(() => {
     const s = new Set<string>();
     for (const v of variants) {
@@ -116,6 +120,94 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
     return DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
   }, [product.description]);
 
+  const purchaseBlockRef = useRef<HTMLDivElement>(null);
+  /** True only after the user scrolls down so the primary CTAs sit above the viewport (not when they are still below the fold on load). */
+  const [ctaScrolledPast, setCtaScrolledPast] = useState(false);
+
+  useEffect(() => {
+    const el = purchaseBlockRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    function updateCta(entry: IntersectionObserverEntry) {
+      const r = entry.boundingClientRect;
+      const vh = window.innerHeight;
+      if (entry.isIntersecting) {
+        setCtaScrolledPast(false);
+        return;
+      }
+      const fullyBelowViewport = r.top >= vh;
+      const fullyAboveViewport = r.bottom <= 0;
+      setCtaScrolledPast(fullyAboveViewport && !fullyBelowViewport);
+    }
+
+    const io = new IntersectionObserver(([entry]) => updateCta(entry), {
+      root: null,
+      rootMargin: "0px",
+      threshold: [0, 0.01, 0.99, 1],
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [selectedVariant?.id]);
+
+  const thumbUrl = useMemo(() => {
+    if (main?.kind === "image") return main.url;
+    const firstImg = gallery.find((g) => g.kind === "image");
+    return firstImg?.url ?? "";
+  }, [main, gallery]);
+
+  /** Stays visible for the rest of the scroll, including over the footer (fixed to the viewport bottom). */
+  const showStickyPurchase = Boolean(selectedVariant) && ctaScrolledPast;
+  /** Hide while cart drawer is open (full-screen on mobile) so it does not stack on top of the drawer. */
+  const showMobileStickyBar = showStickyPurchase && !cartDrawerOpen;
+
+  const stickyBarRef = useRef<HTMLDivElement | null>(null);
+
+  /** Reserve space at the bottom of the page so footer / copyright can scroll above the fixed bar (mobile & tablet). */
+  useLayoutEffect(() => {
+    const page = document.getElementById("PageContainer");
+    if (!page) return;
+
+    const mq = window.matchMedia("(max-width: 1023px)");
+
+    const syncPadding = () => {
+      if (!mq.matches || !showStickyPurchase || cartDrawerOpen) {
+        page.style.paddingBottom = "";
+        return;
+      }
+      const el = stickyBarRef.current;
+      if (!el) return;
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      page.style.paddingBottom = h > 0 ? `${h}px` : "";
+    };
+
+    let ro: ResizeObserver | undefined;
+    const attach = () => {
+      syncPadding();
+      if (typeof ResizeObserver === "undefined") return;
+      ro?.disconnect();
+      const el = stickyBarRef.current;
+      if (!el) return;
+      ro = new ResizeObserver(syncPadding);
+      ro.observe(el);
+    };
+
+    attach();
+    const t = window.setTimeout(attach, 0);
+
+    window.addEventListener("resize", syncPadding);
+    mq.addEventListener("change", syncPadding);
+
+    return () => {
+      clearTimeout(t);
+      ro?.disconnect();
+      window.removeEventListener("resize", syncPadding);
+      mq.removeEventListener("change", syncPadding);
+      page.style.paddingBottom = "";
+    };
+  }, [showStickyPurchase, cartDrawerOpen]);
+
+  const pdpEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
   return (
     <>
       <section className="grid gap-8 lg:grid-cols-2">
@@ -166,7 +258,7 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
           ) : null}
         </div>
         <div className="space-y-4">
-          <p className="text-sm uppercase tracking-wide text-neutral-500">{collectionLabel}</p>
+          <p className="text-sm capitalize tracking-wide text-neutral-500">{collectionLabel}</p>
           <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
           {safeDescriptionHtml ? (
             <div
@@ -202,7 +294,7 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
                 }));
                 return (
                   <div key={key}>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                    <label className="mb-1 block text-xs font-semibold capitalize tracking-wide text-neutral-500">
                       {key}
                     </label>
                     <AppSelect
@@ -252,10 +344,14 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
 
               <div className="flex flex-wrap items-end gap-4">
                 <div>
-                  <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-neutral-500">
+                  <span className="mb-1 block text-xs font-medium capitalize tracking-wide text-neutral-500">
                     Quantity
                   </span>
-                  <div className="inline-flex items-center rounded-lg border border-neutral-300 bg-white">
+                  <div
+                    className="inline-flex items-stretch rounded-lg border border-neutral-300 bg-white"
+                    role="group"
+                    aria-label="Quantity"
+                  >
                     <button
                       type="button"
                       className="px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40"
@@ -265,22 +361,13 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
                     >
                       −
                     </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={Math.max(1, maxQty)}
-                      value={quantity}
-                      onChange={(e) => {
-                        const v = parseInt(e.target.value, 10);
-                        if (Number.isNaN(v)) {
-                          setQuantity(1);
-                          return;
-                        }
-                        setQuantity(Math.min(maxQty, Math.max(1, v)));
-                      }}
-                      className="w-12 border-x border-neutral-200 bg-transparent py-2 text-center text-sm tabular-nums outline-none"
-                      aria-label="Quantity"
-                    />
+                    <span
+                      className="flex min-w-[2.75rem] items-center justify-center border-x border-neutral-200 px-2 py-2 text-center text-sm font-medium tabular-nums text-neutral-900"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {quantity}
+                    </span>
                     <button
                       type="button"
                       className="px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40"
@@ -292,16 +379,33 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
                     </button>
                   </div>
                 </div>
-                <AddToCartVariantButton
-                  variantId={selectedVariant.id}
-                  productId={product.id}
-                  quantity={quantity}
-                  maxQuantity={maxQty}
-                  disabled={maxQty < 1}
-                  openDrawer
-                  itemName={product.name}
-                  className="rounded-full px-6 py-3 text-sm disabled:opacity-50"
-                />
+                <div
+                  ref={purchaseBlockRef}
+                  className="flex flex-wrap items-center gap-3"
+                >
+                  <AddToCartVariantButton
+                    variantId={selectedVariant.id}
+                    productId={product.id}
+                    quantity={quantity}
+                    maxQuantity={maxQty}
+                    disabled={maxQty < 1}
+                    openDrawer
+                    itemName={product.name}
+                    className="rounded-full px-6 py-3 text-sm disabled:opacity-50"
+                  />
+                  <AddToCartVariantButton
+                    variantId={selectedVariant.id}
+                    productId={product.id}
+                    quantity={quantity}
+                    maxQuantity={maxQty}
+                    disabled={maxQty < 1}
+                    openDrawer={false}
+                    redirectHref="/checkout"
+                    label="Buy now"
+                    itemName={product.name}
+                    className="rounded-full px-6 py-3 text-sm disabled:opacity-50"
+                  />
+                </div>
               </div>
             </>
           ) : (
@@ -309,6 +413,66 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
           )}
         </div>
       </section>
+
+      {/* Mobile / tablet: compact sticky bar — thumbnail left, small actions right; page gets bottom padding so copyright clears the bar */}
+      <div className="lg:hidden" aria-hidden={!showMobileStickyBar}>
+        <AnimatePresence
+          onExitComplete={() => {
+            const page = document.getElementById("PageContainer");
+            if (page) page.style.paddingBottom = "";
+          }}
+        >
+          {showMobileStickyBar && selectedVariant ? (
+            <motion.div
+              ref={stickyBarRef}
+              key="pdp-sticky-purchase"
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ duration: 0.38, ease: pdpEase }}
+              className="fixed inset-x-0 bottom-0 z-[45] border-t border-neutral-200 bg-white/95 shadow-[0_-6px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md"
+              style={{
+                paddingBottom: "max(0.375rem, env(safe-area-inset-bottom, 0px))",
+                paddingTop: "0.375rem",
+              }}
+            >
+              <div className="mx-auto flex max-w-lg items-center justify-between gap-2 px-2.5 sm:gap-3 sm:px-4">
+                <div
+                  className="h-14 w-14 shrink-0 overflow-hidden rounded-none border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:h-16 sm:w-16"
+                  style={
+                    thumbUrl ? { backgroundImage: `url(${thumbUrl})` } : undefined
+                  }
+                  aria-hidden
+                />
+                <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+                  <AddToCartVariantButton
+                    variantId={selectedVariant.id}
+                    productId={product.id}
+                    quantity={quantity}
+                    maxQuantity={maxQty}
+                    disabled={maxQty < 1}
+                    openDrawer
+                    itemName={product.name}
+                    className="!rounded-md !px-2 !py-1.5 !text-[11px] !font-semibold !leading-tight !shadow-none hover:!shadow-sm disabled:opacity-50 sm:!px-2.5 sm:!py-1.5 sm:!text-xs"
+                  />
+                  <AddToCartVariantButton
+                    variantId={selectedVariant.id}
+                    productId={product.id}
+                    quantity={quantity}
+                    maxQuantity={maxQty}
+                    disabled={maxQty < 1}
+                    openDrawer={false}
+                    redirectHref="/checkout"
+                    label="Buy now"
+                    itemName={product.name}
+                    className="!rounded-md !px-2 !py-1.5 !text-[11px] !font-semibold !leading-tight !shadow-none hover:!shadow-sm disabled:opacity-50 sm:!px-2.5 sm:!py-1.5 sm:!text-xs"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
     </>
   );
 }

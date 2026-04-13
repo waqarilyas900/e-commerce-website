@@ -163,7 +163,7 @@ export default async function OrderDetailPage({
 
   return (
     <div className="w-full">
-      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
         <Link href="/account" className="hover:underline">
           Account
         </Link>{" "}
@@ -178,7 +178,7 @@ export default async function OrderDetailPage({
         <div className="border-b border-neutral-200 bg-neutral-50/95 px-5 py-6 sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+              <p className="text-[11px] font-semibold capitalize tracking-wider text-neutral-500">
                 Order detail
               </p>
               <h1 className="mt-1 font-mono text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
@@ -199,7 +199,7 @@ export default async function OrderDetailPage({
 
         <div className="grid gap-0 lg:grid-cols-12">
           <div className="border-b border-neutral-200 px-5 py-8 sm:px-8 lg:col-span-8 lg:border-b-0 lg:border-r lg:border-neutral-200 lg:px-10 lg:py-10">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+          <h2 className="text-sm font-semibold capitalize tracking-wide text-neutral-500">
             Items
           </h2>
           {items.length === 0 ? (
@@ -296,7 +296,7 @@ export default async function OrderDetailPage({
 
         <div className="space-y-8 bg-neutral-50/40 px-5 py-8 sm:px-8 lg:col-span-4 lg:px-10 lg:py-10">
           <div className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+            <h2 className="text-sm font-semibold capitalize tracking-wide text-neutral-500">
               Summary
             </h2>
             <dl className="mt-4 space-y-2 text-sm">
@@ -338,7 +338,7 @@ export default async function OrderDetailPage({
           </div>
 
           <div className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+            <h2 className="text-sm font-semibold capitalize tracking-wide text-neutral-500">
               Delivery
             </h2>
             <div className="mt-3 text-sm text-neutral-800">
@@ -360,7 +360,7 @@ export default async function OrderDetailPage({
 
           {timeline.length > 0 ? (
             <div className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+              <h2 className="text-sm font-semibold capitalize tracking-wide text-neutral-500">
                 Status updates
               </h2>
               <ol className="mt-4 space-y-4 border-l border-neutral-200 pl-4">

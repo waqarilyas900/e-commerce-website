@@ -23,19 +23,23 @@ type Props = {
 function ListingFallback() {
   return (
     <div className="space-y-8">
-      <div className="h-10 max-w-md animate-pulse rounded-md bg-neutral-100" />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-4 lg:gap-6">
-        <div className="h-48 animate-pulse rounded-lg bg-neutral-100 lg:col-span-1" />
-        <div className="grid gap-6 sm:grid-cols-2 lg:col-span-3 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+      <div className="grid grid-cols-2 gap-3">
+        <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
+        <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
+      </div>
+      <div className="grid grid-cols-2 items-start gap-4 sm:gap-6 md:grid-cols-3 lg:hidden">
+        <div className="h-40 max-w-[9rem] animate-pulse rounded-lg bg-neutral-100" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
+        ))}
+      </div>
+      <div className="hidden gap-6 lg:grid lg:grid-cols-4">
+        <div className="h-40 animate-pulse rounded-lg bg-neutral-100" />
+        <div className="grid min-w-0 grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:col-span-3 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
           ))}
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
-        ))}
       </div>
     </div>
   );

@@ -40,9 +40,9 @@ export default async function ProductPage({ params }: Props) {
             />
             <section className="mt-10">
               <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {related.map((item) => (
-                  <ProductCard key={item.id} product={item} />
+                  <ProductCard key={item.id} product={item} showAddToCart={false} clampTitle />
                 ))}
               </div>
             </section>
@@ -73,7 +73,7 @@ export default async function ProductPage({ params }: Props) {
             style={{ backgroundImage: `url(${product.image})` }}
           />
           <div className="space-y-4">
-            <p className="text-sm uppercase tracking-wide text-neutral-500">{product.category}</p>
+            <p className="text-sm capitalize tracking-wide text-neutral-500">{product.category}</p>
             <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
             <p className="text-neutral-600">{product.description}</p>
             <div className="text-sm text-neutral-600">
@@ -90,9 +90,9 @@ export default async function ProductPage({ params }: Props) {
 
         <section className="mt-10">
           <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {related.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard key={item.id} product={item} showAddToCart={false} clampTitle />
             ))}
           </div>
         </section>

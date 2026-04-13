@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/app/providers/cart-provider";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { toastAddedToCart } from "@/lib/cart-toast";
@@ -11,12 +12,15 @@ type Props = {
   productId: string;
   className?: string;
   label?: string;
+  /** When `redirectHref` is set, ignored (drawer is not opened). */
   openDrawer?: boolean;
   quantity?: number;
   disabled?: boolean;
   maxQuantity?: number;
   /** Shown in the toast (e.g. product title). */
   itemName?: string;
+  /** After adding to cart, navigate here (e.g. `/checkout`) instead of opening the cart drawer. */
+  redirectHref?: string;
 };
 
 export function AddToCartVariantButton({
@@ -29,7 +33,9 @@ export function AddToCartVariantButton({
   disabled = false,
   maxQuantity = 99,
   itemName,
+  redirectHref,
 }: Props) {
+  const router = useRouter();
   const { addVariant, openCart } = useCart();
   const [adding, setAdding] = useState(false);
   const q = Math.min(maxQuantity, Math.max(1, Math.floor(quantity)));
@@ -54,7 +60,11 @@ export function AddToCartVariantButton({
                 : undefined,
             quantity: q,
           });
-          if (openDrawer) openCart();
+          if (redirectHref) {
+            router.push(redirectHref);
+          } else if (openDrawer) {
+            openCart();
+          }
         } finally {
           setAdding(false);
         }

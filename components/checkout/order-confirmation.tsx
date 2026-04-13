@@ -170,7 +170,7 @@ export function OrderConfirmation({
           className="mt-10 overflow-hidden rounded-3xl border border-neutral-200/90 bg-white shadow-[0_24px_60px_-12px_rgba(0,0,0,0.08),0_12px_24px_-8px_rgba(0,0,0,0.06)] ring-1 ring-neutral-950/[0.04]"
         >
           <div className="border-b border-neutral-100 bg-gradient-to-br from-neutral-50/90 to-white px-6 py-5 sm:px-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-500">
+            <p className="text-[11px] font-semibold capitalize tracking-[0.2em] text-neutral-500">
               Order reference
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

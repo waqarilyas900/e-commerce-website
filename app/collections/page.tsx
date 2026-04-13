@@ -29,7 +29,7 @@ export default async function CollectionsPage() {
           <p className="mt-2 text-neutral-600">
             Browse collections and products from the catalog.
           </p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {listCols.map((collection) => (
               <Link
                 key={collection.slug}
@@ -45,7 +45,7 @@ export default async function CollectionsPage() {
 
         <section>
           <h2 className="text-2xl font-semibold tracking-tight">All Products</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {allProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

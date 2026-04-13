@@ -1,8 +1,10 @@
 /**
  * Mounted from `app/layout.tsx` when `NEXT_PUBLIC_GOOGLE_ONE_TAP` is true. Set
  * `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and add your exact site origin under Google Cloud → OAuth Web client
- * → Authorized JavaScript origins (otherwise `gsi/status` can 403). Fallback: **Sign in with Google**
- * on /login (OAuth redirect).
+ * → Authorized JavaScript origins (otherwise `gsi/status` can 403). In **development**, the GSI script
+ * is not loaded on LAN IPs (e.g. `http://192.168.x.x:3000`) unless you set
+ * `NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS=true` or `NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS`
+ * to include that origin — avoids 403 spam. Fallback: **Sign in with Google** on /login (OAuth redirect).
  *
  * **Nonce:** Supabase requires request `nonce` and JWT `nonce` to **both** be set and match, or **both**
  * absent. Default omits `params.nonce`; if the ID token still includes `nonce`, we redirect to OAuth.
@@ -26,6 +28,28 @@ function shouldSkipRoute(pathname: string): boolean {
 /** Inlined at build time — keep out of `useEffect` deps so Fast Refresh never changes array length. */
 const GOOGLE_ONE_TAP_STRICT_NONCE =
   process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP_STRICT_NONCE === "true";
+
+/**
+ * Optional comma-separated origins (e.g. `http://localhost:3000,https://app.example.com`).
+ * When set, the GSI script loads only on those origins — avoids 403 / “origin not allowed” when
+ * the OAuth client is not configured for the current URL (common with LAN IPs like 192.168.x.x).
+ */
+function parseAllowedOrigins(): string[] | null {
+  const raw = process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS?.trim();
+  if (!raw) return null;
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function isLocalDevHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+  );
+}
 
 function createNonce(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -92,11 +116,48 @@ export function GoogleOneTap() {
   const pathname = usePathname() ?? "";
   const skipAuthRoute = useMemo(() => shouldSkipRoute(pathname), [pathname]);
   const router = useRouter();
+  /** Avoid loading `gsi/client` when Google will reject the origin (403 + console spam). */
+  const [loadGsiScript, setLoadGsiScript] = useState(false);
   const [gsiReady, setGsiReady] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const initOnce = useRef(false);
   const idTokenNonceRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const allowed = parseAllowedOrigins();
+    const origin = window.location.origin;
+    const hostname = window.location.hostname;
+
+    if (allowed?.length) {
+      setLoadGsiScript(allowed.includes(origin));
+      if (process.env.NODE_ENV === "development" && !allowed.includes(origin)) {
+        console.info(
+          `[Google One Tap] Skipped: origin ${origin} is not in NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS.`,
+        );
+      }
+      return;
+    }
+
+    if (process.env.NODE_ENV !== "development") {
+      setLoadGsiScript(true);
+      return;
+    }
+
+    const allowAllDev =
+      process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS === "true" ||
+      process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS === "1";
+
+    if (allowAllDev || isLocalDevHostname(hostname)) {
+      setLoadGsiScript(true);
+      return;
+    }
+
+    setLoadGsiScript(false);
+    console.info(
+      `[Google One Tap] Skipped on ${origin}: add this exact origin to Google Cloud → OAuth client → Authorized JavaScript origins, or use http://localhost:3000, or set NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS=true / NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS=…`,
+    );
+  }, []);
 
   useEffect(() => {
     if (!signedIn) initOnce.current = false;
@@ -162,17 +223,19 @@ export function GoogleOneTap() {
     [router],
   );
 
-  /** GIS logs FedCM probe failures to console; in dev that triggers Next’s error overlay even when harmless. */
+  /** GIS logs FedCM / misconfiguration to console; in dev that triggers Next’s error overlay even when harmless. */
   useEffect(() => {
     if (process.env.NODE_ENV !== "development" || !clientId) return;
-    /** NetworkError (privacy / token), AbortError (navigation / prompt teardown) — not app bugs. */
-    const suppressFedcmProbeNoise =
-      /\[GSI_LOGGER\]: FedCM get\(\) rejects with/i;
+    /** FedCM probes, wrong JS origin (403 on gsi/status), ITP — not app bugs. */
+    const suppressGsiDevNoise = (msg: string) =>
+      /\[GSI_LOGGER\]: FedCM get\(\) rejects with/i.test(msg) ||
+      /\[GSI_LOGGER\]:.*origin is not allowed/i.test(msg) ||
+      /\[GSI_LOGGER\]:/i.test(msg);
     const origError = console.error;
     const origWarn = console.warn;
     const shouldSuppress = (args: unknown[]) => {
       const first = args[0];
-      return typeof first === "string" && suppressFedcmProbeNoise.test(first);
+      return typeof first === "string" && suppressGsiDevNoise(first);
     };
     console.error = (...args: unknown[]) => {
       if (shouldSuppress(args)) return;
@@ -188,7 +251,7 @@ export function GoogleOneTap() {
     };
   }, [clientId]);
 
-  /** Session probe + subscribe — dependency arity must stay at 3: `[clientId, pathname, skipAuthRoute]`. */
+  /** Session probe + subscribe — runs only when we load GSI (same conditions as `<Script>`). */
   useEffect(() => {
     if (!clientId) {
       if (process.env.NODE_ENV === "development") {
@@ -196,6 +259,9 @@ export function GoogleOneTap() {
           "[Google One Tap] Set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env and restart the dev server.",
         );
       }
+      return;
+    }
+    if (!loadGsiScript) {
       return;
     }
     /** Avoid racing `/auth/callback` (recovery / OAuth return) — same Supabase browser singleton. */
@@ -229,11 +295,12 @@ export function GoogleOneTap() {
         /* ignore */
       }
     };
-  }, [clientId, pathname, skipAuthRoute]);
+  }, [clientId, loadGsiScript, pathname, skipAuthRoute]);
 
   useEffect(() => {
     if (
       !clientId ||
+      !loadGsiScript ||
       !gsiReady ||
       !sessionChecked ||
       signedIn ||
@@ -277,9 +344,17 @@ export function GoogleOneTap() {
         console.error("[Google One Tap] initialize", e);
       }
     }
-  }, [clientId, gsiReady, sessionChecked, signedIn, skipAuthRoute, handleCredential]);
+  }, [
+    clientId,
+    loadGsiScript,
+    gsiReady,
+    sessionChecked,
+    signedIn,
+    skipAuthRoute,
+    handleCredential,
+  ]);
 
-  if (!clientId) {
+  if (!clientId || !loadGsiScript) {
     return null;
   }
 
