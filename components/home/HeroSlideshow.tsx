@@ -159,7 +159,7 @@ export function HeroSlideshow() {
       {/* Natural hero height ≈ radstore: image ratio 2.4:1 (2400×1000) */}
       <div className="slideshow-wrapper relative w-full">
         <div className="relative w-full overflow-hidden">
-          <div className="relative aspect-[12/5] w-full max-w-[100vw]">
+          <div className="relative aspect-12/5 w-full max-w-[100vw]">
             <AnimatePresence initial={false} custom={direction} mode="sync">
               <motion.div
                 key={slide.title}
@@ -212,10 +212,10 @@ export function HeroSlideshow() {
                   />
                 </motion.div>
                 <div
-                  className="pointer-events-none absolute inset-0 z-[1]"
+                  className="pointer-events-none absolute inset-0 z-1"
                   style={{ backgroundImage: HERO_OVERLAY }}
                 />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex justify-center px-4 pb-20 sm:pb-24 md:pb-28">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center px-4 pb-20 sm:pb-24 md:pb-28">
                   <motion.div
                     key={slide.title}
                     initial={
@@ -254,7 +254,7 @@ export function HeroSlideshow() {
 
           {/* Thin progress strip — bottom edge of carousel (under buttons visually) */}
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] w-full"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-15 w-full"
             role="presentation"
           >
             <div
@@ -275,25 +275,26 @@ export function HeroSlideshow() {
             </div>
           </div>
 
-          {/* Pagination on the image — bottom-right, above bar (radstore reference) */}
-          <div className="absolute bottom-3 right-4 z-[25] flex items-center gap-2 sm:bottom-4 sm:right-6 sm:gap-2.5 lg:right-8">
-            <button
-              type="button"
-              onClick={prev}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
-              aria-label="Previous slide"
-            >
-              <ArrowPrevIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => next()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
-              aria-label="Next slide"
-            >
-              <ArrowNextIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
-          </div>
+        </div>
+
+        {/* Arrow controls sit on hero bottom edge: half in, half out. */}
+        <div className="absolute bottom-0 right-4 z-40 flex translate-y-1/2 items-center gap-2 sm:right-6 sm:gap-2.5 lg:right-8">
+          <button
+            type="button"
+            onClick={prev}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
+            aria-label="Previous slide"
+          >
+            <ArrowPrevIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => next()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
+            aria-label="Next slide"
+          >
+            <ArrowNextIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
         </div>
       </div>
     </section>

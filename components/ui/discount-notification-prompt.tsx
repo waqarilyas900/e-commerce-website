@@ -51,7 +51,7 @@ export function DiscountNotificationPrompt() {
   if (!open) return null;
 
   return (
-    <div className="fixed left-1/2 top-4 z-[120] w-[min(92vw,460px)] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-4 shadow-[0_10px_28px_rgba(0,0,0,0.24)]">
+    <div className="fixed left-1/2 top-4 z-120 w-[min(92vw,460px)] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-4 shadow-[0_10px_28px_rgba(0,0,0,0.24)]">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 shrink-0">
           <Image src="/dummy-logo.svg" alt="" width={42} height={42} className="h-10 w-10" />

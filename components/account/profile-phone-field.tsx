@@ -50,13 +50,13 @@ export function ProfilePhoneField({ id, value, onChange, disabled, lockCountry }
           autoComplete: "tel",
           "aria-label": "Phone number",
         }}
-        className="!w-full [&_.react-international-phone-input-container]:!w-full"
+        className="w-full! [&_.react-international-phone-input-container]:w-full!"
         inputClassName="!shadow-none !outline-none"
         countrySelectorStyleProps={{
           buttonClassName:
             "!m-0 !rounded-none !border-0 !bg-neutral-50 !shadow-none hover:!bg-neutral-100",
           dropdownStyleProps: {
-            className: "!z-[300] !rounded-lg !border !border-neutral-200 !py-1 !shadow-lg",
+            className: "z-300! rounded-lg! border! border-neutral-200! py-1! shadow-lg!",
           },
         }}
         onChange={(phone) => {

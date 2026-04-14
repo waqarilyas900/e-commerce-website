@@ -129,7 +129,7 @@ export function CartDrawer() {
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-[80]"
+          className="fixed inset-0 z-80"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -150,7 +150,7 @@ export function CartDrawer() {
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
           />
           <motion.aside
-            className="absolute inset-y-0 right-0 z-[81] flex min-h-0 w-full max-w-lg flex-col overflow-hidden bg-white px-6 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-xl"
+            className="absolute inset-y-0 right-0 z-81 flex min-h-0 w-full max-w-lg flex-col overflow-hidden bg-white px-6 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-xl"
             style={{
               willChange: "transform",
               maxHeight: "100dvh",
@@ -229,7 +229,7 @@ export function CartDrawer() {
               }}
             >
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain [overscroll-behavior-y:contain]">
+                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain overscroll-y-contain">
                   {resolvedLines.length === 0 ? (
                     <motion.p
                       className="text-sm text-neutral-600"

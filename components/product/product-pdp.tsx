@@ -362,7 +362,7 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
                       −
                     </button>
                     <span
-                      className="flex min-w-[2.75rem] items-center justify-center border-x border-neutral-200 px-2 py-2 text-center text-sm font-medium tabular-nums text-neutral-900"
+                      className="flex min-w-11 items-center justify-center border-x border-neutral-200 px-2 py-2 text-center text-sm font-medium tabular-nums text-neutral-900"
                       aria-live="polite"
                       aria-atomic="true"
                     >
@@ -430,7 +430,7 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={{ duration: 0.38, ease: pdpEase }}
-              className="fixed inset-x-0 bottom-0 z-[45] border-t border-neutral-200 bg-white/95 shadow-[0_-6px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md"
+              className="fixed inset-x-0 bottom-0 z-45 border-t border-neutral-200 bg-white/95 shadow-[0_-6px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md"
               style={{
                 paddingBottom: "max(0.375rem, env(safe-area-inset-bottom, 0px))",
                 paddingTop: "0.375rem",
@@ -453,7 +453,7 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
                     disabled={maxQty < 1}
                     openDrawer
                     itemName={product.name}
-                    className="!rounded-md !px-2 !py-1.5 !text-[11px] !font-semibold !leading-tight !shadow-none hover:!shadow-sm disabled:opacity-50 sm:!px-2.5 sm:!py-1.5 sm:!text-xs"
+                    className="rounded-md! px-2! py-1.5! text-[11px]! font-semibold! leading-tight! shadow-none! hover:shadow-sm! disabled:opacity-50 sm:px-2.5! sm:py-1.5! sm:text-xs!"
                   />
                   <AddToCartVariantButton
                     variantId={selectedVariant.id}
@@ -465,7 +465,7 @@ export function ProductPdp({ product, collectionLabel, variants, assets }: Props
                     redirectHref="/checkout"
                     label="Buy now"
                     itemName={product.name}
-                    className="!rounded-md !px-2 !py-1.5 !text-[11px] !font-semibold !leading-tight !shadow-none hover:!shadow-sm disabled:opacity-50 sm:!px-2.5 sm:!py-1.5 sm:!text-xs"
+                    className="rounded-md! px-2! py-1.5! text-[11px]! font-semibold! leading-tight! shadow-none! hover:shadow-sm! disabled:opacity-50 sm:px-2.5! sm:py-1.5! sm:text-xs!"
                   />
                 </div>
               </div>

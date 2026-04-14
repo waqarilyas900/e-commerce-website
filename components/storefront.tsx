@@ -102,7 +102,7 @@ export function Header() {
           priority
           className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
         />
-        <span className="hidden min-w-0 max-h-[3rem] truncate text-center text-sm font-semibold capitalize leading-tight tracking-wide text-neutral-900 sm:inline md:text-base">
+        <span className="hidden min-w-0 max-h-12 truncate text-center text-sm font-semibold capitalize leading-tight tracking-wide text-neutral-900 sm:inline md:text-base">
           {storeName}
         </span>
       </Link>
@@ -121,7 +121,7 @@ export function Header() {
         <button
           type="button"
           onClick={() => openCart()}
-          className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
+          className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
           aria-label={`Cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}
         >
           <svg
@@ -290,7 +290,7 @@ export function ProductCard({
           href={`/products/${product.slug}`}
           className={
             rail || clampTitle
-              ? "block min-h-[2.5rem] line-clamp-2 text-sm font-semibold leading-snug text-neutral-900"
+              ? "block min-h-10 line-clamp-2 text-sm font-semibold leading-snug text-neutral-900"
               : "block text-sm font-semibold leading-snug text-neutral-900"
           }
         >
@@ -494,7 +494,7 @@ export function WhyShop() {
       <ScrollReveal className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 md:grid-cols-2 md:items-center md:gap-12 lg:px-8">
         <Link
           href={whyShop.ctaHref}
-          className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-neutral-100 md:aspect-square"
+          className="relative aspect-4/3 w-full overflow-hidden rounded-lg bg-neutral-100 md:aspect-square"
         >
           <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"

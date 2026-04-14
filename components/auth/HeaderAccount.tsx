@@ -140,7 +140,7 @@ export function HeaderAccount() {
     const onResetPage = pathname === "/reset-password";
     return (
       <span
-        className="max-w-[9rem] truncate text-right text-[10px] font-medium leading-tight text-neutral-600 sm:max-w-[18rem] sm:text-[11px]"
+        className="max-w-36 truncate text-right text-[10px] font-medium leading-tight text-neutral-600 sm:max-w-72 sm:text-[11px]"
         title={
           onResetPage
             ? "Email verified — set your new password on this page"
@@ -189,7 +189,7 @@ export function HeaderAccount() {
             aria-controls={menuId}
             aria-label="Account menu"
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex shrink-0 items-center gap-1 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
+            className="flex shrink-0 items-center gap-1 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
           >
             {photo ? (
               <span
@@ -231,7 +231,7 @@ export function HeaderAccount() {
               id={menuId}
               role="menu"
               aria-label="Account"
-              className="absolute right-0 top-[calc(100%+6px)] z-[200] min-w-[14rem] overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg ring-1 ring-black/5"
+              className="absolute right-0 top-[calc(100%+6px)] z-200 min-w-56 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg ring-1 ring-black/5"
             >
             <Link
               href="/account/profile"
@@ -262,7 +262,7 @@ export function HeaderAccount() {
         ) : null}
         </div>
         <span
-          className="hidden min-w-0 max-w-[10rem] truncate text-left text-xs font-medium text-neutral-700 sm:inline md:max-w-[14rem]"
+          className="hidden min-w-0 max-w-40 truncate text-left text-xs font-medium text-neutral-700 sm:inline md:max-w-56"
           title={name}
         >
           {name}
@@ -275,7 +275,7 @@ export function HeaderAccount() {
     <Link
       href="/login"
       aria-label="Log in"
-      className="inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
+      className="inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

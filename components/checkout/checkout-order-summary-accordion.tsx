@@ -67,7 +67,7 @@ function CheckoutOrderSummaryBody({
                     aria-label=""
                   />
                 </div>
-                <span className="absolute -right-1.5 -top-1.5 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-neutral-950 px-1 text-[10px] font-semibold text-white">
+                <span className="absolute -right-1.5 -top-1.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-neutral-950 px-1 text-[10px] font-semibold text-white">
                   {line.quantity}
                 </span>
               </div>

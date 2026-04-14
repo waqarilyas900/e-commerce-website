@@ -98,7 +98,7 @@ export function HeaderSearchPopover({
         ref={triggerRef}
         type="button"
         aria-label="Search"
-        className="inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
+        className="inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
         aria-expanded={open}
         aria-controls={renderPanel ? panelId : undefined}
         onClick={() => onOpenChange(!open)}
@@ -124,7 +124,7 @@ export function HeaderSearchPopover({
             <motion.button
               type="button"
               aria-label="Close search"
-              className={`fixed inset-x-0 bottom-0 z-[35] ${panelOffsetClass} bg-[rgba(0,0,0,0.62)]`}
+              className={`fixed inset-x-0 bottom-0 z-35 ${panelOffsetClass} bg-[rgba(0,0,0,0.62)]`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -137,7 +137,7 @@ export function HeaderSearchPopover({
               role="dialog"
               aria-modal="true"
               aria-label="Search"
-              className={`fixed inset-x-0 z-[40] ${panelOffsetClass} max-h-[min(85vh,560px)] overflow-y-auto border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
+              className={`fixed inset-x-0 z-40 ${panelOffsetClass} max-h-[min(85vh,560px)] overflow-y-auto border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
