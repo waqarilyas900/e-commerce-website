@@ -138,7 +138,7 @@ export function Header() {
             <path d="M3 4h2l2.4 10.5a1 1 0 0 0 1 .8h9.8a1 1 0 0 0 1-.8L21 7H7.2" />
           </svg>
           {itemCount > 0 ? (
-            <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold text-white sm:right-0">
+            <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white sm:right-0">
               {itemCount > 99 ? "99+" : itemCount}
             </span>
           ) : null}
