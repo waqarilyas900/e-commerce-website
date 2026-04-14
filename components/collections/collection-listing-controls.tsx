@@ -323,9 +323,14 @@ export function CollectionListingControls({
                     <ProductCardSkeleton />
                   </div>
                 ))
-              : products.map((product) => (
+              : products.map((product, idx) => (
                   <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
-                    <ProductCard product={product} showAddToCart={false} clampTitle />
+                    <ProductCard
+                      product={product}
+                      showAddToCart={false}
+                      clampTitle
+                      revealDelay={Math.min(idx * 0.07, 0.35)}
+                    />
                   </div>
                 ))}
           </div>
@@ -344,9 +349,14 @@ export function CollectionListingControls({
                     <ProductCardSkeleton />
                   </div>
                 ))
-              : products.map((product) => (
+              : products.map((product, idx) => (
                   <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
-                    <ProductCard product={product} showAddToCart={false} clampTitle />
+                    <ProductCard
+                      product={product}
+                      showAddToCart={false}
+                      clampTitle
+                      revealDelay={Math.min(idx * 0.07, 0.35)}
+                    />
                   </div>
                 ))}
           </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { motion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { HeaderAccount } from "@/components/auth/HeaderAccount";
@@ -11,6 +12,7 @@ import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
 import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
   bundles,
   collections,
@@ -167,38 +169,42 @@ export function Hero() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div
-        className="relative min-h-[430px] overflow-hidden rounded-xl bg-cover bg-center"
-        style={{ backgroundImage: `url(${featuredSlides[0].image})` }}
-      >
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="relative flex min-h-[430px] flex-col justify-end p-7 text-white sm:p-10">
-          <p className="text-xs font-semibold capitalize tracking-[0.2em]">Brand New</p>
-          <h1 className="mt-2 max-w-xl text-3xl font-semibold tracking-tight sm:text-5xl">
-            {featuredSlides[0].title}
-          </h1>
-          <p className="mt-3 max-w-xl text-sm text-white/90 sm:text-base">
-            {featuredSlides[0].subtitle}
-          </p>
-          <Link
-            href={featuredSlides[0].href}
-            className="mt-5 w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold capitalize text-black"
-          >
-            {featuredSlides[0].cta}
-          </Link>
+      <ScrollReveal>
+        <div
+          className="relative min-h-[430px] overflow-hidden rounded-xl bg-cover bg-center"
+          style={{ backgroundImage: `url(${featuredSlides[0].image})` }}
+        >
+          <div className="absolute inset-0 bg-black/30" />
+          <div className="relative flex min-h-[430px] flex-col justify-end p-7 text-white sm:p-10">
+            <p className="text-xs font-semibold capitalize tracking-[0.2em]">Brand New</p>
+            <h1 className="mt-2 max-w-xl text-3xl font-semibold tracking-tight sm:text-5xl">
+              {featuredSlides[0].title}
+            </h1>
+            <p className="mt-3 max-w-xl text-sm text-white/90 sm:text-base">
+              {featuredSlides[0].subtitle}
+            </p>
+            <Link
+              href={featuredSlides[0].href}
+              className="mt-5 w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold capitalize text-black"
+            >
+              {featuredSlides[0].cta}
+            </Link>
+          </div>
         </div>
-      </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        {featuredSlides.map((slide) => (
-          <Link
-            key={slide.title}
-            href={slide.href}
-            className="rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium capitalize text-neutral-900 hover:bg-neutral-50"
-          >
-            {slide.title}
-          </Link>
-        ))}
-      </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.08}>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {featuredSlides.map((slide) => (
+            <Link
+              key={slide.title}
+              href={slide.href}
+              className="rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium capitalize text-neutral-900 hover:bg-neutral-50"
+            >
+              {slide.title}
+            </Link>
+          ))}
+        </div>
+      </ScrollReveal>
     </section>
   );
 }
@@ -206,23 +212,25 @@ export function Hero() {
 export function CategoryHighlights() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {collections.map((collection) => (
-          <Link
-            key={collection.slug}
-            href={`/collections/${collection.slug}`}
-            className="group rounded-md border border-neutral-200 bg-white p-3 transition hover:bg-neutral-50"
-          >
-            <p className="text-sm font-semibold text-neutral-900">{collection.name}</p>
-            <p className="mt-1 line-clamp-2 text-xs text-neutral-700">
-              {collection.description}
-            </p>
-            <p className="mt-2 text-xs font-semibold text-neutral-900 group-hover:underline">
-              Explore
-            </p>
-          </Link>
-        ))}
-      </div>
+      <ScrollReveal>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {collections.map((collection) => (
+            <Link
+              key={collection.slug}
+              href={`/collections/${collection.slug}`}
+              className="group rounded-md border border-neutral-200 bg-white p-3 transition hover:bg-neutral-50"
+            >
+              <p className="text-sm font-semibold text-neutral-900">{collection.name}</p>
+              <p className="mt-1 line-clamp-2 text-xs text-neutral-700">
+                {collection.description}
+              </p>
+              <p className="mt-2 text-xs font-semibold text-neutral-900 group-hover:underline">
+                Explore
+              </p>
+            </Link>
+          ))}
+        </div>
+      </ScrollReveal>
     </section>
   );
 }
@@ -231,6 +239,7 @@ export function ProductCard({
   product,
   showAddToCart = true,
   rail = false,
+  revealDelay = 0,
   /** Grids (collections, search): 2-line title clamp so row heights stay even with stretch layout. */
   clampTitle = false,
 }: {
@@ -239,6 +248,7 @@ export function ProductCard({
   showAddToCart?: boolean;
   /** Home horizontal rail: stable card height + 2-line title clamp. */
   rail?: boolean;
+  revealDelay?: number;
   clampTitle?: boolean;
 }) {
   if (!product?.slug) {
@@ -251,7 +261,13 @@ export function ProductCard({
       : null;
 
   return (
-    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white">
+    <motion.article
+      className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18, margin: "0px 0px -8% 0px" }}
+      transition={{ duration: 0.9, delay: revealDelay, ease: [0.22, 1, 0.36, 1] }}
+    >
       <Link href={`/products/${product.slug}`} className="relative block shrink-0">
         <div
           className="h-60 bg-cover bg-center transition-transform duration-500 hover:scale-[1.03]"
@@ -313,7 +329,7 @@ export function ProductCard({
           <div className="mt-auto" aria-hidden />
         )}
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -392,7 +408,7 @@ export function ProductSection({
   if (layout === "rail") {
     return (
       <section className="bg-neutral-100/80">
-        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+        <ScrollReveal className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
           <div className="mb-4 flex items-end justify-between gap-4">
             <h2 className="text-xl font-semibold tracking-tight text-neutral-900">{title}</h2>
             <Link
@@ -404,10 +420,15 @@ export function ProductSection({
           </div>
           <div className="md:hidden">
             <RailScrollStrip>
-              {railItems.map((product) => (
+              {railItems.map((product, idx) => (
                 <li key={product.id} className={RAIL_ITEM}>
                   <div className="flex h-full min-h-0 flex-1 flex-col">
-                    <ProductCard product={product} showAddToCart={showAddToCart} rail />
+                    <ProductCard
+                      product={product}
+                      showAddToCart={showAddToCart}
+                      rail
+                      revealDelay={Math.min(idx * 0.09, 0.36)}
+                    />
                   </div>
                 </li>
               ))}
@@ -428,28 +449,40 @@ export function ProductSection({
             </RailScrollStrip>
           </div>
           <div className="hidden items-stretch gap-1.5 md:grid md:grid-cols-3 lg:grid-cols-4">
-            {railItems.map((product) => (
-              <ProductCard key={product.id} product={product} showAddToCart={showAddToCart} />
+            {railItems.map((product, idx) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                showAddToCart={showAddToCart}
+                revealDelay={Math.min(idx * 0.08, 0.36)}
+              />
             ))}
           </div>
-        </div>
+        </ScrollReveal>
       </section>
     );
   }
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-        <Link href={viewAllHref} className="shrink-0 text-sm font-semibold text-neutral-900">
-          View all
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3 lg:grid-cols-4 items-stretch">
-        {items.map((product) => (
-          <ProductCard key={product.id} product={product} showAddToCart={showAddToCart} />
-        ))}
-      </div>
+      <ScrollReveal>
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+          <Link href={viewAllHref} className="shrink-0 text-sm font-semibold text-neutral-900">
+            View all
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3 lg:grid-cols-4 items-stretch">
+          {items.map((product, idx) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              showAddToCart={showAddToCart}
+              revealDelay={Math.min(idx * 0.08, 0.36)}
+            />
+          ))}
+        </div>
+      </ScrollReveal>
     </section>
   );
 }
@@ -458,7 +491,7 @@ export function WhyShop() {
   const { whyShop } = useStoreBrand();
   return (
     <section className="border-t border-neutral-200 bg-white py-12 sm:py-16">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 md:grid-cols-2 md:items-center md:gap-12 lg:px-8">
+      <ScrollReveal className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 md:grid-cols-2 md:items-center md:gap-12 lg:px-8">
         <Link
           href={whyShop.ctaHref}
           className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-neutral-100 md:aspect-square"
@@ -486,7 +519,7 @@ export function WhyShop() {
           </Link>
           <p className="mt-6 text-sm text-neutral-600">{whyShop.reviewsLine}</p>
         </div>
-      </div>
+      </ScrollReveal>
     </section>
   );
 }
@@ -496,27 +529,29 @@ export { Footer } from "./site-footer";
 export function BundleSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-      <div className="mb-4 flex items-end justify-between">
-        <h2 className="text-xl font-semibold tracking-tight">Bundle Deals</h2>
-        <Link href="/bundles" className="text-sm font-semibold capitalize text-neutral-900">
-          View all
-        </Link>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {bundles.map((bundle) => (
-          <Link
-            key={bundle.slug}
-            href="/bundles"
-            className="rounded-xl border border-neutral-200 bg-white p-5"
-          >
-            <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
-              {bundle.discountLabel}
-            </p>
-            <p className="mt-1 text-lg font-semibold">{bundle.name}</p>
-            <p className="mt-2 text-sm text-neutral-600">{bundle.description}</p>
+      <ScrollReveal>
+        <div className="mb-4 flex items-end justify-between">
+          <h2 className="text-xl font-semibold tracking-tight">Bundle Deals</h2>
+          <Link href="/bundles" className="text-sm font-semibold capitalize text-neutral-900">
+            View all
           </Link>
-        ))}
-      </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {bundles.map((bundle) => (
+            <Link
+              key={bundle.slug}
+              href="/bundles"
+              className="rounded-xl border border-neutral-200 bg-white p-5"
+            >
+              <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
+                {bundle.discountLabel}
+              </p>
+              <p className="mt-1 text-lg font-semibold">{bundle.name}</p>
+              <p className="mt-2 text-sm text-neutral-600">{bundle.description}</p>
+            </Link>
+          ))}
+        </div>
+      </ScrollReveal>
     </section>
   );
 }

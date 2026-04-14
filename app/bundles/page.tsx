@@ -62,8 +62,12 @@ export default async function BundlesPage() {
               </div>
               <p className="mb-5 text-sm text-neutral-600">{bundle.description}</p>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3">
-                {cards.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                {cards.map((product, idx) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    revealDelay={Math.min(idx * 0.08, 0.36)}
+                  />
                 ))}
               </div>
             </section>

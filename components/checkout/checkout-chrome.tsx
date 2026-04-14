@@ -16,7 +16,7 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
   const isComplete = mode === "complete";
   const chromeClass = isComplete
     ? "min-h-screen bg-[#f6f6f6]"
-    : "min-h-screen bg-[#f6f6f6] md:bg-[linear-gradient(to_right,#ffffff_0%,#ffffff_52%,#f5f5f5_52%,#f5f5f5_100%)]";
+    : "min-h-screen bg-white md:bg-[linear-gradient(to_right,#ffffff_0%,#ffffff_50%,#f5f5f5_50%,#f5f5f5_100%)]";
   const contentWrapClass = isComplete
     ? "mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8"
     : "mx-auto max-w-7xl px-4 pb-6 pt-0 sm:px-6 lg:px-8";

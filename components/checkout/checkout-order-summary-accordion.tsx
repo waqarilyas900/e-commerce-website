@@ -58,14 +58,16 @@ function CheckoutOrderSummaryBody({
           const lineTotal = unitPrice * line.quantity;
           return (
             <li key={line.variantId} className="flex gap-3 text-sm">
-              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100">
-                <div
-                  className="h-full w-full bg-cover bg-center"
-                  style={{ backgroundImage: `url(${product.image})` }}
-                  role="img"
-                  aria-label=""
-                />
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-neutral-950 px-1 text-[10px] font-semibold text-white">
+              <div className="relative h-16 w-16 shrink-0">
+                <div className="h-16 w-16 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100">
+                  <div
+                    className="h-full w-full bg-cover bg-center"
+                    style={{ backgroundImage: `url(${product.image})` }}
+                    role="img"
+                    aria-label=""
+                  />
+                </div>
+                <span className="absolute -right-1.5 -top-1.5 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-neutral-950 px-1 text-[10px] font-semibold text-white">
                   {line.quantity}
                 </span>
               </div>

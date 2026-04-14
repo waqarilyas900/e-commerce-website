@@ -1,4 +1,5 @@
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { collections, products } from "@/app/lib/store-data";
 import { dbListCollections, dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
@@ -24,6 +25,7 @@ export default async function CollectionsPage() {
       <TopStrip />
       <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+        <ScrollReveal>
         <section>
           <h1 className="text-3xl font-semibold tracking-tight">Shop Collections</h1>
           <p className="mt-2 text-neutral-600">
@@ -42,15 +44,22 @@ export default async function CollectionsPage() {
             ))}
           </div>
         </section>
+        </ScrollReveal>
 
+        <ScrollReveal delay={0.06}>
         <section>
           <h2 className="text-2xl font-semibold tracking-tight">All Products</h2>
           <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {allProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {allProducts.map((product, idx) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                revealDelay={Math.min(idx * 0.08, 0.36)}
+              />
             ))}
           </div>
         </section>
+        </ScrollReveal>
       </main>
       <Footer />
     </>

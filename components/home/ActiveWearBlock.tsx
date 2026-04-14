@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getStoreBrand } from "@/app/lib/store-brand";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 /** Mirrors radstore.pk `collection-callout`: image column + text + two collection CTAs */
 export function ActiveWearBlock() {
@@ -12,7 +13,7 @@ export function ActiveWearBlock() {
       className="shopify-section index-section border-b border-[#e8e8e1] bg-white py-6"
       data-section-type="collection-callout"
     >
-      <div className="page-width mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <ScrollReveal className="page-width mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="feature-row grid min-h-[360px] md:min-h-[400px] md:grid-cols-2 md:items-stretch md:gap-0">
           <div className="feature-row__item feature-row__callout-image relative min-h-[280px] md:min-h-[400px]">
             <div
@@ -60,7 +61,7 @@ export function ActiveWearBlock() {
             </div>
           </div>
         </div>
-      </div>
+      </ScrollReveal>
     </section>
   );
 }

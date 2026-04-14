@@ -340,8 +340,8 @@ export default function CheckoutPage() {
   return (
     <CheckoutChrome mode="checkout">
       <main id="MainContent" className="pb-12 md:pb-0">
-        <div className="mx-auto w-full max-w-[1140px] md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-0">
-          <div className="w-full md:bg-white md:px-8 md:py-8 lg:px-12">
+        <div className="mx-auto w-full max-w-[1140px] md:grid md:min-h-screen md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-0">
+          <div className="w-full bg-white px-4 py-6 sm:px-6 md:min-h-screen md:px-8 md:py-8 lg:px-12">
             <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
               <div className="flex items-center justify-between">
                 <Link href="/" className="flex min-w-0 items-center gap-2.5">
@@ -493,22 +493,22 @@ export default function CheckoutPage() {
               <CheckoutPolicyFooterLinks />
             </form>
           </div>
-          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block md:px-8 md:py-8 lg:px-10">
-            <div className="md:sticky md:top-6">
-            <CheckoutOrderSummaryPanel
-              lines={resolvedLines}
-              subtotal={subtotal}
-              shipping={DELIVERY_CHARGE}
-              total={grandTotal}
-              discountCode={discountCode}
-              onDiscountCodeChange={(v) => {
-                setDiscountCode(v);
-                setDiscountNotice(null);
-              }}
-              onApplyDiscount={applyDiscount}
-              discountApplied={discountApplied}
-              discountNotice={discountNotice}
-            />
+          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block md:px-8 md:py-0 lg:px-10">
+            <div className="md:sticky md:top-0 md:h-screen md:overflow-y-auto md:pt-8 md:pb-8">
+              <CheckoutOrderSummaryPanel
+                lines={resolvedLines}
+                subtotal={subtotal}
+                shipping={DELIVERY_CHARGE}
+                total={grandTotal}
+                discountCode={discountCode}
+                onDiscountCodeChange={(v) => {
+                  setDiscountCode(v);
+                  setDiscountNotice(null);
+                }}
+                onApplyDiscount={applyDiscount}
+                discountApplied={discountApplied}
+                discountNotice={discountNotice}
+              />
             </div>
           </aside>
         </div>

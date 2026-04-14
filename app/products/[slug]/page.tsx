@@ -41,8 +41,14 @@ export default async function ProductPage({ params }: Props) {
             <section className="mt-10">
               <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
               <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {related.map((item) => (
-                  <ProductCard key={item.id} product={item} showAddToCart={false} clampTitle />
+                {related.map((item, idx) => (
+                  <ProductCard
+                    key={item.id}
+                    product={item}
+                    showAddToCart={false}
+                    clampTitle
+                    revealDelay={Math.min(idx * 0.08, 0.36)}
+                  />
                 ))}
               </div>
             </section>
@@ -91,8 +97,14 @@ export default async function ProductPage({ params }: Props) {
         <section className="mt-10">
           <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
           <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {related.map((item) => (
-              <ProductCard key={item.id} product={item} showAddToCart={false} clampTitle />
+            {related.map((item, idx) => (
+              <ProductCard
+                key={item.id}
+                product={item}
+                showAddToCart={false}
+                clampTitle
+                revealDelay={Math.min(idx * 0.08, 0.36)}
+              />
             ))}
           </div>
         </section>
