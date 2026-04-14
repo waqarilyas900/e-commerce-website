@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ProfilePhoneField } from "@/components/account/profile-phone-field";
 import type { CheckoutTemplateDef } from "@/app/lib/checkout-templates/types";
 
@@ -31,9 +32,20 @@ export function CheckoutTemplateFields({
     <div className={rootClassName}>
       {template.sections.map((section) => (
         <section key={section.id}>
-          <h3 className="text-sm font-semibold capitalize tracking-wide text-neutral-900">
-            {section.title}
-          </h3>
+          {section.title === "Contact information" ? (
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold capitalize tracking-wide text-neutral-900">
+                Contact
+              </h3>
+              <Link href="/login" className="text-xs font-medium text-neutral-800 underline">
+                Sign in
+              </Link>
+            </div>
+          ) : (
+            <h3 className="text-sm font-semibold capitalize tracking-wide text-neutral-900">
+              {section.title}
+            </h3>
+          )}
           {section.description ? (
             <p className="mt-1 text-xs text-neutral-600">{section.description}</p>
           ) : null}
@@ -41,22 +53,32 @@ export function CheckoutTemplateFields({
             {section.fields.map((field) => {
               const span = field.colSpan === 2 ? "sm:col-span-2" : "";
               const v = values[field.id] ?? "";
+              const resolvedPlaceholder = field.placeholder ?? field.label;
 
               if (field.type === "country") {
                 return (
                   <div key={field.id} className={span}>
-                    <label htmlFor={`co-${field.id}`} className="mb-1 block text-sm font-medium">
-                      {field.label}
-                    </label>
-                    <select
-                      id={`co-${field.id}`}
-                      value="PK"
-                      disabled
+                    <div
+                      className={`${inputClassName} flex cursor-not-allowed items-center justify-between bg-neutral-50`}
+                      aria-label="Country/Region"
                       title="Orders ship within Pakistan only"
-                      className={`${inputClassName} cursor-not-allowed bg-neutral-50 text-neutral-800`}
                     >
-                      <option value="PK">Pakistan</option>
-                    </select>
+                      <div className="leading-tight">
+                        <p className="text-[11px] text-neutral-500">Country/Region</p>
+                        <p className="mt-0.5 text-sm text-neutral-900">Pakistan</p>
+                      </div>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-4 w-4 text-neutral-500"
+                        aria-hidden
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </div>
                   </div>
                 );
               }
@@ -64,9 +86,6 @@ export function CheckoutTemplateFields({
               if (field.type === "phone") {
                 return (
                   <div key={field.id} className={span}>
-                    <label htmlFor={`co-${field.id}`} className="mb-1 block text-sm font-medium">
-                      {field.label}
-                    </label>
                     <ProfilePhoneField
                       id={`co-${field.id}`}
                       value={v}
@@ -91,9 +110,6 @@ export function CheckoutTemplateFields({
                 const showLoc = field.meta?.locationButton && onUseLocation;
                 return (
                   <div key={field.id} className={span}>
-                    <label htmlFor={`co-${field.id}`} className="mb-1 block text-sm font-medium">
-                      {field.label}
-                    </label>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
                       <textarea
                         id={`co-${field.id}`}
@@ -102,7 +118,7 @@ export function CheckoutTemplateFields({
                         onChange={(e) => onChange(field.id, e.target.value)}
                         className={`min-h-[100px] flex-1 resize-y rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/15`}
                         autoComplete={field.autoComplete}
-                        placeholder={field.placeholder}
+                        placeholder={resolvedPlaceholder}
                       />
                       {showLoc ? (
                         <button
@@ -127,9 +143,6 @@ export function CheckoutTemplateFields({
               if (field.type === "select") {
                 return (
                   <div key={field.id} className={span}>
-                    <label htmlFor={`co-${field.id}`} className="mb-1 block text-sm font-medium">
-                      {field.label}
-                    </label>
                     <select
                       id={`co-${field.id}`}
                       required={field.required}
@@ -149,9 +162,6 @@ export function CheckoutTemplateFields({
 
               return (
                 <div key={field.id} className={span}>
-                  <label htmlFor={`co-${field.id}`} className="mb-1 block text-sm font-medium">
-                    {field.label}
-                  </label>
                   <input
                     id={`co-${field.id}`}
                     type={field.type === "email" ? "email" : "text"}
@@ -160,12 +170,30 @@ export function CheckoutTemplateFields({
                     onChange={(e) => onChange(field.id, e.target.value)}
                     className={inputClassName}
                     autoComplete={field.autoComplete}
-                    placeholder={field.placeholder}
+                    placeholder={resolvedPlaceholder}
                   />
+                  {field.id === "email" ? (
+                    <label className="mt-3 inline-flex items-center gap-2 text-xs text-neutral-700">
+                      <input
+                        type="checkbox"
+                        className="h-3.5 w-3.5 rounded border border-neutral-300 text-neutral-900 focus:ring-neutral-900/20"
+                      />
+                      Email me with news and offers
+                    </label>
+                  ) : null}
                 </div>
               );
             })}
           </div>
+          {section.id === "delivery" ? (
+            <label className="mt-3 inline-flex items-center gap-2 text-xs text-neutral-700">
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 rounded border border-neutral-300 text-neutral-900 focus:ring-neutral-900/20"
+              />
+              Save this information for next time
+            </label>
+          ) : null}
         </section>
       ))}
     </div>

@@ -42,7 +42,12 @@ export function ShopCollectionsMenu() {
   }, [open]);
 
   return (
-    <div className="relative" ref={ref}>
+    <div
+      className="relative"
+      ref={ref}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <div className="flex items-center gap-0.5">
         <Link
           href="/collections"

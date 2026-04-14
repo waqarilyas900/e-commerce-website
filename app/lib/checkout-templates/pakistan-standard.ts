@@ -1,4 +1,3 @@
-import { PAKISTAN_PROVINCE_OPTIONS } from "@/app/lib/checkout-templates/pakistan-provinces";
 import type { CheckoutTemplateDef } from "@/app/lib/checkout-templates/types";
 
 /** Full COD + Pakistan address flow — default for this storefront. */
@@ -11,17 +10,23 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
       title: "Contact information",
       fields: [
         {
-          id: "shipping_country",
-          label: "Country/Region",
-          type: "country",
-          colSpan: 2,
-        },
-        {
           id: "email",
           label: "Email",
           type: "email",
           autoComplete: "email",
           required: true,
+          colSpan: 2,
+        },
+      ],
+    },
+    {
+      id: "delivery",
+      title: "Delivery",
+      fields: [
+        {
+          id: "shipping_country",
+          label: "Country/Region",
+          type: "country",
           colSpan: 2,
         },
         {
@@ -41,24 +46,10 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
           colSpan: 1,
         },
         {
-          id: "phone",
-          label: "Phone number",
-          type: "phone",
-          required: true,
-          colSpan: 2,
-          meta: { lockCountry: true },
-        },
-      ],
-    },
-    {
-      id: "delivery",
-      title: "Delivery address",
-      fields: [
-        {
           id: "shipping_street",
-          label: "Street and area",
+          label: "Address",
           type: "textarea",
-          placeholder: "House / street / neighbourhood",
+          placeholder: "Address",
           autoComplete: "street-address",
           required: true,
           colSpan: 2,
@@ -74,19 +65,19 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
         },
         {
           id: "shipping_postal_code",
-          label: "Postal code",
+          label: "Postal code (optional)",
           type: "text",
           autoComplete: "postal-code",
-          required: true,
+          required: false,
           colSpan: 1,
         },
         {
-          id: "shipping_province",
-          label: "Province",
-          type: "select",
+          id: "phone",
+          label: "Phone",
+          type: "phone",
           required: true,
           colSpan: 2,
-          options: PAKISTAN_PROVINCE_OPTIONS,
+          meta: { lockCountry: true },
         },
       ],
     },

@@ -246,12 +246,12 @@ export function CollectionListingControls({
   return (
     <>
       {/* Reference: Filter + Sort equal half-width columns, aligned to listing grid below */}
-      <div className="mb-8 grid grid-cols-2 gap-3">
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
           disabled={isListPending}
-          className="inline-flex w-full min-w-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+          className="inline-flex w-fit min-w-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -267,7 +267,7 @@ export function CollectionListingControls({
           </svg>
           Filter
         </button>
-        <div className="min-w-0">
+        <div className="min-w-0 sm:w-[220px]">
           <AppSelect
             aria-label="Sort products"
             options={sortOptions}
@@ -285,7 +285,7 @@ export function CollectionListingControls({
       {!isListPending && products.length === 0 ? (
         <>
           {/* Empty: keep nav + message (reference-style flow on small screens) */}
-          <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-6 md:grid-cols-3 lg:hidden">
+          <div className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden">
             <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
               <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
             </div>
@@ -293,11 +293,11 @@ export function CollectionListingControls({
               No products match your filters.
             </div>
           </div>
-          <div className="hidden gap-6 lg:grid lg:grid-cols-4">
-            <aside className="min-w-0">
+          <div className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid">
+            <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
               <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
             </aside>
-            <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600 lg:col-span-3">
+            <div className="col-span-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
               No products match your filters.
             </div>
           </div>
@@ -310,7 +310,7 @@ export function CollectionListingControls({
             lg+: sidebar column + 3-col product grid.
           */}
           <div
-            className="grid grid-cols-2 items-stretch gap-4 sm:gap-6 md:grid-cols-3 lg:hidden"
+            className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden"
             aria-busy={isListPending}
             aria-live="polite"
           >
@@ -330,25 +330,25 @@ export function CollectionListingControls({
                 ))}
           </div>
 
-          <div className="hidden gap-6 lg:grid lg:grid-cols-4" aria-busy={isListPending} aria-live="polite">
-            <aside className="min-w-0 self-start">
+          <div
+            className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid"
+            aria-busy={isListPending}
+            aria-live="polite"
+          >
+            <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
               <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
             </aside>
-            <div className="min-w-0 lg:col-span-3">
-              <div className="grid min-w-0 grid-cols-2 items-stretch gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-3">
-                {isListPending
-                  ? Array.from({ length: skeletonCount }).map((_, i) => (
-                      <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
-                        <ProductCardSkeleton />
-                      </div>
-                    ))
-                  : products.map((product) => (
-                      <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
-                        <ProductCard product={product} showAddToCart={false} clampTitle />
-                      </div>
-                    ))}
-              </div>
-            </div>
+            {isListPending
+              ? Array.from({ length: skeletonCount }).map((_, i) => (
+                  <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
+                    <ProductCardSkeleton />
+                  </div>
+                ))
+              : products.map((product) => (
+                  <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
+                    <ProductCard product={product} showAddToCart={false} clampTitle />
+                  </div>
+                ))}
           </div>
         </>
       )}

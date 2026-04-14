@@ -274,6 +274,7 @@ export function HeaderAccount() {
   return (
     <Link
       href="/login"
+      aria-label="Log in"
       className="inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
     >
       <svg
@@ -288,7 +289,7 @@ export function HeaderAccount() {
         <path d="M20 21a8 8 0 0 0-16 0" />
         <circle cx="12" cy="8" r="4" />
       </svg>
-      <span className="hidden text-xs font-medium lg:inline">Log in</span>
+      <span className="sr-only">Log in</span>
     </Link>
   );
 }

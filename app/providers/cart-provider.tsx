@@ -13,6 +13,8 @@ import { createClient } from "@/lib/supabase/client";
 import { hasCatalogDb } from "@/app/lib/db/env";
 
 const STORAGE_KEY = "storefront-cart-v2";
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type CartLine = {
   variantId: string;
@@ -57,6 +59,10 @@ function formatVariantLabel(option_values: Record<string, string>): string {
   return entries.map(([k, v]) => `${k}: ${v}`).join(" · ");
 }
 
+function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
+
 function readStorage(): CartLine[] {
   if (typeof window === "undefined") return [];
   try {
@@ -78,6 +84,7 @@ function readStorage(): CartLine[] {
         typeof (row as CartLine).productId === "string" &&
         typeof (row as CartLine).quantity === "number"
       ) {
+        if (!isUuid((row as CartLine).variantId)) continue;
         const q = Math.floor((row as CartLine).quantity);
         if (q > 0) {
           lines.push({
@@ -206,6 +213,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addVariant = useCallback(
     (variantId: string, productId: string, quantity = 1) => {
+      if (!isUuid(variantId)) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[cart] addVariant ignored invalid variant id", variantId);
+        }
+        return;
+      }
       const q = Math.max(1, Math.min(99, Math.floor(quantity)));
       setLinesSafe((prev) => {
         const i = prev.findIndex((l) => l.variantId === variantId);

@@ -36,96 +36,123 @@ export function Header() {
   const { openCart, itemCount } = useCart();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [stickyActive, setStickyActive] = useState(false);
+
+  useEffect(() => {
+    const sync = () => {
+      setStickyActive(document.body.getAttribute("data-header-sticky") === "true");
+    };
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-header-sticky"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const headerContent = (isStickyHeader: boolean) => (
+    <div className="header-wrapper mx-auto grid min-h-[64px] max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:min-h-[72px] sm:px-6 md:min-h-[83px] lg:px-8">
+      <div className="flex h-full min-h-0 min-w-0 items-center gap-3 justify-self-start">
+        <button
+          type="button"
+          className="flex items-center gap-2 text-neutral-800 md:hidden"
+          aria-label="Site navigation"
+          aria-expanded={isMobileNavOpen}
+          onClick={() => setIsMobileNavOpen((o) => !o)}
+        >
+          <span className="text-xl leading-none">☰</span>
+        </button>
+        <nav
+          className="hidden items-center gap-4 md:flex lg:gap-5"
+          aria-label="Primary"
+        >
+          <ShopCollectionsMenu />
+          <Link
+            href="/collections/sale"
+            className={`${primaryNavLinkClass} inline-flex items-center rounded-md px-0.5 py-1 hover:text-neutral-950`}
+          >
+            <span aria-hidden className="mr-0.5 inline text-[15px] leading-none">
+              ⚡
+            </span>
+            Sale
+          </Link>
+          <Link
+            href="/bundles"
+            className={`${primaryNavLinkClass} inline-flex items-center rounded-md px-0.5 py-1 hover:text-neutral-950`}
+          >
+            <span aria-hidden className="mr-0.5 inline text-[15px] leading-none">
+              🔥
+            </span>
+            Bundle Deals
+          </Link>
+        </nav>
+      </div>
+      <Link
+        href="/"
+        className="flex h-full min-h-0 min-w-0 max-w-[min(100%,240px)] items-center justify-center gap-2 justify-self-center self-center sm:max-w-none md:gap-2.5"
+      >
+        <Image
+          src="/dummy-logo.svg"
+          alt=""
+          width={40}
+          height={40}
+          priority
+          className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
+        />
+        <span className="hidden min-w-0 max-h-[3rem] truncate text-center text-sm font-semibold capitalize leading-tight tracking-wide text-neutral-900 sm:inline md:text-base">
+          {storeName}
+        </span>
+      </Link>
+      <div className="flex min-h-0 items-center justify-end gap-0.5 text-neutral-800 sm:gap-2 lg:gap-3">
+        <HeaderAccount />
+        <HeaderSearchPopover
+          open={searchOpen}
+          onOpenChange={setSearchOpen}
+          renderPanel={isStickyHeader ? stickyActive : !stickyActive}
+          panelOffsetClass={
+            isStickyHeader
+              ? "top-[64px] sm:top-[72px] md:top-[83px]"
+              : "top-[101px] sm:top-[109px] md:top-[120px]"
+          }
+        />
+        <button
+          type="button"
+          onClick={() => openCart()}
+          className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
+          aria-label={`Cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-[22px] w-[22px] shrink-0 sm:h-6 sm:w-6"
+            aria-hidden
+          >
+            <circle cx="9" cy="20" r="1.5" />
+            <circle cx="18" cy="20" r="1.5" />
+            <path d="M3 4h2l2.4 10.5a1 1 0 0 0 1 .8h9.8a1 1 0 0 0 1-.8L21 7H7.2" />
+          </svg>
+          {itemCount > 0 ? (
+            <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold text-white sm:right-0">
+              {itemCount > 99 ? "99+" : itemCount}
+            </span>
+          ) : null}
+          <span className="sr-only">Cart</span>
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
-      <header className="border-b border-neutral-200 bg-white">
-        <div
-          id="HeaderWrapper"
-          className="header-wrapper mx-auto grid min-h-[64px] max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:min-h-[72px] sm:px-6 md:min-h-[83px] lg:px-8"
-        >
-          <div className="flex h-full min-h-0 min-w-0 items-center gap-3 justify-self-start">
-            <button
-              type="button"
-              className="flex items-center gap-2 text-neutral-800 md:hidden"
-              aria-label="Site navigation"
-              aria-expanded={isMobileNavOpen}
-              onClick={() => setIsMobileNavOpen((o) => !o)}
-            >
-              <span className="text-xl leading-none">☰</span>
-            </button>
-            <nav
-              className="hidden items-center gap-4 md:flex lg:gap-5"
-              aria-label="Primary"
-            >
-              <ShopCollectionsMenu />
-              <Link
-                href="/collections/sale"
-                className={`${primaryNavLinkClass} inline-flex items-center rounded-md px-0.5 py-1 hover:text-neutral-950`}
-              >
-                <span aria-hidden className="mr-0.5 inline text-[15px] leading-none">
-                  ⚡
-                </span>
-                Sale
-              </Link>
-              <Link
-                href="/bundles"
-                className={`${primaryNavLinkClass} inline-flex items-center rounded-md px-0.5 py-1 hover:text-neutral-950`}
-              >
-                <span aria-hidden className="mr-0.5 inline text-[15px] leading-none">
-                  🔥
-                </span>
-                Bundle Deals
-              </Link>
-            </nav>
-          </div>
-          <Link
-            href="/"
-            className="flex h-full min-h-0 min-w-0 max-w-[min(100%,240px)] items-center justify-center gap-2 justify-self-center self-center sm:max-w-none md:gap-2.5"
-          >
-            <Image
-              src="/dummy-logo.svg"
-              alt=""
-              width={40}
-              height={40}
-              priority
-              className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
-            />
-            <span className="hidden min-w-0 max-h-[3rem] truncate text-center text-sm font-semibold capitalize leading-tight tracking-wide text-neutral-900 sm:inline md:text-base">
-              {storeName}
-            </span>
-          </Link>
-          <div className="flex min-h-0 items-center justify-end gap-0.5 text-neutral-800 sm:gap-2 lg:gap-3">
-            <HeaderAccount />
-            <HeaderSearchPopover open={searchOpen} onOpenChange={setSearchOpen} />
-            <button
-              type="button"
-              onClick={() => openCart()}
-              className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
-              aria-label={`Cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-[22px] w-[22px] shrink-0 sm:h-6 sm:w-6"
-                aria-hidden
-              >
-                <circle cx="9" cy="20" r="1.5" />
-                <circle cx="18" cy="20" r="1.5" />
-                <path d="M3 4h2l2.4 10.5a1 1 0 0 0 1 .8h9.8a1 1 0 0 0 1-.8L21 7H7.2" />
-              </svg>
-              {itemCount > 0 ? (
-                <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold text-white sm:right-0">
-                  {itemCount > 99 ? "99+" : itemCount}
-                </span>
-              ) : null}
-              <span className="hidden text-xs font-medium lg:inline">Cart</span>
-            </button>
-          </div>
-        </div>
+      <header id="site-header" className="border-b border-neutral-200 bg-white">
+        {headerContent(false)}
+      </header>
+      <header id="site-header-sticky" className="border-b border-neutral-200 bg-white">
+        <div className="pointer-events-auto">{headerContent(true)}</div>
       </header>
 
       <MobileNavDrawer open={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
@@ -329,7 +356,7 @@ function RailScrollStrip({ children }: { children: ReactNode }) {
   );
 
   const railUlClass =
-    "rail-scroll -mx-4 flex list-none items-stretch gap-3 overflow-x-auto scroll-px-4 scroll-smooth px-4 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-4 sm:px-0 sm:scroll-px-0";
+    "rail-scroll -mx-4 flex list-none items-stretch gap-1.5 overflow-x-auto scroll-px-4 scroll-smooth px-4 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-2 sm:px-0 sm:scroll-px-0";
 
   return (
     <ul
@@ -366,32 +393,45 @@ export function ProductSection({
     return (
       <section className="bg-neutral-100/80">
         <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-          <div className="mb-4">
+          <div className="mb-4 flex items-end justify-between gap-4">
             <h2 className="text-xl font-semibold tracking-tight text-neutral-900">{title}</h2>
-          </div>
-          <RailScrollStrip>
-            {railItems.map((product) => (
-              <li key={product.id} className={RAIL_ITEM}>
-                <div className="flex h-full min-h-0 flex-1 flex-col">
-                  <ProductCard product={product} showAddToCart={showAddToCart} rail />
-                </div>
-              </li>
-            ))}
-            <li
-              className={`${RAIL_COL} ${RAIL_SNAP} flex flex-col items-center justify-center`}
+            <Link
+              href={viewAllHref}
+              className="hidden shrink-0 text-sm font-semibold text-neutral-900 md:inline"
             >
-              <Link
-                href={viewAllHref}
-                aria-label={`View all ${count} product${count === 1 ? "" : "s"} in ${title}`}
-                className={RAIL_VIEW_ALL_BTN}
+              View all
+            </Link>
+          </div>
+          <div className="md:hidden">
+            <RailScrollStrip>
+              {railItems.map((product) => (
+                <li key={product.id} className={RAIL_ITEM}>
+                  <div className="flex h-full min-h-0 flex-1 flex-col">
+                    <ProductCard product={product} showAddToCart={showAddToCart} rail />
+                  </div>
+                </li>
+              ))}
+              <li
+                className={`${RAIL_COL} ${RAIL_SNAP} flex flex-col items-center justify-center`}
               >
-                <span className="text-sm font-semibold tracking-tight">View all</span>
-                <span className="mt-1 text-[11px] leading-tight text-neutral-500">
-                  {count} product{count === 1 ? "" : "s"}
-                </span>
-              </Link>
-            </li>
-          </RailScrollStrip>
+                <Link
+                  href={viewAllHref}
+                  aria-label={`View all ${count} product${count === 1 ? "" : "s"} in ${title}`}
+                  className={RAIL_VIEW_ALL_BTN}
+                >
+                  <span className="text-sm font-semibold tracking-tight">View all</span>
+                  <span className="mt-1 text-[11px] leading-tight text-neutral-500">
+                    {count} product{count === 1 ? "" : "s"}
+                  </span>
+                </Link>
+              </li>
+            </RailScrollStrip>
+          </div>
+          <div className="hidden items-stretch gap-1.5 md:grid md:grid-cols-3 lg:grid-cols-4">
+            {railItems.map((product) => (
+              <ProductCard key={product.id} product={product} showAddToCart={showAddToCart} />
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -405,7 +445,7 @@ export function ProductSection({
           View all
         </Link>
       </div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 items-stretch">
+      <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3 lg:grid-cols-4 items-stretch">
         {items.map((product) => (
           <ProductCard key={product.id} product={product} showAddToCart={showAddToCart} />
         ))}

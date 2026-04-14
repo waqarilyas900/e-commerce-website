@@ -27,6 +27,35 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Main header always visible; second sticky header appears after hero scroll. */
+#site-header {
+  position: relative;
+  z-index: 20;
+}
+
+#site-header-sticky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 70;
+  transform: translateY(calc(-100% - 6px));
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 320ms ease,
+    box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body[data-header-sticky="true"] #site-header-sticky {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  box-shadow: 0 8px 24px -18px rgba(0, 0, 0, 0.35);
+}
+
 body {
   background: var(--colorBody);
   color: var(--colorTextBody);

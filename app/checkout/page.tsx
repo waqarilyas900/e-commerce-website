@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,12 +12,14 @@ import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { CheckoutChrome } from "@/components/checkout/checkout-chrome";
 import {
   CheckoutOrderSummaryAccordion,
+  CheckoutOrderSummaryPanel,
   CheckoutPolicyFooterLinks,
 } from "@/components/checkout/checkout-order-summary-accordion";
 import { CheckoutTemplateFields } from "@/components/checkout/checkout-template-fields";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
+import { useStoreBrand } from "@/app/providers/store-brand-provider";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
 
@@ -92,6 +95,7 @@ function defaultFormValues(): Record<string, string> {
 export default function CheckoutPage() {
   const router = useRouter();
   const { ready, resolvedLines, subtotal, clearCart, closeCart, openCart } = useCart();
+  const { storeName } = useStoreBrand();
   const skipEmptyCartRedirectOnce = useRef(false);
 
   const [placing, setPlacing] = useState(false);
@@ -316,7 +320,7 @@ export default function CheckoutPage() {
 
   const inputClass = useMemo(
     () =>
-      "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 shadow-sm outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/15",
+      "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/15",
     [],
   );
 
@@ -335,78 +339,72 @@ export default function CheckoutPage() {
 
   return (
     <CheckoutChrome mode="checkout">
-      <main id="MainContent" className="pb-12">
-        <div className="mx-auto w-full max-w-2xl">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
-              Checkout
-            </h1>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-2">
-              <button
-                type="button"
-                onClick={() => openCart()}
-                className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-3 py-2 text-xs font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50 sm:px-4 sm:py-2.5 sm:text-sm"
-              >
-                Back to cart
-              </button>
-              <Link
-                href="/collections"
-                className="inline-flex items-center justify-center rounded-full border border-neutral-900 bg-neutral-950 px-3 py-2 text-center text-xs font-semibold capitalize text-white shadow-sm transition hover:bg-neutral-800 sm:px-4 sm:py-2.5 sm:text-sm"
-              >
-                Continue shopping
-              </Link>
+      <main id="MainContent" className="pb-12 md:pb-0">
+        <div className="mx-auto w-full max-w-[1140px] md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-0">
+          <div className="w-full md:bg-white md:px-8 md:py-8 lg:px-12">
+            <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
+              <div className="flex items-center justify-between">
+                <Link href="/" className="flex min-w-0 items-center gap-2.5">
+                  <Image
+                    src="/dummy-logo.svg"
+                    alt=""
+                    width={40}
+                    height={40}
+                    priority
+                    className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
+                  />
+                  <span className="truncate text-sm font-semibold capitalize tracking-wide text-neutral-900 sm:text-base">
+                    {storeName}
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  aria-label="Back to cart"
+                  onClick={() => openCart()}
+                  className="inline-flex items-center justify-center rounded-md p-1.5 text-neutral-800 transition-colors hover:bg-neutral-100"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-5 w-5"
+                    aria-hidden
+                  >
+                    <circle cx="9" cy="20" r="1.5" />
+                    <circle cx="18" cy="20" r="1.5" />
+                    <path d="M3 4h2l2.4 10.5a1 1 0 0 0 1 .8h9.8a1 1 0 0 0 1-.8L21 7H7.2" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
 
-          <form id="checkout-form" onSubmit={onSubmit} className="mt-6 space-y-5">
-            <CheckoutOrderSummaryAccordion
-              id="co-summary-top"
-              expanded={topSummaryOpen}
-              onToggle={() => setTopSummaryOpen((o) => !o)}
-              lines={resolvedLines}
-              subtotal={subtotal}
-              shipping={DELIVERY_CHARGE}
-              total={grandTotal}
-              discountCode={discountCode}
-              onDiscountCodeChange={(v) => {
-                setDiscountCode(v);
-                setDiscountNotice(null);
-              }}
-              onApplyDiscount={applyDiscount}
-              discountApplied={discountApplied}
-              discountNotice={discountNotice}
-            />
+            <form id="checkout-form" onSubmit={onSubmit} className="mt-6 space-y-5 md:mt-8">
+              <div className="md:hidden">
+                <CheckoutOrderSummaryAccordion
+                  id="co-summary-top"
+                  expanded={topSummaryOpen}
+                  onToggle={() => setTopSummaryOpen((o) => !o)}
+                  lines={resolvedLines}
+                  subtotal={subtotal}
+                  shipping={DELIVERY_CHARGE}
+                  total={grandTotal}
+                  discountCode={discountCode}
+                  onDiscountCodeChange={(v) => {
+                    setDiscountCode(v);
+                    setDiscountNotice(null);
+                  }}
+                  onApplyDiscount={applyDiscount}
+                  discountApplied={discountApplied}
+                  discountNotice={discountNotice}
+                />
+              </div>
 
             <div
-              className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8"
+              className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
               aria-label="Delivery and contact"
             >
-              <h2 className="hidden text-lg font-semibold text-neutral-900 sm:block">Delivery details</h2>
-              <p className="mt-1 hidden text-sm text-neutral-600 sm:block">Enter where we send your order</p>
-              <p className="mt-3 hidden text-xs leading-relaxed text-neutral-600 sm:block">
-                {signedIn ? (
-                  <>
-                    You&apos;re signed in — this order will show in{" "}
-                    <Link
-                      href="/account/orders"
-                      className="font-medium text-neutral-900 underline"
-                    >
-                      your orders
-                    </Link>{" "}
-                    after checkout. You can still edit delivery details below.
-                  </>
-                ) : (
-                  <>
-                    Delivery and cash on delivery details are required. You do not need an account
-                    to place an order.{" "}
-                    <Link href="/login" className="font-medium text-neutral-900 underline">
-                      Sign in
-                    </Link>{" "}
-                    is optional — it lets you save addresses and view order history.
-                  </>
-                )}
-              </p>
-
               <CheckoutTemplateFields
                 template={CHECKOUT_TEMPLATE}
                 values={formValues}
@@ -423,11 +421,11 @@ export default function CheckoutPage() {
               />
             </div>
 
-            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
               <h2 className="text-base font-semibold text-neutral-900">Shipping method</h2>
               <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-sm">
-                <span className="text-neutral-800">
-                  Standard delivery — orders are dispatched within 3–5 business days
+                <span className="text-xs leading-tight text-neutral-800 sm:text-sm">
+                  Standard delivery (dispatch in 3–5 business days)
                 </span>
                 <span className="shrink-0 tabular-nums font-semibold text-neutral-900">
                   {formatPkr(DELIVERY_CHARGE)}
@@ -438,7 +436,7 @@ export default function CheckoutPage() {
               </p>
             </section>
 
-            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
               <h2 className="text-base font-semibold text-neutral-900">Payment</h2>
               <p className="mt-1 text-xs text-neutral-500">
                 All transactions are secure and encrypted.
@@ -451,14 +449,53 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
               <MoneyBackBadge />
             </div>
 
-            <CheckoutOrderSummaryAccordion
-              id="co-summary-bottom"
-              expanded={bottomSummaryOpen}
-              onToggle={() => setBottomSummaryOpen((o) => !o)}
+              <div className="md:hidden">
+                <CheckoutOrderSummaryAccordion
+                  id="co-summary-bottom"
+                  expanded={bottomSummaryOpen}
+                  onToggle={() => setBottomSummaryOpen((o) => !o)}
+                  lines={resolvedLines}
+                  subtotal={subtotal}
+                  shipping={DELIVERY_CHARGE}
+                  total={grandTotal}
+                  discountCode={discountCode}
+                  onDiscountCodeChange={(v) => {
+                    setDiscountCode(v);
+                    setDiscountNotice(null);
+                  }}
+                  onApplyDiscount={applyDiscount}
+                  discountApplied={discountApplied}
+                  discountNotice={discountNotice}
+                />
+              </div>
+
+              {submitError ? (
+                <p
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+                  role="alert"
+                >
+                  {submitError}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={placing}
+                className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {placing ? "Placing order…" : "Complete order"}
+              </button>
+
+              <CheckoutPolicyFooterLinks />
+            </form>
+          </div>
+          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block md:px-8 md:py-8 lg:px-10">
+            <div className="md:sticky md:top-6">
+            <CheckoutOrderSummaryPanel
               lines={resolvedLines}
               subtotal={subtotal}
               shipping={DELIVERY_CHARGE}
@@ -472,26 +509,8 @@ export default function CheckoutPage() {
               discountApplied={discountApplied}
               discountNotice={discountNotice}
             />
-
-            {submitError ? (
-              <p
-                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-                role="alert"
-              >
-                {submitError}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={placing}
-              className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {placing ? "Placing order…" : "Complete order"}
-            </button>
-
-            <CheckoutPolicyFooterLinks />
-          </form>
+            </div>
+          </aside>
         </div>
       </main>
     </CheckoutChrome>

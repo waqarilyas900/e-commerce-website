@@ -11,10 +11,6 @@ import { collections } from "@/app/lib/store-data";
 const HEADER_TOP_OFFSET =
   "top-[101px] sm:top-[109px] md:top-[120px]";
 
-/** Nike-style: strong dim on page content only (not the header strip), no blur */
-const SEARCH_SCRIM_CLASS =
-  `fixed inset-x-0 bottom-0 z-[35] ${HEADER_TOP_OFFSET} bg-[rgba(0,0,0,0.62)]`;
-
 function popularSearchTerms(): string[] {
   const fromCollections = collections.map((c) => c.name);
   const extra = ["Sale", "Bundle deals", "New arrivals"];
@@ -25,38 +21,62 @@ function popularSearchTerms(): string[] {
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Render only trigger button when false (no panel/effects). */
+  renderPanel?: boolean;
+  /** Optional top offset utility classes for panel/scrim positioning. */
+  panelOffsetClass?: string;
 };
 
-export function HeaderSearchPopover({ open, onOpenChange }: Props) {
+export function HeaderSearchPopover({
+  open,
+  onOpenChange,
+  renderPanel = true,
+  panelOffsetClass = HEADER_TOP_OFFSET,
+}: Props) {
   const { storeName } = useStoreBrand();
   const router = useRouter();
   const panelId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const terms = popularSearchTerms();
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !renderPanel) return;
     const t = window.setTimeout(() => inputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
-  }, [open]);
+  }, [open, renderPanel]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !renderPanel) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [open, renderPanel]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !renderPanel) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onOpenChange(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onOpenChange]);
+  }, [open, onOpenChange, renderPanel]);
+
+  useEffect(() => {
+    if (!open || !renderPanel) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (panelRef.current?.contains(t)) return;
+      if (triggerRef.current?.contains(t)) return;
+      onOpenChange(false);
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [open, onOpenChange, renderPanel]);
 
   const goSearch = (q: string) => {
     const query = q.trim();
@@ -75,10 +95,12 @@ export function HeaderSearchPopover({ open, onOpenChange }: Props) {
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
+        aria-label="Search"
         className="inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-controls={renderPanel ? panelId : undefined}
         onClick={() => onOpenChange(!open)}
       >
         <svg
@@ -93,16 +115,16 @@ export function HeaderSearchPopover({ open, onOpenChange }: Props) {
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
         </svg>
-        <span className="hidden text-xs font-medium lg:inline">Search</span>
+        <span className="sr-only">Search</span>
       </button>
 
       <AnimatePresence>
-        {open ? (
+        {open && renderPanel ? (
           <>
             <motion.button
               type="button"
               aria-label="Close search"
-              className={SEARCH_SCRIM_CLASS}
+              className={`fixed inset-x-0 bottom-0 z-[35] ${panelOffsetClass} bg-[rgba(0,0,0,0.62)]`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -110,11 +132,12 @@ export function HeaderSearchPopover({ open, onOpenChange }: Props) {
               onClick={() => onOpenChange(false)}
             />
             <motion.div
+              ref={panelRef}
               id={panelId}
               role="dialog"
               aria-modal="true"
               aria-label="Search"
-              className={`fixed inset-x-0 z-[40] ${HEADER_TOP_OFFSET} max-h-[min(85vh,560px)] overflow-y-auto border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
+              className={`fixed inset-x-0 z-[40] ${panelOffsetClass} max-h-[min(85vh,560px)] overflow-y-auto border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
