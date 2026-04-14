@@ -8,6 +8,7 @@ import { StoreBrandProvider } from "@/app/providers/store-brand-provider";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
+import { DiscountNotificationPrompt } from "@/components/ui/discount-notification-prompt";
 import "./globals.css";
 
 /** Radstore.pk uses Jost for body copy */
@@ -74,6 +75,7 @@ export default async function RootLayout({
             {showGoogleOneTap ? <GoogleOneTap /> : null}
             <CartProvider>
               <HeaderStickyObserver />
+              <DiscountNotificationPrompt />
               <div id="PageContainer" className="page-container">
                 <div className="transition-body">{children}</div>
               </div>

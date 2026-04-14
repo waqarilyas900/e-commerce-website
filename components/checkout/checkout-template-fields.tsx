@@ -34,15 +34,15 @@ export function CheckoutTemplateFields({
         <section key={section.id}>
           {section.title === "Contact information" ? (
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold capitalize tracking-wide text-neutral-900">
+              <h3 className="text-sm font-semibold capitalize tracking-tight text-neutral-900">
                 Contact
               </h3>
-              <Link href="/login" className="text-xs font-medium text-neutral-800 underline">
+              <Link href="/login" className="text-xs font-semibold tracking-wide text-neutral-800 underline">
                 Sign in
               </Link>
             </div>
           ) : (
-            <h3 className="text-sm font-semibold capitalize tracking-wide text-neutral-900">
+            <h3 className="text-sm font-semibold capitalize tracking-tight text-neutral-900">
               {section.title}
             </h3>
           )}
@@ -64,7 +64,7 @@ export function CheckoutTemplateFields({
                       title="Orders ship within Pakistan only"
                     >
                       <div className="leading-tight">
-                        <p className="text-[11px] text-neutral-500">Country/Region</p>
+                        <p className="text-xs font-semibold tracking-wide text-neutral-500">Country/Region</p>
                         <p className="mt-0.5 text-sm text-neutral-900">Pakistan</p>
                       </div>
                       <svg

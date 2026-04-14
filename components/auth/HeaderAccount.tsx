@@ -40,7 +40,7 @@ function avatarPhotoUrl(user: User): string | null {
 }
 
 const menuLinkClass =
-  "block w-full px-3 py-2.5 text-left text-sm text-neutral-800 transition-colors hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none";
+  "block w-full px-3 py-2.5 text-left text-sm font-semibold tracking-tight text-neutral-800 transition-colors hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none";
 
 export function HeaderAccount() {
   const router = useRouter();

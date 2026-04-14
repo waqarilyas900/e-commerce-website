@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ProductPdp } from "@/components/product/product-pdp";
+import { CustomerReviews } from "@/components/product/customer-reviews";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import {
   dbGetProductDetailBySlug,
@@ -52,6 +53,10 @@ export default async function ProductPage({ params }: Props) {
                 ))}
               </div>
             </section>
+            <CustomerReviews
+              rating={Number(detail.product.rating ?? 0)}
+              reviewsCount={Number(detail.product.reviews_count ?? 0)}
+            />
           </main>
           <Footer />
         </>
@@ -108,6 +113,10 @@ export default async function ProductPage({ params }: Props) {
             ))}
           </div>
         </section>
+        <CustomerReviews
+          rating={Number(product.rating ?? 0)}
+          reviewsCount={Number(product.reviews ?? 0)}
+        />
       </main>
       <Footer />
     </>

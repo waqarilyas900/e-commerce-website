@@ -84,7 +84,7 @@ function DrawerSocialIcons() {
 }
 
 const itemClass =
-  "block w-full border-b border-neutral-200 px-4 py-5 text-[15px] font-medium tracking-tight text-neutral-950 transition-colors hover:bg-neutral-50";
+  "block w-full border-b border-neutral-200 px-4 py-5 text-sm font-semibold tracking-tight text-neutral-950 transition-colors hover:bg-neutral-50";
 
 type Props = {
   open: boolean;
@@ -147,7 +147,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
             <div className="border-b border-neutral-200">
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-4 py-5 text-left text-[15px] font-medium tracking-tight text-neutral-950 hover:bg-neutral-50"
+                className="flex w-full items-center justify-between px-4 py-5 text-left text-sm font-semibold tracking-tight text-neutral-950 hover:bg-neutral-50"
                 aria-expanded={shopOpen}
                 onClick={() => setShopOpen((o) => !o)}
               >
@@ -173,7 +173,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                     >
                       <Link
                         href="/collections"
-                        className="block py-3 text-[15px] font-medium text-neutral-900"
+                        className="block py-3 text-sm font-semibold tracking-tight text-neutral-900"
                         onClick={onClose}
                       >
                         All collections
@@ -186,7 +186,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                             <li key={l.slug}>
                               <Link
                                 href={`/collections/${l.slug}`}
-                                className="block py-3 text-[15px] font-medium text-neutral-800"
+                                className="block py-3 text-sm font-semibold tracking-tight text-neutral-800"
                                 onClick={onClose}
                               >
                                 {l.name}

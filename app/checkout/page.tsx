@@ -353,7 +353,7 @@ export default function CheckoutPage() {
                     priority
                     className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
                   />
-                  <span className="truncate text-sm font-semibold capitalize tracking-wide text-neutral-900 sm:text-base">
+                  <span className="truncate text-sm font-semibold capitalize tracking-tight text-neutral-900 sm:text-base">
                     {storeName}
                   </span>
                 </Link>
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
             <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
               <h2 className="text-base font-semibold text-neutral-900">Shipping method</h2>
               <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-sm">
-                <span className="text-xs leading-tight text-neutral-800 sm:text-sm">
+                <span className="text-sm leading-tight text-neutral-800">
                   Standard delivery (dispatch in 3–5 business days)
                 </span>
                 <span className="shrink-0 tabular-nums font-semibold text-neutral-900">

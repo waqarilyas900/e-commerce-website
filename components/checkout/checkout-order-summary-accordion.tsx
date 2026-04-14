@@ -72,12 +72,12 @@ function CheckoutOrderSummaryBody({
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium leading-snug text-neutral-900">{product.name}</p>
+                <p className="font-semibold leading-snug text-neutral-900">{product.name}</p>
                 {variantLabel ? (
                   <p className="mt-0.5 text-xs text-neutral-500">{variantLabel}</p>
                 ) : null}
               </div>
-              <p className="shrink-0 self-start tabular-nums font-medium text-neutral-900">
+              <p className="shrink-0 self-start tabular-nums font-semibold text-neutral-900">
                 {formatPkr(lineTotal)}
               </p>
             </li>
@@ -97,7 +97,7 @@ function CheckoutOrderSummaryBody({
         <button
           type="button"
           onClick={onApplyDiscount}
-          className="shrink-0 rounded-md border border-neutral-200 bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+          className="shrink-0 rounded-md border border-neutral-200 bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-200"
         >
           Apply
         </button>
@@ -135,10 +135,10 @@ function CheckoutOrderSummaryBody({
 
       <div className="mt-4 border-t border-neutral-200 pt-4">
         <div className="flex items-end justify-between gap-4">
-          <span className="text-base font-bold text-neutral-900">Total</span>
+          <span className="text-base font-semibold text-neutral-900">Total</span>
           <div className="text-right">
-            <span className="text-xs font-medium text-neutral-500">PKR</span>
-            <span className="ml-1.5 text-lg font-bold tabular-nums text-neutral-900">
+            <span className="text-xs font-semibold text-neutral-500">PKR</span>
+            <span className="ml-1.5 text-lg font-semibold tabular-nums text-neutral-900">
               {formatPkr(total)}
             </span>
           </div>
@@ -173,7 +173,7 @@ export function CheckoutOrderSummaryAccordion({
         onClick={onToggle}
         className="flex w-full items-center justify-between gap-3 bg-neutral-100 px-4 py-3.5 text-left transition hover:bg-neutral-200/80"
       >
-        <span className="flex items-center gap-2 text-sm font-medium text-neutral-900">
+        <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
           Order summary
           <motion.span
             aria-hidden
@@ -229,7 +229,7 @@ export function CheckoutOrderSummaryPanel(props: Omit<SummaryBodyProps, "inert">
       aria-label="Order summary"
     >
       <div className="flex items-center justify-between gap-3 bg-neutral-100 px-4 py-3.5 md:hidden">
-        <span className="text-sm font-medium text-neutral-900">Order summary</span>
+        <span className="text-sm font-semibold text-neutral-900">Order summary</span>
         <span className="text-sm font-semibold tabular-nums text-neutral-900">
           {formatPkr(props.total)}
         </span>

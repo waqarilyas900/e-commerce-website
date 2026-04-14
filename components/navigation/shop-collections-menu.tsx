@@ -6,7 +6,10 @@ import { useNavCollections } from "@/app/providers/nav-collections-provider";
 
 /** Shared style for primary header nav labels (Shop link, Sale, Bundles). */
 export const primaryNavLinkClass =
-  "whitespace-nowrap text-[15px] font-semibold tracking-tight text-neutral-950 transition-colors hover:text-black";
+  "whitespace-nowrap text-sm font-semibold tracking-tight text-neutral-950 transition-colors hover:text-black";
+
+const collectionMenuItemClass =
+  "block px-4 py-2.5 text-sm font-semibold tracking-tight text-neutral-900 transition-colors hover:bg-neutral-50";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -31,7 +34,27 @@ export function ShopCollectionsMenu() {
   const links = useNavCollections();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
+
+  function clearCloseTimer() {
+    if (!closeTimerRef.current) return;
+    clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  }
+
+  function openMenu() {
+    clearCloseTimer();
+    setOpen(true);
+  }
+
+  function scheduleClose() {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
+    }, 220);
+  }
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -41,18 +64,27 @@ export function ShopCollectionsMenu() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
+  useEffect(() => {
+    return () => {
+      clearCloseTimer();
+    };
+  }, []);
+
   return (
     <div
       className="relative"
       ref={ref}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
     >
       <div className="flex items-center gap-0.5">
         <Link
           href="/collections"
           className={`${primaryNavLinkClass} rounded-md px-0.5 py-1`}
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            clearCloseTimer();
+            setOpen(false);
+          }}
         >
           Shop
         </Link>
@@ -82,9 +114,12 @@ export function ShopCollectionsMenu() {
               <Link
                 key={l.slug}
                 href={`/collections/${l.slug}`}
-                className="block px-4 py-2.5 text-[15px] font-medium text-neutral-900 hover:bg-neutral-50"
+                className={collectionMenuItemClass}
                 role="menuitem"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  clearCloseTimer();
+                  setOpen(false);
+                }}
               >
                 {l.name}
               </Link>

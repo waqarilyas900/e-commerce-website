@@ -52,10 +52,10 @@ function DrawerRecoTile({ product }: { product: Product }) {
         style={{ backgroundImage: `url(${product.image})` }}
       />
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-2.5">
-        <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-neutral-900">
+        <p className="line-clamp-2 text-xs font-semibold leading-snug text-neutral-900">
           {product.name}
         </p>
-        <div className="flex flex-wrap items-baseline gap-x-1.5 text-[10px] leading-none">
+        <div className="flex flex-wrap items-baseline gap-x-1.5 text-xs leading-none">
           {product.compareAtPrice && product.compareAtPrice > product.price ? (
             <>
               <span className="text-neutral-400 line-through">
@@ -76,7 +76,7 @@ function DrawerRecoTile({ product }: { product: Product }) {
           <motion.button
             type="button"
             whileTap={{ scale: 0.98 }}
-            className="mt-auto w-full rounded-md border border-neutral-900 bg-neutral-950 py-1.5 text-[10px] font-semibold text-white hover:bg-neutral-800"
+            className="mt-auto w-full rounded-md border border-neutral-900 bg-neutral-950 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800"
             onClick={() => addVariant(quick.variantId, quick.productId, 1)}
           >
             Add to cart
@@ -85,7 +85,7 @@ function DrawerRecoTile({ product }: { product: Product }) {
           <Link
             href={`/products/${product.slug}`}
             onClick={closeCart}
-            className="mt-auto flex w-full items-center justify-center rounded-md border border-neutral-300 py-1.5 text-center text-[10px] font-semibold text-neutral-900 hover:bg-neutral-50"
+            className="mt-auto flex w-full items-center justify-center rounded-md border border-neutral-300 py-1.5 text-center text-xs font-semibold text-neutral-900 hover:bg-neutral-50"
           >
             Choose options
           </Link>
@@ -327,7 +327,7 @@ export function CartDrawer() {
 
                 {showRecommendations && recommended.length > 0 ? (
                   <div className="mt-4 shrink-0 border-t border-neutral-200 pt-5">
-                    <h3 className="text-[11px] font-semibold capitalize tracking-[0.18em] text-neutral-500">
+                    <h3 className="text-xs font-semibold capitalize tracking-[0.14em] text-neutral-500">
                       You might like
                     </h3>
                     <div className="mt-3 grid grid-cols-12 gap-3">
@@ -362,7 +362,7 @@ export function CartDrawer() {
                   <Link
                     href="/checkout"
                     onClick={closeCart}
-                    className="mt-5 flex w-full items-center justify-center rounded-md bg-black px-5 py-3 text-base font-semibold capitalize text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985]"
+                    className="mt-5 flex w-full items-center justify-center rounded-md bg-black px-5 py-3 text-sm font-semibold capitalize text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985]"
                   >
                     Check out
                   </Link>

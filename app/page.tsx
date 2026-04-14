@@ -9,6 +9,7 @@ import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
 import { HeroSlideshow } from "@/components/home/HeroSlideshow";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
+import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
 import { getHomeRailSections } from "@/app/lib/home-rails";
 
 export default async function Home() {
@@ -35,6 +36,7 @@ export default async function Home() {
           />
         ))}
         <WhyShop />
+        <TrustRatingStrip />
       </main>
       <Footer />
     </>

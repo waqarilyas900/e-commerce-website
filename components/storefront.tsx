@@ -281,7 +281,7 @@ export function ProductCard({
       </Link>
       {/* Single column: mt-auto only on the button so it pins to the bottom when the row stretches */}
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3">
-        <p className="text-[11px] text-neutral-500">
+        <p className="text-xs text-neutral-500">
           {product.reviews > 0
             ? `${product.rating.toFixed(1)} ★ · ${product.reviews} reviews`
             : "New · no reviews yet"}
@@ -314,7 +314,7 @@ export function ProductCard({
           )}
         </div>
         {product.defaultVariantId ? (
-          <p className="pt-1 text-[10px] text-neutral-500">Multiple sizes / colors on product page</p>
+          <p className="pt-1 text-xs text-neutral-500">Multiple sizes / colors on product page</p>
         ) : null}
         {showAddToCart ? (
           <div className="mt-auto pt-2">
@@ -441,7 +441,7 @@ export function ProductSection({
                   className={RAIL_VIEW_ALL_BTN}
                 >
                   <span className="text-sm font-semibold tracking-tight">View all</span>
-                  <span className="mt-1 text-[11px] leading-tight text-neutral-500">
+                  <span className="mt-1 text-xs leading-tight text-neutral-500">
                     {count} product{count === 1 ? "" : "s"}
                   </span>
                 </Link>
