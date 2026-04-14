@@ -338,7 +338,7 @@ export function ProductCard({
  * ul uses px-4 → 2rem horizontal; gap-3 → 0.75rem
  */
 const RAIL_COL =
-  "w-[calc((100vw-2.75rem)/1.5)] max-w-[232px] shrink-0 sm:w-[200px] sm:max-w-none md:w-[220px]";
+  "w-[calc((100vw-2.75rem)/1.5)] min-w-[172px] max-w-[232px] shrink-0 sm:w-[200px] sm:max-w-none md:w-[220px]";
 const RAIL_SNAP = "snap-start snap-always";
 /** Product tile in the home rail (same as `${RAIL_COL} ${RAIL_SNAP} flex flex-col`). */
 const RAIL_ITEM = `${RAIL_COL} ${RAIL_SNAP} flex flex-col`;

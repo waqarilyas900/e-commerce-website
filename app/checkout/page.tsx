@@ -340,7 +340,7 @@ export default function CheckoutPage() {
   return (
     <CheckoutChrome mode="checkout">
       <main id="MainContent" className="pb-12 md:pb-0">
-        <div className="mx-auto w-full max-w-[1140px] md:grid md:min-h-screen md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-0">
+        <div className="mx-auto w-full max-w-[1140px] md:grid md:min-h-screen md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="w-full bg-white px-4 py-6 sm:px-6 md:min-h-screen md:px-8 md:py-8 lg:px-12">
             <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
               <div className="flex items-center justify-between">

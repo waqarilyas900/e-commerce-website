@@ -186,7 +186,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                             <li key={l.slug}>
                               <Link
                                 href={`/collections/${l.slug}`}
-                                className="block py-3 text-sm font-semibold tracking-tight text-neutral-800"
+                                className="block wrap-break-word py-3 text-sm font-semibold tracking-tight text-neutral-800"
                                 onClick={onClose}
                               >
                                 {l.name}

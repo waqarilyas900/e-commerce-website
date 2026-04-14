@@ -213,9 +213,10 @@ export function CustomerReviews({ rating, reviewsCount }: Props) {
               }}
             />
             {selectedFiles.length > 0 ? (
-              <p className="mt-2 text-xs text-neutral-600">
+              <p className="mt-2 wrap-break-word text-xs text-neutral-600">
                 {selectedFiles.length} file{selectedFiles.length > 1 ? "s" : ""} selected:{" "}
-                {selectedFiles.join(", ")}
+                {selectedFiles.slice(0, 2).join(", ")}
+                {selectedFiles.length > 2 ? ` +${selectedFiles.length - 2} more` : ""}
               </p>
             ) : (
               <p className="mt-2 text-xs text-neutral-500">

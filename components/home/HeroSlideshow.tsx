@@ -278,11 +278,11 @@ export function HeroSlideshow() {
         </div>
 
         {/* Arrow controls sit on hero bottom edge: half in, half out. */}
-        <div className="absolute bottom-0 right-4 z-40 flex translate-y-1/2 items-center gap-2 sm:right-6 sm:gap-2.5 lg:right-8">
+        <div className="pointer-events-none absolute bottom-0 right-4 z-40 flex translate-y-1/2 items-center gap-2 sm:right-6 sm:gap-2.5 lg:right-8">
           <button
             type="button"
             onClick={prev}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
+            className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
             aria-label="Previous slide"
           >
             <ArrowPrevIcon className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -290,7 +290,7 @@ export function HeroSlideshow() {
           <button
             type="button"
             onClick={() => next()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
+            className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-neutral-500 shadow-md ring-1 ring-neutral-200/80 transition hover:bg-neutral-50 sm:h-11 sm:w-11 md:h-12 md:w-12"
             aria-label="Next slide"
           >
             <ArrowNextIcon className="h-4 w-4 sm:h-5 sm:w-5" />
