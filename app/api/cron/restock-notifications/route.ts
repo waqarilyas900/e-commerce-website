@@ -31,7 +31,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createServiceRoleClient();
+  let admin: ReturnType<typeof createServiceRoleClient>;
+  try {
+    admin = createServiceRoleClient();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Service role client failed";
+    return NextResponse.json({ ok: false, error: msg }, { status: 503 });
+  }
+
   const site = getPublicSiteUrl();
 
   const { data: rows, error: qErr } = await admin
@@ -51,6 +58,7 @@ export async function GET(req: Request) {
 
   let sent = 0;
   let failed = 0;
+  const failures: Array<{ queueId: string; email: string; error?: string }> = [];
 
   for (const row of rows as QueueRow[]) {
     const { data: vrow } = await admin
@@ -106,8 +114,19 @@ export async function GET(req: Request) {
       sent += 1;
     } else {
       failed += 1;
+      failures.push({
+        queueId: row.id,
+        email: row.user_email,
+        error: result.error ?? "send failed",
+      });
     }
   }
 
-  return NextResponse.json({ ok: true, processed: rows.length, sent, failed });
+  return NextResponse.json({
+    ok: true,
+    processed: rows.length,
+    sent,
+    failed,
+    ...(failures.length > 0 ? { failures } : {}),
+  });
 }
