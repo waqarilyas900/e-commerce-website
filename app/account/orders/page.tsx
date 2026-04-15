@@ -32,13 +32,13 @@ export default async function AccountOrdersPage() {
   return (
     <div className="w-full">
       <header className="border-b border-neutral-200/90 pb-8">
-        <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
+        <p className="text-xs font-normal capitalize tracking-wide text-neutral-500">
           <Link href="/account" className="hover:underline">
             Account
           </Link>{" "}
           / Order history
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900">Your orders</h1>
+        <h1 className="mt-2 text-3xl font-normal tracking-tight text-neutral-900">Your orders</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
           Track deliveries and open any order for line items, payment, and shipping details.
         </p>

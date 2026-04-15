@@ -278,7 +278,7 @@ export function HeroSlideshow() {
         </div>
 
         {/* Arrow controls sit on hero bottom edge: half in, half out. */}
-        <div className="pointer-events-none absolute bottom-0 right-4 z-40 flex translate-y-1/2 items-center gap-2 sm:right-6 sm:gap-2.5 lg:right-8">
+        <div className="pointer-events-none absolute bottom-0 right-4 z-10 flex translate-y-0 items-center gap-2 sm:right-6 sm:gap-2.5 md:translate-y-1/2 lg:right-8">
           <button
             type="button"
             onClick={prev}

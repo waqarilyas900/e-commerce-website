@@ -8,6 +8,7 @@ import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { HeaderAccount } from "@/components/auth/HeaderAccount";
 import { HeaderSearchPopover } from "@/components/HeaderSearchPopover";
+import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
@@ -72,11 +73,9 @@ export function Header() {
           <ShopCollectionsMenu />
           <Link
             href="/collections/sale"
-            className={`${primaryNavLinkClass} inline-flex items-center rounded-md px-0.5 py-1 hover:text-neutral-950`}
+            className={`${primaryNavLinkClass} inline-flex items-center gap-1 rounded-md px-0.5 py-1 hover:text-neutral-950`}
           >
-            <span aria-hidden className="mr-0.5 inline text-[15px] leading-none">
-              ⚡
-            </span>
+            <SaleBoltIcon className="h-[15px] w-[15px] shrink-0" />
             Sale
           </Link>
           <Link

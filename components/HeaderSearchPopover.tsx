@@ -206,7 +206,7 @@ export function HeaderSearchPopover({
             <motion.button
               type="button"
               aria-label="Close search"
-              className={`fixed inset-x-0 bottom-0 z-35 ${panelOffsetClass} bg-[rgba(0,0,0,0.62)]`}
+              className={`fixed inset-x-0 bottom-0 z-90 ${panelOffsetClass} bg-[rgba(0,0,0,0.62)]`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{
@@ -229,7 +229,7 @@ export function HeaderSearchPopover({
               aria-modal="true"
               aria-label="Search"
               style={{ transformOrigin: "top center" }}
-              className={`fixed inset-x-0 z-40 ${panelOffsetClass} max-h-[min(85vh,560px)] overflow-y-auto overflow-x-hidden border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
+              className={`fixed inset-x-0 z-100 ${panelOffsetClass} max-h-[min(85dvh,560px)] overflow-y-auto overflow-x-hidden border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
               initial={
                 reduceMotion ? { opacity: 0 } : { y: "-100%", opacity: 1 }
               }

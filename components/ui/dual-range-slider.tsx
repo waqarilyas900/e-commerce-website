@@ -48,7 +48,7 @@ export function DualRangeSlider({ min, max, step, values, onChange, onFinalChang
   };
 
   return (
-    <div id={id} className="w-full py-2">
+    <div id={id} className="box-border w-full px-3 py-2">
       <Range
         label="Price range"
         {...(labelledBy ? { labelledBy } : {})}

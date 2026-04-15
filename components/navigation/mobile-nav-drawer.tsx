@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
+import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 
 const accordionEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -84,7 +85,7 @@ function DrawerSocialIcons() {
 }
 
 const itemClass =
-  "block w-full border-b border-neutral-200 px-4 py-5 text-sm font-semibold tracking-tight text-neutral-950 transition-colors hover:bg-neutral-50";
+  "block w-full border-b border-neutral-200 px-4 py-5 text-sm font-normal text-neutral-950 transition-colors hover:bg-neutral-50";
 
 type Props = {
   open: boolean;
@@ -112,7 +113,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-30 md:hidden"
+          className="fixed inset-0 z-120 md:hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -124,7 +125,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
             onClick={onClose}
           />
           <motion.nav
-            className="absolute left-0 top-0 flex h-full max-h-screen w-[min(90vw,360px)] flex-col overflow-y-auto bg-white shadow-xl rounded-br-2xl"
+            className="absolute left-0 top-0 flex h-dvh max-h-dvh w-[min(90vw,360px)] flex-col overflow-y-auto bg-white pb-[max(1rem,env(safe-area-inset-bottom))] shadow-xl"
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
@@ -147,7 +148,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
             <div className="border-b border-neutral-200">
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-4 py-5 text-left text-sm font-semibold tracking-tight text-neutral-950 hover:bg-neutral-50"
+                className="flex w-full items-center justify-between px-4 py-5 text-left text-sm font-normal text-neutral-950 hover:bg-neutral-50"
                 aria-expanded={shopOpen}
                 onClick={() => setShopOpen((o) => !o)}
               >
@@ -173,7 +174,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                     >
                       <Link
                         href="/collections"
-                        className="block py-3 text-sm font-semibold tracking-tight text-neutral-900"
+                        className="block py-3 text-sm font-normal text-neutral-900"
                         onClick={onClose}
                       >
                         All collections
@@ -186,7 +187,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                             <li key={l.slug}>
                               <Link
                                 href={`/collections/${l.slug}`}
-                                className="block wrap-break-word py-3 text-sm font-semibold tracking-tight text-neutral-800"
+                                className="block wrap-break-word py-3 text-sm font-normal text-neutral-800"
                                 onClick={onClose}
                               >
                                 {l.name}
@@ -201,10 +202,12 @@ export function MobileNavDrawer({ open, onClose }: Props) {
               </AnimatePresence>
             </div>
 
-            <Link href="/collections/sale" className={itemClass} onClick={onClose}>
-              <span aria-hidden className="mr-1.5">
-                ⚡
-              </span>
+            <Link
+              href="/collections/sale"
+              className={`${itemClass} inline-flex items-center gap-2`}
+              onClick={onClose}
+            >
+              <SaleBoltIcon className="h-5 w-5 shrink-0" />
               Sale
             </Link>
             <Link href="/bundles" className={itemClass} onClick={onClose}>
@@ -217,7 +220,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
               Log in
             </Link>
 
-            <div className="border-t border-neutral-200 px-4 py-5">
+            <div className="mt-auto border-t border-neutral-200 px-4 py-5">
               <DrawerSocialIcons />
             </div>
           </motion.nav>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -124,9 +125,7 @@ function ExploreLinksList({
             <Link href={item.href} className="transition-colors hover:text-white hover:underline">
               {isSale ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <span aria-hidden className="text-base leading-none">
-                    ⚡
-                  </span>
+                  <SaleBoltIcon className="h-4 w-4 shrink-0" />
                   {item.label}
                 </span>
               ) : (

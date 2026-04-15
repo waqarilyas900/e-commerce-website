@@ -6,10 +6,10 @@ import { useNavCollections } from "@/app/providers/nav-collections-provider";
 
 /** Shared style for primary header nav labels (Shop link, Sale, Bundles). */
 export const primaryNavLinkClass =
-  "whitespace-nowrap text-sm font-semibold tracking-tight text-neutral-950 transition-colors hover:text-black";
+  "whitespace-nowrap text-sm font-normal text-neutral-950 transition-colors hover:text-black";
 
 const collectionMenuItemClass =
-  "block px-4 py-2.5 text-sm font-semibold tracking-tight text-neutral-900 transition-colors hover:bg-neutral-50";
+  "block px-4 py-2.5 text-sm font-normal text-neutral-900 transition-colors hover:bg-neutral-50";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -104,7 +104,7 @@ export function ShopCollectionsMenu() {
       {open ? (
         <div
           id={menuId}
-          className="absolute left-0 top-full z-50 mt-2 min-w-[240px] max-h-[min(70vh,420px)] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1.5 shadow-xl"
+          className="absolute left-0 top-full z-50 mt-2 min-w-[240px] max-h-[min(70dvh,420px)] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1.5 shadow-xl"
           role="menu"
         >
           {links.length === 0 ? (

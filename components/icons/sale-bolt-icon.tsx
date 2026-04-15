@@ -1,0 +1,20 @@
+type Props = {
+  className?: string;
+};
+
+/** Sale nav bolt — source asset uses #F7CF52 fill. */
+export function SaleBoltIcon({ className }: Props) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 400 400"
+      className={className}
+      aria-hidden
+    >
+      <polygon
+        fill="#F7CF52"
+        points="157.055,0 90.798,196.319 164.417,196.319 88.344,400 289.571,159.509 218.405,159.509 311.656,0"
+      />
+    </svg>
+  );
+}

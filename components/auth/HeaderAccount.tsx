@@ -40,7 +40,7 @@ function avatarPhotoUrl(user: User): string | null {
 }
 
 const menuLinkClass =
-  "block w-full px-3 py-2.5 text-left text-sm font-semibold tracking-tight text-neutral-800 transition-colors hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none";
+  "block w-full px-3 py-2.5 text-left text-sm font-normal text-neutral-800 transition-colors hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none";
 
 export function HeaderAccount() {
   const router = useRouter();
@@ -218,7 +218,7 @@ export function HeaderAccount() {
               </span>
             )}
             <span
-              className="min-w-0 max-w-[7.5rem] truncate text-left text-xs font-medium text-neutral-700 sm:max-w-40 md:max-w-56"
+              className="min-w-0 max-w-[7.5rem] truncate text-left text-xs font-normal text-neutral-700 sm:max-w-40 md:max-w-56"
               title={name}
             >
               {name}

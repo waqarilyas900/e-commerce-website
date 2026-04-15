@@ -14,6 +14,7 @@ import { ProductCard } from "@/components/storefront";
 import type { AppSelectOption } from "@/components/ui/app-select";
 import { AppSelect } from "@/components/ui/app-select";
 import { CollectionFilterDrawer } from "./collection-filter-drawer";
+import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 
 /** Flat react-select: no box shadows (collection toolbar). */
 const sortSelectStyles: StylesConfig<AppSelectOption, false, GroupBase<AppSelectOption>> = {
@@ -157,10 +158,10 @@ function CollectionSidebar({
   return (
     <nav className="flex flex-col gap-0.5" aria-label="Collections">
       <CollectionNavLink href="/collections/sale" isActive={saleActive}>
-        <span aria-hidden className="mr-1">
-          ⚡
+        <span className="inline-flex items-center gap-1.5">
+          <SaleBoltIcon className="h-4 w-4 shrink-0" />
+          Sale
         </span>
-        Sale
       </CollectionNavLink>
       {navLinks.map((c) => (
         <CollectionNavLink

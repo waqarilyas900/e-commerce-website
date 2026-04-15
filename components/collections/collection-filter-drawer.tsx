@@ -85,10 +85,15 @@ export function CollectionFilterDrawer({
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prev;
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
     };
   }, [open]);
 
@@ -110,7 +115,7 @@ export function CollectionFilterDrawer({
       {open ? (
         <motion.div
           key="collection-filter-drawer"
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-110"
           role="dialog"
           aria-modal="true"
           aria-label="Filters"
@@ -134,7 +139,7 @@ export function CollectionFilterDrawer({
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
           />
           <motion.aside
-            className="absolute left-0 top-0 z-50 flex h-screen w-full max-w-[min(92vw,400px)] flex-col overflow-hidden border-r border-neutral-200 bg-white px-5 py-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),24px_0_48px_-12px_rgba(0,0,0,0.18)]"
+            className="absolute left-0 top-0 z-120 flex h-dvh max-h-dvh min-h-0 w-full min-w-0 max-w-[min(92vw,400px)] flex-col overflow-hidden border-r border-neutral-200 bg-white px-5 py-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),24px_0_48px_-12px_rgba(0,0,0,0.18)]"
             initial={{ x: "-100%", opacity: 0.98 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{
@@ -172,7 +177,7 @@ export function CollectionFilterDrawer({
             style={{ willChange: "transform" }}
           >
             <motion.div
-              className="flex items-center justify-between border-b border-neutral-200 pb-4"
+              className="flex shrink-0 items-center justify-between border-b border-neutral-200 pb-4"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={
@@ -195,8 +200,8 @@ export function CollectionFilterDrawer({
               </motion.button>
             </motion.div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto py-4 pb-8">
-              <fieldset className="space-y-3">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+              <fieldset className="min-w-0 space-y-3 px-0.5">
                 <legend className="mb-1 text-sm font-semibold text-neutral-900">Availability</legend>
                 <div className="flex flex-col gap-3">
                   <Radio
@@ -239,8 +244,8 @@ export function CollectionFilterDrawer({
                 <p className="mt-1 text-xs text-neutral-500">
                   Range: {formatPkr(0)} — {formatPkr(maxPriceCeil)}
                 </p>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <label className="text-xs text-neutral-600">
+                <div className="mt-4 grid min-w-0 grid-cols-2 gap-3">
+                  <label className="min-w-0 text-xs text-neutral-600">
                     Min (PKR)
                     <input
                       type="number"
@@ -253,10 +258,10 @@ export function CollectionFilterDrawer({
                         scheduleNumberApply();
                       }}
                       onBlur={flushNumberApply}
-                      className="mt-1 w-full rounded-md border border-neutral-200 px-2 py-2 text-sm"
+                      className="mt-1 w-full min-w-0 rounded-md border border-neutral-200 px-2 py-2 text-sm"
                     />
                   </label>
-                  <label className="text-xs text-neutral-600">
+                  <label className="min-w-0 text-xs text-neutral-600">
                     Max (PKR)
                     <input
                       type="number"
@@ -269,11 +274,11 @@ export function CollectionFilterDrawer({
                         scheduleNumberApply();
                       }}
                       onBlur={flushNumberApply}
-                      className="mt-1 w-full rounded-md border border-neutral-200 px-2 py-2 text-sm"
+                      className="mt-1 w-full min-w-0 rounded-md border border-neutral-200 px-2 py-2 text-sm"
                     />
                   </label>
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 min-w-0">
                   <DualRangeSlider
                     min={0}
                     max={rangeMax}
