@@ -157,12 +157,18 @@ export function HeaderAccount() {
         ) : (
           <>
             <span className="sm:hidden">
-              <Link href="/reset-password" className="underline underline-offset-2">
+              <Link
+                href="/reset-password"
+                className="underline underline-offset-2"
+              >
                 Set new password
               </Link>
             </span>
             <span className="hidden sm:inline">
-              <Link href="/reset-password" className="underline underline-offset-2">
+              <Link
+                href="/reset-password"
+                className="underline underline-offset-2"
+              >
                 Finish password reset
               </Link>{" "}
               (link from your email)
@@ -179,8 +185,8 @@ export function HeaderAccount() {
     const name = displayName(user);
 
     return (
-      <div className="flex min-w-0 max-w-full items-center justify-end gap-1.5 sm:gap-2 md:gap-3">
-        <div ref={wrapRef} className="relative shrink-0">
+      <div className="flex min-w-0 max-w-full items-center justify-end">
+        <div ref={wrapRef} className="relative min-w-0 max-w-full shrink">
           <button
             type="button"
             id="header-account-trigger"
@@ -189,11 +195,11 @@ export function HeaderAccount() {
             aria-controls={menuId}
             aria-label="Account menu"
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex shrink-0 items-center gap-1 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
+            className="flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:gap-2 sm:pr-2"
           >
             {photo ? (
               <span
-                className={`relative block h-9 w-9 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 ring-2 transition hover:ring-neutral-300 ${menuOpen ? "ring-neutral-400" : "ring-transparent"}`}
+                className={`relative block h-9 w-9 shrink-0 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 ring-2 transition hover:ring-neutral-300 ${menuOpen ? "ring-neutral-400" : "ring-transparent"}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- OAuth avatar URLs (e.g. Google) vary by host */}
                 <img
@@ -206,11 +212,17 @@ export function HeaderAccount() {
               </span>
             ) : (
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-900 text-[11px] font-semibold normal-case tracking-wide text-white ring-2 transition hover:ring-neutral-400 ${menuOpen ? "ring-neutral-500" : "ring-transparent"}`}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-900 text-[11px] font-semibold normal-case tracking-wide text-white ring-2 transition hover:ring-neutral-400 ${menuOpen ? "ring-neutral-500" : "ring-transparent"}`}
               >
                 {initials}
               </span>
             )}
+            <span
+              className="min-w-0 max-w-[7.5rem] truncate text-left text-xs font-medium text-neutral-700 sm:max-w-40 md:max-w-56"
+              title={name}
+            >
+              {name}
+            </span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -233,40 +245,37 @@ export function HeaderAccount() {
               aria-label="Account"
               className="absolute right-0 top-[calc(100%+6px)] z-200 min-w-56 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg ring-1 ring-black/5"
             >
-            <Link
-              href="/account/profile"
-              role="menuitem"
-              className={menuLinkClass}
-              onClick={closeMenu}
-            >
-              Profile
-            </Link>
-            <Link
-              href="/account/orders"
-              role="menuitem"
-              className={menuLinkClass}
-              onClick={closeMenu}
-            >
-              Order history
-            </Link>
-            <div className="my-1 border-t border-neutral-100" role="separator" />
-            <button
-              type="button"
-              role="menuitem"
-              className={`${menuLinkClass} text-neutral-700 cursor-pointer`}
-              onClick={() => void signOut()}
-            >
-              Sign out
-            </button>
-          </div>
-        ) : null}
+              <Link
+                href="/account/profile"
+                role="menuitem"
+                className={menuLinkClass}
+                onClick={closeMenu}
+              >
+                Profile
+              </Link>
+              <Link
+                href="/account/orders"
+                role="menuitem"
+                className={menuLinkClass}
+                onClick={closeMenu}
+              >
+                Order history
+              </Link>
+              <div
+                className="my-1 border-t border-neutral-100"
+                role="separator"
+              />
+              <button
+                type="button"
+                role="menuitem"
+                className={`${menuLinkClass} text-neutral-700 cursor-pointer`}
+                onClick={() => void signOut()}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : null}
         </div>
-        <span
-          className="hidden min-w-0 max-w-40 truncate text-left text-xs font-medium text-neutral-700 sm:inline md:max-w-56"
-          title={name}
-        >
-          {name}
-        </span>
       </div>
     );
   }

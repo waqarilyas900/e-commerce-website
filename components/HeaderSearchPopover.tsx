@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, type FormEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+} from "framer-motion";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { collections } from "@/app/lib/store-data";
 
@@ -27,6 +31,33 @@ type Props = {
   panelOffsetClass?: string;
 };
 
+/** Match `components/cart/CartDrawer.tsx` for open/close rhythm */
+const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
+
+/** Slow, smooth open */
+const panelEnterTransition = {
+  duration: 0.68,
+  ease: [0.25, 1, 0.5, 1] as const,
+};
+
+/** Panel fully leaves like cart drawer slide (cart uses `x` 0.42s + easeSoftIn) */
+const panelExitTransition = {
+  duration: 0.42,
+  ease: easeSoftIn,
+};
+
+/** Same duration as panel exit so both finish together (avoids staggered “pop” before onExitComplete) */
+const scrimExitTransition = {
+  duration: 0.42,
+  ease: easeSilk,
+};
+
+const scrimEnterTransition = {
+  duration: 0.45,
+  ease: easeSilk,
+};
+
 export function HeaderSearchPopover({
   open,
   onOpenChange,
@@ -35,10 +66,18 @@ export function HeaderSearchPopover({
 }: Props) {
   const { storeName } = useStoreBrand();
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const panelId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  /** Scroll lock on `html` (matches `scrollbar-gutter` in globals); body padding only when scrollbar consumes width */
+  const htmlOverflowSnapshotRef = useRef<string | null>(null);
+  const bodyPaddingRightSnapshotRef = useRef<string | null>(null);
+  const scrollLockedRef = useRef(false);
+  /** Latest `open` for exit callback — avoid unlocking if user re-opened before exit finished. */
+  const openRef = useRef(open);
+  openRef.current = open;
   const terms = popularSearchTerms();
 
   useEffect(() => {
@@ -49,12 +88,45 @@ export function HeaderSearchPopover({
 
   useEffect(() => {
     if (!open || !renderPanel) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    if (!scrollLockedRef.current) {
+      const html = document.documentElement;
+      const body = document.body;
+      /** Measure while scrollbar still affects layout; avoids width jump when hiding overflow */
+      const scrollbarWidth = window.innerWidth - html.clientWidth;
+      bodyPaddingRightSnapshotRef.current = body.style.paddingRight;
+      htmlOverflowSnapshotRef.current = html.style.overflow;
+      html.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+      scrollLockedRef.current = true;
+    }
   }, [open, renderPanel]);
+
+  const releaseBodyScrollLock = () => {
+    if (!scrollLockedRef.current) return;
+    const html = document.documentElement;
+    const body = document.body;
+    html.style.overflow = htmlOverflowSnapshotRef.current ?? "";
+    body.style.paddingRight = bodyPaddingRightSnapshotRef.current ?? "";
+    htmlOverflowSnapshotRef.current = null;
+    bodyPaddingRightSnapshotRef.current = null;
+    scrollLockedRef.current = false;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (scrollLockedRef.current) {
+        const h = document.documentElement;
+        const b = document.body;
+        h.style.overflow = htmlOverflowSnapshotRef.current ?? "";
+        b.style.paddingRight = bodyPaddingRightSnapshotRef.current ?? "";
+        scrollLockedRef.current = false;
+        htmlOverflowSnapshotRef.current = null;
+        bodyPaddingRightSnapshotRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!open || !renderPanel) return;
@@ -98,7 +170,7 @@ export function HeaderSearchPopover({
         ref={triggerRef}
         type="button"
         aria-label="Search"
-        className="inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
+        className="cursor-pointer inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
         aria-expanded={open}
         aria-controls={renderPanel ? panelId : undefined}
         onClick={() => onOpenChange(!open)}
@@ -118,7 +190,17 @@ export function HeaderSearchPopover({
         <span className="sr-only">Search</span>
       </button>
 
-      <AnimatePresence>
+      <AnimatePresence
+        onExitComplete={() => {
+          if (openRef.current) return;
+          /** Two frames after exit: lets compositor finish without ~50ms setTimeout delay */
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (!openRef.current) releaseBodyScrollLock();
+            });
+          });
+        }}
+      >
         {open && renderPanel ? (
           <>
             <motion.button
@@ -127,8 +209,17 @@ export function HeaderSearchPopover({
               className={`fixed inset-x-0 bottom-0 z-35 ${panelOffsetClass} bg-[rgba(0,0,0,0.62)]`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
+              exit={{
+                opacity: 0,
+                transition: reduceMotion
+                  ? { duration: 0.14, ease: "easeOut" }
+                  : scrimExitTransition,
+              }}
+              transition={
+                reduceMotion
+                  ? { duration: 0.22, ease: "easeOut" }
+                  : scrimEnterTransition
+              }
               onClick={() => onOpenChange(false)}
             />
             <motion.div
@@ -137,11 +228,27 @@ export function HeaderSearchPopover({
               role="dialog"
               aria-modal="true"
               aria-label="Search"
-              className={`fixed inset-x-0 z-40 ${panelOffsetClass} max-h-[min(85vh,560px)] overflow-y-auto border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              style={{ transformOrigin: "top center" }}
+              className={`fixed inset-x-0 z-40 ${panelOffsetClass} max-h-[min(85vh,560px)] overflow-y-auto overflow-x-hidden border-b border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)]`}
+              initial={
+                reduceMotion ? { opacity: 0 } : { y: "-100%", opacity: 1 }
+              }
+              animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+              exit={
+                reduceMotion
+                  ? {
+                      opacity: 0,
+                      transition: { duration: 0.14, ease: "easeOut" },
+                    }
+                  : {
+                      y: "-100%",
+                      opacity: 0,
+                      transition: panelExitTransition,
+                    }
+              }
+              transition={
+                reduceMotion ? { duration: 0.22 } : panelEnterTransition
+              }
             >
               <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                 <form onSubmit={handleSubmit} className="relative">

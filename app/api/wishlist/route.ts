@@ -43,12 +43,13 @@ async function sellableForVariant(
  * GET /api/wishlist?variants=id,id&productId=&optionFp=
  * - `variants`: variant UUIDs to check (in-wishlist for logged-in user)
  * - `productId` + `optionFp`: check option-snapshot row (no SKU yet)
+ * - `bulk=1` + `productId` (+ `variants`): also return `optionSnapshotFingerprints[]` for this product (PDP prefetch)
  */
 export async function GET(req: Request) {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const url = new URL(req.url);
   const idsParam = url.searchParams.get("variants") ?? "";
@@ -58,6 +59,7 @@ export async function GET(req: Request) {
     .filter(Boolean);
   const productId = url.searchParams.get("productId")?.trim() ?? "";
   const optionFp = url.searchParams.get("optionFp")?.trim() ?? "";
+  const bulk = url.searchParams.get("bulk") === "1";
 
   const variants: Record<string, { inWishlist: boolean }> = {};
   for (const id of variantIds) {
@@ -65,17 +67,25 @@ export async function GET(req: Request) {
   }
 
   let optionRequest: { inWishlist: boolean } | undefined;
+  let optionSnapshotFingerprints: string[] | undefined;
 
-  if (!session?.user) {
+  if (!user) {
     if (productId && optionFp) {
       optionRequest = { inWishlist: false };
     }
-    return NextResponse.json({ variants, optionRequest });
+    if (bulk && productId) {
+      optionSnapshotFingerprints = [];
+    }
+    return NextResponse.json({ variants, optionRequest, optionSnapshotFingerprints });
   }
 
-  const userId = await getAppUserId(supabase, session.user.id);
+  const userId = await getAppUserId(supabase, user.id);
   if (!userId) {
-    return NextResponse.json({ variants, optionRequest: { inWishlist: false } });
+    return NextResponse.json({
+      variants,
+      optionRequest: { inWishlist: false },
+      optionSnapshotFingerprints: bulk && productId ? [] : undefined,
+    });
   }
 
   if (variantIds.length > 0) {
@@ -96,6 +106,22 @@ export async function GET(req: Request) {
     }
   }
 
+  if (bulk && productId) {
+    const { data: snapRows, error: snapErr } = await supabase
+      .from("wishlist_items")
+      .select("option_request_fingerprint")
+      .eq("user_id", userId)
+      .eq("product_id", productId)
+      .is("product_variant_id", null);
+
+    if (snapErr) {
+      return NextResponse.json({ error: snapErr.message }, { status: 400 });
+    }
+    optionSnapshotFingerprints = (snapRows ?? [])
+      .map((r) => (r as { option_request_fingerprint: string | null }).option_request_fingerprint)
+      .filter((fp): fp is string => Boolean(fp));
+  }
+
   if (productId && optionFp) {
     const { data: optRow } = await supabase
       .from("wishlist_items")
@@ -108,7 +134,7 @@ export async function GET(req: Request) {
     optionRequest = { inWishlist: Boolean(optRow) };
   }
 
-  return NextResponse.json({ variants, optionRequest });
+  return NextResponse.json({ variants, optionRequest, optionSnapshotFingerprints });
 }
 
 type PostBody = {
@@ -128,13 +154,13 @@ type PostBody = {
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.user) {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = await getAppUserId(supabase, session.user.id);
+  const userId = await getAppUserId(supabase, user.id);
   if (!userId) {
     return NextResponse.json({ error: "Profile not found" }, { status: 400 });
   }

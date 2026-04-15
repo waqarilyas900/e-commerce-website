@@ -56,6 +56,11 @@ body[data-header-sticky="true"] #site-header-sticky {
   box-shadow: 0 8px 24px -18px rgba(0, 0, 0, 0.35);
 }
 
+/* Reserve scrollbar space so toggling overflow (e.g. search modal) doesn’t shift layout at close */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--colorBody);
   color: var(--colorTextBody);

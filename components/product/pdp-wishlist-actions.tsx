@@ -1,11 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SignInModal } from "@/components/auth/sign-in-modal";
 import { clientOptionFingerprint } from "@/lib/wishlist-fingerprint";
 import type { DbProductVariantRow } from "@/app/lib/db/types";
 import { toastWishlistAdded, toastWishlistRemoved } from "@/lib/wishlist-toast";
+
+export type PdpWishlistBulkChange = {
+  inWishlist: boolean;
+  /** When the row is variant-scoped */
+  variantId?: string;
+  /** When the row is option-snapshot (no SKU) */
+  optionFingerprint?: string;
+};
 
 type Props = {
   productId: string;
@@ -16,8 +24,17 @@ type Props = {
   selection: Record<string, string>;
   /** Resolved SKU or null when no variant exists for this combination */
   matchedVariant: DbProductVariantRow | null;
-  variantIds: string[];
   maxQty: number;
+  /** Prefetched from GET /api/wishlist?bulk=1 — variant ids saved for this product */
+  wishlistVariantIds: ReadonlySet<string>;
+  /** Prefetched option-request fingerprints for this product */
+  wishlistOptionFingerprints: ReadonlySet<string>;
+  /** Current selection fingerprint (parent computes async; no GET per change) */
+  currentOptionFingerprint: string;
+  /** False until PDP has loaded bulk wishlist (guest = true immediately) */
+  wishlistReady: boolean;
+  /** Keep PDP Sets in sync after POST without refetch */
+  onWishlistBulkChange?: (patch: PdpWishlistBulkChange) => void;
   compact?: boolean;
   layout?: "default" | "inline";
   className?: string;
@@ -30,57 +47,35 @@ export function PdpWishlistActions({
   dimensionKeys,
   selection,
   matchedVariant,
-  variantIds,
   maxQty,
+  wishlistVariantIds,
+  wishlistOptionFingerprints,
+  currentOptionFingerprint,
+  wishlistReady,
+  onWishlistBulkChange,
   compact = false,
   layout = "default",
   className = "",
 }: Props) {
-  const [inWishlist, setInWishlist] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
 
   const nextPath = `/products/${productSlug}`;
 
-  const refreshStatus = useCallback(async () => {
-    const ids = [...new Set(variantIds)].filter(Boolean);
-    try {
-      const fp = await clientOptionFingerprint(dimensionKeys, selection);
-      const qs = new URLSearchParams();
-      if (ids.length) qs.set("variants", ids.join(","));
-      qs.set("productId", productId);
-      qs.set("optionFp", fp);
-      const res = await fetch(`/api/wishlist?${qs.toString()}`, { credentials: "same-origin" });
-      if (!res.ok) return;
-      const data = (await res.json()) as {
-        variants?: Record<string, { inWishlist: boolean }>;
-        optionRequest?: { inWishlist: boolean };
-      };
-      if (matchedVariant) {
-        setInWishlist(Boolean(data.variants?.[matchedVariant.id]?.inWishlist));
-      } else {
-        setInWishlist(Boolean(data.optionRequest?.inWishlist));
-      }
-    } catch {
-      /* ignore */
+  const inWishlist = useMemo(() => {
+    if (!wishlistReady) return false;
+    if (matchedVariant) {
+      return wishlistVariantIds.has(matchedVariant.id);
     }
-  }, [dimensionKeys, selection, matchedVariant, productId, variantIds]);
-
-  useEffect(() => {
-    void refreshStatus();
-  }, [refreshStatus]);
-
-  useEffect(() => {
-    const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        void refreshStatus();
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [refreshStatus]);
+    if (!currentOptionFingerprint) return false;
+    return wishlistOptionFingerprints.has(currentOptionFingerprint);
+  }, [
+    wishlistReady,
+    matchedVariant,
+    wishlistVariantIds,
+    wishlistOptionFingerprints,
+    currentOptionFingerprint,
+  ]);
 
   async function requireAuth(): Promise<boolean> {
     const supabase = createClient();
@@ -112,6 +107,8 @@ export function PdpWishlistActions({
         inWishlist: next,
       };
 
+      let snapshotFp: string | undefined;
+
       if (matchedVariant) {
         body.productVariantId = matchedVariant.id;
         body.notifyOnRestock = maxQty < 1 ? true : false;
@@ -120,6 +117,7 @@ export function PdpWishlistActions({
         body.dimensionKeys = dimensionKeys;
         body.requestedOptionValues = buildRequestedOptions();
         body.notifyOnRestock = true;
+        snapshotFp = await clientOptionFingerprint(dimensionKeys, selection);
       }
 
       const res = await fetch("/api/wishlist", {
@@ -133,7 +131,24 @@ export function PdpWishlistActions({
         return;
       }
       if (!res.ok) return;
-      setInWishlist(next);
+
+      const json = (await res.json()) as { optionFingerprint?: string };
+
+      if (matchedVariant) {
+        onWishlistBulkChange?.({
+          inWishlist: next,
+          variantId: matchedVariant.id,
+        });
+      } else {
+        const fp = json.optionFingerprint ?? snapshotFp;
+        if (fp) {
+          onWishlistBulkChange?.({
+            inWishlist: next,
+            optionFingerprint: fp,
+          });
+        }
+      }
+
       if (next) {
         toastWishlistAdded(productName, {
           restockNotify: Boolean(matchedVariant ? maxQty < 1 : true),
@@ -161,7 +176,7 @@ export function PdpWishlistActions({
           onClick={() => void toggleWishlist()}
           disabled={loading}
           aria-pressed={inWishlist}
-          className={btnClass}
+          className={`cursor-pointer ${btnClass}`}
         >
           <span
             className={`text-lg leading-none ${inWishlist ? "text-red-600" : "text-neutral-400"}`}

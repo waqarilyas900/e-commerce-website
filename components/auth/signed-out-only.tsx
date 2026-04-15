@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
 import { createClient } from "@/lib/supabase/client";
 
@@ -21,11 +22,9 @@ export function SignedOutOnly({ children, whenSignedInHref }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const supabase = createClient();
+
+    function applySession(session: Session | null) {
       if (cancelled) return;
       const user = session?.user ?? null;
       if (user && isCompletingPasswordReset(session)) {
@@ -37,9 +36,21 @@ export function SignedOutOnly({ children, whenSignedInHref }: Props) {
         return;
       }
       setReady(true);
-    })();
+    }
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      applySession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
+
     return () => {
       cancelled = true;
+      subscription.unsubscribe();
     };
   }, [router, whenSignedInHref]);
 

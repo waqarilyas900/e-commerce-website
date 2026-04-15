@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import DOMPurify from "isomorphic-dompurify";
 import ReactStars from "react-rating-stars-component";
 import { AnimatePresence, motion } from "framer-motion";
 import { AddToCartVariantButton } from "@/components/cart/AddToCartVariantButton";
-import { PdpWishlistActions } from "@/components/product/pdp-wishlist-actions";
+import {
+  PdpWishlistActions,
+  type PdpWishlistBulkChange,
+} from "@/components/product/pdp-wishlist-actions";
+import { createClient } from "@/lib/supabase/client";
+import { clientOptionFingerprint } from "@/lib/wishlist-fingerprint";
 import { AppSelect } from "@/components/ui/app-select";
 import {
   collectOptionKeysFromVariants,
@@ -71,6 +83,21 @@ function firstImage(images: unknown): string {
   return "";
 }
 
+/** Dedupe concurrent identical bulk wishlist GETs (e.g. React Strict Mode double mount). Key must include auth epoch so sign-in/out never reuse another session’s response. */
+const bulkWishlistInflight = new Map<string, Promise<Response>>();
+
+function fetchWishlistBulkOnce(dedupeKey: string, url: string): Promise<Response> {
+  const existing = bulkWishlistInflight.get(dedupeKey);
+  /** Each caller gets a fresh clone() so two Strict Mode effect runs can both read JSON. */
+  if (existing) return existing.then((r) => r.clone());
+  const p = fetch(url, { credentials: "same-origin" });
+  bulkWishlistInflight.set(dedupeKey, p);
+  p.finally(() => {
+    globalThis.setTimeout(() => bulkWishlistInflight.delete(dedupeKey), 2500);
+  });
+  return p.then((r) => r.clone());
+}
+
 type GalleryItem = { kind: "image" | "video"; url: string; alt: string };
 
 function buildGallery(
@@ -129,10 +156,112 @@ export function ProductPdp({
   const keys = useMemo(() => dimensions.map((d) => d.key), [dimensions]);
 
   const variantIds = useMemo(() => variants.map((v) => v.id), [variants]);
+  /** Stable primitive for effect deps (avoids ref churn when `variantIds` array identity changes). */
+  const variantIdsKey = useMemo(() => variantIds.join(","), [variantIds]);
 
   const [selection, setSelection] = useState<Record<string, string>>(() =>
     initialSelectionForVariants(variants, keys),
   );
+
+  const [authTick, setAuthTick] = useState(0);
+  /** Baseline + last seen auth user id — avoids extra bulk refetch when Supabase emits duplicate SIGNED_IN for the same session. */
+  const lastAuthUserIdRef = useRef<string | null | undefined>(undefined);
+  const [wishlistVariantIds, setWishlistVariantIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [wishlistOptionFingerprints, setWishlistOptionFingerprints] = useState<
+    Set<string>
+  >(() => new Set());
+  const [wishlistReady, setWishlistReady] = useState(false);
+  const [currentOptionFingerprint, setCurrentOptionFingerprint] = useState("");
+
+  const handleWishlistBulkChange = useCallback((patch: PdpWishlistBulkChange) => {
+    if (patch.variantId) {
+      setWishlistVariantIds((prev) => {
+        const n = new Set(prev);
+        if (patch.inWishlist) n.add(patch.variantId!);
+        else n.delete(patch.variantId!);
+        return n;
+      });
+    }
+    if (patch.optionFingerprint) {
+      setWishlistOptionFingerprints((prev) => {
+        const n = new Set(prev);
+        if (patch.inWishlist) n.add(patch.optionFingerprint!);
+        else n.delete(patch.optionFingerprint!);
+        return n;
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nextId = session?.user?.id ?? null;
+      if (lastAuthUserIdRef.current === undefined) {
+        lastAuthUserIdRef.current = nextId;
+      } else if (lastAuthUserIdRef.current !== nextId) {
+        lastAuthUserIdRef.current = nextId;
+        setAuthTick((t) => t + 1);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setWishlistReady(false);
+    setWishlistVariantIds(new Set());
+    setWishlistOptionFingerprints(new Set());
+
+    (async () => {
+      const params = new URLSearchParams();
+      params.set("productId", product.id);
+      params.set("bulk", "1");
+      if (variantIdsKey.length > 0) {
+        params.set("variants", variantIdsKey);
+      }
+      const bulkUrl = `/api/wishlist?${params.toString()}`;
+      const dedupeKey = `${product.id}|${variantIdsKey}|${authTick}`;
+      const res = await fetchWishlistBulkOnce(dedupeKey, bulkUrl);
+      if (cancelled) return;
+      if (!res.ok) {
+        setWishlistReady(true);
+        return;
+      }
+      const json = (await res.json()) as {
+        variants?: Record<string, { inWishlist: boolean }>;
+        optionSnapshotFingerprints?: string[];
+      };
+      const vNext = new Set<string>();
+      if (json.variants) {
+        for (const [id, row] of Object.entries(json.variants)) {
+          if (row.inWishlist) vNext.add(id);
+        }
+      }
+      const fpNext = new Set(json.optionSnapshotFingerprints ?? []);
+      setWishlistVariantIds(vNext);
+      setWishlistOptionFingerprints(fpNext);
+      setWishlistReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id, variantIdsKey, authTick]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const fp = await clientOptionFingerprint(keys, selection);
+      if (!cancelled) setCurrentOptionFingerprint(fp);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [keys, selection]);
 
   /** Exact SKU for current selection; stock + cart use this only. */
   const matchedVariant = useMemo(
@@ -504,7 +633,8 @@ export function ProductPdp({
                     </p>
                   )
                 ) : (
-                  <p className="text-2xl font-semibold text-neutral-400">—</p>
+                  <></>
+                  // <p className="text-2xl font-semibold text-neutral-400">—</p>
                 )}
               </div>
               <div
@@ -618,8 +748,12 @@ export function ProductPdp({
                           dimensionKeys={keys}
                           selection={selection}
                           matchedVariant={matchedVariant ?? null}
-                          variantIds={variantIds}
                           maxQty={maxQty}
+                          wishlistVariantIds={wishlistVariantIds}
+                          wishlistOptionFingerprints={wishlistOptionFingerprints}
+                          currentOptionFingerprint={currentOptionFingerprint}
+                          wishlistReady={wishlistReady}
+                          onWishlistBulkChange={handleWishlistBulkChange}
                           layout="inline"
                         />
                       </div>
@@ -665,8 +799,12 @@ export function ProductPdp({
                         dimensionKeys={keys}
                         selection={selection}
                         matchedVariant={null}
-                        variantIds={variantIds}
                         maxQty={0}
+                        wishlistVariantIds={wishlistVariantIds}
+                        wishlistOptionFingerprints={wishlistOptionFingerprints}
+                        currentOptionFingerprint={currentOptionFingerprint}
+                        wishlistReady={wishlistReady}
+                        onWishlistBulkChange={handleWishlistBulkChange}
                         layout="inline"
                       />
                     </div>
@@ -770,8 +908,12 @@ export function ProductPdp({
                         dimensionKeys={keys}
                         selection={selection}
                         matchedVariant={matchedVariant ?? null}
-                        variantIds={variantIds}
                         maxQty={matchedVariant ? maxQty : 0}
+                        wishlistVariantIds={wishlistVariantIds}
+                        wishlistOptionFingerprints={wishlistOptionFingerprints}
+                        currentOptionFingerprint={currentOptionFingerprint}
+                        wishlistReady={wishlistReady}
+                        onWishlistBulkChange={handleWishlistBulkChange}
                         compact
                         layout="inline"
                       />

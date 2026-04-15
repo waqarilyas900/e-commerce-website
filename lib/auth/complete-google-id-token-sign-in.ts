@@ -27,30 +27,49 @@ export async function completeGoogleIdTokenSignIn(options: {
 }): Promise<void> {
   const { credential, router, nextPath } = options;
   const supabase = createClient();
+  const loadingToastId = toast.loading("Signing you in…");
 
-  const { error } = await supabase.auth.signInWithIdToken({
-    provider: "google",
-    token: credential,
-  });
+  try {
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: credential,
+    });
 
-  if (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[Google] signInWithIdToken", error.message);
+    if (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Google] signInWithIdToken", error.message);
+      }
+      if (/nonce/i.test(error.message)) {
+        toast.error("Google One Tap needs Supabase setting", {
+          description:
+            "Enable “Skip nonce check” for the Google provider: Dashboard → Authentication → Providers → Google. Required due to GoTrue vs Google nonce encoding (github.com/supabase/auth/issues/1829).",
+          duration: 12_000,
+        });
+      }
+      return;
     }
-    if (/nonce/i.test(error.message)) {
-      toast.error("Google One Tap needs Supabase setting", {
-        description:
-          "Enable “Skip nonce check” for the Google provider: Dashboard → Authentication → Providers → Google. Required due to GoTrue vs Google nonce encoding (github.com/supabase/auth/issues/1829).",
-        duration: 12_000,
-      });
-    }
-    return;
-  }
 
-  router.refresh();
-  if (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")) {
-    router.push(nextPath);
+    router.refresh();
+    const dest =
+      (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
+        ? nextPath
+        : undefined) ?? inferSafePostGoogleNavPath();
+    if (dest) {
+      router.push(dest);
+    }
+  } finally {
+    toast.dismiss(loadingToastId);
   }
+}
+
+/** Last URL segment after trimming trailing slashes — supports `/login`, `/login/`, `/en/login`. */
+function authPageKindFromPathname(pathname: string): "login" | "signup" | null {
+  const trimmed = pathname.replace(/\/+$/, "");
+  const segments = trimmed.split("/").filter(Boolean);
+  const last = segments[segments.length - 1];
+  if (last === "login") return "login";
+  if (last === "signup") return "signup";
+  return null;
 }
 
 /**
@@ -59,12 +78,12 @@ export async function completeGoogleIdTokenSignIn(options: {
  */
 export function inferSafePostGoogleNavPath(): string | undefined {
   if (typeof window === "undefined") return undefined;
-  const p = window.location.pathname;
-  if (p === "/login") {
+  const kind = authPageKindFromPathname(window.location.pathname);
+  if (kind === "login") {
     const n = new URLSearchParams(window.location.search).get("next");
     if (n && n.startsWith("/") && !n.startsWith("//")) return n;
     return "/";
   }
-  if (p === "/signup") return "/";
+  if (kind === "signup") return "/";
   return undefined;
 }
