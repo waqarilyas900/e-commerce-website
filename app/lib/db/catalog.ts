@@ -7,6 +7,10 @@ import type {
 } from "@/app/lib/db/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Product } from "@/app/lib/catalog/types";
+import {
+  optionDefinitionsFromDbRows,
+  type VariantOptionSchemaEntry,
+} from "@/app/lib/catalog/variant-option-schema";
 import { hasCatalogDb } from "@/app/lib/db/env";
 
 let warnedMissingCatalogSchema = false;
@@ -364,11 +368,20 @@ export async function dbGetProductsBySlugs(slugs: string[]): Promise<Product[]> 
   });
 }
 
+/** Hex/name for storefront swatches; keyed by `colors.id` from variants’ `color_id`. */
+export type ProductDetailColorMeta = {
+  name: string;
+  hex: string | null;
+};
+
 export type ProductDetail = {
   product: DbProductRow;
+  /** From `product_option_definitions`; drives PDP picker labels and layout. */
+  optionDefinitions: VariantOptionSchemaEntry[];
   collectionSlug: string;
   variants: DbProductVariantRow[];
   assets: DbProductAssetRow[];
+  colorById: Record<string, ProductDetailColorMeta>;
 };
 
 export async function dbGetProductDetailBySlug(
@@ -424,6 +437,29 @@ export async function dbGetProductDetailBySlug(
     >[],
   );
 
+  const colorIds = [
+    ...new Set(
+      merged.map((v) => v.color_id).filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  let colorById: Record<string, ProductDetailColorMeta> = {};
+  if (colorIds.length) {
+    const { data: colorRows, error: colErr } = await supabase
+      .from("colors")
+      .select("id, name, hex")
+      .in("id", colorIds);
+    if (colErr) {
+      logDbCatalogIssue("productDetailColors", colErr.message);
+    } else {
+      colorById = Object.fromEntries(
+        (colorRows ?? []).map((c: { id: string; name: string; hex: string | null }) => [
+          c.id,
+          { name: c.name, hex: c.hex },
+        ]),
+      );
+    }
+  }
+
   const { data: assetRows, error: aErr } = await supabase
     .from("product_assets")
     .select("id, product_id, url, kind, sort_order, alt_text")
@@ -434,11 +470,32 @@ export async function dbGetProductDetailBySlug(
     logDbCatalogIssue("productAssets", aErr.message);
   }
 
+  const { data: optRows, error: optErr } = await supabase
+    .from("product_option_definitions")
+    .select("option_key, label, presentation, sort_order")
+    .eq("product_id", row.id)
+    .order("sort_order", { ascending: true });
+
+  if (optErr) {
+    logDbCatalogIssue("productOptionDefinitions", optErr.message);
+  }
+
   return {
     product: row,
+    optionDefinitions: optionDefinitionsFromDbRows(
+      optRows as
+        | {
+            option_key: string;
+            label: string;
+            presentation: string;
+            sort_order: number;
+          }[]
+        | null,
+    ),
     collectionSlug,
     variants: merged,
     assets: (assetRows ?? []) as DbProductAssetRow[],
+    colorById,
   };
 }
 

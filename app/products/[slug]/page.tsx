@@ -34,10 +34,14 @@ export default async function ProductPage({ params }: Props) {
             className="main-content mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
           >
             <ProductPdp
+              key={detail.product.id}
               product={detail.product}
+              productSlug={slug}
+              optionDefinitions={detail.optionDefinitions}
               collectionLabel={detail.collectionSlug}
               variants={detail.variants}
               assets={detail.assets}
+              colorById={detail.colorById}
             />
             <section className="mt-10">
               <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>

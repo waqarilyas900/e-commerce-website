@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { GoogleSignInCredentialButton } from "@/components/auth/google-identity-provider";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
@@ -49,7 +49,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
-      <GoogleSignInButton label="Sign in with Google" nextHref={safeNext} />
+      <GoogleSignInCredentialButton label="Sign in with Google" nextHref={safeNext} />
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center" aria-hidden>
           <span className="w-full border-t border-neutral-200" />

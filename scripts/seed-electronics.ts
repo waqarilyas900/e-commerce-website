@@ -2,7 +2,7 @@
  * Seeds the Electronics collection + 5 products with varied variant strategies:
  * - USB hub: single option "Configuration" (no size/color FKs)
  * - Mouse: color-only variants with color_id (Black / White)
- * - Monitor: panel size + compare-at sale on 27″
+ * - Monitor: size variants (27″ / 32″ QHD) + compare-at sale on 27″
  * - Speaker: storage tiers + sale on entry tier
  * - Keyboard: Switch × Color matrix with tiered pricing
  *
@@ -88,7 +88,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
   "vector-qhd-monitor": [
     {
       sku: "vector-mon-27qhd",
-      option_values: { Panel: "27″ QHD" },
+      option_values: { size: "27″ QHD" },
       sizeLabel: null,
       colorName: null,
       price: 45900,
@@ -97,7 +97,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
     },
     {
       sku: "vector-mon-32qhd",
-      option_values: { Panel: "32″ QHD" },
+      option_values: { size: "32″ QHD" },
       sizeLabel: null,
       colorName: null,
       price: 62900,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Jost } from "next/font/google";
 import { getStoreBrand } from "@/app/lib/store-brand";
-import { GoogleOneTap } from "@/components/auth/google-one-tap";
+import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
 import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider";
 import { StoreBrandProvider } from "@/app/providers/store-brand-provider";
@@ -72,15 +72,27 @@ export default async function RootLayout({
       >
         <StoreBrandProvider brand={brand}>
           <NavCollectionsProvider links={collectionLinks}>
-            {showGoogleOneTap ? <GoogleOneTap /> : null}
-            <CartProvider>
-              <HeaderStickyObserver />
-              <DiscountNotificationPrompt />
-              <div id="PageContainer" className="page-container">
-                <div className="transition-body">{children}</div>
-              </div>
-              <AppToaster />
-            </CartProvider>
+            {showGoogleOneTap ? (
+              <GoogleOneTap>
+                <CartProvider>
+                  <HeaderStickyObserver />
+                  <DiscountNotificationPrompt />
+                  <div id="PageContainer" className="page-container">
+                    <div className="transition-body">{children}</div>
+                  </div>
+                  <AppToaster />
+                </CartProvider>
+              </GoogleOneTap>
+            ) : (
+              <CartProvider>
+                <HeaderStickyObserver />
+                <DiscountNotificationPrompt />
+                <div id="PageContainer" className="page-container">
+                  <div className="transition-body">{children}</div>
+                </div>
+                <AppToaster />
+              </CartProvider>
+            )}
           </NavCollectionsProvider>
         </StoreBrandProvider>
       </body>
