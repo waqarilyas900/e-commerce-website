@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SignInModal } from "@/components/auth/sign-in-modal";
 import { clientOptionFingerprint } from "@/lib/wishlist-fingerprint";
@@ -57,12 +57,14 @@ export function PdpWishlistActions({
   layout = "default",
   className = "",
 }: Props) {
-  const [loading, setLoading] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  /** Overrides server-derived state until the POST finishes or props reconcile (optimistic heart). */
+  const [optimisticInWishlist, setOptimisticInWishlist] = useState<boolean | null>(null);
+  const inFlightRef = useRef(false);
 
   const nextPath = `/products/${productSlug}`;
 
-  const inWishlist = useMemo(() => {
+  const serverInWishlist = useMemo(() => {
     if (!wishlistReady) return false;
     if (matchedVariant) {
       return wishlistVariantIds.has(matchedVariant.id);
@@ -76,6 +78,15 @@ export function PdpWishlistActions({
     wishlistOptionFingerprints,
     currentOptionFingerprint,
   ]);
+
+  const inWishlist = optimisticInWishlist ?? serverInWishlist;
+
+  useEffect(() => {
+    if (optimisticInWishlist === null) return;
+    if (optimisticInWishlist === serverInWishlist) {
+      setOptimisticInWishlist(null);
+    }
+  }, [optimisticInWishlist, serverInWishlist]);
 
   async function requireAuth(): Promise<boolean> {
     const supabase = createClient();
@@ -96,12 +107,15 @@ export function PdpWishlistActions({
   }
 
   async function toggleWishlist() {
-    if (loading) return;
+    if (inFlightRef.current) return;
     const ok = await requireAuth();
     if (!ok) return;
-    setLoading(true);
+
+    const next = !inWishlist;
+    inFlightRef.current = true;
+    setOptimisticInWishlist(next);
+
     try {
-      const next = !inWishlist;
       const body: Record<string, unknown> = {
         productId,
         inWishlist: next,
@@ -127,10 +141,14 @@ export function PdpWishlistActions({
         body: JSON.stringify(body),
       });
       if (res.status === 401) {
+        setOptimisticInWishlist(null);
         setAuthOpen(true);
         return;
       }
-      if (!res.ok) return;
+      if (!res.ok) {
+        setOptimisticInWishlist(null);
+        return;
+      }
 
       const json = (await res.json()) as { optionFingerprint?: string };
 
@@ -149,6 +167,8 @@ export function PdpWishlistActions({
         }
       }
 
+      setOptimisticInWishlist(null);
+
       if (next) {
         toastWishlistAdded(productName, {
           restockNotify: Boolean(matchedVariant ? maxQty < 1 : true),
@@ -157,7 +177,7 @@ export function PdpWishlistActions({
         toastWishlistRemoved();
       }
     } finally {
-      setLoading(false);
+      inFlightRef.current = false;
     }
   }
 
@@ -174,7 +194,6 @@ export function PdpWishlistActions({
         <button
           type="button"
           onClick={() => void toggleWishlist()}
-          disabled={loading}
           aria-pressed={inWishlist}
           className={`cursor-pointer ${btnClass}`}
         >
@@ -184,11 +203,7 @@ export function PdpWishlistActions({
           >
             {inWishlist ? "♥" : "♡"}
           </span>
-          {loading ? (
-            <span>…</span>
-          ) : (
-            <span className={compact ? "text-[11px]" : ""}>Wishlist</span>
-          )}
+          <span className={compact ? "text-[11px]" : ""}>Wishlist</span>
         </button>
       </div>
       <SignInModal

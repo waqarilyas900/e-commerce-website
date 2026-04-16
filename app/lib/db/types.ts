@@ -1,11 +1,24 @@
 /** Rows aligned with public.collections / products / product_variants */
 
+import { type CollectionTypeDb } from "@/app/lib/db/collection-type";
+
 export type DbCollectionRow = {
   id: string;
   slug: string;
   name: string;
   description: string;
   hero_image: string;
+  sort_order: number;
+  /** `public.collection_type` enum; omit only before migration. */
+  collection_type?: CollectionTypeDb;
+};
+
+/** `public.home_page_sections` — homepage product rails + `/s/{slug}` listing. */
+export type DbHomePageSectionRow = {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
   sort_order: number;
 };
 

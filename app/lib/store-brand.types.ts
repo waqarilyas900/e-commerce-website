@@ -4,12 +4,33 @@ export type StoreVerticalId =
   | "jewellery"
   | "home-compliance";
 
+/** Top strip from admin (home_page_settings); set in root layout from Supabase. */
+export type AnnouncementBarSettings = {
+  enabled: boolean;
+  /**
+   * Non-empty rich HTML segments (TipTap), shown in order; storefront crossfades between them.
+   * Legacy single `announcement_html` is merged into this list when the array was empty.
+   */
+  messages: string[];
+  /** Time each message is visible before advancing (loop). Clamped server-side (e.g. 3–12s). */
+  rotationIntervalMs: number;
+  /**
+   * First message (or legacy html) for backward compatibility — prefer `messages` in UI.
+   * @deprecated use messages
+   */
+  html: string;
+  backgroundColor: string;
+  textColor: string;
+};
+
 export type StoreBrandConfig = {
   storeName: string;
   siteTitle: string;
   siteDescription: string;
-  announcement: string;
-  missionParagraph: string;
+  /**
+   * When set (root layout), drives the top announcement bar: HTML, colors, rotation.
+   */
+  announcementBar?: AnnouncementBarSettings;
   featured: {
     eyebrow: string;
     title: string;
@@ -37,10 +58,21 @@ export type StoreBrandConfig = {
   };
 };
 
-/** Brand fields from a vertical catalog (no store name — use `getPublicStoreName()`). */
-export type CatalogBrand = Omit<StoreBrandConfig, "storeName">;
+/**
+ * Static vertical seed files only — not used for live storefront copy when DB is configured.
+ */
+export type CatalogBrand = Omit<StoreBrandConfig, "storeName" | "announcementBar"> & {
+  announcement: string;
+  missionParagraph: string;
+};
 
-export type HeroSlide = { title: string; href: string; image: string };
+export type HeroSlide = {
+  /** Set when slide comes from DB — stable keys for animation */
+  id?: string;
+  title: string;
+  href: string;
+  image: string;
+};
 
 export type HomeCategoryRail = {
   title: string;

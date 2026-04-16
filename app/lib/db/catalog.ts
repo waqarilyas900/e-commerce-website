@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
   DbCollectionRow,
+  DbHomePageSectionRow,
   DbProductAssetRow,
   DbProductRow,
   DbProductVariantRow,
 } from "@/app/lib/db/types";
+import { collectionIsTagBased } from "@/app/lib/db/collection-type";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Product } from "@/app/lib/catalog/types";
 import {
@@ -227,7 +229,7 @@ export async function dbListCollections(): Promise<DbCollectionRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("collections")
-    .select("id, slug, name, description, hero_image, sort_order")
+    .select("id, slug, name, description, hero_image, sort_order, collection_type")
     .order("sort_order", { ascending: true });
   if (error) {
     logDbCatalogIssue("listCollections", error.message);
@@ -243,7 +245,7 @@ export async function dbGetCollectionBySlug(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("collections")
-    .select("id, slug, name, description, hero_image, sort_order")
+    .select("id, slug, name, description, hero_image, sort_order, collection_type")
     .eq("slug", slug)
     .maybeSingle();
   if (error) {
@@ -261,17 +263,49 @@ export async function dbListProductsByCollectionSlug(
   if (!col) return [];
 
   const supabase = await createClient();
-  const { data: linkRows, error: linkErr } = await supabase
-    .from("product_collections")
-    .select("product_id")
-    .eq("collection_id", col.id)
-    .order("created_at", { ascending: true });
-  if (linkErr) {
-    logDbCatalogIssue("listProductsByCollectionLinks", linkErr.message);
-    return [];
+
+  let productIds: string[] = [];
+
+  if (collectionIsTagBased(col.collection_type)) {
+    const { data: ctRows, error: ctErr } = await supabase
+      .from("collection_tags")
+      .select("tag_id")
+      .eq("collection_id", col.id);
+    if (ctErr) {
+      logDbCatalogIssue("listCollectionTags", ctErr.message);
+      return [];
+    }
+    const tagIds = (ctRows ?? []).map((r: { tag_id: string }) => r.tag_id);
+    if (!tagIds.length) return [];
+
+    const { data: ptRows, error: ptErr } = await supabase
+      .from("product_tags")
+      .select("product_id")
+      .in("tag_id", tagIds);
+    if (ptErr) {
+      logDbCatalogIssue("listProductsByTagLinks", ptErr.message);
+      return [];
+    }
+    const seen = new Set<string>();
+    for (const r of ptRows ?? []) {
+      const pid = (r as { product_id: string }).product_id;
+      if (!seen.has(pid)) seen.add(pid);
+    }
+    productIds = [...seen];
+    if (!productIds.length) return [];
+  } else {
+    const { data: linkRows, error: linkErr } = await supabase
+      .from("product_collections")
+      .select("product_id")
+      .eq("collection_id", col.id)
+      .order("created_at", { ascending: true });
+    if (linkErr) {
+      logDbCatalogIssue("listProductsByCollectionLinks", linkErr.message);
+      return [];
+    }
+    productIds = (linkRows ?? []).map((r: { product_id: string }) => r.product_id);
+    if (!productIds.length) return [];
   }
-  const productIds = (linkRows ?? []).map((r: { product_id: string }) => r.product_id);
-  if (!productIds.length) return [];
 
   const { data: products, error: pErr } = await supabase
     .from("products")
@@ -313,7 +347,11 @@ export async function dbListProductsByCollectionSlug(
   }
 
   const order = new Map(productIds.map((id, i) => [id, i]));
-  plist.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  if (collectionIsTagBased(col.collection_type)) {
+    plist.sort((a, b) => a.name.localeCompare(b.name));
+  } else {
+    plist.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  }
 
   return plist.map((p) =>
     mapProductCard(p, byProduct.get(p.id) ?? [], col.slug),
@@ -548,4 +586,173 @@ export async function dbSearchProducts(q: string): Promise<Product[]> {
     const slug = displaySlug.get(p.id) ?? "uncategorized";
     return mapProductCard(p, byProduct.get(p.id) ?? [], slug);
   });
+}
+
+export type HomePageSectionWithTags = {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  tagIds: string[];
+};
+
+/** Active homepage sections with tag ids (OR match on storefront). */
+export async function dbListActiveHomePageSectionsWithTags(): Promise<
+  HomePageSectionWithTags[]
+> {
+  if (!hasCatalogDb()) return [];
+  const supabase = await createClient();
+  const { data: sections, error } = await supabase
+    .from("home_page_sections")
+    .select("id, name, slug, sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error || !sections?.length) {
+    if (error) logDbCatalogIssue("listHomePageSections", error.message);
+    return [];
+  }
+  const ids = (sections as { id: string }[]).map((s) => s.id);
+  const { data: links, error: lErr } = await supabase
+    .from("home_page_section_tags")
+    .select("section_id, tag_id")
+    .in("section_id", ids);
+  if (lErr) {
+    logDbCatalogIssue("listHomePageSectionTags", lErr.message);
+  }
+  const bySection = new Map<string, string[]>();
+  for (const row of links ?? []) {
+    const sid = (row as { section_id: string; tag_id: string }).section_id;
+    const tid = (row as { section_id: string; tag_id: string }).tag_id;
+    const arr = bySection.get(sid) ?? [];
+    arr.push(tid);
+    bySection.set(sid, arr);
+  }
+  return (sections as Pick<DbHomePageSectionRow, "id" | "name" | "slug" | "sort_order">[]).map(
+    (s) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      sort_order: s.sort_order,
+      tagIds: bySection.get(s.id) ?? [],
+    }),
+  );
+}
+
+export async function dbGetActiveHomePageSectionBySlug(
+  slug: string,
+): Promise<{ id: string; name: string; slug: string } | null> {
+  if (!hasCatalogDb()) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("home_page_sections")
+    .select("id, name, slug")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) {
+    logDbCatalogIssue("getHomePageSectionBySlug", error.message);
+    return null;
+  }
+  return data as { id: string; name: string; slug: string } | null;
+}
+
+/** Active section by slug plus tag ids for listing and filters. */
+export async function dbGetActiveHomePageSectionWithTagsBySlug(
+  slug: string,
+): Promise<{ id: string; name: string; slug: string; tagIds: string[] } | null> {
+  if (!hasCatalogDb()) return null;
+  const supabase = await createClient();
+  const { data: row, error } = await supabase
+    .from("home_page_sections")
+    .select("id, name, slug")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) {
+    logDbCatalogIssue("getHomePageSectionWithTags", error.message);
+    return null;
+  }
+  if (!row) return null;
+  const rid = (row as { id: string }).id;
+  const { data: links, error: lErr } = await supabase
+    .from("home_page_section_tags")
+    .select("tag_id")
+    .eq("section_id", rid);
+  if (lErr) {
+    logDbCatalogIssue("getHomePageSectionTagIds", lErr.message);
+  }
+  const tagIds = (links ?? []).map((r: { tag_id: string }) => r.tag_id);
+  return { ...(row as { id: string; name: string; slug: string }), tagIds };
+}
+
+/**
+ * Products for a homepage section: any product whose tags intersect `tagIds` (OR).
+ * `sectionSlug` is used for card category/collection display strings.
+ */
+export async function dbListProductsForHomeSectionTags(
+  tagIds: string[],
+  sectionSlug: string,
+): Promise<Product[]> {
+  if (!hasCatalogDb() || !tagIds.length) return [];
+  const supabase = await createClient();
+
+  const { data: ptRows, error: ptErr } = await supabase
+    .from("product_tags")
+    .select("product_id")
+    .in("tag_id", tagIds);
+  if (ptErr) {
+    logDbCatalogIssue("listProductsByHomeSectionTagLinks", ptErr.message);
+    return [];
+  }
+  const seen = new Set<string>();
+  for (const r of ptRows ?? []) {
+    seen.add((r as { product_id: string }).product_id);
+  }
+  const productIds = [...seen];
+  if (!productIds.length) return [];
+
+  const { data: products, error: pErr } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .in("id", productIds)
+    .eq("status", "active");
+
+  if (pErr || !products?.length) {
+    if (pErr) logDbCatalogIssue("listProductsForHomeSection", pErr.message);
+    return [];
+  }
+
+  const plist = products as DbProductRow[];
+  const ids = plist.map((p) => p.id);
+  const { data: rawVariants, error: vErr } = await supabase
+    .from("product_variants")
+    .select("id, product_id, sku, option_values, price, compare_at_price, size_id, color_id")
+    .in("product_id", ids);
+
+  if (vErr) {
+    logDbCatalogIssue("variantsForHomeSection", vErr.message);
+    return [];
+  }
+
+  const variants = await mergeInventoryForVariants(
+    supabase,
+    (rawVariants ?? []) as Omit<
+      DbProductVariantRow,
+      "quantity_on_hand" | "quantity_reserved"
+    >[],
+  );
+
+  const byProduct = new Map<string, DbProductVariantRow[]>();
+  for (const v of variants) {
+    const row = v;
+    const list = byProduct.get(row.product_id) ?? [];
+    list.push(row);
+    byProduct.set(row.product_id, list);
+  }
+
+  plist.sort((a, b) => a.name.localeCompare(b.name));
+
+  return plist.map((p) =>
+    mapProductCard(p, byProduct.get(p.id) ?? [], sectionSlug),
+  );
 }

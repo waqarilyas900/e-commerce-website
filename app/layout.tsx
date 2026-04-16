@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Jost } from "next/font/google";
-import { getStoreBrand } from "@/app/lib/store-brand";
+import { getAnnouncementBarForLayout } from "@/app/lib/home-marketing";
+import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
 import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
 import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider";
@@ -29,23 +30,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const brand = getStoreBrand();
-
 const showGoogleOneTap =
   process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP === "1" ||
   process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP === "true";
 
-export const metadata: Metadata = {
-  title: brand.siteTitle,
-  description: brand.siteDescription,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await loadStoreBrandFromDatabase();
+  const title = brand.siteTitle.trim() || brand.storeName.trim() || "Store";
+  const description = brand.siteDescription.trim() || undefined;
+  return {
+    title,
+    description,
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const collectionLinks = await getNavCollectionLinks();
+  const [baseBrand, announcementBar, collectionLinks] = await Promise.all([
+    loadStoreBrandFromDatabase(),
+    getAnnouncementBarForLayout(),
+    getNavCollectionLinks(),
+  ]);
+  const storeBrand = { ...baseBrand, announcementBar };
 
   return (
     <html
@@ -70,7 +79,7 @@ export default async function RootLayout({
         data-aos-duration="400"
         data-aos-delay="0"
       >
-        <StoreBrandProvider brand={brand}>
+        <StoreBrandProvider brand={storeBrand}>
           <NavCollectionsProvider links={collectionLinks}>
             {showGoogleOneTap ? (
               <GoogleOneTap>

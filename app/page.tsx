@@ -9,11 +9,14 @@ import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
 import { HeroSlideshow } from "@/components/home/HeroSlideshow";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
-import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
+import { getHomeMarketingData } from "@/app/lib/home-marketing";
 import { getHomeRailSections } from "@/app/lib/home-rails";
 
 export default async function Home() {
-  const railSections = await getHomeRailSections();
+  const [railSections, homeMarketing] = await Promise.all([
+    getHomeRailSections(),
+    getHomeMarketingData(),
+  ]);
 
   return (
     <>
@@ -21,12 +24,16 @@ export default async function Home() {
       <TopStrip />
       <Header />
       <main id="MainContent" className="main-content bg-white">
-        <HeroSlideshow />
-        <MissionStrip />
+        {homeMarketing.slides.length > 0 ? (
+          <HeroSlideshow slides={homeMarketing.slides} />
+        ) : null}
+        {homeMarketing.missionParagraph ? (
+          <MissionStrip missionHtml={homeMarketing.missionParagraph} />
+        ) : null}
         <ActiveWearBlock />
         {railSections.map((rail) => (
           <ProductSection
-            key={rail.title}
+            key={rail.viewAllHref}
             title={rail.title}
             items={rail.items}
             viewAllHref={rail.viewAllHref}
@@ -36,7 +43,6 @@ export default async function Home() {
           />
         ))}
         <WhyShop />
-        <TrustRatingStrip />
       </main>
       <Footer />
     </>

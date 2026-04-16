@@ -1,8 +1,11 @@
 import { Suspense } from "react";
-import { Footer, Header, TopStrip } from "@/components/storefront";
-import { dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
-import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
+import { Footer, Header, TopStrip } from "@/components/storefront";
+import {
+  dbGetActiveHomePageSectionWithTagsBySlug,
+  dbListProductsForHomeSectionTags,
+} from "@/app/lib/db/catalog";
+import { hasCatalogDb } from "@/app/lib/db/env";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
 import {
   buildFeaturedIndex,
@@ -15,6 +18,7 @@ import { CollectionListingControls } from "@/components/collections/collection-l
 import type { Product } from "@/app/lib/catalog/types";
 
 type Props = {
+  params: Promise<{ slug: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
@@ -26,14 +30,12 @@ function ListingFallback() {
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
       </div>
       <div className="grid grid-cols-2 items-start gap-4 sm:gap-6 md:grid-cols-3 lg:hidden">
-        <div className="h-40 max-w-[9rem] animate-pulse rounded-lg bg-neutral-100" />
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
         ))}
       </div>
       <div className="hidden gap-6 lg:grid lg:grid-cols-4">
-        <div className="h-40 animate-pulse rounded-lg bg-neutral-100" />
-        <div className="grid min-w-0 grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:col-span-3 lg:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:col-span-4 lg:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
           ))}
@@ -43,22 +45,24 @@ function ListingFallback() {
   );
 }
 
-function saleBaseline(fromCatalog: Product[]): Product[] {
-  return fromCatalog.filter(
-    (product) => product.compareAtPrice != null && product.compareAtPrice > product.price,
-  );
-}
+export default async function HomeSectionListingPage({ params, searchParams }: Props) {
+  const { slug } = await params;
+  const sp = searchParams != null ? await searchParams : {};
+  const parsed = parseCollectionSearchParams(sp);
 
-export default async function CollectionsSalePage({ searchParams }: Props) {
   if (!hasCatalogDb()) {
     notFound();
   }
 
-  const sp = searchParams != null ? await searchParams : {};
-  const parsed = parseCollectionSearchParams(sp);
+  const section = await dbGetActiveHomePageSectionWithTagsBySlug(slug);
+  if (!section) {
+    notFound();
+  }
 
-  const base = await dbListAllActiveProductsForCards();
-  const baseline = saleBaseline(base);
+  let baseline: Product[] = [];
+  if (section.tagIds.length > 0) {
+    baseline = await dbListProductsForHomeSectionTags(section.tagIds, section.slug);
+  }
 
   const navLinks = await getNavCollectionLinks();
   const featuredIndex = buildFeaturedIndex(baseline);
@@ -79,7 +83,7 @@ export default async function CollectionsSalePage({ searchParams }: Props) {
       <main id="MainContent" className="main-content mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
-            Sale and Discount
+            {section.name}
           </h1>
         </header>
 
@@ -88,10 +92,10 @@ export default async function CollectionsSalePage({ searchParams }: Props) {
             <CollectionListingControls
               maxPriceCeil={maxCeil}
               parsed={parsed}
-              currentSlug="sale"
-              saleActive
+              currentSlug={slug}
               navLinks={navLinks}
               products={list}
+              hideCollectionNav
             />
           </Suspense>
         </section>

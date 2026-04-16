@@ -1,14 +1,8 @@
 /**
- * Display name for the storefront. Set `NEXT_PUBLIC_STORE_NAME` per deployment
- * (each server / tenant). Catalogs do not define a store name.
+ * Narrow escape hatch for modules that cannot await `store_settings` (e.g. some email templates).
+ * Prefer keeping `NEXT_PUBLIC_STORE_NAME` aligned with `store_settings.store_name` row id=1.
  */
-const FALLBACK = "Store Name";
-
 export function getPublicStoreName(): string {
-  const raw = process.env.NEXT_PUBLIC_STORE_NAME;
-  if (typeof raw === "string") {
-    const t = raw.trim();
-    if (t.length > 0) return t;
-  }
-  return FALLBACK;
+  const t = process.env.NEXT_PUBLIC_STORE_NAME?.trim();
+  return t && t.length > 0 ? t : "Store";
 }

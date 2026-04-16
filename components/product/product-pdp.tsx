@@ -34,10 +34,7 @@ import { formatPkr } from "@/app/lib/format-currency";
 import { useCart } from "@/app/providers/cart-provider";
 
 function sellableQty(v: DbProductVariantRow): number {
-  return Math.max(
-    0,
-    (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0),
-  );
+  return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
 }
 
 function findVariantExact(
@@ -69,15 +66,18 @@ function hexForColorValue(
   colorById: Record<string, ProductDetailColorMeta>,
 ): string | null {
   const row = variants.find(
-    (x) =>
-      (x.option_values[optionKey] ?? "") === value && Boolean(x.color_id),
+    (x) => (x.option_values[optionKey] ?? "") === value && Boolean(x.color_id),
   );
   if (!row?.color_id) return null;
   return colorById[row.color_id]?.hex ?? null;
 }
 
 function firstImage(images: unknown): string {
-  if (Array.isArray(images) && images.length > 0 && typeof images[0] === "string") {
+  if (
+    Array.isArray(images) &&
+    images.length > 0 &&
+    typeof images[0] === "string"
+  ) {
     return images[0];
   }
   return "";
@@ -86,7 +86,10 @@ function firstImage(images: unknown): string {
 /** Dedupe concurrent identical bulk wishlist GETs (e.g. React Strict Mode double mount). Key must include auth epoch so sign-in/out never reuse another session’s response. */
 const bulkWishlistInflight = new Map<string, Promise<Response>>();
 
-function fetchWishlistBulkOnce(dedupeKey: string, url: string): Promise<Response> {
+function fetchWishlistBulkOnce(
+  dedupeKey: string,
+  url: string,
+): Promise<Response> {
   const existing = bulkWishlistInflight.get(dedupeKey);
   /** Each caller gets a fresh clone() so two Strict Mode effect runs can both read JSON. */
   if (existing) return existing.then((r) => r.clone());
@@ -144,7 +147,8 @@ export function ProductPdp({
   const { isOpen: cartDrawerOpen } = useCart();
 
   const variantKeys = useMemo(
-    () => collectOptionKeysFromVariants(variants.map((v) => v.option_values ?? {})),
+    () =>
+      collectOptionKeysFromVariants(variants.map((v) => v.option_values ?? {})),
     [variants],
   );
 
@@ -175,24 +179,27 @@ export function ProductPdp({
   const [wishlistReady, setWishlistReady] = useState(false);
   const [currentOptionFingerprint, setCurrentOptionFingerprint] = useState("");
 
-  const handleWishlistBulkChange = useCallback((patch: PdpWishlistBulkChange) => {
-    if (patch.variantId) {
-      setWishlistVariantIds((prev) => {
-        const n = new Set(prev);
-        if (patch.inWishlist) n.add(patch.variantId!);
-        else n.delete(patch.variantId!);
-        return n;
-      });
-    }
-    if (patch.optionFingerprint) {
-      setWishlistOptionFingerprints((prev) => {
-        const n = new Set(prev);
-        if (patch.inWishlist) n.add(patch.optionFingerprint!);
-        else n.delete(patch.optionFingerprint!);
-        return n;
-      });
-    }
-  }, []);
+  const handleWishlistBulkChange = useCallback(
+    (patch: PdpWishlistBulkChange) => {
+      if (patch.variantId) {
+        setWishlistVariantIds((prev) => {
+          const n = new Set(prev);
+          if (patch.inWishlist) n.add(patch.variantId!);
+          else n.delete(patch.variantId!);
+          return n;
+        });
+      }
+      if (patch.optionFingerprint) {
+        setWishlistOptionFingerprints((prev) => {
+          const n = new Set(prev);
+          if (patch.inWishlist) n.add(patch.optionFingerprint!);
+          else n.delete(patch.optionFingerprint!);
+          return n;
+        });
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const supabase = createClient();
@@ -332,7 +339,12 @@ export function ProductPdp({
   /** Sticky bar: in-stock cart, OOS wishlist, or option-snapshot wishlist (no matching SKU yet). */
   const showStickyPurchase =
     ctaScrolledPast &&
-    Boolean(variants.length > 0 && (matchedVariant || (keys.length > 0 && keys.every((k) => (selection[k] ?? "").trim() !== ""))));
+    Boolean(
+      variants.length > 0 &&
+      (matchedVariant ||
+        (keys.length > 0 &&
+          keys.every((k) => (selection[k] ?? "").trim() !== ""))),
+    );
   /** Hide while cart drawer is open (full-screen on mobile) so it does not stack on top of the drawer. */
   const showMobileStickyBar = showStickyPurchase && !cartDrawerOpen;
 
@@ -441,7 +453,9 @@ export function ProductPdp({
                   type="button"
                   onClick={() => setActiveMedia(i)}
                   className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
-                    activeMedia === i ? "border-neutral-950" : "border-transparent"
+                    activeMedia === i
+                      ? "border-neutral-950"
+                      : "border-transparent"
                   }`}
                 >
                   {item.kind === "video" ? (
@@ -460,8 +474,12 @@ export function ProductPdp({
           ) : null}
         </div>
         <div className="space-y-4">
-          <p className="text-sm capitalize tracking-wide text-neutral-500">{collectionLabel}</p>
-          <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
+          <p className="text-sm capitalize tracking-wide text-neutral-500">
+            {collectionLabel}
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {product.name}
+          </h1>
           {safeDescriptionHtml ? (
             <div
               className="text-neutral-600 [&_a]:text-neutral-900 [&_a]:underline [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
@@ -478,7 +496,8 @@ export function ProductPdp({
               edit={false}
             />
             <span>
-              {(product.rating ?? 0).toFixed(1)}/5 ({product.reviews_count ?? 0} reviews)
+              {(product.rating ?? 0).toFixed(1)}/5 ({product.reviews_count ?? 0}{" "}
+              reviews)
             </span>
           </div>
 
@@ -489,10 +508,15 @@ export function ProductPdp({
                 const heading = (dim.label?.trim() || key) as string;
                 const values = [
                   ...new Set(
-                    variants.map((v) => v.option_values[key]).filter(Boolean) as string[],
+                    variants
+                      .map((v) => v.option_values[key])
+                      .filter(Boolean) as string[],
                   ),
                 ].sort();
-                const variantOptions = values.map((val) => ({ value: val, label: val }));
+                const variantOptions = values.map((val) => ({
+                  value: val,
+                  label: val,
+                }));
                 const pres = dim.presentation;
 
                 if (pres === "dropdown") {
@@ -537,7 +561,12 @@ export function ProductPdp({
                       >
                         {values.map((val) => {
                           const selected = (selection[key] ?? "") === val;
-                          const hex = hexForColorValue(variants, key, val, colorById);
+                          const hex = hexForColorValue(
+                            variants,
+                            key,
+                            val,
+                            colorById,
+                          );
                           return (
                             <button
                               key={val}
@@ -556,11 +585,19 @@ export function ProductPdp({
                                 }`}
                                 style={
                                   hex
-                                    ? { backgroundColor: hex, color: "transparent" }
-                                    : { backgroundColor: "#f5f5f5", color: "#525252" }
+                                    ? {
+                                        backgroundColor: hex,
+                                        color: "transparent",
+                                      }
+                                    : {
+                                        backgroundColor: "#f5f5f5",
+                                        color: "#525252",
+                                      }
                                 }
                               >
-                                {!hex ? val.slice(0, 2).toUpperCase() : "\u00a0"}
+                                {!hex
+                                  ? val.slice(0, 2).toUpperCase()
+                                  : "\u00a0"}
                               </span>
                               <span className="max-w-[5rem] truncate text-center text-[11px] font-medium text-neutral-600">
                                 {val}
@@ -659,7 +696,7 @@ export function ProductPdp({
                       >
                         <button
                           type="button"
-                          className="px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40"
+                          className={`${quantity <= 1 ? "cursor-not-allowed" : "cursor-pointer"} px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40`}
                           aria-label="Decrease quantity"
                           disabled={quantity <= 1}
                           onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -675,10 +712,12 @@ export function ProductPdp({
                         </span>
                         <button
                           type="button"
-                          className="px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40"
+                          className={`${quantity >= maxQty ? "cursor-not-allowed" : "cursor-pointer"} px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40`}
                           aria-label="Increase quantity"
                           disabled={quantity >= maxQty}
-                          onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                          onClick={() =>
+                            setQuantity((q) => Math.min(maxQty, q + 1))
+                          }
                         >
                           +
                         </button>
@@ -750,7 +789,9 @@ export function ProductPdp({
                           matchedVariant={matchedVariant ?? null}
                           maxQty={maxQty}
                           wishlistVariantIds={wishlistVariantIds}
-                          wishlistOptionFingerprints={wishlistOptionFingerprints}
+                          wishlistOptionFingerprints={
+                            wishlistOptionFingerprints
+                          }
                           currentOptionFingerprint={currentOptionFingerprint}
                           wishlistReady={wishlistReady}
                           onWishlistBulkChange={handleWishlistBulkChange}
@@ -813,7 +854,9 @@ export function ProductPdp({
               ) : null}
             </div>
           ) : (
-            <p className="text-sm text-red-600">This product has no purchasable variants.</p>
+            <p className="text-sm text-red-600">
+              This product has no purchasable variants.
+            </p>
           )}
         </div>
       </section>
@@ -826,7 +869,10 @@ export function ProductPdp({
             if (page) page.style.paddingBottom = "";
           }}
         >
-          {showMobileStickyBar && (matchedVariant || (keys.length > 0 && keys.every((k) => (selection[k] ?? "").trim() !== ""))) ? (
+          {showMobileStickyBar &&
+          (matchedVariant ||
+            (keys.length > 0 &&
+              keys.every((k) => (selection[k] ?? "").trim() !== ""))) ? (
             <motion.div
               ref={stickyBarRef}
               key="pdp-sticky-purchase"
@@ -836,7 +882,8 @@ export function ProductPdp({
               transition={{ duration: 0.38, ease: pdpEase }}
               className="fixed inset-x-0 bottom-0 z-45 border-t border-neutral-200 bg-white/95 shadow-[0_-6px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md"
               style={{
-                paddingBottom: "max(0.375rem, env(safe-area-inset-bottom, 0px))",
+                paddingBottom:
+                  "max(0.375rem, env(safe-area-inset-bottom, 0px))",
                 paddingTop: "0.375rem",
               }}
             >
@@ -844,7 +891,9 @@ export function ProductPdp({
                 <div
                   className="h-14 w-14 shrink-0 overflow-hidden rounded-none border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:h-16 sm:w-16"
                   style={
-                    thumbUrl ? { backgroundImage: `url(${thumbUrl})` } : undefined
+                    thumbUrl
+                      ? { backgroundImage: `url(${thumbUrl})` }
+                      : undefined
                   }
                   aria-hidden
                 />

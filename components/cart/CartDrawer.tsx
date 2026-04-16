@@ -5,23 +5,12 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
 import { formatPkr } from "@/app/lib/format-currency";
-import { products, type Product } from "@/app/lib/store-data";
+import type { Product } from "@/app/lib/catalog/types";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { fetchCheapestVariantForProductSlug } from "@/app/lib/cart/fetch-cheapest-variant-client";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
-
-function pickRandomProducts(source: Product[], count: number): Product[] {
-  if (source.length === 0) return [];
-  const copy = [...source];
-  const n = Math.min(count, copy.length);
-  for (let i = 0; i < n; i++) {
-    const j = i + Math.floor(Math.random() * (copy.length - i));
-    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
-  }
-  return copy.slice(0, n);
-}
 
 function DrawerRecoTile({ product }: { product: Product }) {
   const { addVariant, closeCart } = useCart();
@@ -122,7 +111,24 @@ export function CartDrawer() {
 
   useEffect(() => {
     if (!isOpen || !showRecommendations) return;
-    setRecommended(pickRandomProducts(products, 2));
+    if (!hasCatalogDb()) {
+      setRecommended([]);
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/catalog/random-products?limit=2")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: Product[]) => {
+        if (!cancelled && Array.isArray(data)) {
+          setRecommended(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setRecommended([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, showRecommendations]);
 
   return (

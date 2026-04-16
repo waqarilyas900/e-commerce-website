@@ -91,6 +91,8 @@ type Props = {
   /** All collections for the left rail (+ Sale). */
   navLinks: NavCollectionLink[];
   products: Product[];
+  /** Full-width grid without collection sidebar (e.g. `/s/[slug]` home section listing). */
+  hideCollectionNav?: boolean;
 };
 
 function buildParams(
@@ -197,6 +199,7 @@ export function CollectionListingControls({
   saleActive = false,
   navLinks,
   products,
+  hideCollectionNav = false,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -284,83 +287,140 @@ export function CollectionListingControls({
       </div>
 
       {!isListPending && products.length === 0 ? (
-        <>
-          {/* Empty: keep nav + message (reference-style flow on small screens) */}
-          <div className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden">
-            <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
-            </div>
-            <div className="col-span-2 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600 md:col-span-2">
-              No products match your filters.
-            </div>
+        hideCollectionNav ? (
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
+            No products match your filters.
           </div>
-          <div className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid">
-            <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
-            </aside>
-            <div className="col-span-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
-              No products match your filters.
+        ) : (
+          <>
+            {/* Empty: keep nav + message (reference-style flow on small screens) */}
+            <div className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden">
+              <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+                <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+              </div>
+              <div className="col-span-2 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600 md:col-span-2">
+                No products match your filters.
+              </div>
             </div>
-          </div>
-        </>
+            <div className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid">
+              <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+                <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+              </aside>
+              <div className="col-span-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
+                No products match your filters.
+              </div>
+            </div>
+          </>
+        )
       ) : (
         <>
-          {/*
-            Below lg (reference): one grid — cell 1 = collection links, then products in flow
-            (row 1: nav | p1 [ | p2 on md ], then products continue; not a full-height sidebar column).
-            lg+: sidebar column + 3-col product grid.
-          */}
-          <div
-            className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden"
-            aria-busy={isListPending}
-            aria-live="polite"
-          >
-            <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
-            </div>
-            {isListPending
-              ? Array.from({ length: skeletonCount }).map((_, i) => (
-                  <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
-                    <ProductCardSkeleton />
-                  </div>
-                ))
-              : products.map((product, idx) => (
-                  <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
-                    <ProductCard
-                      product={product}
-                      showAddToCart={false}
-                      clampTitle
-                      revealDelay={Math.min(idx * 0.07, 0.35)}
-                    />
-                  </div>
-                ))}
-          </div>
+          {hideCollectionNav ? (
+            <>
+              <div
+                className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden"
+                aria-busy={isListPending}
+                aria-live="polite"
+              >
+                {isListPending
+                  ? Array.from({ length: skeletonCount }).map((_, i) => (
+                      <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCardSkeleton />
+                      </div>
+                    ))
+                  : products.map((product, idx) => (
+                      <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCard
+                          product={product}
+                          showAddToCart={false}
+                          clampTitle
+                          revealDelay={Math.min(idx * 0.07, 0.35)}
+                        />
+                      </div>
+                    ))}
+              </div>
+              <div
+                className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid"
+                aria-busy={isListPending}
+                aria-live="polite"
+              >
+                {isListPending
+                  ? Array.from({ length: skeletonCount }).map((_, i) => (
+                      <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCardSkeleton />
+                      </div>
+                    ))
+                  : products.map((product, idx) => (
+                      <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCard
+                          product={product}
+                          showAddToCart={false}
+                          clampTitle
+                          revealDelay={Math.min(idx * 0.07, 0.35)}
+                        />
+                      </div>
+                    ))}
+              </div>
+            </>
+          ) : (
+            <>
+              {/*
+                Below lg (reference): one grid — cell 1 = collection links, then products in flow
+                (row 1: nav | p1 [ | p2 on md ], then products continue; not a full-height sidebar column).
+                lg+: sidebar column + 3-col product grid.
+              */}
+              <div
+                className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden"
+                aria-busy={isListPending}
+                aria-live="polite"
+              >
+                <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+                  <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+                </div>
+                {isListPending
+                  ? Array.from({ length: skeletonCount }).map((_, i) => (
+                      <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCardSkeleton />
+                      </div>
+                    ))
+                  : products.map((product, idx) => (
+                      <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCard
+                          product={product}
+                          showAddToCart={false}
+                          clampTitle
+                          revealDelay={Math.min(idx * 0.07, 0.35)}
+                        />
+                      </div>
+                    ))}
+              </div>
 
-          <div
-            className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid"
-            aria-busy={isListPending}
-            aria-live="polite"
-          >
-            <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-              <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
-            </aside>
-            {isListPending
-              ? Array.from({ length: skeletonCount }).map((_, i) => (
-                  <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
-                    <ProductCardSkeleton />
-                  </div>
-                ))
-              : products.map((product, idx) => (
-                  <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
-                    <ProductCard
-                      product={product}
-                      showAddToCart={false}
-                      clampTitle
-                      revealDelay={Math.min(idx * 0.07, 0.35)}
-                    />
-                  </div>
-                ))}
-          </div>
+              <div
+                className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid"
+                aria-busy={isListPending}
+                aria-live="polite"
+              >
+                <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+                  <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+                </aside>
+                {isListPending
+                  ? Array.from({ length: skeletonCount }).map((_, i) => (
+                      <div key={i} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCardSkeleton />
+                      </div>
+                    ))
+                  : products.map((product, idx) => (
+                      <div key={product.id} className="min-w-0 flex h-full min-h-0 flex-col">
+                        <ProductCard
+                          product={product}
+                          showAddToCart={false}
+                          clampTitle
+                          revealDelay={Math.min(idx * 0.07, 0.35)}
+                        />
+                      </div>
+                    ))}
+              </div>
+            </>
+          )}
         </>
       )}
 

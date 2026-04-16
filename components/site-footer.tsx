@@ -18,6 +18,15 @@ const policyLinks: { href: string; label: string }[] = [
   { href: "/policies/privacy", label: "Privacy Policy" },
 ];
 
+/** Explore column — matches storefront nav (collection slug + policies). */
+const footerExploreLinks: { href: string; label: string }[] = [
+  { href: "/collections/electronics", label: "Electronics" },
+  { href: "/collections/sale", label: "Sale" },
+  { href: "/policies/shipping", label: "Shipping" },
+  { href: "/policies/returns", label: "Returns" },
+  { href: "/contact", label: "Contact" },
+];
+
 function FooterMark({ className }: { className?: string }) {
   return (
     <svg
@@ -125,7 +134,7 @@ function ExploreLinksList({
             <Link href={item.href} className="transition-colors hover:text-white hover:underline">
               {isSale ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <SaleBoltIcon className="h-4 w-4 shrink-0" />
+                  <SaleBoltIcon className="h-4 w-4 shrink-0 text-amber-400" />
                   {item.label}
                 </span>
               ) : (
@@ -238,7 +247,7 @@ export function Footer() {
               <NeedHelpBlock mailto={mailto} footer={footer} />
             </MobileAccordion>
             <MobileAccordion id="explore" title="Explore" openId={openId} onToggle={toggle}>
-              <ExploreLinksList links={footer.exploreLinks} />
+              <ExploreLinksList links={footerExploreLinks} />
             </MobileAccordion>
             {/* Customer care: always visible (not accordion); no divider below before brand row */}
             <div className="py-5">
@@ -268,7 +277,7 @@ export function Footer() {
             <div>
               <h2 className="text-[12px] font-semibold capitalize tracking-[0.2em] text-white">Explore</h2>
               <div className="mt-6">
-                <ExploreLinksList links={footer.exploreLinks} />
+                <ExploreLinksList links={footerExploreLinks} />
               </div>
             </div>
             <div className="lg:pt-9">

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Footer, Header, TopStrip } from "@/components/storefront";
-import { getCollectionBySlug, products } from "@/app/lib/store-data";
 import { dbGetCollectionBySlug, dbListProductsByCollectionSlug } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
@@ -57,33 +56,25 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     heroImage: string;
   } | null = null;
 
-  let baseline: Product[] = products.filter((product) => product.collection === slug);
+  let baseline: Product[] = [];
 
-  if (hasCatalogDb()) {
-    const dbCol = await dbGetCollectionBySlug(slug);
-    if (dbCol) {
-      collection = {
-        slug: dbCol.slug,
-        name: dbCol.name,
-        description: dbCol.description,
-        heroImage: dbCol.hero_image,
-      };
-      baseline = await dbListProductsByCollectionSlug(slug);
-    }
+  if (!hasCatalogDb()) {
+    notFound();
+  }
+
+  const dbCol = await dbGetCollectionBySlug(slug);
+  if (dbCol) {
+    collection = {
+      slug: dbCol.slug,
+      name: dbCol.name,
+      description: dbCol.description,
+      heroImage: dbCol.hero_image,
+    };
+    baseline = await dbListProductsByCollectionSlug(slug);
   }
 
   if (!collection) {
-    const staticCol = getCollectionBySlug(slug);
-    if (!staticCol) {
-      notFound();
-    }
-    collection = {
-      slug: staticCol.slug,
-      name: staticCol.name,
-      description: staticCol.description,
-      heroImage: staticCol.heroImage,
-    };
-    baseline = products.filter((product) => product.collection === slug);
+    notFound();
   }
 
   const navLinks = await getNavCollectionLinks();

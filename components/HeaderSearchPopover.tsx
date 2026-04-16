@@ -9,16 +9,16 @@ import {
   useReducedMotion,
 } from "framer-motion";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
-import { collections } from "@/app/lib/store-data";
+import { useNavCollections } from "@/app/providers/nav-collections-provider";
+import type { NavCollectionLink } from "@/app/lib/nav-collections";
 
 /** Aligns with `TopStrip` (37px) + `Header` min-heights in storefront */
 const HEADER_TOP_OFFSET =
   "top-[101px] sm:top-[109px] md:top-[120px]";
 
-function popularSearchTerms(): string[] {
-  const fromCollections = collections.map((c) => c.name);
-  const extra = ["Sale", "Bundle deals", "New arrivals"];
-  const merged = [...fromCollections, ...extra];
+function popularSearchTerms(links: NavCollectionLink[]): string[] {
+  const fromCollections = links.map((c) => c.name);
+  const merged = [...fromCollections, "Sale"];
   return [...new Set(merged)].slice(0, 14);
 }
 
@@ -65,6 +65,7 @@ export function HeaderSearchPopover({
   panelOffsetClass = HEADER_TOP_OFFSET,
 }: Props) {
   const { storeName } = useStoreBrand();
+  const navLinks = useNavCollections();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const panelId = useId();
@@ -78,7 +79,7 @@ export function HeaderSearchPopover({
   /** Latest `open` for exit callback — avoid unlocking if user re-opened before exit finished. */
   const openRef = useRef(open);
   openRef.current = open;
-  const terms = popularSearchTerms();
+  const terms = popularSearchTerms(navLinks);
 
   useEffect(() => {
     if (!open || !renderPanel) return;

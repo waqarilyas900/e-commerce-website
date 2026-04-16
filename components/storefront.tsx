@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { motion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
@@ -14,23 +21,132 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
 import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
-import {
-  bundles,
-  collections,
-  promoSlides,
-  type Product,
-} from "@/app/lib/store-data";
+import type { Product } from "@/app/lib/catalog/types";
 import { formatPkr } from "@/app/lib/format-currency";
+import DOMPurify from "isomorphic-dompurify";
+import { isEffectivelyEmptyHtml } from "@/app/lib/html-content";
 
-export function TopStrip() {
-  const { announcement } = useStoreBrand();
+const stripShellClass =
+  "shopify-section shopify-section-group-header-group flex min-h-[37px] w-full shrink-0 items-center justify-center overflow-hidden px-4 py-1.5 text-center text-[13px] font-medium leading-snug tracking-wide";
+
+const announcementProseClass =
+  "announcement-bar-prose w-full text-center [&_a]:underline [&_a]:text-inherit [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_p]:m-0 [&_p]:inline [&_strong]:font-semibold";
+
+type AnnouncementRotatorProps = {
+  messagesHtml: string[];
+  backgroundColor: string;
+  textColor: string;
+  intervalMs: number;
+};
+
+function AnnouncementMessageRotator({
+  messagesHtml,
+  backgroundColor,
+  textColor,
+  intervalMs,
+}: AnnouncementRotatorProps) {
+  const sanitized = useMemo(() => {
+    return messagesHtml
+      .map((raw) =>
+        DOMPurify.sanitize(raw.trim(), {
+          USE_PROFILES: { html: true },
+        }),
+      )
+      .filter((s) => s.length > 0);
+  }, [messagesHtml]);
+
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (sanitized.length <= 1) {
+      return;
+    }
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % sanitized.length);
+    }, intervalMs);
+    return () => window.clearInterval(id);
+  }, [sanitized.length, intervalMs]);
+
+  useEffect(() => {
+    setIndex((i) => {
+      if (sanitized.length === 0) return 0;
+      return i % sanitized.length;
+    });
+  }, [sanitized.length]);
+
+  if (sanitized.length === 0) {
+    return null;
+  }
+
+  if (sanitized.length === 1) {
+    return (
+      <div
+        id="shopify-section-announcement-bar"
+        className={stripShellClass}
+        style={{ backgroundColor, color: textColor }}
+      >
+        <div
+          className={`${announcementProseClass} mx-auto max-w-5xl`}
+          dangerouslySetInnerHTML={{ __html: sanitized[0]! }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       id="shopify-section-announcement-bar"
-      className="shopify-section shopify-section-group-header-group flex h-[37px] w-full shrink-0 items-center justify-center overflow-hidden bg-[#1c1d1d] px-4 text-center text-[13px] font-medium leading-none tracking-wide text-white"
+      className={stripShellClass}
+      style={{ backgroundColor, color: textColor }}
+      aria-live="polite"
     >
-      <span className="block max-w-full truncate px-1 capitalize">{announcement}</span>
+      <div className="relative mx-auto w-full max-w-5xl">
+        <div className="relative flex min-h-[1.25rem] w-full items-center justify-center">
+          {sanitized.map((html, i) => {
+            const active = i === index;
+            return (
+              <div
+                key={i}
+                className={`${announcementProseClass} absolute inset-x-0 top-1/2 mx-auto max-w-5xl -translate-y-1/2 px-1`}
+                style={{
+                  opacity: active ? 1 : 0,
+                  transition: "opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
+                  pointerEvents: active ? "auto" : "none",
+                  zIndex: active ? 2 : 0,
+                }}
+                aria-hidden={!active}
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
+  );
+}
+
+export function TopStrip() {
+  const { announcementBar } = useStoreBrand();
+
+  if (!announcementBar || !announcementBar.enabled) {
+    return null;
+  }
+  const bg = announcementBar.backgroundColor;
+  const fg = announcementBar.textColor;
+  const rotationMs = announcementBar.rotationIntervalMs;
+  const richMessages = announcementBar.messages.filter((m) => !isEffectivelyEmptyHtml(m));
+
+  if (richMessages.length === 0) {
+    return null;
+  }
+
+  return (
+    <AnnouncementMessageRotator
+      messagesHtml={richMessages}
+      backgroundColor={bg}
+      textColor={fg}
+      intervalMs={rotationMs}
+    />
   );
 }
 
@@ -160,77 +276,6 @@ export function Header() {
 
       <CartDrawer />
     </>
-  );
-}
-
-export function Hero() {
-  const featuredSlides = promoSlides.slice(0, 5);
-
-  return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <ScrollReveal>
-        <div
-          className="relative min-h-[430px] overflow-hidden rounded-xl bg-cover bg-center"
-          style={{ backgroundImage: `url(${featuredSlides[0].image})` }}
-        >
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="relative flex min-h-[430px] flex-col justify-end p-7 text-white sm:p-10">
-            <p className="text-xs font-semibold capitalize tracking-[0.2em]">Brand New</p>
-            <h1 className="mt-2 max-w-xl text-3xl font-semibold tracking-tight sm:text-5xl">
-              {featuredSlides[0].title}
-            </h1>
-            <p className="mt-3 max-w-xl text-sm text-white/90 sm:text-base">
-              {featuredSlides[0].subtitle}
-            </p>
-            <Link
-              href={featuredSlides[0].href}
-              className="mt-5 w-fit rounded-full bg-white px-5 py-3 text-sm font-semibold capitalize text-black"
-            >
-              {featuredSlides[0].cta}
-            </Link>
-          </div>
-        </div>
-      </ScrollReveal>
-      <ScrollReveal delay={0.08}>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {featuredSlides.map((slide) => (
-            <Link
-              key={slide.title}
-              href={slide.href}
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium capitalize text-neutral-900 hover:bg-neutral-50"
-            >
-              {slide.title}
-            </Link>
-          ))}
-        </div>
-      </ScrollReveal>
-    </section>
-  );
-}
-
-export function CategoryHighlights() {
-  return (
-    <section className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-      <ScrollReveal>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {collections.map((collection) => (
-            <Link
-              key={collection.slug}
-              href={`/collections/${collection.slug}`}
-              className="group rounded-md border border-neutral-200 bg-white p-3 transition hover:bg-neutral-50"
-            >
-              <p className="text-sm font-semibold text-neutral-900">{collection.name}</p>
-              <p className="mt-1 line-clamp-2 text-xs text-neutral-700">
-                {collection.description}
-              </p>
-              <p className="mt-2 text-xs font-semibold text-neutral-900 group-hover:underline">
-                Explore
-              </p>
-            </Link>
-          ))}
-        </div>
-      </ScrollReveal>
-    </section>
   );
 }
 
@@ -488,35 +533,61 @@ export function ProductSection({
 
 export function WhyShop() {
   const { whyShop } = useStoreBrand();
+  const hasImage = whyShop.imageUrl.trim().length > 0;
+  const hasCopy =
+    whyShop.title.trim().length > 0 ||
+    whyShop.body.trim().length > 0 ||
+    whyShop.eyebrow.trim().length > 0;
+
+  if (!hasImage && !hasCopy) {
+    return null;
+  }
+
   return (
     <section className="border-t border-neutral-200 bg-white py-12 sm:py-16">
-      <ScrollReveal className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 md:grid-cols-2 md:items-center md:gap-12 lg:px-8">
-        <Link
-          href={whyShop.ctaHref}
-          className="relative aspect-4/3 w-full overflow-hidden rounded-lg bg-neutral-100 md:aspect-square"
-        >
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
-            style={{
-              backgroundImage: `url(${whyShop.imageUrl})`,
-            }}
-          />
-        </Link>
-        <div>
-          <p className="text-sm font-medium text-neutral-500">{whyShop.eyebrow}</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-            {whyShop.title}
-          </h2>
-          <p className="mt-4 text-sm leading-relaxed text-neutral-700 sm:text-base">
-            {whyShop.body}
-          </p>
+      <ScrollReveal
+        className={`mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 md:items-center md:gap-12 lg:px-8 ${
+          hasImage ? "md:grid-cols-2" : "md:grid-cols-1"
+        }`}
+      >
+        {hasImage ? (
           <Link
             href={whyShop.ctaHref}
-            className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-semibold capitalize text-white"
+            className="relative aspect-4/3 w-full overflow-hidden rounded-lg bg-neutral-100 md:aspect-square"
           >
-            {whyShop.ctaLabel}
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
+              style={{
+                backgroundImage: `url(${whyShop.imageUrl})`,
+              }}
+            />
           </Link>
-          <p className="mt-6 text-sm text-neutral-600">{whyShop.reviewsLine}</p>
+        ) : null}
+        <div>
+          {whyShop.eyebrow.trim() ? (
+            <p className="text-sm font-medium text-neutral-500">{whyShop.eyebrow}</p>
+          ) : null}
+          {whyShop.title.trim() ? (
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+              {whyShop.title}
+            </h2>
+          ) : null}
+          {whyShop.body.trim() ? (
+            <p className="mt-4 text-sm leading-relaxed text-neutral-700 sm:text-base">
+              {whyShop.body}
+            </p>
+          ) : null}
+          {whyShop.ctaLabel.trim() ? (
+            <Link
+              href={whyShop.ctaHref}
+              className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-semibold capitalize text-white"
+            >
+              {whyShop.ctaLabel}
+            </Link>
+          ) : null}
+          {whyShop.reviewsLine.trim() ? (
+            <p className="mt-6 text-sm text-neutral-600">{whyShop.reviewsLine}</p>
+          ) : null}
         </div>
       </ScrollReveal>
     </section>
@@ -524,34 +595,4 @@ export function WhyShop() {
 }
 
 export { Footer } from "./site-footer";
-
-export function BundleSection() {
-  return (
-    <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-      <ScrollReveal>
-        <div className="mb-4 flex items-end justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Bundle Deals</h2>
-          <Link href="/bundles" className="text-sm font-semibold capitalize text-neutral-900">
-            View all
-          </Link>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {bundles.map((bundle) => (
-            <Link
-              key={bundle.slug}
-              href="/bundles"
-              className="rounded-xl border border-neutral-200 bg-white p-5"
-            >
-              <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
-                {bundle.discountLabel}
-              </p>
-              <p className="mt-1 text-lg font-semibold">{bundle.name}</p>
-              <p className="mt-2 text-sm text-neutral-600">{bundle.description}</p>
-            </Link>
-          ))}
-        </div>
-      </ScrollReveal>
-    </section>
-  );
-}
 

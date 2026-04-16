@@ -2,11 +2,13 @@ import { cache } from "react";
 import type { Product } from "@/app/lib/catalog/types";
 import {
   dbGetProductsBySlugs,
+  dbListActiveHomePageSectionsWithTags,
   dbListAllActiveProductsForCards,
   dbListProductsByCollectionSlug,
+  dbListProductsForHomeSectionTags,
 } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
-import { homeCategoryRails, products, productsBySlugs } from "@/app/lib/store-data";
+import { dbGetHomeRailsConfig } from "@/app/lib/home-rails-from-db";
 import type { HomeCategoryRail } from "@/app/lib/store-brand.types";
 
 export type HomeRailSection = HomeCategoryRail & {
@@ -25,32 +27,47 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
   if (!slug) return 0;
 
   if (slug === "sale") {
-    if (hasCatalogDb()) {
-      const all = await dbListAllActiveProductsForCards();
-      return all.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price).length;
-    }
-    return products.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price).length;
+    if (!hasCatalogDb()) return 0;
+    const all = await dbListAllActiveProductsForCards();
+    return all.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price).length;
   }
 
-  if (hasCatalogDb()) {
-    const list = await dbListProductsByCollectionSlug(slug);
-    return list.length;
-  }
-
-  return products.filter((p) => p.collection === slug).length;
+  if (!hasCatalogDb()) return 0;
+  const list = await dbListProductsByCollectionSlug(slug);
+  return list.length;
 }
 
 async function loadHomeRails(): Promise<HomeRailSection[]> {
+  if (!hasCatalogDb()) {
+    return [];
+  }
+
+  const configuredSections = await dbListActiveHomePageSectionsWithTags();
+  const sectionsWithTags = configuredSections.filter((s) => s.tagIds.length > 0);
+  if (sectionsWithTags.length > 0) {
+    return Promise.all(
+      sectionsWithTags.map(async (s) => {
+        const items = await dbListProductsForHomeSectionTags(s.tagIds, s.slug);
+        const rail: HomeCategoryRail = {
+          title: s.name,
+          viewAllHref: `/s/${s.slug}`,
+          productSlugs: items.map((p) => p.slug),
+        };
+        return { ...rail, items, totalProductCount: items.length };
+      }),
+    );
+  }
+
+  const rails = await dbGetHomeRailsConfig();
+  if (rails.length === 0) {
+    return [];
+  }
+
   return Promise.all(
-    homeCategoryRails.map(async (rail) => {
+    rails.map(async (rail) => {
       const totalProductCount = await getTotalProductsForViewAllHref(rail.viewAllHref);
-      if (hasCatalogDb()) {
-        const fromDb = await dbGetProductsBySlugs(rail.productSlugs);
-        if (fromDb.length > 0) {
-          return { ...rail, items: fromDb, totalProductCount };
-        }
-      }
-      return { ...rail, items: productsBySlugs(rail.productSlugs), totalProductCount };
+      const fromDb = await dbGetProductsBySlugs(rail.productSlugs);
+      return { ...rail, items: fromDb, totalProductCount };
     }),
   );
 }

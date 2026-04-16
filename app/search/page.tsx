@@ -1,33 +1,23 @@
 import Link from "next/link";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
-import { products } from "@/app/lib/store-data";
 import { dbSearchProducts } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { notFound } from "next/navigation";
 
 type Props = {
   searchParams: Promise<{ q?: string }>;
 };
 
 export default async function SearchPage({ searchParams }: Props) {
-  const { q = "" } = await searchParams;
-  const query = q.trim().toLowerCase();
-
-  let results =
-    query.length === 0
-      ? []
-      : products.filter((p) => {
-          const blob =
-            `${p.name} ${p.description} ${p.category} ${p.collection} ${p.tags.join(" ")}`.toLowerCase();
-          return blob.includes(query);
-        });
-
-  if (query.length > 0 && hasCatalogDb()) {
-    const dbResults = await dbSearchProducts(q);
-    if (dbResults.length > 0) {
-      results = dbResults;
-    }
+  if (!hasCatalogDb()) {
+    notFound();
   }
+
+  const { q = "" } = await searchParams;
+  const query = q.trim();
+
+  const results = query.length === 0 ? [] : await dbSearchProducts(q);
 
   return (
     <>
@@ -61,7 +51,7 @@ export default async function SearchPage({ searchParams }: Props) {
           <p className="mt-8 text-sm text-neutral-600">
             No products matched &ldquo;{q}&rdquo;.{" "}
             <Link href="/collections" className="font-medium text-neutral-900 underline">
-              Browse all collections
+              Browse collections
             </Link>
           </p>
         ) : (

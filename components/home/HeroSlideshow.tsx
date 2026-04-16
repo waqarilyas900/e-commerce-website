@@ -5,7 +5,11 @@ import Link from "next/link";
 import { Poppins } from "next/font/google";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { homeHeroSlides } from "@/app/lib/store-data";
+import type { HeroSlide } from "@/app/lib/store-brand.types";
+
+function slideStableKey(slide: HeroSlide, index: number) {
+  return slide.id ?? `slide-${index}-${slide.title}-${slide.image}`;
+}
 
 const heroTitle = Poppins({
   weight: ["600", "700"],
@@ -88,8 +92,7 @@ function ArrowNextIcon({ className }: { className?: string }) {
   );
 }
 
-export function HeroSlideshow() {
-  const slides = homeHeroSlides;
+export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
@@ -147,6 +150,9 @@ export function HeroSlideshow() {
   }, []);
 
   const slide = slides[index];
+  if (!slide || slides.length === 0) {
+    return null;
+  }
 
   return (
     <section
@@ -162,7 +168,7 @@ export function HeroSlideshow() {
           <div className="relative aspect-12/5 w-full max-w-[100vw]">
             <AnimatePresence initial={false} custom={direction} mode="sync">
               <motion.div
-                key={slide.title}
+                key={slideStableKey(slide, index)}
                 custom={direction}
                 variants={
                   prefersReducedMotion
@@ -189,7 +195,7 @@ export function HeroSlideshow() {
                 className="absolute inset-0 overflow-hidden will-change-transform"
               >
                 <motion.div
-                  key={`hero-img-${slide.title}-${index}`}
+                  key={`hero-img-${slideStableKey(slide, index)}`}
                   className="absolute inset-0"
                   initial={
                     prefersReducedMotion
@@ -204,7 +210,7 @@ export function HeroSlideshow() {
                 >
                   <Image
                     src={slide.image}
-                    alt=""
+                    alt={slide.title}
                     fill
                     priority={index === 0}
                     sizes="100vw"
@@ -217,7 +223,7 @@ export function HeroSlideshow() {
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center px-4 pb-20 sm:pb-24 md:pb-28">
                   <motion.div
-                    key={slide.title}
+                    key={`hero-title-${slideStableKey(slide, index)}`}
                     initial={
                       prefersReducedMotion
                         ? { opacity: 1, y: 0 }
