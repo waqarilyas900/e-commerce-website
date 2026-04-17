@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 function shufflePick<T>(arr: T[], n: number): T[] {
   if (arr.length === 0) return [];
@@ -14,6 +15,12 @@ function shufflePick<T>(arr: T[], n: number): T[] {
 
 /** Random active products for cart recommendations (JSON). */
 export async function GET(req: Request) {
+  const ip = getRequestIp(req);
+  const limited = rateLimit(`random-products:${ip}`, 120, 60 * 1000);
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterMs);
+  }
+
   if (!hasCatalogDb()) {
     return NextResponse.json([]);
   }

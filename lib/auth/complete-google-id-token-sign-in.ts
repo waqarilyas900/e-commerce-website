@@ -54,8 +54,13 @@ export async function completeGoogleIdTokenSignIn(options: {
       (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
         ? nextPath
         : undefined) ?? inferSafePostGoogleNavPath();
-    if (dest) {
-      router.push(dest);
+    if (dest && typeof window !== "undefined") {
+      const target = new URL(dest, window.location.origin);
+      const same =
+        target.pathname === window.location.pathname && target.search === window.location.search;
+      if (!same) {
+        router.push(dest);
+      }
     }
   } finally {
     toast.dismiss(loadingToastId);

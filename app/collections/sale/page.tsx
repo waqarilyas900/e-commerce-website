@@ -89,7 +89,6 @@ export default async function CollectionsSalePage({ searchParams }: Props) {
               maxPriceCeil={maxCeil}
               parsed={parsed}
               currentSlug="sale"
-              saleActive
               navLinks={navLinks}
               products={list}
             />

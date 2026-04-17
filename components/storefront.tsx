@@ -13,6 +13,7 @@ import {
 import { motion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import { HeaderAccount } from "@/components/auth/HeaderAccount";
 import { HeaderSearchPopover } from "@/components/HeaderSearchPopover";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
@@ -152,6 +153,7 @@ export function TopStrip() {
 
 export function Header() {
   const { storeName } = useStoreBrand();
+  const headerNavItems = useHeaderNavMenuItems();
   const { openCart, itemCount } = useCart();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -187,22 +189,18 @@ export function Header() {
           aria-label="Primary"
         >
           <ShopCollectionsMenu />
-          <Link
-            href="/collections/sale"
-            className={`${primaryNavLinkClass} inline-flex items-center gap-1 rounded-md px-0.5 py-1 hover:text-neutral-950`}
-          >
-            <SaleBoltIcon className="h-[15px] w-[15px] shrink-0" />
-            Sale
-          </Link>
-          <Link
-            href="/bundles"
-            className={`${primaryNavLinkClass} inline-flex items-center rounded-md px-0.5 py-1 hover:text-neutral-950`}
-          >
-            <span aria-hidden className="mr-0.5 inline text-[15px] leading-none">
-              🔥
-            </span>
-            Bundle Deals
-          </Link>
+          {headerNavItems.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`${primaryNavLinkClass} inline-flex items-center gap-1 rounded-md px-0.5 py-1 hover:text-neutral-950`}
+            >
+              {item.slug === "sale" ? (
+                <SaleBoltIcon className="h-[15px] w-[15px] shrink-0" aria-hidden />
+              ) : null}
+              {item.label}
+            </Link>
+          ))}
         </nav>
       </div>
       <Link

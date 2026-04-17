@@ -6,6 +6,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
 import { createClient } from "@/lib/supabase/client";
 import { AccountShell } from "@/components/account/account-shell";
+import { ProfileFormSkeleton } from "@/app/account/profile/profile-form";
+import { ProfilePageLayout } from "@/app/account/profile/profile-page-layout";
 
 type Props = { children: React.ReactNode };
 
@@ -55,6 +57,15 @@ export function AccountGate({ children }: Props) {
   }, [pathname, router, searchParams]);
 
   if (status === "loading") {
+    if (pathname === "/account/profile") {
+      return (
+        <AccountShell>
+          <ProfilePageLayout>
+            <ProfileFormSkeleton />
+          </ProfilePageLayout>
+        </AccountShell>
+      );
+    }
     return (
       <AccountShell>
         <p className="text-sm text-neutral-600">Loading your account…</p>

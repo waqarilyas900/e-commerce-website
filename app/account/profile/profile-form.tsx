@@ -2,15 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import type { GroupBase, StylesConfig } from "react-select";
 import { toast } from "sonner";
 import {
   USER_GENDER,
   USER_GENDER_PROFILE_OPTIONS,
-  getUserGenderLabel,
   parseUserGender,
   type UserGender,
 } from "@/lib/enums/user-gender";
 import { ProfilePhoneField } from "@/components/account/profile-phone-field";
+import type { AppSelectOption } from "@/components/ui/app-select";
 import { AppSelect } from "@/components/ui/app-select";
 import { createClient } from "@/lib/supabase/client";
 
@@ -25,6 +26,80 @@ const inputClass =
 
 const inputReadonlyClass =
   "h-[42px] w-full cursor-not-allowed rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-600";
+
+/** Profile gender field: only Male / Female / Prefer not to say (matches DB subset). */
+const PROFILE_GENDER_VALUES = new Set<UserGender>([
+  USER_GENDER.Male,
+  USER_GENDER.Female,
+  USER_GENDER.PreferNotToSay,
+]);
+
+const GENDER_SELECT_OPTIONS: AppSelectOption[] = USER_GENDER_PROFILE_OPTIONS.map((o) => ({
+  value: o.value,
+  label: o.label,
+}));
+
+const profileGenderSelectStyles: StylesConfig<
+  AppSelectOption,
+  false,
+  GroupBase<AppSelectOption>
+> = {
+  menuPortal: (base) => ({ ...base, zIndex: 100_000 }),
+};
+
+/** Matches `AppSelect` control: minHeight 42, rounded-lg — same pulse treatment as collection listing toolbars. */
+const selectControlSkeletonClass =
+  "h-[42px] w-full animate-pulse rounded-lg bg-neutral-100";
+
+const inputFieldSkeletonClass =
+  "h-[42px] w-full animate-pulse rounded-lg bg-neutral-100";
+
+function LabelSkeleton() {
+  return <div className="mb-1.5 h-4 w-24 max-w-[40%] animate-pulse rounded bg-neutral-100" />;
+}
+
+export function ProfileFormSkeleton() {
+  return (
+    <div className="space-y-5" aria-busy="true" aria-live="polite">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <LabelSkeleton />
+          <div className={inputFieldSkeletonClass} />
+        </div>
+        <div>
+          <LabelSkeleton />
+          <div className={inputFieldSkeletonClass} />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="grid gap-4 sm:grid-cols-2 sm:items-end">
+          <div>
+            <LabelSkeleton />
+            <div className={inputFieldSkeletonClass} />
+          </div>
+          <div>
+            <LabelSkeleton />
+            <div className={inputFieldSkeletonClass} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <LabelSkeleton />
+          <div className={selectControlSkeletonClass} />
+        </div>
+        <div>
+          <LabelSkeleton />
+          <div className={inputFieldSkeletonClass} />
+        </div>
+      </div>
+
+      <div className="mt-2 h-10 w-28 animate-pulse rounded-full bg-neutral-100" />
+    </div>
+  );
+}
 
 function formatSignupProvider(provider: string) {
   const labels: Record<string, string> = {
@@ -49,27 +124,10 @@ export function ProfileForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const genderSelectOptions = useMemo(() => {
-    const base = USER_GENDER_PROFILE_OPTIONS.map((o) => ({
-      value: o.value,
-      label: o.label,
-    }));
-    const allowed = new Set<UserGender>([
-      USER_GENDER.Male,
-      USER_GENDER.Female,
-      USER_GENDER.PreferNotToSay,
-    ]);
-    if (allowed.has(gender)) return base;
-    return [
-      ...base,
-      { value: gender, label: getUserGenderLabel(gender) },
-    ];
+  const genderValue = useMemo(() => {
+    if (!PROFILE_GENDER_VALUES.has(gender)) return null;
+    return GENDER_SELECT_OPTIONS.find((o) => o.value === gender) ?? null;
   }, [gender]);
-
-  const genderValue = useMemo(
-    () => genderSelectOptions.find((o) => o.value === gender) ?? null,
-    [gender, genderSelectOptions],
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -177,7 +235,7 @@ export function ProfileForm() {
   }
 
   if (loading) {
-    return <p className="text-sm text-neutral-600">Loading profile…</p>;
+    return <ProfileFormSkeleton />;
   }
 
   return (
@@ -248,6 +306,7 @@ export function ProfileForm() {
               value={phone}
               onChange={setPhone}
               disabled={saving}
+              lockCountry
             />
           </div>
         </div>
@@ -260,7 +319,7 @@ export function ProfileForm() {
           </label>
           <AppSelect
             inputId="profile-gender"
-            options={genderSelectOptions}
+            options={GENDER_SELECT_OPTIONS}
             value={genderValue}
             onChange={(opt) => {
               if (opt) setGender(parseUserGender(opt.value));
@@ -269,6 +328,9 @@ export function ProfileForm() {
             isDisabled={saving}
             isSearchable={false}
             isClearable={false}
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
+            styles={profileGenderSelectStyles}
           />
         </div>
         <div>

@@ -5,8 +5,10 @@ import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
 import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
 import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider";
+import { HeaderNavMenuProvider } from "@/app/providers/header-nav-menu-provider";
 import { StoreBrandProvider } from "@/app/providers/store-brand-provider";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
+import { getHeaderNavMenuItems } from "@/app/lib/header-nav-menu";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
 import { DiscountNotificationPrompt } from "@/components/ui/discount-notification-prompt";
@@ -49,11 +51,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [baseBrand, announcementBar, collectionLinks] = await Promise.all([
-    loadStoreBrandFromDatabase(),
-    getAnnouncementBarForLayout(),
-    getNavCollectionLinks(),
-  ]);
+  const [baseBrand, announcementBar, collectionLinks, headerNavMenuItems] =
+    await Promise.all([
+      loadStoreBrandFromDatabase(),
+      getAnnouncementBarForLayout(),
+      getNavCollectionLinks(),
+      getHeaderNavMenuItems(),
+    ]);
   const storeBrand = { ...baseBrand, announcementBar };
 
   return (
@@ -81,8 +85,19 @@ export default async function RootLayout({
       >
         <StoreBrandProvider brand={storeBrand}>
           <NavCollectionsProvider links={collectionLinks}>
-            {showGoogleOneTap ? (
-              <GoogleOneTap>
+            <HeaderNavMenuProvider items={headerNavMenuItems}>
+              {showGoogleOneTap ? (
+                <GoogleOneTap>
+                  <CartProvider>
+                    <HeaderStickyObserver />
+                    <DiscountNotificationPrompt />
+                    <div id="PageContainer" className="page-container">
+                      <div className="transition-body">{children}</div>
+                    </div>
+                    <AppToaster />
+                  </CartProvider>
+                </GoogleOneTap>
+              ) : (
                 <CartProvider>
                   <HeaderStickyObserver />
                   <DiscountNotificationPrompt />
@@ -91,17 +106,8 @@ export default async function RootLayout({
                   </div>
                   <AppToaster />
                 </CartProvider>
-              </GoogleOneTap>
-            ) : (
-              <CartProvider>
-                <HeaderStickyObserver />
-                <DiscountNotificationPrompt />
-                <div id="PageContainer" className="page-container">
-                  <div className="transition-body">{children}</div>
-                </div>
-                <AppToaster />
-              </CartProvider>
-            )}
+              )}
+            </HeaderNavMenuProvider>
           </NavCollectionsProvider>
         </StoreBrandProvider>
       </body>

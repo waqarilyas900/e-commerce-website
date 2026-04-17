@@ -14,7 +14,6 @@ import { ProductCard } from "@/components/storefront";
 import type { AppSelectOption } from "@/components/ui/app-select";
 import { AppSelect } from "@/components/ui/app-select";
 import { CollectionFilterDrawer } from "./collection-filter-drawer";
-import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 
 /** Flat react-select: no box shadows (collection toolbar). */
 const sortSelectStyles: StylesConfig<AppSelectOption, false, GroupBase<AppSelectOption>> = {
@@ -84,11 +83,9 @@ export type NavCollectionLink = { slug: string; name: string };
 type Props = {
   maxPriceCeil: number;
   parsed: ParsedCollectionQuery;
-  /** Current collection slug (bold in sidebar). Ignored when `saleActive` is true. */
+  /** Current collection slug (bold in sidebar). */
   currentSlug: string;
-  /** When true, you are on `/collections/sale` and the Sale nav item is highlighted. */
-  saleActive?: boolean;
-  /** All collections for the left rail (+ Sale). */
+  /** All collections for the left rail (same list as Shop). */
   navLinks: NavCollectionLink[];
   products: Product[];
   /** Full-width grid without collection sidebar (e.g. `/s/[slug]` home section listing). */
@@ -151,25 +148,17 @@ function CollectionNavLink({
 function CollectionSidebar({
   navLinks,
   currentSlug,
-  saleActive = false,
 }: {
   navLinks: NavCollectionLink[];
   currentSlug: string;
-  saleActive?: boolean;
 }) {
   return (
     <nav className="flex flex-col gap-0.5" aria-label="Collections">
-      <CollectionNavLink href="/collections/sale" isActive={saleActive}>
-        <span className="inline-flex items-center gap-1.5">
-          <SaleBoltIcon className="h-4 w-4 shrink-0" />
-          Sale
-        </span>
-      </CollectionNavLink>
       {navLinks.map((c) => (
         <CollectionNavLink
           key={c.slug}
           href={`/collections/${c.slug}`}
-          isActive={!saleActive && c.slug === currentSlug}
+          isActive={c.slug === currentSlug}
         >
           {c.name}
         </CollectionNavLink>
@@ -196,7 +185,6 @@ export function CollectionListingControls({
   maxPriceCeil,
   parsed,
   currentSlug,
-  saleActive = false,
   navLinks,
   products,
   hideCollectionNav = false,
@@ -296,7 +284,7 @@ export function CollectionListingControls({
             {/* Empty: keep nav + message (reference-style flow on small screens) */}
             <div className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden">
               <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-                <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+                <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
               </div>
               <div className="col-span-2 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600 md:col-span-2">
                 No products match your filters.
@@ -304,7 +292,7 @@ export function CollectionListingControls({
             </div>
             <div className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid">
               <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-                <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+                <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
               </aside>
               <div className="col-span-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
                 No products match your filters.
@@ -374,7 +362,7 @@ export function CollectionListingControls({
                 aria-live="polite"
               >
                 <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-                  <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+                  <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
                 </div>
                 {isListPending
                   ? Array.from({ length: skeletonCount }).map((_, i) => (
@@ -400,7 +388,7 @@ export function CollectionListingControls({
                 aria-live="polite"
               >
                 <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
-                  <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} saleActive={saleActive} />
+                  <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
                 </aside>
                 {isListPending
                   ? Array.from({ length: skeletonCount }).map((_, i) => (

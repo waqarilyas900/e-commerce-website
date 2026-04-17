@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -18,10 +19,8 @@ const policyLinks: { href: string; label: string }[] = [
   { href: "/policies/privacy", label: "Privacy Policy" },
 ];
 
-/** Explore column — matches storefront nav (collection slug + policies). */
-const footerExploreLinks: { href: string; label: string }[] = [
-  { href: "/collections/electronics", label: "Electronics" },
-  { href: "/collections/sale", label: "Sale" },
+/** Non-collection links appended after dynamic header nav items (collections). */
+const footerExploreExtras: { href: string; label: string }[] = [
   { href: "/policies/shipping", label: "Shipping" },
   { href: "/policies/returns", label: "Returns" },
   { href: "/contact", label: "Contact" },
@@ -128,7 +127,9 @@ function ExploreLinksList({
   return (
     <ul className="list-none space-y-2.5 pl-0 text-[15px] text-white/90">
       {links.map((item) => {
-        const isSale = item.label.trim().toLowerCase() === "sale";
+        const isSale =
+          item.href === "/collections/sale" ||
+          item.label.trim().toLowerCase() === "sale";
         return (
           <li key={item.href + item.label}>
             <Link href={item.href} className="transition-colors hover:text-white hover:underline">
@@ -221,8 +222,14 @@ function MobileAccordion({
 
 export function Footer() {
   const { storeName, footer } = useStoreBrand();
+  const headerNavItems = useHeaderNavMenuItems();
   const mailto = `mailto:${footer.supportEmail}`;
   const [openId, setOpenId] = useState<AccordionId | null>(null);
+
+  const footerExploreLinks = [
+    ...headerNavItems.map((n) => ({ href: n.href, label: n.label })),
+    ...footerExploreExtras,
+  ];
 
   const toggle = (id: AccordionId) => {
     setOpenId((prev) => (prev === id ? null : id));

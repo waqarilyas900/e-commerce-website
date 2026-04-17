@@ -756,3 +756,97 @@ export async function dbListProductsForHomeSectionTags(
     mapProductCard(p, byProduct.get(p.id) ?? [], sectionSlug),
   );
 }
+
+/** PDP review list — RLS shows approved to everyone; authors also see their own pending/rejected. */
+export type ProductReviewPdpRow = {
+  id: string;
+  product_id: string;
+  rating: number;
+  title: string;
+  body: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  media: { url: string; kind: "image" | "video" }[];
+  reviewer_name: string;
+  /** Shown for approved reviews tied to a real account; synthetic admin reviews omit the badge. */
+  show_verified_buyer: boolean;
+};
+
+function parseReviewMedia(raw: unknown): { url: string; kind: "image" | "video" }[] {
+  if (!Array.isArray(raw)) return [];
+  const out: { url: string; kind: "image" | "video" }[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const o = item as Record<string, unknown>;
+    const url = typeof o.url === "string" ? o.url : "";
+    const kind = o.kind === "video" ? "video" : "image";
+    if (url) out.push({ url, kind });
+  }
+  return out;
+}
+
+export async function dbListProductReviewsForPdp(
+  productId: string,
+): Promise<ProductReviewPdpRow[]> {
+  if (!hasCatalogDb()) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("reviews")
+    .select(
+      `
+      id,
+      product_id,
+      user_id,
+      attributed_display_name,
+      attributed_display_email,
+      rating,
+      title,
+      body,
+      status,
+      created_at,
+      media,
+      users ( first_name, last_name )
+    `,
+    )
+    .eq("product_id", productId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    logDbCatalogIssue("dbListProductReviewsForPdp", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row: Record<string, unknown>) => {
+    const rawU = row.users;
+    const u = (
+      Array.isArray(rawU) ? rawU[0] : rawU
+    ) as { first_name?: string; last_name?: string } | null | undefined;
+    const userId = row.user_id as string | null | undefined;
+    const attributedName =
+      typeof row.attributed_display_name === "string" ? row.attributed_display_name.trim() : "";
+    const fromProfile = [u?.first_name, u?.last_name].filter(Boolean).join(" ").trim();
+    const reviewer_name =
+      attributedName ||
+      fromProfile ||
+      (typeof row.attributed_display_email === "string" && row.attributed_display_email.trim()
+        ? row.attributed_display_email.trim()
+        : "Customer");
+    const st = row.status as string;
+    const status: ProductReviewPdpRow["status"] =
+      st === "approved" || st === "rejected" || st === "pending" ? st : "pending";
+    const show_verified_buyer = status === "approved" && Boolean(userId);
+    return {
+      id: String(row.id),
+      product_id: String(row.product_id),
+      rating: Number(row.rating ?? 0),
+      title: String(row.title ?? ""),
+      body: String(row.body ?? ""),
+      status,
+      created_at: String(row.created_at ?? ""),
+      media: parseReviewMedia(row.media),
+      reviewer_name,
+      show_verified_buyer,
+    };
+  });
+}

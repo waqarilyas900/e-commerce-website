@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { hashOpaqueResetToken } from "@/lib/auth/opaque-reset-token";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * POST { token: string } — checks token exists, not used, not expired.
  * Does not consume the token (use complete-reset for that).
  */
 export async function POST(req: Request) {
+  const ip = getRequestIp(req);
+  const limited = rateLimit(`validate-reset:${ip}`, 30, 15 * 60 * 1000);
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterMs);
+  }
+
   let body: { token?: string };
   try {
     body = (await req.json()) as { token?: string };

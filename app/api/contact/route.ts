@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendContactInquiryEmail } from "@/lib/email/send-contact-message";
+import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 type Body = {
   name?: string;
@@ -8,6 +9,12 @@ type Body = {
 };
 
 export async function POST(req: Request) {
+  const ip = getRequestIp(req);
+  const limited = rateLimit(`contact:${ip}`, 10, 15 * 60 * 1000);
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterMs);
+  }
+
   let body: Body;
   try {
     body = (await req.json()) as Body;

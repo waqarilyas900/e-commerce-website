@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AccountGate } from "@/components/account/account-gate";
-import { AccountShell } from "@/components/account/account-shell";
+import { AccountSuspenseFallback } from "@/components/account/account-suspense-fallback";
 
 export default function AccountLayout({
   children,
@@ -8,13 +8,7 @@ export default function AccountLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <Suspense
-      fallback={
-        <AccountShell>
-          <p className="text-sm text-neutral-600">Loading your account…</p>
-        </AccountShell>
-      }
-    >
+    <Suspense fallback={<AccountSuspenseFallback />}>
       <AccountGate>{children}</AccountGate>
     </Suspense>
   );

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
 
-/** Shared style for primary header nav labels (Shop link, Sale, Bundles). */
+/** Shared style for primary header nav labels (Shop + dynamic header menu items). */
 export const primaryNavLinkClass =
   "whitespace-nowrap text-sm font-normal text-neutral-950 transition-colors hover:text-black";
 

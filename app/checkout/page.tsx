@@ -20,11 +20,12 @@ import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session"
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
+import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-settings";
+import { hasCatalogDb } from "@/app/lib/db/env";
+import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
-
-/** Flat delivery fee in PKR (matches server `place_order` shipping in paisa). */
-const DELIVERY_CHARGE = 500;
 
 /** ISO 3166-1 alpha-2 — must match `place_order` (Pakistan-only storefront). */
 const SHIPPING_COUNTRY_CODE = "PK";
@@ -118,7 +119,29 @@ export default function CheckoutPage() {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [discountNotice, setDiscountNotice] = useState<string | null>(null);
 
-  const grandTotal = subtotal + DELIVERY_CHARGE;
+  const [deliverySettings, setDeliverySettings] = useState<{
+    standardPaisa: number;
+    freeThresholdsPaisa: number[];
+  }>({
+    standardPaisa: FALLBACK_STANDARD_DELIVERY_PAISA,
+    freeThresholdsPaisa: [],
+  });
+
+  const deliveryPkr = useMemo(
+    () =>
+      computeDeliveryPkr(subtotal, {
+        standard_delivery_paisa: deliverySettings.standardPaisa,
+        free_delivery_thresholds_paisa: deliverySettings.freeThresholdsPaisa,
+      }),
+    [subtotal, deliverySettings],
+  );
+
+  const freeDeliveryGapPkr = useMemo(
+    () => nextFreeDeliveryGapPkr(subtotal, deliverySettings.freeThresholdsPaisa),
+    [subtotal, deliverySettings.freeThresholdsPaisa],
+  );
+
+  const grandTotal = subtotal + deliveryPkr;
 
   const applyDiscount = useCallback(() => {
     const c = discountCode.trim();
@@ -153,6 +176,22 @@ export default function CheckoutPage() {
   useEffect(() => {
     closeCart();
   }, [closeCart]);
+
+  useEffect(() => {
+    if (!hasCatalogDb()) return;
+    let cancelled = false;
+    void (async () => {
+      const loaded = await fetchStoreDeliverySettings();
+      if (cancelled || !loaded) return;
+      setDeliverySettings({
+        standardPaisa: loaded.standardPaisa,
+        freeThresholdsPaisa: loaded.freeThresholdsPaisa,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!ready) return;
@@ -388,7 +427,7 @@ export default function CheckoutPage() {
                   onToggle={() => setTopSummaryOpen((o) => !o)}
                   lines={resolvedLines}
                   subtotal={subtotal}
-                  shipping={DELIVERY_CHARGE}
+                  shipping={deliveryPkr}
                   total={grandTotal}
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
@@ -428,9 +467,15 @@ export default function CheckoutPage() {
                   Standard delivery (dispatch in 3–5 business days)
                 </span>
                 <span className="shrink-0 tabular-nums font-semibold text-neutral-900">
-                  {formatPkr(DELIVERY_CHARGE)}
+                  {deliveryPkr <= 0 ? "Free" : formatPkr(deliveryPkr)}
                 </span>
               </div>
+              {freeDeliveryGapPkr != null && freeDeliveryGapPkr > 0 ? (
+                <p className="mt-2 text-xs text-emerald-800">
+                  Add {formatPkr(freeDeliveryGapPkr)} more in products (before delivery) for free
+                  standard delivery.
+                </p>
+              ) : null}
               <p className="mt-3 text-xs text-neutral-600">
                 Estimated delivery: 3–5 business days after confirmation.
               </p>
@@ -460,7 +505,7 @@ export default function CheckoutPage() {
                   onToggle={() => setBottomSummaryOpen((o) => !o)}
                   lines={resolvedLines}
                   subtotal={subtotal}
-                  shipping={DELIVERY_CHARGE}
+                  shipping={deliveryPkr}
                   total={grandTotal}
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
@@ -498,7 +543,7 @@ export default function CheckoutPage() {
               <CheckoutOrderSummaryPanel
                 lines={resolvedLines}
                 subtotal={subtotal}
-                shipping={DELIVERY_CHARGE}
+                shipping={deliveryPkr}
                 total={grandTotal}
                 discountCode={discountCode}
                 onDiscountCodeChange={(v) => {

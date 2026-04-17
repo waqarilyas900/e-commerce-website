@@ -3,6 +3,7 @@ import { formatPkr } from "@/app/lib/format-currency";
 import { createClient } from "@/lib/supabase/server";
 import { sendOrderConfirmationEmail } from "@/lib/email/send-order-confirmation";
 import type { OrderLineSummary } from "@/lib/email/send-order-confirmation";
+import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export type PlaceOrderPayload = {
   email: string;
@@ -78,6 +79,12 @@ async function buildOrderLineSummaries(
 }
 
 export async function POST(req: Request) {
+  const ip = getRequestIp(req);
+  const limited = rateLimit(`place-order:${ip}`, 25, 15 * 60 * 1000);
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterMs);
+  }
+
   let body: unknown;
   try {
     body = await req.json();

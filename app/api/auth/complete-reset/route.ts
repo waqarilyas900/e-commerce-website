@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PASSWORD_RESET_LINK_VALID_MINUTES } from "@/lib/auth/password-reset";
 import { hashOpaqueResetToken } from "@/lib/auth/opaque-reset-token";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const MIN_PASSWORD = 8;
 
@@ -9,6 +10,12 @@ const MIN_PASSWORD = 8;
  * POST { token, password } — one-time: updates password via admin API, marks token used.
  */
 export async function POST(req: Request) {
+  const ip = getRequestIp(req);
+  const limited = rateLimit(`complete-reset:${ip}`, 10, 60 * 60 * 1000);
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterMs);
+  }
+
   let body: { token?: string; password?: string };
   try {
     body = (await req.json()) as { token?: string; password?: string };

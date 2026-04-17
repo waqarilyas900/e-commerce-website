@@ -357,6 +357,7 @@ export function GoogleSignInCredentialButton({ label, nextHref }: CredentialButt
       lastRenderedWidth = widthPx;
       el.innerHTML = "";
       try {
+        /** `shape` is supported by GIS; not yet in bundled @types — see Google `renderButton` reference. */
         google.accounts.id.renderButton(el, {
           type: "standard",
           theme: "outline",
@@ -364,7 +365,8 @@ export function GoogleSignInCredentialButton({ label, nextHref }: CredentialButt
           width: widthPx,
           text: isSignup ? "signup_with" : "signin_with",
           locale: typeof navigator !== "undefined" ? navigator.language.slice(0, 2) : "en",
-        });
+          shape: "pill",
+        } as Parameters<typeof google.accounts.id.renderButton>[1]);
       } catch (e) {
         if (process.env.NODE_ENV === "development") {
           console.error("[Google] renderButton", e);
@@ -405,7 +407,7 @@ export function GoogleSignInCredentialButton({ label, nextHref }: CredentialButt
   return (
     <div
       ref={containerRef}
-      className="w-full min-w-0 overflow-hidden [&_iframe]:max-w-full"
+      className="flex w-full min-w-0 justify-center [&_iframe]:max-w-full"
     />
   );
 }

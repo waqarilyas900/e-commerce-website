@@ -3,12 +3,15 @@ import { generateOpaqueResetTokenRaw, hashOpaqueResetToken } from "@/lib/auth/op
 import { PASSWORD_RESET_LINK_VALID_MINUTES } from "@/lib/auth/password-reset";
 import { sendForgotPasswordEmail } from "@/lib/email/send-forgot-password-email";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-
-/** Shown when no row exists in auth.users for this email. */
-const NO_ACCOUNT_MESSAGE =
-  "We don't have an account with that email address. You can create one on the sign-up page, or double-check the spelling.";
+import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const ip = getRequestIp(req);
+  const limited = rateLimit(`forgot-password:${ip}`, 5, 60 * 60 * 1000);
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterMs);
+  }
+
   let body: { email?: string };
   try {
     body = (await req.json()) as { email?: string };
@@ -55,10 +58,8 @@ export async function POST(req: Request) {
   }
 
   if (!exists) {
-    return NextResponse.json(
-      { ok: false, code: "NO_ACCOUNT" as const, error: NO_ACCOUNT_MESSAGE },
-      { status: 404 },
-    );
+    /** Same response as success — do not reveal whether the email is registered. */
+    return NextResponse.json({ ok: true });
   }
 
   const { data: authUserId, error: uidErr } = await admin.rpc("auth_user_id_by_email", {
@@ -74,10 +75,7 @@ export async function POST(req: Request) {
   }
 
   if (authUserId == null) {
-    return NextResponse.json(
-      { ok: false, code: "NO_ACCOUNT" as const, error: NO_ACCOUNT_MESSAGE },
-      { status: 404 },
-    );
+    return NextResponse.json({ ok: true });
   }
 
   const { error: delErr } = await admin

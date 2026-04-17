@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
+import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
+import { useScrollLock } from "@/lib/scroll-lock";
 
 const accordionEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -94,7 +96,10 @@ type Props = {
 
 export function MobileNavDrawer({ open, onClose }: Props) {
   const links = useNavCollections();
+  const headerNavItems = useHeaderNavMenuItems();
   const [shopOpen, setShopOpen] = useState(false);
+
+  useScrollLock(open);
 
   useEffect(() => {
     if (!open) setShopOpen(false);
@@ -202,20 +207,19 @@ export function MobileNavDrawer({ open, onClose }: Props) {
               </AnimatePresence>
             </div>
 
-            <Link
-              href="/collections/sale"
-              className={`${itemClass} inline-flex items-center gap-2`}
-              onClick={onClose}
-            >
-              <SaleBoltIcon className="h-5 w-5 shrink-0" />
-              Sale
-            </Link>
-            <Link href="/bundles" className={itemClass} onClick={onClose}>
-              <span aria-hidden className="mr-1.5">
-                🔥
-              </span>
-              Bundle Deals
-            </Link>
+            {headerNavItems.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={`${itemClass} inline-flex items-center gap-2`}
+                onClick={onClose}
+              >
+                {item.slug === "sale" ? (
+                  <SaleBoltIcon className="h-5 w-5 shrink-0" aria-hidden />
+                ) : null}
+                {item.label}
+              </Link>
+            ))}
             <Link href="/login" className={itemClass} onClick={onClose}>
               Log in
             </Link>

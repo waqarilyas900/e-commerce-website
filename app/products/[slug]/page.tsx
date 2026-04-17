@@ -4,6 +4,7 @@ import { CustomerReviews } from "@/components/product/customer-reviews";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import {
   dbGetProductDetailBySlug,
+  dbListProductReviewsForPdp,
   dbListProductsByCollectionSlug,
 } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
@@ -21,7 +22,10 @@ export default async function ProductPage({ params }: Props) {
 
   const detail = await dbGetProductDetailBySlug(slug);
   if (detail && detail.variants.length > 0) {
-    const relatedDb = await dbListProductsByCollectionSlug(detail.collectionSlug);
+    const [relatedDb, initialReviews] = await Promise.all([
+      dbListProductsByCollectionSlug(detail.collectionSlug),
+      dbListProductReviewsForPdp(detail.product.id),
+    ]);
     const related = relatedDb
       .filter((item) => item.slug !== slug)
       .slice(0, 4);
@@ -59,8 +63,10 @@ export default async function ProductPage({ params }: Props) {
             </div>
           </section>
           <CustomerReviews
+            productId={detail.product.id}
             rating={Number(detail.product.rating ?? 0)}
             reviewsCount={Number(detail.product.reviews_count ?? 0)}
+            initialReviews={initialReviews}
           />
         </main>
         <Footer />

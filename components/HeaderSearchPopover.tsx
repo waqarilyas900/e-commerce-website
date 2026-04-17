@@ -10,15 +10,20 @@ import {
 } from "framer-motion";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
+import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import type { NavCollectionLink } from "@/app/lib/nav-collections";
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 
 /** Aligns with `TopStrip` (37px) + `Header` min-heights in storefront */
 const HEADER_TOP_OFFSET =
   "top-[101px] sm:top-[109px] md:top-[120px]";
 
-function popularSearchTerms(links: NavCollectionLink[]): string[] {
+function popularSearchTerms(
+  links: NavCollectionLink[],
+  headerNavLabels: string[],
+): string[] {
   const fromCollections = links.map((c) => c.name);
-  const merged = [...fromCollections, "Sale"];
+  const merged = [...fromCollections, ...headerNavLabels];
   return [...new Set(merged)].slice(0, 14);
 }
 
@@ -66,20 +71,22 @@ export function HeaderSearchPopover({
 }: Props) {
   const { storeName } = useStoreBrand();
   const navLinks = useNavCollections();
+  const headerNavItems = useHeaderNavMenuItems();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const panelId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  /** Scroll lock on `html` (matches `scrollbar-gutter` in globals); body padding only when scrollbar consumes width */
-  const htmlOverflowSnapshotRef = useRef<string | null>(null);
-  const bodyPaddingRightSnapshotRef = useRef<string | null>(null);
+  /** Pairs with global `scroll-lock` ref-count (unlock after exit animation completes). */
   const scrollLockedRef = useRef(false);
   /** Latest `open` for exit callback — avoid unlocking if user re-opened before exit finished. */
   const openRef = useRef(open);
   openRef.current = open;
-  const terms = popularSearchTerms(navLinks);
+  const terms = popularSearchTerms(
+    navLinks,
+    headerNavItems.map((h) => h.label),
+  );
 
   useEffect(() => {
     if (!open || !renderPanel) return;
@@ -90,41 +97,22 @@ export function HeaderSearchPopover({
   useEffect(() => {
     if (!open || !renderPanel) return;
     if (!scrollLockedRef.current) {
-      const html = document.documentElement;
-      const body = document.body;
-      /** Measure while scrollbar still affects layout; avoids width jump when hiding overflow */
-      const scrollbarWidth = window.innerWidth - html.clientWidth;
-      bodyPaddingRightSnapshotRef.current = body.style.paddingRight;
-      htmlOverflowSnapshotRef.current = html.style.overflow;
-      html.style.overflow = "hidden";
-      if (scrollbarWidth > 0) {
-        body.style.paddingRight = `${scrollbarWidth}px`;
-      }
+      lockScroll();
       scrollLockedRef.current = true;
     }
   }, [open, renderPanel]);
 
   const releaseBodyScrollLock = () => {
     if (!scrollLockedRef.current) return;
-    const html = document.documentElement;
-    const body = document.body;
-    html.style.overflow = htmlOverflowSnapshotRef.current ?? "";
-    body.style.paddingRight = bodyPaddingRightSnapshotRef.current ?? "";
-    htmlOverflowSnapshotRef.current = null;
-    bodyPaddingRightSnapshotRef.current = null;
+    unlockScroll();
     scrollLockedRef.current = false;
   };
 
   useEffect(() => {
     return () => {
       if (scrollLockedRef.current) {
-        const h = document.documentElement;
-        const b = document.body;
-        h.style.overflow = htmlOverflowSnapshotRef.current ?? "";
-        b.style.paddingRight = bodyPaddingRightSnapshotRef.current ?? "";
+        unlockScroll();
         scrollLockedRef.current = false;
-        htmlOverflowSnapshotRef.current = null;
-        bodyPaddingRightSnapshotRef.current = null;
       }
     };
   }, []);

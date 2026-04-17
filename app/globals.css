@@ -84,6 +84,18 @@ body {
   input[type="submit"] {
     text-transform: capitalize;
   }
+
+  button:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="reset"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /* Shopify theme layout — https://radstore.pk structure */

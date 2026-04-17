@@ -4,10 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
+import { useScrollLock } from "@/lib/scroll-lock";
 import { formatPkr } from "@/app/lib/format-currency";
 import type { Product } from "@/app/lib/catalog/types";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { fetchCheapestVariantForProductSlug } from "@/app/lib/cart/fetch-cheapest-variant-client";
+import {
+  fetchStoreDeliverySettings,
+  type StoreDeliverySettingsState,
+} from "@/app/lib/fetch-store-delivery-settings";
+import { CartFreeDeliveryProgress } from "@/components/cart/cart-free-delivery-progress";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
@@ -84,6 +90,26 @@ function DrawerRecoTile({ product }: { product: Product }) {
   );
 }
 
+/** Same shell as `DrawerRecoTile` while random products are fetched. */
+function DrawerRecoTileSkeleton() {
+  return (
+    <div className="col-span-6 flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+      <div className="aspect-square w-full animate-pulse bg-neutral-100" aria-hidden />
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-2.5">
+        <div className="space-y-1.5">
+          <div className="h-2.5 w-full animate-pulse rounded bg-neutral-200" />
+          <div className="h-2.5 w-[85%] animate-pulse rounded bg-neutral-200" />
+        </div>
+        <div className="h-3 w-14 animate-pulse rounded bg-neutral-100" />
+        <div
+          className="mt-auto h-8 w-full animate-pulse rounded-md bg-neutral-200"
+          aria-hidden
+        />
+      </div>
+    </div>
+  );
+}
+
 export function CartDrawer() {
   const {
     isOpen,
@@ -96,26 +122,48 @@ export function CartDrawer() {
   } = useCart();
   const prefersReducedMotion = useReducedMotion();
   const [recommended, setRecommended] = useState<Product[]>([]);
+  const [recoLoading, setRecoLoading] = useState(false);
+  const [deliverySettings, setDeliverySettings] = useState<StoreDeliverySettingsState | null>(null);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
 
   /** Only when the cart has zero line items — any product added hides this block. */
   const showRecommendations = lines.length === 0;
 
+  useScrollLock(isOpen);
+
   useEffect(() => {
     if (!isOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (!hasCatalogDb()) {
+      setDeliverySettings(null);
+      setDeliveryLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setDeliverySettings(null);
+    setDeliveryLoading(true);
+    void fetchStoreDeliverySettings().then((s) => {
+      if (cancelled) return;
+      setDeliverySettings(s);
+      setDeliveryLoading(false);
+    });
     return () => {
-      document.body.style.overflow = prev;
+      cancelled = true;
     };
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !showRecommendations) return;
+    if (!isOpen || !showRecommendations) {
+      setRecoLoading(false);
+      return;
+    }
     if (!hasCatalogDb()) {
       setRecommended([]);
+      setRecoLoading(false);
       return;
     }
     let cancelled = false;
+    setRecoLoading(true);
+    setRecommended([]);
     void fetch("/api/catalog/random-products?limit=2")
       .then((r) => (r.ok ? r.json() : []))
       .then((data: Product[]) => {
@@ -125,6 +173,9 @@ export function CartDrawer() {
       })
       .catch(() => {
         if (!cancelled) setRecommended([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRecoLoading(false);
       });
     return () => {
       cancelled = true;
@@ -219,6 +270,14 @@ export function CartDrawer() {
                 ×
               </motion.button>
             </motion.div>
+
+            {lines.length > 0 ? (
+              <CartFreeDeliveryProgress
+                subtotalPkr={subtotal}
+                settings={deliverySettings}
+                loading={deliveryLoading}
+              />
+            ) : null}
 
             <motion.div
               className="flex min-h-0 flex-1 flex-col overflow-hidden py-6"
@@ -331,15 +390,20 @@ export function CartDrawer() {
                   )}
                 </div>
 
-                {showRecommendations && recommended.length > 0 ? (
-                  <div className="mt-4 shrink-0 border-t border-neutral-200 pt-5">
+                {showRecommendations && (recoLoading || recommended.length > 0) ? (
+                  <div
+                    className="mt-4 shrink-0 border-t border-neutral-200 pt-5"
+                    aria-busy={recoLoading}
+                  >
                     <h3 className="text-xs font-semibold capitalize tracking-[0.14em] text-neutral-500">
                       You might like
                     </h3>
                     <div className="mt-3 grid grid-cols-12 gap-3">
-                      {recommended.map((p) => (
-                        <DrawerRecoTile key={p.id} product={p} />
-                      ))}
+                      {recoLoading
+                        ? [0, 1].map((i) => <DrawerRecoTileSkeleton key={i} />)
+                        : recommended.map((p) => (
+                            <DrawerRecoTile key={p.id} product={p} />
+                          ))}
                     </div>
                   </div>
                 ) : null}

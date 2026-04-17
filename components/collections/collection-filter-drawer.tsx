@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { AvailabilityFilter, ParsedCollectionQuery } from "@/app/lib/collection-query";
 import { formatPkr } from "@/app/lib/format-currency";
 import { DualRangeSlider } from "@/components/ui/dual-range-slider";
+import { useScrollLock } from "@/lib/scroll-lock";
 import { Radio } from "@/components/ui/radio";
 
 type Props = {
@@ -83,19 +84,7 @@ export function CollectionFilterDrawer({
 
   useEffect(() => setMounted(true), []);
 
-  useEffect(() => {
-    if (!open) return;
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtml = html.style.overflow;
-    const prevBody = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-    return () => {
-      html.style.overflow = prevHtml;
-      body.style.overflow = prevBody;
-    };
-  }, [open]);
+  useScrollLock(open);
 
   useEffect(() => {
     if (!open) return;

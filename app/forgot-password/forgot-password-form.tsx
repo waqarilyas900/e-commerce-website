@@ -43,8 +43,9 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-4">
         <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
-          Check your inbox for a reset link. {passwordResetLinkValidityCopy()} After opening it, you
-          can set a new password on this site.
+          If an account exists for that email, we sent a password reset link. Check your inbox and
+          spam folder. {passwordResetLinkValidityCopy()} After opening the link, you can set a new
+          password on this site.
         </p>
         <Link href="/login" className="inline-block text-sm font-medium text-neutral-900 underline">
           Back to sign in

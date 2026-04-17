@@ -8,16 +8,17 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.user) {
+    data: { user },
+    error: userErr,
+  } = await supabase.auth.getUser();
+  if (userErr || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { data: adminRow } = await supabase
     .from("admins")
     .select("id")
-    .eq("auth_id", session.user.id)
+    .eq("auth_id", user.id)
     .eq("status", "active")
     .maybeSingle();
 

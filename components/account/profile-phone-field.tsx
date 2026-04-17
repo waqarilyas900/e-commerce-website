@@ -1,8 +1,11 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { PhoneInput } from "react-international-phone";
+import { defaultCountries, PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
+
+/** Single-country list so pasted numbers cannot switch away from +92 when `lockCountry` is on. */
+const COUNTRIES_PAKISTAN_ONLY = defaultCountries.filter((row) => row[1] === "pk");
 
 type Props = {
   id?: string;
@@ -38,6 +41,7 @@ export function ProfilePhoneField({ id, value, onChange, disabled, lockCountry }
       <PhoneInput
         defaultCountry="pk"
         preferredCountries={["pk"]}
+        countries={lockCountry ? COUNTRIES_PAKISTAN_ONLY : undefined}
         value={value}
         disabled={disabled}
         hideDropdown={lockCountry}
@@ -48,13 +52,14 @@ export function ProfilePhoneField({ id, value, onChange, disabled, lockCountry }
         inputProps={{
           id,
           autoComplete: "tel",
-          "aria-label": "Phone number",
+          "aria-label": lockCountry ? "Phone number (Pakistan +92)" : "Phone number",
         }}
         className="w-full! [&_.react-international-phone-input-container]:w-full!"
         inputClassName="!shadow-none !outline-none"
         countrySelectorStyleProps={{
           buttonClassName:
-            "!m-0 !rounded-none !border-0 !bg-neutral-50 !shadow-none hover:!bg-neutral-100",
+            "!m-0 !rounded-none !border-0 !bg-neutral-50 !shadow-none " +
+            (lockCountry ? "!cursor-default hover:!bg-neutral-50" : "hover:!bg-neutral-100"),
           dropdownStyleProps: {
             className: "z-300! rounded-lg! border! border-neutral-200! py-1! shadow-lg!",
           },

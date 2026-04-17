@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,12 @@ async function reverseNominatim(lat: string, lon: string): Promise<AddressParts 
 }
 
 export async function GET(req: NextRequest) {
+  const ip = getRequestIp(req);
+  const limited = rateLimit(`geocode:${ip}`, 60, 60 * 1000);
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterMs);
+  }
+
   const lat = req.nextUrl.searchParams.get("lat");
   const lon = req.nextUrl.searchParams.get("lon");
   if (!lat || !lon) {

@@ -28,6 +28,12 @@ type ItemRow = {
   unit_price_cents: number;
   quantity: number;
   option_values_snapshot: Record<string, unknown>;
+  product_slug_snapshot: string | null;
+  primary_image_url_snapshot: string | null;
+  compare_at_unit_price_cents: number | null;
+  line_subtotal_cents: number | null;
+  inventory_on_hand_before: number | null;
+  inventory_reserved_before: number | null;
   product_variants: VariantRow | VariantRow[] | null;
 };
 type HistoryRow = {
@@ -55,6 +61,7 @@ type OrderDetail = {
   shipping_province: string;
   customer_note: string;
   created_at: string;
+  checkout_snapshot: Record<string, unknown> | null;
   order_items: ItemRow[] | null;
   order_status_history: HistoryRow[] | null;
 };
@@ -106,6 +113,7 @@ export default async function OrderDetailPage({
       shipping_province,
       customer_note,
       created_at,
+      checkout_snapshot,
       order_items (
         id,
         product_variant_id,
@@ -113,6 +121,12 @@ export default async function OrderDetailPage({
         sku_snapshot,
         unit_price_cents,
         quantity,
+        product_slug_snapshot,
+        primary_image_url_snapshot,
+        compare_at_unit_price_cents,
+        line_subtotal_cents,
+        inventory_on_hand_before,
+        inventory_reserved_before,
         option_values_snapshot,
         product_variants (
           id,
@@ -211,16 +225,28 @@ export default async function OrderDetailPage({
             {items.map((line) => {
               const variant = normalizeVariant(line.product_variants);
               const product = variant?.products ?? null;
-              const imgUrl = firstProductImage(product?.images);
+              const snapImg = line.primary_image_url_snapshot?.trim();
+              const imgUrl =
+                snapImg && snapImg.length > 0
+                  ? snapImg
+                  : firstProductImage(product?.images);
               const optsFromSnap = formatOptionSnapshot(line.option_values_snapshot);
               const optsFromVariant = formatOptionSnapshot(variant?.option_values);
               const optionsLine =
                 optsFromSnap || optsFromVariant || null;
               const unitRupees = line.unit_price_cents / 100;
-              const lineTotal = unitRupees * line.quantity;
-              const productHref = product?.slug
-                ? `/products/${product.slug}`
-                : null;
+              const lineSubCents =
+                line.line_subtotal_cents != null
+                  ? line.line_subtotal_cents
+                  : line.unit_price_cents * line.quantity;
+              const lineTotal = lineSubCents / 100;
+              const slugSnap = line.product_slug_snapshot?.trim();
+              const productHref =
+                slugSnap && slugSnap.length > 0
+                  ? `/products/${slugSnap}`
+                  : product?.slug
+                    ? `/products/${product.slug}`
+                    : null;
 
               return (
                 <li key={line.id} className="flex gap-4 p-4 sm:gap-5 sm:p-5">
@@ -269,6 +295,11 @@ export default async function OrderDetailPage({
                         <p className="mt-1 font-mono text-xs text-neutral-500">
                           SKU {line.sku_snapshot}
                         </p>
+                        {line.compare_at_unit_price_cents != null ? (
+                          <p className="mt-1 text-xs text-neutral-400 line-through">
+                            {formatPkr(line.compare_at_unit_price_cents / 100)}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-neutral-900">
@@ -312,6 +343,19 @@ export default async function OrderDetailPage({
                   {formatPkr(order.shipping_cents / 100)}
                 </dd>
               </div>
+              {(() => {
+                const cs = order.checkout_snapshot;
+                const d =
+                  cs && typeof cs === "object" && "delivery" in cs && cs.delivery && typeof cs.delivery === "object"
+                    ? (cs.delivery as Record<string, unknown>)
+                    : null;
+                if (!d || d.free_shipping_applied !== true) return null;
+                return (
+                  <p className="text-xs text-neutral-500">
+                    Free delivery was applied at checkout under the store rules in effect then.
+                  </p>
+                );
+              })()}
               {order.discount_cents > 0 ? (
                 <div className="flex justify-between gap-4">
                   <dt className="text-neutral-600">Discount</dt>

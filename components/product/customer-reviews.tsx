@@ -1,18 +1,38 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import confetti from "canvas-confetti";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import type { ProductReviewPdpRow } from "@/app/lib/db/catalog";
+import {
+  REVIEW_MAX_FILES,
+  validateReviewFiles,
+  type ValidatedReviewFile,
+} from "@/app/lib/review-upload-rules";
+import { uploadReviewMediaForReviewRow } from "@/lib/supabase/storage-config";
+import { SignInModal } from "@/components/auth/sign-in-modal";
+import { ModalShell } from "@/components/ui/modal-shell";
 
-type Review = {
-  id: string;
-  name: string;
-  rating: number;
-  text: string;
-  verified?: boolean;
-};
+const OPEN_REVIEW_SESSION_KEY = "openReviewAfterAuth";
+const OPEN_REVIEW_QUERY = "openReview";
 
 type Props = {
+  productId: string;
+  /** Aggregates from `products` (approved-only after moderation). */
   rating: number;
   reviewsCount: number;
+  initialReviews: ProductReviewPdpRow[];
 };
 
 function Stars({
@@ -33,227 +53,888 @@ function Stars({
   );
 }
 
-function estimateDistribution(rating: number, count: number): number[] {
-  if (count <= 0) return [0, 0, 0, 0, 0];
-  const five = Math.max(0, Math.round((rating / 5) * count * 0.7));
-  const four = Math.max(0, Math.round((rating / 5) * count * 0.25));
-  const three = Math.max(0, Math.round((rating / 5) * count * 0.05));
-  const oneTwo = Math.max(0, count - five - four - three);
-  const two = Math.floor(oneTwo / 2);
-  const one = oneTwo - two;
-  return [five, four, three, two, one];
+function RatingPicker({
+  value,
+  onChange,
+  labelId,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  labelId: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1" role="radiogroup" aria-labelledby={labelId}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const active = value >= n;
+        return (
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={value === n}
+            className={`cursor-pointer rounded px-0.5 text-2xl leading-none transition ${
+              active ? "text-amber-400" : "text-neutral-300 hover:text-amber-200"
+            }`}
+            onClick={() => onChange(n)}
+          >
+            ★
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
-function buildMockReviews(rating: number, count: number): Review[] {
-  if (count <= 0) return [];
-  const base: Review[] = [
-    {
-      id: "r1",
-      name: "Hamza",
-      rating: Math.max(4, Math.round(rating)),
-      text: "Great quality and comfortable fit. Recommended.",
-      verified: true,
-    },
-    {
-      id: "r2",
-      name: "Barkat Ali",
-      rating: Math.max(4, Math.round(rating) - 1),
-      text: "Good fabric and value for money. Delivery was smooth.",
-      verified: true,
-    },
-    {
-      id: "r3",
-      name: "Talal Mughal",
-      rating: Math.max(3, Math.round(rating) - 1),
-      text: "Overall good experience. Product matched expectations.",
-      verified: true,
-    },
-  ];
-  return base.slice(0, Math.min(3, count));
+/** Histogram: index 0 = 5★ … index 4 = 1★ */
+function starHistogram(approved: ProductReviewPdpRow[]): number[] {
+  const counts = [0, 0, 0, 0, 0];
+  for (const r of approved) {
+    const s = Math.max(1, Math.min(5, Math.round(r.rating)));
+    counts[5 - s] += 1;
+  }
+  return counts;
 }
 
-export function CustomerReviews({ rating, reviewsCount }: Props) {
-  const [formOpen, setFormOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const hasReviews = reviewsCount > 0;
+function emptyReviewForm() {
+  return {
+    rating: 5,
+    title: "",
+    content: "",
+  };
+}
+
+type PendingAttachment = {
+  id: string;
+  file: File;
+  kind: "image" | "video";
+  previewUrl: string;
+};
+
+function newAttachmentId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+function CustomerReviewsInner({
+  productId,
+  rating,
+  reviewsCount,
+  initialReviews,
+}: Props) {
+  const pathname = usePathname() ?? "/";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const formId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [reviews, setReviews] = useState<ProductReviewPdpRow[]>(initialReviews);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
+  const [form, setForm] = useState(emptyReviewForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [postingHint, setPostingHint] = useState<string>("");
+  const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
+  /** Thumbnails shown on the thank-you step after a successful submit. */
+  const [submittedMediaPreview, setSubmittedMediaPreview] = useState<
+    { url: string; kind: "image" | "video" }[]
+  >([]);
+  /** Local picks with blob previews before submit (revoked on remove / modal close). */
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const shouldRefreshOnCloseRef = useRef(false);
+
+  useEffect(() => {
+    setReviews(initialReviews);
+  }, [initialReviews]);
+
+  const approvedOnly = useMemo(
+    () => reviews.filter((r) => r.status === "approved"),
+    [reviews],
+  );
+
   const displayRating = Number.isFinite(rating) ? rating : 0;
-  const reviews = useMemo(
-    () => buildMockReviews(displayRating, reviewsCount),
-    [displayRating, reviewsCount],
-  );
-  const dist = useMemo(
-    () => estimateDistribution(displayRating, reviewsCount),
-    [displayRating, reviewsCount],
-  );
+  const hasReviewsAggregate = reviewsCount > 0;
+  const dist = useMemo(() => starHistogram(approvedOnly), [approvedOnly]);
   const maxDist = Math.max(1, ...dist);
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setFormOpen(false);
+  const nextPathWithReviewFlag = useMemo(() => {
+    const base = pathname.startsWith("/") ? pathname : "/";
+    const join = base.includes("?") ? "&" : "?";
+    return `${base}${join}${OPEN_REVIEW_QUERY}=1`;
+  }, [pathname]);
+
+  const openReviewModalAndReset = useCallback(() => {
+    shouldRefreshOnCloseRef.current = false;
+    setReviewSubmitSuccess(false);
+    setSubmittedMediaPreview([]);
+    setPendingAttachments((prev) => {
+      prev.forEach((a) => URL.revokeObjectURL(a.previewUrl));
+      return [];
+    });
+    setForm(emptyReviewForm());
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setReviewModalOpen(true);
+    void (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setPostingHint("");
+        return;
+      }
+      const { data: urow } = await supabase
+        .from("users")
+        .select("first_name, last_name")
+        .eq("auth_id", user.id)
+        .maybeSingle();
+      const name = [urow?.first_name, urow?.last_name].filter(Boolean).join(" ").trim();
+      const email = user.email ?? "";
+      setPostingHint(name || email || "Your account");
+    })();
+  }, []);
+
+  const closeSignInModal = useCallback(() => {
+    try {
+      sessionStorage.removeItem(OPEN_REVIEW_SESSION_KEY);
+    } catch {
+      /* ignore */
+    }
+    setSignInModalOpen(false);
+  }, []);
+
+  const closeReviewModal = useCallback(() => {
+    if (shouldRefreshOnCloseRef.current) {
+      shouldRefreshOnCloseRef.current = false;
+      router.refresh();
+    }
+    setReviewSubmitSuccess(false);
+    setSubmittedMediaPreview([]);
+    setPendingAttachments((prev) => {
+      prev.forEach((a) => URL.revokeObjectURL(a.previewUrl));
+      return [];
+    });
+    setReviewModalOpen(false);
+    setForm(emptyReviewForm());
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [router]);
+
+  useEffect(() => {
+    if (!reviewSubmitSuccess || !reviewModalOpen) return;
+
+    const mq = typeof window !== "undefined" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+    if (mq?.matches) return;
+
+    const zIndex = 260;
+    const colors = ["#22c55e", "#eab308", "#3b82f6", "#ec4899", "#f97316", "#a855f7"];
+    const burst = (origin: { x: number; y: number }, particleCount = 90, spread = 72) => {
+      void confetti({
+        particleCount,
+        spread,
+        origin,
+        colors,
+        zIndex,
+        disableForReducedMotion: true,
+      });
+    };
+
+    /** DOM `setTimeout` ids; avoid `NodeJS.Timeout` union from global typings. */
+    const timeouts: number[] = [];
+    const outer = window.setTimeout(() => {
+      burst({ x: 0.12, y: 0.7 });
+      burst({ x: 0.5, y: 0.55 }, 110, 85);
+      burst({ x: 0.88, y: 0.7 });
+      void confetti({
+        particleCount: 140,
+        spread: 100,
+        origin: { x: 0.5, y: 0.48 },
+        colors,
+        zIndex,
+        scalar: 1.05,
+        disableForReducedMotion: true,
+      });
+      timeouts.push(
+        window.setTimeout(() => {
+          void confetti({
+            particleCount: 70,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.68 },
+            colors,
+            zIndex,
+            disableForReducedMotion: true,
+          });
+          void confetti({
+            particleCount: 70,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.68 },
+            colors,
+            zIndex,
+            disableForReducedMotion: true,
+          });
+        }, 180),
+      );
+    }, 30);
+    timeouts.push(outer);
+
+    return () => {
+      for (const id of timeouts) clearTimeout(id);
+    };
+  }, [reviewSubmitSuccess, reviewModalOpen]);
+
+  useEffect(() => {
+    const flag = searchParams.get(OPEN_REVIEW_QUERY);
+    if (flag !== "1") return;
+
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      openReviewModalAndReset();
+      router.replace(pathname, { scroll: false });
+    });
+  }, [searchParams, pathname, router, openReviewModalAndReset]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" || !session?.user) return;
+      try {
+        if (sessionStorage.getItem(OPEN_REVIEW_SESSION_KEY) !== "1") return;
+      } catch {
+        return;
+      }
+      sessionStorage.removeItem(OPEN_REVIEW_SESSION_KEY);
+      setSignInModalOpen(false);
+      openReviewModalAndReset();
+    });
+    return () => subscription.unsubscribe();
+  }, [openReviewModalAndReset]);
+
+  async function onWriteReviewClick() {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      openReviewModalAndReset();
+      return;
+    }
+    try {
+      sessionStorage.setItem(OPEN_REVIEW_SESSION_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setSignInModalOpen(true);
   }
 
+  function removePendingAttachment(id: string) {
+    setPendingAttachments((prev) => {
+      const found = prev.find((a) => a.id === id);
+      if (found) URL.revokeObjectURL(found.previewUrl);
+      return prev.filter((a) => a.id !== id);
+    });
+  }
+
+  function onPendingMediaChange(e: React.ChangeEvent<HTMLInputElement>) {
+    // Snapshot files before clearing the input — clearing `value` empties the live FileList in browsers.
+    const picked = e.target.files ? Array.from(e.target.files) : [];
+    e.target.value = "";
+    const validated = validateReviewFiles(picked);
+    if (!validated.ok) {
+      for (const err of validated.errors) {
+        toast.error(err.fileName ? `${err.fileName}: ${err.message}` : err.message);
+      }
+      return;
+    }
+    setPendingAttachments((prev) => {
+      const room = REVIEW_MAX_FILES - prev.length;
+      if (room <= 0) {
+        toast.error(`You can attach at most ${REVIEW_MAX_FILES} files.`);
+        return prev;
+      }
+      const slice = validated.files.slice(0, room);
+      if (validated.files.length > room) {
+        toast.info(`Only ${room} more file(s) added (max ${REVIEW_MAX_FILES}).`);
+      }
+      const added: PendingAttachment[] = slice.map((vf: ValidatedReviewFile) => ({
+        id: newAttachmentId(),
+        file: vf.file,
+        kind: vf.kind,
+        previewUrl: URL.createObjectURL(vf.file),
+      }));
+      return [...prev, ...added];
+    });
+  }
+
+  async function onSubmitReview(e: FormEvent) {
+    e.preventDefault();
+    if (submitting) return;
+
+    const validatedFiles: ValidatedReviewFile[] = pendingAttachments.map((a) => ({
+      file: a.file,
+      kind: a.kind,
+    }));
+
+    setSubmitting(true);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Sign in to submit a review.");
+        return;
+      }
+
+      let { data: urow } = await supabase
+        .from("users")
+        .select("id")
+        .eq("auth_id", user.id)
+        .maybeSingle();
+
+      if (!urow?.id) {
+        const { error: upsertErr } = await supabase.from("users").upsert(
+          {
+            auth_id: user.id,
+            first_name: "",
+            last_name: "",
+            phone: "",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "auth_id" },
+        );
+        if (upsertErr) {
+          toast.error(upsertErr.message);
+          return;
+        }
+        const { data: again } = await supabase
+          .from("users")
+          .select("id")
+          .eq("auth_id", user.id)
+          .maybeSingle();
+        urow = again;
+      }
+
+      if (!urow?.id) {
+        toast.error("Could not resolve your profile. Try again.");
+        return;
+      }
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("reviews")
+        .insert({
+          product_id: productId,
+          user_id: urow.id,
+          rating: form.rating,
+          title: form.title.trim(),
+          body: form.content.trim(),
+          status: "pending",
+          media: [],
+        })
+        .select("id")
+        .single();
+
+      if (insErr) {
+        if (
+          insErr.code === "23505" ||
+          insErr.message.toLowerCase().includes("duplicate") ||
+          insErr.message.toLowerCase().includes("unique")
+        ) {
+          toast.error("You already submitted a review for this product.");
+        } else {
+          toast.error(insErr.message);
+        }
+        return;
+      }
+
+      const reviewId = inserted.id as string;
+
+      if (validatedFiles.length > 0) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          toast.error("Your session expired. Sign in again to upload photos or videos.");
+          closeReviewModal();
+          router.refresh();
+          return;
+        }
+      }
+
+      const uploadResult = await uploadReviewMediaForReviewRow(supabase, reviewId, validatedFiles);
+      if (!uploadResult.ok) {
+        toast.error(
+          uploadResult.fileName
+            ? `Upload failed (${uploadResult.fileName}): ${uploadResult.message}`
+            : uploadResult.message,
+        );
+        closeReviewModal();
+        router.refresh();
+        return;
+      }
+      const media = uploadResult.media;
+
+      if (media.length > 0) {
+        const { error: upRevErr } = await supabase
+          .from("reviews")
+          .update({
+            media,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", reviewId);
+        if (upRevErr) {
+          toast.error(upRevErr.message);
+          return;
+        }
+      }
+
+      const reviewerLabel = postingHint.trim() || "You";
+      const optimistic: ProductReviewPdpRow = {
+        id: reviewId,
+        product_id: productId,
+        rating: form.rating,
+        title: form.title.trim(),
+        body: form.content.trim(),
+        status: "pending",
+        created_at: new Date().toISOString(),
+        media,
+        reviewer_name: reviewerLabel,
+        show_verified_buyer: false,
+      };
+      setReviews((prev) => [optimistic, ...prev.filter((r) => r.id !== reviewId)]);
+      setSubmittedMediaPreview(media);
+      void router.refresh();
+
+      shouldRefreshOnCloseRef.current = true;
+      setPendingAttachments((prev) => {
+        prev.forEach((a) => URL.revokeObjectURL(a.previewUrl));
+        return [];
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setReviewSubmitSuccess(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <>
+      <section className="mt-12 border border-neutral-200 bg-white p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-3xl font-semibold tracking-tight text-neutral-900">Customer Reviews</h2>
+          <button
+            type="button"
+            onClick={() => void onWriteReviewClick()}
+            className="cursor-pointer rounded-sm border border-neutral-800 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-50"
+          >
+            Write a review
+          </button>
+        </div>
+
+        {!hasReviewsAggregate && reviews.length === 0 ? (
+          <div className="mt-6 rounded-xl border border-neutral-200/90 bg-linear-to-b from-neutral-50 to-white px-5 py-10 text-center shadow-[0_1px_0_rgba(0,0,0,0.04)] sm:px-8 sm:py-12">
+            <div className="mx-auto max-w-md">
+              <p className="text-base font-semibold tracking-tight text-neutral-900 sm:text-lg">
+                No reviews yet
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+                Tried this product? A short note on quality, fit, or how it holds up in real use helps the
+                next person decide with confidence.
+              </p>
+            </div>
+          </div>
+        ) : hasReviewsAggregate ? (
+          <div className="mt-4 border-b border-neutral-200 pb-4">
+            <div className="grid gap-4 md:grid-cols-[200px_minmax(0,1fr)]">
+              <div>
+                <Stars value={displayRating} size="text-xl" />
+                <p className="mt-1 text-sm text-neutral-600">Based on {reviewsCount} reviews</p>
+              </div>
+              <div className="space-y-1.5">
+                {[5, 4, 3, 2, 1].map((star, i) => (
+                  <div key={star} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-xs">
+                    <span className="w-10 text-neutral-600">{star}★</span>
+                    <div className="h-2 overflow-hidden rounded bg-neutral-200">
+                      <div
+                        className="h-full bg-amber-400"
+                        style={{ width: `${(dist[i] / maxDist) * 100}%` }}
+                      />
+                    </div>
+                    <span className="w-10 text-right text-neutral-600">{dist[i]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-neutral-600">
+            Product ratings will appear here after the first approved review.
+          </p>
+        )}
+
+        {reviews.length > 0 ? (
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {reviews.map((r) => (
+              <article key={r.id} className="border border-neutral-200 bg-neutral-50 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-neutral-900">{r.reviewer_name}</p>
+                  {r.status === "pending" ? (
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-950">
+                      Pending moderation
+                    </span>
+                  ) : null}
+                  {r.status === "rejected" ? (
+                    <span className="rounded bg-neutral-200 px-2 py-0.5 text-[11px] font-medium text-neutral-700">
+                      Not published
+                    </span>
+                  ) : null}
+                  {r.show_verified_buyer ? (
+                    <span className="inline-flex bg-neutral-900 px-2 py-0.5 text-[11px] font-semibold text-white">
+                      Verified buyer
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-sm font-medium text-neutral-900">{r.title}</p>
+                <div className="mt-2">
+                  <Stars value={r.rating} size="text-sm" />
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-700">{r.body}</p>
+                {r.media.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {r.media.map((m, idx) =>
+                      m.kind === "image" ? (
+                        <div
+                          key={`${r.id}-m-${idx}`}
+                          className="h-24 w-24 overflow-hidden rounded-md border border-neutral-200 bg-white"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element -- Supabase Storage public URLs */}
+                          <img
+                            src={m.url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      ) : (
+                        <video
+                          key={`${r.id}-m-${idx}`}
+                          src={m.url}
+                          className="h-28 max-w-full rounded-md border border-neutral-200"
+                          controls
+                          playsInline
+                        />
+                      ),
+                    )}
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      <SignInModal
+        open={signInModalOpen}
+        onClose={closeSignInModal}
+        nextPath={nextPathWithReviewFlag}
+        title="Sign in to write a review"
+        description="Sign in with Google or your email. You’ll stay on this page — we’ll open the review form as soon as you’re signed in."
+        closeModalOnPasswordSuccess={false}
+      />
+
+      {reviewModalOpen ? (
+        <ModalShell
+          open={reviewModalOpen}
+          onClose={closeReviewModal}
+          titleId={
+            reviewSubmitSuccess ? `${formId}-thank-title` : `${formId}-review-title`
+          }
+          title={reviewSubmitSuccess ? "Review submitted" : "Write a review"}
+          subtitle={
+            reviewSubmitSuccess ? (
+              "We’ve received your rating and comments. They’ll go live after a quick review."
+            ) : postingHint ? (
+              <>
+                Posting as{" "}
+                <span className="font-medium text-neutral-900">{postingHint}</span>
+              </>
+            ) : (
+              "Rate this product and share what stood out for you."
+            )
+          }
+          maxWidthClassName="max-w-3xl"
+          zIndexClassName="z-[210]"
+          footer={
+            reviewSubmitSuccess ? (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={closeReviewModal}
+                  className="w-full cursor-pointer rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-900 sm:w-auto"
+                >
+                  Back to product
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+                <button
+                  type="button"
+                  onClick={closeReviewModal}
+                  className="cursor-pointer rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form={`${formId}-review-form`}
+                  disabled={submitting}
+                  className="cursor-pointer rounded-full bg-neutral-950 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? "Submitting…" : "Submit review"}
+                </button>
+              </div>
+            )
+          }
+        >
+          {reviewSubmitSuccess ? (
+            <div className="rounded-2xl border border-emerald-200/70 bg-linear-to-b from-emerald-50/95 via-white to-neutral-50/40 px-4 py-7 sm:px-7 sm:py-8">
+              <div className="mx-auto flex max-w-lg flex-col items-center text-center">
+                <div
+                  className="mb-6 flex h-17 w-17 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-[0_12px_40px_-12px_rgba(5,150,105,0.55)] ring-1 ring-emerald-700/20"
+                  aria-hidden
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-9 w-9"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </div>
+                <p className="text-[15px] font-medium leading-snug text-neutral-900">
+                  Thanks — your review helps the community shop smarter.
+                </p>
+                {submittedMediaPreview.length > 0 ? (
+                  <div className="mt-5 flex w-full max-w-md flex-wrap justify-center gap-2">
+                    {submittedMediaPreview.map((m, idx) =>
+                      m.kind === "image" ? (
+                        <div
+                          key={`success-m-${idx}`}
+                          className="h-20 w-20 overflow-hidden rounded-lg border border-emerald-200/80 bg-white shadow-sm"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={m.url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <video
+                          key={`success-m-${idx}`}
+                          src={m.url}
+                          className="h-24 max-w-[min(100%,280px)] rounded-lg border border-emerald-200/80"
+                          controls
+                          playsInline
+                        />
+                      ),
+                    )}
+                  </div>
+                ) : null}
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-neutral-600">
+                  Here’s what happens next:
+                </p>
+                <ol className="mt-5 w-full max-w-md space-y-3.5 text-left text-sm leading-relaxed text-neutral-700">
+                  <li className="flex gap-3">
+                    <span
+                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white"
+                      aria-hidden
+                    >
+                      1
+                    </span>
+                    <span>
+                      We run a brief check for spam and policy compliance—usually quite fast.
+                    </span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span
+                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white"
+                      aria-hidden
+                    >
+                      2
+                    </span>
+                    <span>
+                      Once approved, your rating and text show on this product page for other
+                      shoppers.
+                    </span>
+                  </li>
+                </ol>
+                <p className="mt-6 max-w-md border-t border-emerald-100/80 pt-5 text-xs leading-relaxed text-neutral-500">
+                  You can close this dialog and keep browsing—nothing else is required from you.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <form
+              id={`${formId}-review-form`}
+              onSubmit={(e) => void onSubmitReview(e)}
+              className="space-y-4"
+            >
+              <div>
+                <p
+                  id={`${formId}-rating-label`}
+                  className="mb-1 text-xs font-semibold tracking-[0.14em] text-neutral-700"
+                >
+                  RATING
+                </p>
+                <RatingPicker
+                  labelId={`${formId}-rating-label`}
+                  value={form.rating}
+                  onChange={(n) => setForm((f) => ({ ...f, rating: n }))}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor={`${formId}-title`}
+                  className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700"
+                >
+                  REVIEW TITLE
+                </label>
+                <input
+                  id={`${formId}-title`}
+                  required
+                  value={form.title}
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                  placeholder="Give your review a title"
+                  className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor={`${formId}-content`}
+                  className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700"
+                >
+                  REVIEW CONTENT
+                </label>
+                <textarea
+                  id={`${formId}-content`}
+                  required
+                  rows={5}
+                  value={form.content}
+                  onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                  placeholder="Start writing here..."
+                  className="w-full resize-y border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700">
+                  PICTURE/VIDEO (OPTIONAL, max {REVIEW_MAX_FILES} files)
+                </label>
+                <p className="mb-2 text-xs text-neutral-500">
+                  Images up to 2 MB each; videos up to 5 MB each. Tap a thumbnail’s × to remove it before
+                  you submit.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {pendingAttachments.map((a) => (
+                    <div
+                      key={a.id}
+                      className="relative h-24 w-24 shrink-0 overflow-hidden rounded border border-neutral-300 bg-neutral-100"
+                    >
+                      {a.kind === "image" ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- blob preview URL
+                        <img src={a.previewUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <video
+                          src={a.previewUrl}
+                          className="h-full w-full object-cover"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removePendingAttachment(a.id)}
+                        className="absolute right-1 top-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-neutral-900/85 text-sm font-bold leading-none text-white shadow-sm hover:bg-neutral-900"
+                        aria-label="Remove file"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {pendingAttachments.length < REVIEW_MAX_FILES ? (
+                    <label
+                      htmlFor={`${formId}-media`}
+                      className="flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center border border-dashed border-neutral-300 bg-neutral-50 text-3xl text-neutral-400 hover:border-neutral-500 hover:bg-neutral-100"
+                    >
+                      📷
+                    </label>
+                  ) : null}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  id={`${formId}-media`}
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  className="sr-only"
+                  onChange={onPendingMediaChange}
+                />
+                <p className="mt-2 text-xs text-neutral-500">
+                  {pendingAttachments.length >= REVIEW_MAX_FILES
+                    ? `Maximum ${REVIEW_MAX_FILES} files selected. Remove one to add a different file.`
+                    : "Tap the camera to add photos or videos."}
+                </p>
+              </div>
+              <p className="text-xs text-neutral-600">
+                We will only contact you about the review you left, and only if necessary.
+              </p>
+            </form>
+          )}
+        </ModalShell>
+      ) : null}
+    </>
+  );
+}
+
+function CustomerReviewsFallback({ rating, reviewsCount }: Pick<Props, "rating" | "reviewsCount">) {
+  const hasReviews = reviewsCount > 0;
+  const displayRating = Number.isFinite(rating) ? rating : 0;
   return (
     <section className="mt-12 border border-neutral-200 bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-3xl font-semibold tracking-tight text-neutral-900">Customer Reviews</h2>
-        <button
-          type="button"
-          onClick={() => setFormOpen((v) => !v)}
-          className="rounded-sm border border-neutral-800 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-50"
-        >
-          {formOpen ? "Cancel review" : "Write a review"}
-        </button>
+        <div className="h-10 w-36 animate-pulse rounded-sm bg-neutral-100" />
       </div>
-
       {!hasReviews ? (
-        <div className="mt-3 flex items-center gap-3 text-sm text-neutral-700">
-          <Stars value={0} size="text-base" />
-          <span>Be the first to write a review</span>
-        </div>
+        <div className="mt-3 h-5 w-64 animate-pulse rounded bg-neutral-100" />
       ) : (
-        <div className="mt-4 border-b border-neutral-200 pb-4">
-          <div className="grid gap-4 md:grid-cols-[200px_minmax(0,1fr)]">
-            <div>
-              <Stars value={displayRating} size="text-xl" />
-              <p className="mt-1 text-sm text-neutral-600">Based on {reviewsCount} reviews</p>
-            </div>
-            <div className="space-y-1.5">
-              {[5, 4, 3, 2, 1].map((star, i) => (
-                <div key={star} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-xs">
-                  <span className="w-10 text-neutral-600">{star}★</span>
-                  <div className="h-2 overflow-hidden rounded bg-neutral-200">
-                    <div
-                      className="h-full bg-amber-400"
-                      style={{ width: `${(dist[i] / maxDist) * 100}%` }}
-                    />
-                  </div>
-                  <span className="w-10 text-right text-neutral-600">{dist[i]}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <div className="mt-4 h-24 animate-pulse rounded bg-neutral-100" />
       )}
-
-      {formOpen ? (
-        <form onSubmit={onSubmit} className="mt-5 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700">
-                DISPLAY NAME
-              </label>
-              <input
-                required
-                placeholder="Display name"
-                className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700">
-                EMAIL ADDRESS
-              </label>
-              <input
-                type="email"
-                required
-                placeholder="Your email address"
-                className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700">
-              RATING
-            </label>
-            <Stars value={5} size="text-lg" />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700">
-              REVIEW TITLE
-            </label>
-            <input
-              required
-              placeholder="Give your review a title"
-              className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700">
-              REVIEW CONTENT
-            </label>
-            <textarea
-              required
-              rows={5}
-              placeholder="Start writing here..."
-              className="w-full resize-y border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold tracking-[0.14em] text-neutral-700">
-              PICTURE/VIDEO (OPTIONAL)
-            </label>
-            <label
-              htmlFor="review-media-upload"
-              className="flex h-24 w-24 cursor-pointer items-center justify-center border border-neutral-300 bg-neutral-50 text-3xl text-neutral-300 hover:bg-neutral-100"
-            >
-              📷
-            </label>
-            <input
-              id="review-media-upload"
-              type="file"
-              accept="image/*,video/*"
-              multiple
-              className="sr-only"
-              onChange={(e) => {
-                const files = e.target.files;
-                if (!files) {
-                  setSelectedFiles([]);
-                  return;
-                }
-                setSelectedFiles(Array.from(files).map((f) => f.name));
-              }}
-            />
-            {selectedFiles.length > 0 ? (
-              <p className="mt-2 wrap-break-word text-xs text-neutral-600">
-                {selectedFiles.length} file{selectedFiles.length > 1 ? "s" : ""} selected:{" "}
-                {selectedFiles.slice(0, 2).join(", ")}
-                {selectedFiles.length > 2 ? ` +${selectedFiles.length - 2} more` : ""}
-              </p>
-            ) : (
-              <p className="mt-2 text-xs text-neutral-500">
-                Tap/click camera icon to upload from your device.
-              </p>
-            )}
-          </div>
-          <p className="text-xs text-neutral-600">
-            We will only contact you about the review you left, and only if necessary.
-          </p>
-          <button
-            type="submit"
-            className="rounded bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
-          >
-            Submit Review
-          </button>
-        </form>
-      ) : null}
-
-      {hasReviews ? (
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {reviews.map((r) => (
-            <article key={r.id} className="border border-neutral-200 bg-neutral-50 p-4">
-              <p className="font-semibold text-neutral-900">{r.name}</p>
-              {r.verified ? (
-                <span className="mt-1 inline-flex bg-neutral-900 px-2 py-0.5 text-[11px] font-semibold text-white">
-                  Verified Buyer
-                </span>
-              ) : null}
-              <div className="mt-2">
-                <Stars value={r.rating} size="text-sm" />
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-700">{r.text}</p>
-            </article>
-          ))}
-        </div>
-      ) : null}
+      <p className="sr-only">
+        Loading reviews. Rating {displayRating}, count {reviewsCount}.
+      </p>
     </section>
+  );
+}
+
+export function CustomerReviews(props: Props) {
+  return (
+    <Suspense
+      fallback={
+        <CustomerReviewsFallback rating={props.rating} reviewsCount={props.reviewsCount} />
+      }
+    >
+      <CustomerReviewsInner {...props} />
+    </Suspense>
   );
 }

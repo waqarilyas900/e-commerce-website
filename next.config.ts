@@ -28,10 +28,10 @@ const nextConfig: NextConfig = {
         hostname: "radstore.pk",
         pathname: "/cdn/**",
       },
-      /** Supabase Storage public URLs (home hero, collection heroes, product media) */
+      /** Supabase Storage public URLs (home hero, collection heroes, product media, reviews) */
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "**.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
     ],
