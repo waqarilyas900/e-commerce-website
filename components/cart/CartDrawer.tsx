@@ -18,6 +18,27 @@ import { CartFreeDeliveryProgress } from "@/components/cart/cart-free-delivery-p
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
+function CartLineRemoveIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
 function DrawerRecoTile({ product }: { product: Product }) {
   const { addVariant, closeCart } = useCart();
   const [quick, setQuick] = useState<
@@ -207,7 +228,7 @@ export function CartDrawer() {
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
           />
           <motion.aside
-            className="absolute inset-y-0 right-0 z-81 flex min-h-0 w-full max-w-md flex-col overflow-hidden bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
+            className="absolute inset-y-0 right-0 z-81 flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
             style={{
               willChange: "transform",
               maxHeight: "100dvh",
@@ -335,13 +356,24 @@ export function CartDrawer() {
                           style={{ backgroundImage: `url(${product.image})` }}
                         />
                         <div className="min-w-0 flex-1">
-                          <Link
-                            href={`/products/${product.slug}`}
-                            onClick={closeCart}
-                            className="text-sm font-medium leading-5 text-neutral-900 hover:underline"
-                          >
-                            {product.name}
-                          </Link>
+                          {/* min(100%,max-content): short titles stay compact (icon beside name); long titles use full width */}
+                          <div className="flex w-[min(100%,max-content)] max-w-full flex-wrap items-start gap-x-1.5 gap-y-1">
+                            <Link
+                              href={`/products/${product.slug}`}
+                              onClick={closeCart}
+                              className="min-w-0 wrap-break-word text-sm font-medium leading-5 text-neutral-900 hover:underline"
+                            >
+                              {product.name}
+                            </Link>
+                            <button
+                              type="button"
+                              className="shrink-0 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                              aria-label={`Remove ${product.name}`}
+                              onClick={() => removeItem(line.variantId)}
+                            >
+                              <CartLineRemoveIcon className="h-4 w-4" />
+                            </button>
+                          </div>
                           {variantLabel ? (
                             <p className="mt-0.5 text-xs text-neutral-500">{variantLabel}</p>
                           ) : null}
@@ -377,13 +409,6 @@ export function CartDrawer() {
                               {formatPkr(unitPrice * line.quantity)}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            className="mt-2 text-xs font-medium text-neutral-500 underline-offset-2 hover:text-neutral-800 hover:underline"
-                            onClick={() => removeItem(line.variantId)}
-                          >
-                            Remove
-                          </button>
                         </div>
                       </motion.article>
                     ))

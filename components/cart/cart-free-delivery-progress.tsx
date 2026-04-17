@@ -50,9 +50,16 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
+/** Nudge label boxes inward near drawer edges so “Free shipping” never clips (overflow-safe). */
+function labelShiftPx(posPct: number): number {
+  if (posPct < 22) return Math.round((22 - posPct) * 0.45);
+  if (posPct > 78) return -Math.round((posPct - 78) * 0.45);
+  return 0;
+}
+
 /**
- * Tiered free-delivery progress (store_settings). Renders nothing if admin has not configured
- * `free_delivery_thresholds_paisa` or while data is unavailable — no placeholder copy.
+ * Tiered free-delivery progress — aligned with store_settings + checkout rules.
+ * Renders nothing if no thresholds configured.
  */
 export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Props) {
   const rawThresholds = settings?.freeThresholdsPaisa ?? [];
@@ -84,7 +91,6 @@ export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Pro
   const fillPct =
     maxPaisa > 0 ? Math.min(100, Math.max(0, (subPaisa / maxPaisa) * 100)) : 0;
 
-  /** Next tier index for messaging (smallest threshold not yet reached). */
   const nextIdx = useMemo(() => {
     if (!hasTiers) return -1;
     const i = thresholdsPaisa.findIndex((t) => subPaisa < t);
@@ -93,10 +99,7 @@ export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Pro
 
   if (loading && !hasTiers) {
     return (
-      <div
-        className="mb-4 h-1 w-full animate-pulse rounded-full bg-neutral-200"
-        aria-hidden
-      />
+      <div className="mb-4 h-1 w-full animate-pulse rounded-full bg-neutral-200" aria-hidden />
     );
   }
 
@@ -111,53 +114,82 @@ export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Pro
       </p>
     ) : gapPkr != null && nextIdx >= 0 ? (
       <p className="text-center text-[15px] font-semibold leading-snug text-neutral-900">
-        You are{" "}
-        <span className="tabular-nums">{formatPkr(gapPkr)}</span> away from{" "}
+        You are <span className="tabular-nums">{formatPkr(gapPkr)}</span> away from{" "}
         {nextIdx === 0 ? "Free shipping" : "Tiered coupon"}
       </p>
     ) : null;
 
   return (
-    <div className="mb-5">
-      <div className="relative pt-1">
-        <div className="relative h-[3px] overflow-hidden rounded-full bg-neutral-200">
-          <div
-            className="absolute left-0 top-0 h-full rounded-full bg-neutral-900 transition-[width] duration-500 ease-out"
-            style={{ width: `${fillPct}%` }}
-          />
+    <div className="mb-4 w-full min-w-0 px-0.5">
+      <div className="relative w-full min-w-0">
+        {/* Track + icons: line bisects circles; equal py so the bar has breathing room */}
+        <div className="relative w-full min-w-0 shrink-0 pt-3 pb-1">
+          <div className="relative h-12 w-full min-w-0">
+            <div
+              className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-2 -translate-y-1/2 rounded-full bg-neutral-200"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute left-0 top-1/2 z-0 h-2 -translate-y-1/2 rounded-full bg-neutral-900 transition-[width] duration-500 ease-out"
+              style={{ width: `${fillPct}%` }}
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(fillPct)}
+              aria-label="Progress toward delivery rewards"
+            />
+            {thresholdsPaisa.map((tp, idx) => {
+              const posPct = maxPaisa > 0 ? (tp / maxPaisa) * 100 : 0;
+              const achieved = subPaisa >= tp;
+              const isFirst = idx === 0;
+
+              return (
+                <div
+                  key={`icon-${tp}-${idx}`}
+                  className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${posPct}%` }}
+                >
+                  <div
+                    className={
+                      achieved
+                        ? "flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900 text-white shadow-sm ring-[3px] ring-white"
+                        : "flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-900 shadow-sm ring-[3px] ring-white"
+                    }
+                  >
+                    {achieved ? (
+                      <CheckIcon className="h-4 w-4" />
+                    ) : isFirst ? (
+                      <TruckIcon className="h-[17px] w-[17px]" />
+                    ) : (
+                      <span className="text-[15px] font-bold leading-none">%</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="relative mt-5 min-h-18">
+        {/* Labels: two lines under each node; min-h reserves space for absolute children */}
+        <div className="relative mt-0.5 min-h-[3rem] w-full min-w-0">
           {thresholdsPaisa.map((tp, idx) => {
             const posPct = maxPaisa > 0 ? (tp / maxPaisa) * 100 : 0;
-            const achieved = subPaisa >= tp;
             const isFirst = idx === 0;
+            const shift = labelShiftPx(posPct);
 
             return (
               <div
-                key={`${tp}-${idx}`}
-                className="absolute top-0 flex w-21 -translate-x-1/2 flex-col items-center text-center"
-                style={{ left: `${posPct}%` }}
+                key={`label-${tp}-${idx}`}
+                className="absolute top-0 flex max-w-[min(9.5rem,calc(100vw-4rem))] min-w-0 flex-col items-center text-center"
+                style={{
+                  left: `${posPct}%`,
+                  transform: `translateX(calc(-50% + ${shift}px))`,
+                }}
               >
-                <div
-                  className={
-                    achieved
-                      ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white shadow-sm"
-                      : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 shadow-sm"
-                  }
-                >
-                  {achieved ? (
-                    <CheckIcon className="h-4 w-4" />
-                  ) : isFirst ? (
-                    <TruckIcon className="h-4 w-4" />
-                  ) : (
-                    <span className="text-sm font-bold">%</span>
-                  )}
-                </div>
-                <span className="mt-2 text-[13px] font-semibold leading-tight text-neutral-900">
+                <span className="w-full text-[13px] font-semibold leading-tight text-neutral-900">
                   {isFirst ? "Free shipping" : "Tiered coupon"}
                 </span>
-                <span className="mt-0.5 text-[12px] tabular-nums text-neutral-500">
+                <span className="mt-0 text-[12px] tabular-nums leading-none text-neutral-500">
                   {formatPkr(tp / 100)}
                 </span>
               </div>
@@ -166,7 +198,7 @@ export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Pro
         </div>
       </div>
 
-      <div className="mt-12 border-t border-neutral-100 pt-4">{statusLine}</div>
+      <div className="mt-1.5">{statusLine}</div>
     </div>
   );
 }
