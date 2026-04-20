@@ -23,6 +23,7 @@ import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
 import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-settings";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { voucherErrorMessage } from "@/app/lib/voucher-user-messages";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
@@ -117,6 +118,8 @@ export default function CheckoutPage() {
   const [bottomSummaryOpen, setBottomSummaryOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [discountPreviewCents, setDiscountPreviewCents] = useState<number | null>(null);
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [discountNotice, setDiscountNotice] = useState<string | null>(null);
 
   const [deliverySettings, setDeliverySettings] = useState<{
@@ -141,19 +144,83 @@ export default function CheckoutPage() {
     [subtotal, deliverySettings.freeThresholdsPaisa],
   );
 
-  const grandTotal = subtotal + deliveryPkr;
+  const discountPkr =
+    discountApplied && discountPreviewCents != null && discountPreviewCents > 0
+      ? discountPreviewCents / 100
+      : 0;
 
-  const applyDiscount = useCallback(() => {
+  const grandTotal = Math.max(0, subtotal + deliveryPkr - discountPkr);
+
+  const cartFingerprint = useMemo(
+    () => resolvedLines.map(({ line }) => `${line.variantId}:${line.quantity}`).join("|"),
+    [resolvedLines],
+  );
+
+  useEffect(() => {
+    setDiscountPreviewCents(null);
+    setDiscountApplied(false);
+    setDiscountNotice(null);
+  }, [cartFingerprint]);
+
+  const applyDiscount = useCallback(async () => {
     const c = discountCode.trim();
     if (!c) {
       setDiscountNotice("Enter a discount code first.");
       return;
     }
-    setDiscountApplied(true);
-    setDiscountNotice(
-      "If this code is valid, any discount will be confirmed when the order is processed.",
-    );
-  }, [discountCode]);
+    if (!signedIn) {
+      setDiscountNotice("Sign in to apply a voucher code.");
+      return;
+    }
+    if (resolvedLines.length === 0) {
+      setDiscountNotice("Your cart is empty.");
+      return;
+    }
+    setApplyingVoucher(true);
+    setDiscountNotice(null);
+    try {
+      const productIds = [...new Set(resolvedLines.map((r) => r.line.productId))];
+      const res = await fetch("/api/vouchers/preview", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: c,
+          cart_subtotal: subtotal,
+          product_ids: productIds,
+        }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        discount_cents?: number;
+        error?: string;
+        error_code?: string;
+      };
+      if (!res.ok || data.ok === false) {
+        setDiscountApplied(false);
+        setDiscountPreviewCents(null);
+        setDiscountNotice(
+          voucherErrorMessage(data.error_code, data.error ?? "That code could not be applied."),
+        );
+        return;
+      }
+      const cents = data.discount_cents;
+      if (cents == null || !Number.isFinite(cents) || cents <= 0) {
+        setDiscountApplied(false);
+        setDiscountPreviewCents(null);
+        setDiscountNotice("No discount applies to this order.");
+        return;
+      }
+      setDiscountPreviewCents(Math.round(cents));
+      setDiscountApplied(true);
+    } catch {
+      setDiscountApplied(false);
+      setDiscountPreviewCents(null);
+      setDiscountNotice("Could not verify the code. Try again.");
+    } finally {
+      setApplyingVoucher(false);
+    }
+  }, [discountCode, resolvedLines, signedIn, subtotal]);
 
   const applyGeocode = useCallback((addr: NominatimAddress) => {
     const parts = [
@@ -318,6 +385,9 @@ export default function CheckoutPage() {
           shipping_country: SHIPPING_COUNTRY_CODE,
           currency: STORE_CURRENCY_CODE,
           items,
+          ...(discountApplied && discountCode.trim() !== ""
+            ? { voucher_code: discountCode.trim() }
+            : {}),
         }),
       });
       const data = (await res.json()) as {
@@ -325,9 +395,12 @@ export default function CheckoutPage() {
         order_number?: string;
         total_cents?: number;
         error?: string;
+        error_code?: string;
       };
       if (!res.ok || data.ok === false) {
-        setSubmitError(data.error ?? "Could not place order. Please try again.");
+        setSubmitError(
+          voucherErrorMessage(data.error_code, data.error ?? "Could not place order. Please try again."),
+        );
         return;
       }
       if (!data.order_number || data.total_cents == null) {
@@ -433,10 +506,14 @@ export default function CheckoutPage() {
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
                     setDiscountNotice(null);
+                    setDiscountApplied(false);
+                    setDiscountPreviewCents(null);
                   }}
-                  onApplyDiscount={applyDiscount}
+                  onApplyDiscount={() => void applyDiscount()}
                   discountApplied={discountApplied}
+                  discountPkr={discountPkr}
                   discountNotice={discountNotice}
+                  applyingVoucher={applyingVoucher}
                 />
               </div>
 
@@ -511,10 +588,14 @@ export default function CheckoutPage() {
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
                     setDiscountNotice(null);
+                    setDiscountApplied(false);
+                    setDiscountPreviewCents(null);
                   }}
-                  onApplyDiscount={applyDiscount}
+                  onApplyDiscount={() => void applyDiscount()}
                   discountApplied={discountApplied}
+                  discountPkr={discountPkr}
                   discountNotice={discountNotice}
+                  applyingVoucher={applyingVoucher}
                 />
               </div>
 
@@ -549,10 +630,14 @@ export default function CheckoutPage() {
                 onDiscountCodeChange={(v) => {
                   setDiscountCode(v);
                   setDiscountNotice(null);
+                  setDiscountApplied(false);
+                  setDiscountPreviewCents(null);
                 }}
-                onApplyDiscount={applyDiscount}
+                onApplyDiscount={() => void applyDiscount()}
                 discountApplied={discountApplied}
+                discountPkr={discountPkr}
                 discountNotice={discountNotice}
+                applyingVoucher={applyingVoucher}
               />
             </div>
           </aside>
