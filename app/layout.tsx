@@ -12,10 +12,6 @@ import { getHeaderNavMenuItems } from "@/app/lib/header-nav-menu";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
 import { DiscountNotificationPrompt } from "@/components/ui/discount-notification-prompt";
-import {
-  FALLBACK_ANNOUNCEMENT_BAR,
-  FALLBACK_STORE_BRAND,
-} from "@/app/lib/layout-fallbacks";
 import "./globals.css";
 
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
@@ -44,18 +40,13 @@ const showGoogleOneTap =
   process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP === "true";
 
 export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const brand = await loadStoreBrandFromDatabase();
-    const title = brand.siteTitle.trim() || brand.storeName.trim() || "Store";
-    const description = brand.siteDescription.trim() || undefined;
-    return {
-      title,
-      description,
-    };
-  } catch (e) {
-    console.error("[layout] generateMetadata", e);
-    return { title: "Store" };
-  }
+  const brand = await loadStoreBrandFromDatabase();
+  const title = brand.siteTitle.trim() || brand.storeName.trim() || "Store";
+  const description = brand.siteDescription.trim() || undefined;
+  return {
+    title,
+    description,
+  };
 }
 
 export default async function RootLayout({
@@ -63,26 +54,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let baseBrand: Awaited<ReturnType<typeof loadStoreBrandFromDatabase>>;
-  let announcementBar: Awaited<ReturnType<typeof getAnnouncementBarForLayout>>;
-  let collectionLinks: Awaited<ReturnType<typeof getNavCollectionLinks>>;
-  let headerNavMenuItems: Awaited<ReturnType<typeof getHeaderNavMenuItems>>;
-
-  try {
-    [baseBrand, announcementBar, collectionLinks, headerNavMenuItems] = await Promise.all([
+  const [baseBrand, announcementBar, collectionLinks, headerNavMenuItems] =
+    await Promise.all([
       loadStoreBrandFromDatabase(),
       getAnnouncementBarForLayout(),
       getNavCollectionLinks(),
       getHeaderNavMenuItems(),
     ]);
-  } catch (e) {
-    console.error("[layout] RootLayout data", e);
-    baseBrand = FALLBACK_STORE_BRAND;
-    announcementBar = FALLBACK_ANNOUNCEMENT_BAR;
-    collectionLinks = [];
-    headerNavMenuItems = [];
-  }
-
   const storeBrand = { ...baseBrand, announcementBar };
 
   return (
