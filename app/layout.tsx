@@ -14,6 +14,9 @@ import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
 import { DiscountNotificationPrompt } from "@/components/ui/discount-notification-prompt";
 import "./globals.css";
 
+/** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
+export const dynamic = "force-dynamic";
+
 /** Radstore.pk uses Jost for body copy */
 const jost = Jost({
   variable: "--font-jost",

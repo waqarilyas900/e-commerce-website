@@ -19,7 +19,10 @@ type Props = {
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
   discountApplied: boolean;
+  /** When set, shown as the discount line (PKR). */
+  discountPkr?: number;
   discountNotice: string | null;
+  applyingVoucher?: boolean;
 };
 
 type Line = ResolvedCartLine;
@@ -33,7 +36,9 @@ type SummaryBodyProps = {
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
   discountApplied: boolean;
+  discountPkr?: number;
   discountNotice: string | null;
+  applyingVoucher?: boolean;
   inert?: boolean;
 };
 
@@ -46,7 +51,9 @@ function CheckoutOrderSummaryBody({
   onDiscountCodeChange,
   onApplyDiscount,
   discountApplied,
+  discountPkr = 0,
   discountNotice,
+  applyingVoucher = false,
   inert = false,
 }: SummaryBodyProps) {
   return (
@@ -97,9 +104,10 @@ function CheckoutOrderSummaryBody({
         <button
           type="button"
           onClick={onApplyDiscount}
-          className="shrink-0 rounded-md border border-neutral-200 bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-200"
+          disabled={applyingVoucher}
+          className="shrink-0 rounded-md border border-neutral-200 bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Apply
+          {applyingVoucher ? "…" : "Apply"}
         </button>
       </div>
       {discountNotice ? (
@@ -125,10 +133,10 @@ function CheckoutOrderSummaryBody({
           </span>
           <span className="tabular-nums">{formatPkr(shipping)}</span>
         </div>
-        {discountApplied ? (
-          <div className="flex justify-between gap-4 text-neutral-700">
+        {discountApplied && discountPkr > 0 ? (
+          <div className="flex justify-between gap-4 text-emerald-800">
             <span>Discount</span>
-            <span className="tabular-nums text-neutral-600">{formatPkr(0)}</span>
+            <span className="tabular-nums font-medium">−{formatPkr(discountPkr)}</span>
           </div>
         ) : null}
       </div>
@@ -161,7 +169,9 @@ export function CheckoutOrderSummaryAccordion({
   onDiscountCodeChange,
   onApplyDiscount,
   discountApplied,
+  discountPkr,
   discountNotice,
+  applyingVoucher,
 }: Props) {
   return (
     <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
@@ -214,7 +224,9 @@ export function CheckoutOrderSummaryAccordion({
           onDiscountCodeChange={onDiscountCodeChange}
           onApplyDiscount={onApplyDiscount}
           discountApplied={discountApplied}
+          discountPkr={discountPkr}
           discountNotice={discountNotice}
+          applyingVoucher={applyingVoucher}
           inert={!expanded}
         />
       </motion.div>

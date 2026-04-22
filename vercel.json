@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/cron/restock-notifications",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

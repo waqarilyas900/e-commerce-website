@@ -18,12 +18,14 @@ export type PlaceOrderPayload = {
   shipping_country?: string;
   customer_note?: string;
   currency?: string;
+  /** Optional; server recomputes discount from DB prices — must match an authenticated preview. */
+  voucher_code?: string;
   items: { variant_id: string; quantity: number }[];
 };
 
 export type PlaceOrderResult =
-  | { ok: true; order_id: string; order_number: string; total_cents: number }
-  | { ok: false; error: string };
+  | { ok: true; order_id: string; order_number: string; total_cents: number; discount_cents?: number }
+  | { ok: false; error: string; error_code?: string };
 
 function productNameFromJoin(products: unknown): string {
   if (products && typeof products === "object" && !Array.isArray(products) && "name" in products) {
@@ -110,6 +112,9 @@ export async function POST(req: Request) {
     customer_note: incoming.customer_note,
     currency: incoming.currency,
     items: incoming.items,
+    ...(typeof incoming.voucher_code === "string" && incoming.voucher_code.trim() !== ""
+      ? { voucher_code: incoming.voucher_code.trim() }
+      : {}),
   };
 
   const supabase = await createClient();
@@ -133,7 +138,11 @@ export async function POST(req: Request) {
   }
 
   if ("ok" in result && result.ok === false) {
-    return NextResponse.json(result, { status: 400 });
+    const err = result as { ok: false; error: string; error_code?: string };
+    return NextResponse.json(
+      { ok: false, error: err.error, ...(err.error_code ? { error_code: err.error_code } : {}) },
+      { status: 400 },
+    );
   }
 
   if ("ok" in result && result.ok === true) {

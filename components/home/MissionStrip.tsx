@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
@@ -6,10 +9,18 @@ type MissionStripProps = {
   missionHtml: string;
 };
 
+/** Client-only: avoids jsdom / isomorphic-dompurify SSR edge cases on serverless (e.g. Vercel). */
 export function MissionStrip({ missionHtml }: MissionStripProps) {
-  const safe = DOMPurify.sanitize(missionHtml.trim(), {
-    USE_PROFILES: { html: true },
-  });
+  const safe = useMemo(() => {
+    try {
+      return DOMPurify.sanitize(missionHtml.trim(), {
+        USE_PROFILES: { html: true },
+      });
+    } catch {
+      return "";
+    }
+  }, [missionHtml]);
+
   if (!safe) return null;
 
   return (
