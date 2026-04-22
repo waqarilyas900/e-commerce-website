@@ -96,7 +96,16 @@ function defaultFormValues(): Record<string, string> {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { ready, resolvedLines, subtotal, clearCart, closeCart, openCart } = useCart();
+  const {
+    ready,
+    lines,
+    isResolvingCart,
+    resolvedLines,
+    subtotal,
+    clearCart,
+    closeCart,
+    openCart,
+  } = useCart();
   const { storeName } = useStoreBrand();
   const skipEmptyCartRedirectOnce = useRef(false);
 
@@ -130,18 +139,28 @@ export default function CheckoutPage() {
     freeThresholdsPaisa: [],
   });
 
-  const deliveryPkr = useMemo(
-    () =>
-      computeDeliveryPkr(subtotal, {
-        standard_delivery_paisa: deliverySettings.standardPaisa,
-        free_delivery_thresholds_paisa: deliverySettings.freeThresholdsPaisa,
-      }),
-    [subtotal, deliverySettings],
-  );
+  const cartResolving =
+    hasCatalogDb() && lines.length > 0 && resolvedLines.length === 0 && isResolvingCart;
+
+  const cartResolveFailed =
+    ready &&
+    hasCatalogDb() &&
+    lines.length > 0 &&
+    resolvedLines.length === 0 &&
+    !isResolvingCart;
+
+  const deliveryPkr = useMemo(() => {
+    if (cartResolving) return 0;
+    return computeDeliveryPkr(subtotal, {
+      standard_delivery_paisa: deliverySettings.standardPaisa,
+      free_delivery_thresholds_paisa: deliverySettings.freeThresholdsPaisa,
+    });
+  }, [cartResolving, subtotal, deliverySettings]);
 
   const freeDeliveryGapPkr = useMemo(
-    () => nextFreeDeliveryGapPkr(subtotal, deliverySettings.freeThresholdsPaisa),
-    [subtotal, deliverySettings.freeThresholdsPaisa],
+    () =>
+      cartResolving ? null : nextFreeDeliveryGapPkr(subtotal, deliverySettings.freeThresholdsPaisa),
+    [cartResolving, subtotal, deliverySettings.freeThresholdsPaisa],
   );
 
   const discountPkr =
@@ -262,14 +281,14 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!ready) return;
-    if (resolvedLines.length === 0) {
-      if (skipEmptyCartRedirectOnce.current) {
-        skipEmptyCartRedirectOnce.current = false;
-        return;
-      }
-      router.replace("/");
+    /** Only bounce home when there are no raw cart lines — not while lines exist but still resolving. */
+    if (lines.length > 0) return;
+    if (skipEmptyCartRedirectOnce.current) {
+      skipEmptyCartRedirectOnce.current = false;
+      return;
     }
-  }, [ready, resolvedLines.length, router]);
+    router.replace("/");
+  }, [ready, lines.length, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -449,6 +468,22 @@ export default function CheckoutPage() {
     );
   }
 
+  if (cartResolving) {
+    return (
+      <CheckoutChrome mode="checkout">
+        <main
+          id="MainContent"
+          className="flex min-h-[50vh] flex-col items-center justify-center gap-2 text-center"
+        >
+          <p className="text-sm text-neutral-600">Loading your cart…</p>
+          <p className="max-w-sm text-xs text-neutral-500">
+            Fetching product details for your order. This only takes a moment.
+          </p>
+        </main>
+      </CheckoutChrome>
+    );
+  }
+
   return (
     <CheckoutChrome mode="checkout">
       <main id="MainContent" className="pb-12 md:pb-0">
@@ -608,9 +643,19 @@ export default function CheckoutPage() {
                 </p>
               ) : null}
 
+              {cartResolveFailed ? (
+                <p
+                  className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                  role="status"
+                >
+                  We couldn&apos;t load one or more items in your cart from the catalog. Open your
+                  cart and try again, or continue shopping.
+                </p>
+              ) : null}
+
               <button
                 type="submit"
-                disabled={placing}
+                disabled={placing || resolvedLines.length === 0 || cartResolveFailed}
                 className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {placing ? "Placing order…" : "Complete order"}

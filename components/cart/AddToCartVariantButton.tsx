@@ -36,7 +36,7 @@ export function AddToCartVariantButton({
   redirectHref,
 }: Props) {
   const router = useRouter();
-  const { addVariant, openCart } = useCart();
+  const { addVariant, openCart, waitForCartResolution } = useCart();
   const [adding, setAdding] = useState(false);
   const q = Math.min(maxQuantity, Math.max(1, Math.floor(quantity)));
 
@@ -61,6 +61,7 @@ export function AddToCartVariantButton({
             quantity: q,
           });
           if (redirectHref) {
+            await waitForCartResolution();
             router.push(redirectHref);
           } else if (openDrawer) {
             openCart();

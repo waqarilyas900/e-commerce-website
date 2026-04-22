@@ -26,6 +26,15 @@ export async function GET(req: Request) {
   }
   const limitRaw = new URL(req.url).searchParams.get("limit");
   const limit = Math.min(12, Math.max(1, Number(limitRaw) || 2));
+  const excludeRaw = new URL(req.url).searchParams.get("exclude")?.trim() ?? "";
+  const excludeIds = new Set(
+    excludeRaw
+      .split(/[\s,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
   const all = await dbListAllActiveProductsForCards();
-  return NextResponse.json(shufflePick(all, limit));
+  const pool =
+    excludeIds.size === 0 ? all : all.filter((p) => p.id && !excludeIds.has(p.id));
+  return NextResponse.json(shufflePick(pool, limit));
 }
