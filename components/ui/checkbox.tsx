@@ -59,7 +59,7 @@ export function Checkbox({
           {...rest}
           id={inputId}
           type="checkbox"
-          className={`peer sr-only ${rest.className ?? ""}`.trim()}
+          className="peer sr-only"
           disabled={disabled}
           onChange={handleChange}
           aria-labelledby={labelTextId}

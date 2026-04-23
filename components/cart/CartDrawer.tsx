@@ -233,7 +233,7 @@ export function CartDrawer() {
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-80"
+          className="fixed inset-0 z-[180]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -254,7 +254,7 @@ export function CartDrawer() {
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
           />
           <motion.aside
-            className="absolute inset-y-0 right-0 z-81 flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
+            className="absolute inset-y-0 right-0 z-[181] flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
             style={{
               willChange: "transform",
               maxHeight: "100dvh",
