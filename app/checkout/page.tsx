@@ -4,7 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CHECKOUT_THANK_YOU_META_KEY } from "@/app/lib/checkout-thank-you";
+import {
+  CHECKOUT_PENDING_CART_CLEAR_KEY,
+  CHECKOUT_THANK_YOU_META_KEY,
+} from "@/app/lib/checkout-thank-you";
 // Alternate layout: import `GUEST_MINIMAL_CHECKOUT` from `@/app/lib/checkout-templates` and assign below.
 import { PAKISTAN_STANDARD_CHECKOUT } from "@/app/lib/checkout-templates";
 import { PAKISTAN_PROVINCE_OPTIONS } from "@/app/lib/checkout-templates/pakistan-provinces";
@@ -96,11 +99,12 @@ function defaultFormValues(): Record<string, string> {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { ready, resolvedLines, subtotal, clearCart, closeCart, openCart } = useCart();
+  const { ready, resolvedLines, subtotal, closeCart, openCart } = useCart();
   const { storeName } = useStoreBrand();
   const skipEmptyCartRedirectOnce = useRef(false);
 
   const [placing, setPlacing] = useState(false);
+  const [redirectingToConfirmation, setRedirectingToConfirmation] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [formValues, setFormValues] = useState<Record<string, string>>(defaultFormValues);
@@ -121,6 +125,17 @@ export default function CheckoutPage() {
   const [discountPreviewCents, setDiscountPreviewCents] = useState<number | null>(null);
   const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [discountNotice, setDiscountNotice] = useState<string | null>(null);
+  const [discountNoticeIsError, setDiscountNoticeIsError] = useState(false);
+
+  const clearDiscountNotice = useCallback(() => {
+    setDiscountNotice(null);
+    setDiscountNoticeIsError(false);
+  }, []);
+
+  const setDiscountIssue = useCallback((message: string) => {
+    setDiscountNotice(message);
+    setDiscountNoticeIsError(true);
+  }, []);
 
   const [deliverySettings, setDeliverySettings] = useState<{
     standardPaisa: number;
@@ -160,24 +175,25 @@ export default function CheckoutPage() {
     setDiscountPreviewCents(null);
     setDiscountApplied(false);
     setDiscountNotice(null);
+    setDiscountNoticeIsError(false);
   }, [cartFingerprint]);
 
   const applyDiscount = useCallback(async () => {
     const c = discountCode.trim();
     if (!c) {
-      setDiscountNotice("Enter a discount code first.");
+      setDiscountIssue("Enter a discount code first.");
       return;
     }
     if (!signedIn) {
-      setDiscountNotice("Sign in to apply a voucher code.");
+      setDiscountIssue("Sign in to apply a voucher code.");
       return;
     }
     if (resolvedLines.length === 0) {
-      setDiscountNotice("Your cart is empty.");
+      setDiscountIssue("Your cart is empty.");
       return;
     }
     setApplyingVoucher(true);
-    setDiscountNotice(null);
+    clearDiscountNotice();
     try {
       const productIds = [...new Set(resolvedLines.map((r) => r.line.productId))];
       const res = await fetch("/api/vouchers/preview", {
@@ -199,7 +215,7 @@ export default function CheckoutPage() {
       if (!res.ok || data.ok === false) {
         setDiscountApplied(false);
         setDiscountPreviewCents(null);
-        setDiscountNotice(
+        setDiscountIssue(
           voucherErrorMessage(data.error_code, data.error ?? "That code could not be applied."),
         );
         return;
@@ -208,7 +224,7 @@ export default function CheckoutPage() {
       if (cents == null || !Number.isFinite(cents) || cents <= 0) {
         setDiscountApplied(false);
         setDiscountPreviewCents(null);
-        setDiscountNotice("No discount applies to this order.");
+        setDiscountIssue("No discount applies to this order.");
         return;
       }
       setDiscountPreviewCents(Math.round(cents));
@@ -216,11 +232,11 @@ export default function CheckoutPage() {
     } catch {
       setDiscountApplied(false);
       setDiscountPreviewCents(null);
-      setDiscountNotice("Could not verify the code. Try again.");
+      setDiscountIssue("Could not verify the code. Try again.");
     } finally {
       setApplyingVoucher(false);
     }
-  }, [discountCode, resolvedLines, signedIn, subtotal]);
+  }, [clearDiscountNotice, discountCode, resolvedLines, setDiscountIssue, signedIn, subtotal]);
 
   const applyGeocode = useCallback((addr: NominatimAddress) => {
     const parts = [
@@ -364,6 +380,7 @@ export default function CheckoutPage() {
     setFormError(null);
     setSubmitError(null);
     setPlacing(true);
+    let successNavigation = false;
     try {
       const items = resolvedLines.map(({ line }) => ({
         variant_id: line.variantId,
@@ -419,14 +436,20 @@ export default function CheckoutPage() {
       } catch {
         /* private mode / quota */
       }
+      try {
+        sessionStorage.setItem(CHECKOUT_PENDING_CART_CLEAR_KEY, "1");
+      } catch {
+        /* private mode / quota */
+      }
+      setRedirectingToConfirmation(true);
+      successNavigation = true;
       router.replace(
         `/checkout/thank-you?order=${encodeURIComponent(data.order_number)}&total_cents=${String(data.total_cents)}`,
       );
-      clearCart();
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {
-      setPlacing(false);
+      if (!successNavigation) setPlacing(false);
     }
   }
 
@@ -444,6 +467,30 @@ export default function CheckoutPage() {
           className="flex min-h-[50vh] flex-col items-center justify-center text-center"
         >
           <p className="text-sm text-neutral-600">Loading checkout…</p>
+        </main>
+      </CheckoutChrome>
+    );
+  }
+
+  if (redirectingToConfirmation) {
+    return (
+      <CheckoutChrome mode="checkout">
+        <main
+          id="MainContent"
+          className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <div
+            className="h-9 w-9 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900"
+            aria-hidden
+          />
+          <div>
+            <p className="text-base font-semibold text-neutral-900">Order placed</p>
+            <p className="mt-1.5 text-sm text-neutral-600">
+              Taking you to your confirmation…
+            </p>
+          </div>
         </main>
       </CheckoutChrome>
     );
@@ -505,7 +552,7 @@ export default function CheckoutPage() {
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
-                    setDiscountNotice(null);
+                    clearDiscountNotice();
                     setDiscountApplied(false);
                     setDiscountPreviewCents(null);
                   }}
@@ -513,6 +560,7 @@ export default function CheckoutPage() {
                   discountApplied={discountApplied}
                   discountPkr={discountPkr}
                   discountNotice={discountNotice}
+                  discountNoticeIsError={discountNoticeIsError}
                   applyingVoucher={applyingVoucher}
                 />
               </div>
@@ -529,7 +577,7 @@ export default function CheckoutPage() {
                   if (id === "phone") setFormError(null);
                 }}
                 inputClassName={inputClass}
-                rootClassName="mt-0 space-y-8"
+                rootClassName="mt-0 space-y-4"
                 phoneError={formError}
                 locError={locError}
                 locLoading={locLoading}
@@ -587,7 +635,7 @@ export default function CheckoutPage() {
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
-                    setDiscountNotice(null);
+                    clearDiscountNotice();
                     setDiscountApplied(false);
                     setDiscountPreviewCents(null);
                   }}
@@ -595,6 +643,7 @@ export default function CheckoutPage() {
                   discountApplied={discountApplied}
                   discountPkr={discountPkr}
                   discountNotice={discountNotice}
+                  discountNoticeIsError={discountNoticeIsError}
                   applyingVoucher={applyingVoucher}
                 />
               </div>
@@ -629,7 +678,7 @@ export default function CheckoutPage() {
                 discountCode={discountCode}
                 onDiscountCodeChange={(v) => {
                   setDiscountCode(v);
-                  setDiscountNotice(null);
+                  clearDiscountNotice();
                   setDiscountApplied(false);
                   setDiscountPreviewCents(null);
                 }}
@@ -637,6 +686,7 @@ export default function CheckoutPage() {
                 discountApplied={discountApplied}
                 discountPkr={discountPkr}
                 discountNotice={discountNotice}
+                discountNoticeIsError={discountNoticeIsError}
                 applyingVoucher={applyingVoucher}
               />
             </div>

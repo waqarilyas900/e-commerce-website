@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useId } from "react";
 import { motion } from "framer-motion";
 import { formatPkr } from "@/app/lib/format-currency";
 import type { ResolvedCartLine } from "@/app/providers/cart-provider";
@@ -22,6 +23,8 @@ type Props = {
   /** When set, shown as the discount line (PKR). */
   discountPkr?: number;
   discountNotice: string | null;
+  /** When true, message is styled as an error and the code field gets a red border. */
+  discountNoticeIsError?: boolean;
   applyingVoucher?: boolean;
 };
 
@@ -38,6 +41,7 @@ type SummaryBodyProps = {
   discountApplied: boolean;
   discountPkr?: number;
   discountNotice: string | null;
+  discountNoticeIsError?: boolean;
   applyingVoucher?: boolean;
   inert?: boolean;
 };
@@ -53,9 +57,14 @@ function CheckoutOrderSummaryBody({
   discountApplied,
   discountPkr = 0,
   discountNotice,
+  discountNoticeIsError = false,
   applyingVoucher = false,
   inert = false,
 }: SummaryBodyProps) {
+  const voucherNoticeId = useId();
+  const showNotice = Boolean(discountNotice);
+  const inputError = showNotice && discountNoticeIsError;
+
   return (
     <div
       className={`border-t border-neutral-200 bg-white px-4 py-4 md:border-t-0 md:bg-transparent md:px-0 ${inert ? "pointer-events-none" : ""}`}
@@ -99,7 +108,13 @@ function CheckoutOrderSummaryBody({
           onChange={(e) => onDiscountCodeChange(e.target.value)}
           placeholder="Discount code"
           autoComplete="off"
-          className="min-w-0 flex-1 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10"
+          aria-invalid={inputError}
+          aria-describedby={inputError ? voucherNoticeId : undefined}
+          className={
+            inputError
+              ? "min-w-0 flex-1 rounded-md border-2 border-red-500 bg-red-50/40 px-3 py-2.5 text-sm text-neutral-900 outline-none transition placeholder:text-red-900/40 focus:border-red-600 focus:ring-2 focus:ring-red-500/25"
+              : "min-w-0 flex-1 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10"
+          }
         />
         <button
           type="button"
@@ -110,8 +125,16 @@ function CheckoutOrderSummaryBody({
           {applyingVoucher ? "…" : "Apply"}
         </button>
       </div>
-      {discountNotice ? (
-        <p className="mt-2 text-xs text-neutral-600" role="status">
+      {showNotice ? (
+        <p
+          id={voucherNoticeId}
+          className={
+            discountNoticeIsError
+              ? "mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium leading-snug text-red-800"
+              : "mt-2 text-xs text-neutral-600"
+          }
+          role={discountNoticeIsError ? "alert" : "status"}
+        >
           {discountNotice}
         </p>
       ) : null}
@@ -171,6 +194,7 @@ export function CheckoutOrderSummaryAccordion({
   discountApplied,
   discountPkr,
   discountNotice,
+  discountNoticeIsError,
   applyingVoucher,
 }: Props) {
   return (
@@ -226,6 +250,7 @@ export function CheckoutOrderSummaryAccordion({
           discountApplied={discountApplied}
           discountPkr={discountPkr}
           discountNotice={discountNotice}
+          discountNoticeIsError={discountNoticeIsError}
           applyingVoucher={applyingVoucher}
           inert={!expanded}
         />
