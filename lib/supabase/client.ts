@@ -32,13 +32,12 @@ export function createClient(): SupabaseClient {
        */
       detectSessionInUrl: false,
       /**
-       * Default `navigator.locks` + `lockAcquireTimeout` uses "steal" recovery, which surfaces as
+       * Default `navigator.locks` uses "steal" recovery, which surfaces as
        * `AbortError: Lock broken by another request with the 'steal' option` when React Strict
        * Mode or parallel effects (e.g. cart resolve + One Tap `getUser`) contend. In-process lock
        * serializes auth in this tab only (no cross-tab mutex; rare multi-tab edge cases only).
        */
       lock: processLock,
-      lockAcquireTimeout: -1,
     },
   });
 
