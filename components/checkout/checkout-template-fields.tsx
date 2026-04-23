@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { ProfilePhoneField } from "@/components/account/profile-phone-field";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Radio } from "@/components/ui/radio";
 import type { CheckoutTemplateDef } from "@/app/lib/checkout-templates/types";
+import type { SavedAddress } from "@/app/lib/saved-addresses";
 
 type Props = {
   template: CheckoutTemplateDef;
@@ -15,6 +18,18 @@ type Props = {
   locError?: string | null;
   locLoading?: boolean;
   onUseLocation?: () => void;
+  signedIn?: boolean;
+  onRequestSignIn?: () => void;
+  saveForNextTime?: boolean;
+  onToggleSaveForNextTime?: (checked: boolean) => void;
+  savedAddresses?: SavedAddress[];
+  selectedSavedAddressId?: string | null;
+  onSelectSavedAddress?: (id: string) => void;
+  loadingSavedAddresses?: boolean;
+  onEditSavedAddress?: (id: string) => void;
+  onDeleteSavedAddress?: (id: string) => void;
+  savingAddress?: boolean;
+  saveAddressErrors?: Partial<Record<string, string>>;
 };
 
 export function CheckoutTemplateFields({
@@ -27,6 +42,18 @@ export function CheckoutTemplateFields({
   locError,
   locLoading,
   onUseLocation,
+  signedIn = false,
+  onRequestSignIn,
+  saveForNextTime = false,
+  onToggleSaveForNextTime,
+  savedAddresses = [],
+  selectedSavedAddressId = null,
+  onSelectSavedAddress,
+  loadingSavedAddresses = false,
+  onEditSavedAddress,
+  onDeleteSavedAddress,
+  savingAddress = false,
+  saveAddressErrors = {},
 }: Props) {
   return (
     <div className={rootClassName}>
@@ -37,9 +64,21 @@ export function CheckoutTemplateFields({
               <h3 className="text-sm font-semibold capitalize tracking-tight text-neutral-900">
                 Contact
               </h3>
-              <Link href="/login" className="text-xs font-semibold tracking-wide text-neutral-800 underline">
-                Sign in
-              </Link>
+              {signedIn ? (
+                <span className="text-xs font-semibold tracking-wide text-emerald-700">Signed in</span>
+              ) : onRequestSignIn ? (
+                <button
+                  type="button"
+                  onClick={onRequestSignIn}
+                  className="text-xs font-semibold tracking-wide text-neutral-800 underline"
+                >
+                  Sign in
+                </button>
+              ) : (
+                <Link href="/login" className="text-xs font-semibold tracking-wide text-neutral-800 underline">
+                  Sign in
+                </Link>
+              )}
             </div>
           ) : (
             <h3 className="text-sm font-semibold capitalize tracking-tight text-neutral-900">
@@ -97,6 +136,11 @@ export function CheckoutTemplateFields({
                     <p className="mt-1 text-xs text-neutral-500">
                       Required for delivery updates (COD).
                     </p>
+                    {saveAddressErrors[field.id] ? (
+                      <p className="mt-2 text-xs text-red-600" role="alert">
+                        {saveAddressErrors[field.id]}
+                      </p>
+                    ) : null}
                     {phoneError ? (
                       <p className="mt-2 text-xs text-red-600" role="alert">
                         {phoneError}
@@ -136,6 +180,11 @@ export function CheckoutTemplateFields({
                         {locError}
                       </p>
                     ) : null}
+                    {saveAddressErrors[field.id] ? (
+                      <p className="mt-2 text-xs text-red-600" role="alert">
+                        {saveAddressErrors[field.id]}
+                      </p>
+                    ) : null}
                   </div>
                 );
               }
@@ -173,26 +222,81 @@ export function CheckoutTemplateFields({
                     placeholder={resolvedPlaceholder}
                   />
                   {field.id === "email" ? (
-                    <label className="mt-3 inline-flex items-center gap-2 text-xs text-neutral-700">
-                      <input
-                        type="checkbox"
-                        className="h-3.5 w-3.5 rounded border border-neutral-300 text-neutral-900 focus:ring-neutral-900/20"
-                      />
-                      Email me with news and offers
-                    </label>
+                    <Checkbox
+                      className="mt-3 text-xs text-neutral-700"
+                      label="Email me with news and offers"
+                      defaultChecked={false}
+                    />
+                  ) : null}
+                  {saveAddressErrors[field.id] ? (
+                    <p className="mt-2 text-xs text-red-600" role="alert">
+                      {saveAddressErrors[field.id]}
+                    </p>
                   ) : null}
                 </div>
               );
             })}
           </div>
+          {section.id === "delivery" && signedIn ? (
+            <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <p className="text-xs font-semibold tracking-wide text-neutral-700">Saved addresses</p>
+              {loadingSavedAddresses ? (
+                <p className="mt-2 text-xs text-neutral-500">Loading your saved addresses…</p>
+              ) : savedAddresses.length === 0 ? (
+                <p className="mt-2 text-xs text-neutral-500">
+                  No saved addresses yet. Check the box below to save this one.
+                </p>
+              ) : (
+                <div className="mt-2 space-y-2">
+                  {savedAddresses.map((address, idx) => {
+                    const title =
+                      address.label.trim() || `Address ${String(idx + 1)}`;
+                    const summary = [
+                      address.shipping_street,
+                      address.shipping_city,
+                      address.shipping_province,
+                      address.shipping_postal_code,
+                    ]
+                      .map((v) => v.trim())
+                      .filter(Boolean)
+                      .join(", ");
+                    return (
+                      <Radio
+                        key={address.id}
+                        id={`checkout-saved-address-${address.id}`}
+                        name="checkout-saved-address"
+                        value={address.id}
+                        checked={selectedSavedAddressId === address.id}
+                        onChange={() => onSelectSavedAddress?.(address.id)}
+                        align="start"
+                        className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-700"
+                        label={
+                          <>
+                            <span className="block font-semibold text-neutral-900">{title}</span>
+                            <span className="mt-0.5 block text-neutral-600">{summary}</span>
+                          </>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
           {section.id === "delivery" ? (
-            <label className="mt-3 inline-flex items-center gap-2 text-xs text-neutral-700">
-              <input
-                type="checkbox"
-                className="h-3.5 w-3.5 rounded border border-neutral-300 text-neutral-900 focus:ring-neutral-900/20"
-              />
-              Save this information for next time
-            </label>
+            <Checkbox
+              className="mt-3 text-xs text-neutral-700"
+              label={
+                <>
+                  Save this address for next time
+                  {savingAddress ? (
+                    <span className="ml-1 text-[11px] font-normal text-neutral-500">(Saving…)</span>
+                  ) : null}
+                </>
+              }
+              checked={saveForNextTime}
+              onChange={(e) => onToggleSaveForNextTime?.(e.target.checked)}
+            />
           ) : null}
         </section>
       ))}

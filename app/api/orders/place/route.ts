@@ -20,6 +20,8 @@ export type PlaceOrderPayload = {
   currency?: string;
   /** Optional; server recomputes discount from DB prices — must match an authenticated preview. */
   voucher_code?: string;
+  /** Optional reference to a previously saved checkout address (for audit/use tracking). */
+  saved_address_id?: string;
   items: { variant_id: string; quantity: number }[];
 };
 
@@ -112,6 +114,9 @@ export async function POST(req: Request) {
     customer_note: incoming.customer_note,
     currency: incoming.currency,
     items: incoming.items,
+    ...(typeof incoming.saved_address_id === "string" && incoming.saved_address_id.trim() !== ""
+      ? { saved_address_id: incoming.saved_address_id.trim() }
+      : {}),
     ...(typeof incoming.voucher_code === "string" && incoming.voucher_code.trim() !== ""
       ? { voucher_code: incoming.voucher_code.trim() }
       : {}),

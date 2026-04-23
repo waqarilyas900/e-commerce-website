@@ -13,7 +13,7 @@ export function ProfilePageLayout({ children }: { children: React.ReactNode }) {
       <p className="mt-2 text-sm text-neutral-600">
         Keep your details up to date for checkout and support.
       </p>
-      <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-6 sm:p-8">{children}</div>
+      <div className="mt-8 space-y-8">{children}</div>
     </>
   );
 }

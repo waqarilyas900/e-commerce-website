@@ -132,11 +132,37 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
       /\[GSI_LOGGER\]: FedCM get\(\) rejects with/i.test(msg) ||
       /\[GSI_LOGGER\]:.*origin is not allowed/i.test(msg) ||
       /\[GSI_LOGGER\]:/i.test(msg);
+    /** GoTrue navigator-lock steal / timeout spam in dev (mitigated in `lib/supabase/client` via `processLock`). */
+    const suppressGotrueLockDevNoise = (msg: string) =>
+      /@supabase\/gotrue-js:/i.test(msg) &&
+      (/Lock "/i.test(msg) ||
+        /acquisition timed out/i.test(msg) ||
+        /orphaned lock/i.test(msg) ||
+        /stole it/i.test(msg) ||
+        /steal option/i.test(msg) ||
+        /Forcefully acquiring the lock/i.test(msg));
+    const isAuthLockNoise = (msg: string) =>
+      /Lock broken by another request/i.test(msg) ||
+      /released because another request stole it/i.test(msg) ||
+      (/AbortError/i.test(msg) && /steal|lock/i.test(msg));
     const origError = console.error;
     const origWarn = console.warn;
     const shouldSuppress = (args: unknown[]) => {
       const first = args[0];
-      return typeof first === "string" && suppressGsiDevNoise(first);
+      const second = args[1];
+      if (typeof first === "string") {
+        if (suppressGsiDevNoise(first)) return true;
+        if (suppressGotrueLockDevNoise(first)) return true;
+        if (
+          first.includes("[cart] resolve variants") &&
+          ((typeof second === "string" && isAuthLockNoise(second)) ||
+            (second instanceof Error && isAuthLockNoise(second.message)))
+        ) {
+          return true;
+        }
+      }
+      if (typeof second === "string" && suppressGotrueLockDevNoise(second)) return true;
+      return false;
     };
     console.error = (...args: unknown[]) => {
       if (shouldSuppress(args)) return;

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
+import { useId, useState } from "react";
 import { motion } from "framer-motion";
 import { formatPkr } from "@/app/lib/format-currency";
 import type { ResolvedCartLine } from "@/app/providers/cart-provider";
+import { ModalShell } from "@/components/ui/modal-shell";
 
 const easeCheckout: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -16,6 +17,7 @@ type Props = {
   subtotal: number;
   shipping: number;
   total: number;
+  shippingWaiverCutoffPkr?: number | null;
   discountCode: string;
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
@@ -35,6 +37,7 @@ type SummaryBodyProps = {
   subtotal: number;
   shipping: number;
   total: number;
+  shippingWaiverCutoffPkr?: number | null;
   discountCode: string;
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
@@ -51,6 +54,7 @@ function CheckoutOrderSummaryBody({
   subtotal,
   shipping,
   total,
+  shippingWaiverCutoffPkr = null,
   discountCode,
   onDiscountCodeChange,
   onApplyDiscount,
@@ -64,6 +68,7 @@ function CheckoutOrderSummaryBody({
   const voucherNoticeId = useId();
   const showNotice = Boolean(discountNotice);
   const inputError = showNotice && discountNoticeIsError;
+  const [shippingPolicyOpen, setShippingPolicyOpen] = useState(false);
 
   return (
     <div
@@ -147,14 +152,27 @@ function CheckoutOrderSummaryBody({
         <div className="flex justify-between gap-4 text-neutral-700">
           <span className="inline-flex items-center gap-1.5">
             Shipping
-            <span
-              className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-neutral-400 text-[10px] font-semibold text-neutral-600"
-              title="Delivery fee for your area. Final charges are confirmed before dispatch."
+            <button
+              type="button"
+              onClick={() => setShippingPolicyOpen(true)}
+              aria-label="View shipping policy"
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-neutral-400 text-[10px] font-semibold text-neutral-600 transition hover:bg-neutral-100"
             >
               ?
-            </span>
+            </button>
           </span>
-          <span className="tabular-nums">{formatPkr(shipping)}</span>
+          {shipping <= 0 ? (
+            <span className="text-right">
+              <span className="tabular-nums font-semibold text-emerald-700">
+                {shippingWaiverCutoffPkr != null && shippingWaiverCutoffPkr > 0
+                  ? `Waived (${formatPkr(shippingWaiverCutoffPkr)}+)`
+                  : "Waived"}
+              </span>
+              <span className="block text-[11px] text-neutral-500">Not added to total</span>
+            </span>
+          ) : (
+            <span className="tabular-nums">{formatPkr(shipping)}</span>
+          )}
         </div>
         {discountApplied && discountPkr > 0 ? (
           <div className="flex justify-between gap-4 text-emerald-800">
@@ -176,6 +194,49 @@ function CheckoutOrderSummaryBody({
         </div>
         <p className="mt-1 text-right text-xs text-neutral-500">Including Rs 0.00 in taxes</p>
       </div>
+
+      <ModalShell
+        open={shippingPolicyOpen}
+        onClose={() => setShippingPolicyOpen(false)}
+        title="Shipping"
+        maxWidthClassName="max-w-3xl"
+        zIndexClassName="z-[220]"
+      >
+        <ul className="list-disc space-y-4 pl-5 text-base leading-relaxed text-neutral-900">
+          <li>
+            <strong>Free Shipping</strong> on all orders over the value of <strong>Rs.3000</strong>.
+          </li>
+          <li>
+            We charge <strong>Rs.250</strong> for shipping on all orders under the value of{" "}
+            <strong>Rs.3000</strong>.
+          </li>
+          <li>
+            Orders placed by 12:00 pm (Pakistan Standard Time) will be shipped the same day via
+            Registered Courier Service. Orders received after 12:00 pm will be dispatched the next
+            day.
+          </li>
+          <li>
+            Orders received on Sundays and on Pakistan&apos;s National Holidays will be processed
+            and shipped on the next working day.
+          </li>
+          <li>
+            Delivery time is between <strong>4 to 7 working days</strong> (No delivery on Sundays).
+            However delivery can take up to 7 working days during the busy shopping season or our
+            mega sales events.
+          </li>
+          <li>
+            We will deliver to the home or office address indicated by you when you place an order.
+          </li>
+          <li>
+            We cannot deliver to PO boxes. All deliveries must be signed for upon receipt. We will
+            try at least twice to deliver your order at the address indicated by you.
+          </li>
+          <li>
+            If you have any questions you can contact us at <strong>0302-2994444</strong> or email
+            us at <strong>support@radstore.pk</strong>.
+          </li>
+        </ul>
+      </ModalShell>
     </div>
   );
 }
@@ -188,6 +249,7 @@ export function CheckoutOrderSummaryAccordion({
   subtotal,
   shipping,
   total,
+  shippingWaiverCutoffPkr,
   discountCode,
   onDiscountCodeChange,
   onApplyDiscount,
@@ -244,6 +306,7 @@ export function CheckoutOrderSummaryAccordion({
           subtotal={subtotal}
           shipping={shipping}
           total={total}
+          shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
           discountCode={discountCode}
           onDiscountCodeChange={onDiscountCodeChange}
           onApplyDiscount={onApplyDiscount}

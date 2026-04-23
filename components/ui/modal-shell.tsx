@@ -19,12 +19,18 @@ export type ModalShellProps = {
   maxWidthClassName?: string;
   zIndexClassName?: string;
   panelClassName?: string;
+  /**
+   * Vertical placement of the panel in the overlay.
+   * `top` — upper viewport (e.g. confirm dialogs); `center` — default centered stack.
+   */
+  overlayVerticalAlign?: "center" | "top";
   /** @default true */
   showCloseButton?: boolean;
 };
 
 /**
- * Centered overlay + panel: fixed header (title + subtitle), scrollable body, optional footer.
+ * Full-viewport overlay + panel: fixed header (title + subtitle), scrollable body, optional footer.
+ * Vertical alignment is controlled by {@link ModalShellProps.overlayVerticalAlign}.
  */
 export function ModalShell({
   open,
@@ -37,6 +43,7 @@ export function ModalShell({
   maxWidthClassName = "max-w-md",
   zIndexClassName = "z-[200]",
   panelClassName = "",
+  overlayVerticalAlign = "center",
   showCloseButton = true,
 }: ModalShellProps) {
   useScrollLock(open);
@@ -52,10 +59,13 @@ export function ModalShell({
 
   if (!open) return null;
 
+  const overlayLayout =
+    overlayVerticalAlign === "top"
+      ? "items-start justify-center px-4 pb-4 pt-[max(1rem,10vh)] sm:pt-[12vh]"
+      : "items-center justify-center p-4";
+
   return (
-    <div
-      className={`fixed inset-0 flex items-center justify-center p-4 ${zIndexClassName}`}
-    >
+    <div className={`fixed inset-0 flex ${overlayLayout} ${zIndexClassName}`}>
       <button
         type="button"
         className="absolute inset-0 cursor-pointer bg-black/45 backdrop-blur-[2px]"
