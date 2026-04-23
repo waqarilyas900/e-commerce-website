@@ -6,12 +6,14 @@ import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google
 import { CartProvider } from "@/app/providers/cart-provider";
 import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider";
 import { HeaderNavMenuProvider } from "@/app/providers/header-nav-menu-provider";
+import { AskTheStoreProvider } from "@/app/providers/ask-the-store-provider";
 import { StoreBrandProvider } from "@/app/providers/store-brand-provider";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
 import { getHeaderNavMenuItems } from "@/app/lib/header-nav-menu";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
 import { DiscountNotificationPrompt } from "@/components/ui/discount-notification-prompt";
+import { AskTheStore } from "@/components/ask-the-store/ask-the-store";
 import "./globals.css";
 
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
@@ -87,10 +89,22 @@ export default async function RootLayout({
         data-aos-delay="0"
       >
         <StoreBrandProvider brand={storeBrand}>
-          <NavCollectionsProvider links={collectionLinks}>
-            <HeaderNavMenuProvider items={headerNavMenuItems}>
-              {showGoogleOneTap ? (
-                <GoogleOneTap>
+          <AskTheStoreProvider>
+            <NavCollectionsProvider links={collectionLinks}>
+              <HeaderNavMenuProvider items={headerNavMenuItems}>
+                {showGoogleOneTap ? (
+                  <GoogleOneTap>
+                    <CartProvider>
+                      <HeaderStickyObserver />
+                      <DiscountNotificationPrompt />
+                      <div id="PageContainer" className="page-container">
+                        <div className="transition-body">{children}</div>
+                      </div>
+                      <AppToaster />
+                      <AskTheStore />
+                    </CartProvider>
+                  </GoogleOneTap>
+                ) : (
                   <CartProvider>
                     <HeaderStickyObserver />
                     <DiscountNotificationPrompt />
@@ -98,20 +112,12 @@ export default async function RootLayout({
                       <div className="transition-body">{children}</div>
                     </div>
                     <AppToaster />
+                    <AskTheStore />
                   </CartProvider>
-                </GoogleOneTap>
-              ) : (
-                <CartProvider>
-                  <HeaderStickyObserver />
-                  <DiscountNotificationPrompt />
-                  <div id="PageContainer" className="page-container">
-                    <div className="transition-body">{children}</div>
-                  </div>
-                  <AppToaster />
-                </CartProvider>
-              )}
-            </HeaderNavMenuProvider>
-          </NavCollectionsProvider>
+                )}
+              </HeaderNavMenuProvider>
+            </NavCollectionsProvider>
+          </AskTheStoreProvider>
         </StoreBrandProvider>
       </body>
     </html>

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, type FormEvent } from "react";
 import {
@@ -8,7 +7,7 @@ import {
   motion,
   useReducedMotion,
 } from "framer-motion";
-import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { useAskTheStore } from "@/app/providers/ask-the-store-provider";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
 import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import type { NavCollectionLink } from "@/app/lib/nav-collections";
@@ -69,7 +68,7 @@ export function HeaderSearchPopover({
   renderPanel = true,
   panelOffsetClass = HEADER_TOP_OFFSET,
 }: Props) {
-  const { storeName } = useStoreBrand();
+  const { openAskStore } = useAskTheStore();
   const navLinks = useNavCollections();
   const headerNavItems = useHeaderNavMenuItems();
   const router = useRouter();
@@ -276,16 +275,19 @@ export function HeaderSearchPopover({
                 </form>
 
                 <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-neutral-100 pb-5">
-                  <Link
-                    href="/contact"
-                    onClick={() => onOpenChange(false)}
-                    className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-400 hover:bg-neutral-50"
+                  <button
+                    type="button"
+                    className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-400 hover:bg-neutral-50"
+                    onClick={() => {
+                      onOpenChange(false);
+                      openAskStore();
+                    }}
                   >
                     <span className="text-base leading-none" aria-hidden>
                       ✦
                     </span>
-                    Ask {storeName} AI
-                  </Link>
+                    Ask store AI
+                  </button>
                 </div>
 
                 <section
