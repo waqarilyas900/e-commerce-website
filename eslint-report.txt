@@ -1,0 +1,247 @@
+﻿
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\HeaderSearchPopover.tsx
+  84:3  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\HeaderSearchPopover.tsx:84:3
+  82 |   /** Latest `open` for exit callback ΓÇö avoid unlocking if user re-opened before exit finished. */
+  83 |   const openRef = useRef(open);
+> 84 |   openRef.current = open;
+     |   ^^^^^^^^^^^^^^^ Cannot update ref during render
+  85 |   const terms = popularSearchTerms(
+  86 |     navLinks,
+  87 |     headerNavItems.map((h) => h.label),  react-hooks/refs
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\HeaderAccount.tsx
+  139:39  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\HeaderAccount.tsx:139:39
+  137 |
+  138 |   /** Recovery / reset page: no avatar + name ΓÇö not the normal ΓÇ£logged inΓÇ¥ chrome. */
+> 139 |   if (shouldUsePasswordRecoveryHeader(authSessionRef.current, pathname)) {
+      |                                       ^^^^^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  140 |     const onResetPage = pathname === "/reset-password";
+  141 |     return (
+  142 |       <span  react-hooks/refs
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\google-identity-provider.tsx
+   96:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\google-identity-provider.tsx:96:7
+  94 |
+  95 |     if (allowed?.length) {
+> 96 |       setLoadGsiScript(allowed.includes(origin));
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  97 |       if (process.env.NODE_ENV === "development" && !allowed.includes(origin)) {
+  98 |         console.info(
+  99 |           `[Google One Tap] Skipped: origin ${origin} is not in NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS.`,  react-hooks/set-state-in-effect
+  194:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\google-identity-provider.tsx:194:7
+  192 |     }
+  193 |     if (skipPromptRoute) {
+> 194 |       setSessionChecked(true);
+      |       ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  195 |       setSignedIn(false);
+  196 |       return;
+  197 |     }                                                                                                                                                                             react-hooks/set-state-in-effect
+  268:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\google-identity-provider.tsx:268:7
+  266 |         itp_support: true,
+  267 |       });
+> 268 |       setIdentityInitialized(true);
+      |       ^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  269 |
+  270 |       google.accounts.id.prompt((notification) => {
+  271 |         if (process.env.NODE_ENV !== "development") return;                                                                                             react-hooks/set-state-in-effect
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\sign-in-modal.tsx
+  51:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\auth\sign-in-modal.tsx:51:5
+  49 |   useEffect(() => {
+  50 |     if (!open) return;
+> 51 |     setEmail("");
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  52 |     setPassword("");
+  53 |     setError(null);
+  54 |     setLoading(false);  react-hooks/set-state-in-effect
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\cart\CartDrawer.tsx
+   50:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\cart\CartDrawer.tsx:50:7
+  48 |   useEffect(() => {
+  49 |     if (!hasCatalogDb()) {
+> 50 |       setQuick(null);
+     |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |       return;
+  52 |     }
+  53 |     let cancelled = false;                                           react-hooks/set-state-in-effect
+  179:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\cart\CartDrawer.tsx:179:7
+  177 |     if (!isOpen) return;
+  178 |     if (!hasCatalogDb()) {
+> 179 |       setDeliverySettings(null);
+      |       ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  180 |       setDeliveryLoading(false);
+  181 |       return;
+  182 |     }  react-hooks/set-state-in-effect
+  198:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\cart\CartDrawer.tsx:198:7
+  196 |   useEffect(() => {
+  197 |     if (!isOpen) {
+> 198 |       setRecoLoading(false);
+      |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  199 |       return;
+  200 |     }
+  201 |     if (!showEmptyCartRecommendations) {                react-hooks/set-state-in-effect
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\cart\cart-free-delivery-progress.tsx
+  65:9  warning  The 'rawThresholds' logical expression could make the dependencies of useMemo Hook (at line 70) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'rawThresholds' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\checkout\checkout-template-fields.tsx
+  53:3  warning  'onEditSavedAddress' is defined but never used    @typescript-eslint/no-unused-vars
+  54:3  warning  'onDeleteSavedAddress' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\collections\collection-filter-drawer.tsx
+  85:19  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\collections\collection-filter-drawer.tsx:85:19
+  83 |   }, [runApply]);
+  84 |
+> 85 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  86 |
+  87 |   useScrollLock(open);
+  88 |                                                                                                                                                                         react-hooks/set-state-in-effect
+  91:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\collections\collection-filter-drawer.tsx:91:5
+  89 |   useEffect(() => {
+  90 |     if (!open) return;
+> 91 |     setAvailability(initial.availability);
+     |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  92 |     setMinVal(initial.priceMin ?? 0);
+  93 |     setMaxVal(initial.priceMax ?? maxPriceCeil);
+  94 |   }, [open, initial.availability, initial.priceMin, initial.priceMax, maxPriceCeil]);  react-hooks/set-state-in-effect
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\navigation\mobile-nav-drawer.tsx
+  105:16  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\navigation\mobile-nav-drawer.tsx:105:16
+  103 |
+  104 |   useEffect(() => {
+> 105 |     if (!open) setShopOpen(false);
+      |                ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  106 |   }, [open]);
+  107 |
+  108 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\product\product-pdp.tsx
+  222:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\product\product-pdp.tsx:222:5
+  220 |   useEffect(() => {
+  221 |     let cancelled = false;
+> 222 |     setWishlistReady(false);
+      |     ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  223 |     setWishlistVariantIds(new Set());
+  224 |     setWishlistOptionFingerprints(new Set());
+  225 |  react-hooks/set-state-in-effect
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\storefront.tsx
+  72:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\components\storefront.tsx:72:5
+  70 |
+  71 |   useEffect(() => {
+> 72 |     setIndex((i) => {
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  73 |       if (sanitized.length === 0) return 0;
+  74 |       return i % sanitized.length;
+  75 |     });  react-hooks/set-state-in-effect
+
+C:\Users\PixelPk Technologies\Desktop\e-commerce-workspace\e-commerece-website\supabase\functions\restock-notifications\index.ts
+  18:1  error  Do not use a triple slash reference for ../edge-ambient.d.ts, use `import` style instead  @typescript-eslint/triple-slash-reference
+
+Γ£û 18 problems (15 errors, 3 warnings)
+
