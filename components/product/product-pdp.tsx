@@ -219,9 +219,11 @@ export function ProductPdp({
 
   useEffect(() => {
     let cancelled = false;
-    setWishlistReady(false);
-    setWishlistVariantIds(new Set());
-    setWishlistOptionFingerprints(new Set());
+    queueMicrotask(() => {
+      setWishlistReady(false);
+      setWishlistVariantIds(new Set());
+      setWishlistOptionFingerprints(new Set());
+    });
 
     (async () => {
       const params = new URLSearchParams();
@@ -599,7 +601,7 @@ export function ProductPdp({
                                   ? val.slice(0, 2).toUpperCase()
                                   : "\u00a0"}
                               </span>
-                              <span className="max-w-[5rem] truncate text-center text-[11px] font-medium text-neutral-600">
+                              <span className="max-w-20 truncate text-center text-[11px] font-medium text-neutral-600">
                                 {val}
                               </span>
                             </button>

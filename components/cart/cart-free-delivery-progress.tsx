@@ -62,13 +62,12 @@ function labelShiftPx(posPct: number): number {
  * Renders nothing if no thresholds configured.
  */
 export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Props) {
-  const rawThresholds = settings?.freeThresholdsPaisa ?? [];
   const standardPaisa = settings?.standardPaisa ?? FALLBACK_STANDARD_DELIVERY_PAISA;
 
-  const thresholdsPaisa = useMemo(
-    () => [...new Set(rawThresholds.filter((t) => Number.isFinite(t) && t > 0))].sort((a, b) => a - b),
-    [rawThresholds],
-  );
+  const thresholdsPaisa = useMemo(() => {
+    const raw = settings?.freeThresholdsPaisa ?? [];
+    return [...new Set(raw.filter((t) => Number.isFinite(t) && t > 0))].sort((a, b) => a - b);
+  }, [settings]);
 
   const hasTiers = thresholdsPaisa.length > 0;
 
@@ -130,7 +129,7 @@ export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Pro
               aria-hidden
             />
             <div
-              className="pointer-events-none absolute left-0 top-1/2 z-0 h-2 -translate-y-1/2 rounded-full bg-neutral-900 transition-[width] duration-500 ease-out"
+              className="pointer-events-none absolute left-0 top-1/2 z-0 h-2 -translate-y-1/2 rounded-full bg-neutral-900"
               style={{ width: `${fillPct}%` }}
               role="progressbar"
               aria-valuemin={0}
@@ -171,7 +170,7 @@ export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Pro
         </div>
 
         {/* Labels: two lines under each node; min-h reserves space for absolute children */}
-        <div className="relative mt-0.5 min-h-[3rem] w-full min-w-0">
+        <div className="relative mt-0.5 min-h-12 w-full min-w-0">
           {thresholdsPaisa.map((tp, idx) => {
             const posPct = maxPaisa > 0 ? (tp / maxPaisa) * 100 : 0;
             const isFirst = idx === 0;

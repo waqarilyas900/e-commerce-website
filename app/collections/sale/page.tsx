@@ -26,7 +26,7 @@ function ListingFallback() {
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
       </div>
       <div className="grid grid-cols-2 items-start gap-4 sm:gap-6 md:grid-cols-3 lg:hidden">
-        <div className="h-40 max-w-[9rem] animate-pulse rounded-lg bg-neutral-100" />
+        <div className="h-40 max-w-36 animate-pulse rounded-lg bg-neutral-100" />
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
         ))}

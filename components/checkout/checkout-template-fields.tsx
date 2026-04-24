@@ -50,8 +50,6 @@ export function CheckoutTemplateFields({
   selectedSavedAddressId = null,
   onSelectSavedAddress,
   loadingSavedAddresses = false,
-  onEditSavedAddress,
-  onDeleteSavedAddress,
   savingAddress = false,
   saveAddressErrors = {},
 }: Props) {

@@ -47,7 +47,7 @@ function DrawerRecoTile({ product }: { product: Product }) {
 
   useEffect(() => {
     if (!hasCatalogDb()) {
-      setQuick(null);
+      queueMicrotask(() => setQuick(null));
       return;
     }
     let cancelled = false;
@@ -119,12 +119,12 @@ function CartLineResolvingSkeleton() {
       aria-busy="true"
       aria-label="Loading cart line"
     >
-      <div className="h-20 w-16 shrink-0 rounded-md bg-neutral-100" />
+      <div className="size-24 shrink-0 rounded-md bg-neutral-100" />
       <div className="min-w-0 flex-1 space-y-2 py-0.5">
-        <div className="h-4 max-w-[14rem] rounded bg-neutral-100" />
-        <div className="h-3 max-w-[6rem] rounded bg-neutral-100" />
+        <div className="h-4 max-w-56 rounded bg-neutral-100" />
+        <div className="h-3 max-w-24 rounded bg-neutral-100" />
         <div className="mt-3 flex items-center justify-between gap-2">
-          <div className="h-8 w-[6.5rem] rounded border border-neutral-200 bg-neutral-50" />
+          <div className="h-8 w-26 rounded border border-neutral-200 bg-neutral-50" />
           <div className="h-4 w-14 rounded bg-neutral-100" />
         </div>
       </div>
@@ -176,13 +176,15 @@ export function CartDrawer() {
   useEffect(() => {
     if (!isOpen) return;
     if (!hasCatalogDb()) {
-      setDeliverySettings(null);
-      setDeliveryLoading(false);
+      queueMicrotask(() => {
+        setDeliverySettings(null);
+        setDeliveryLoading(false);
+      });
       return;
     }
     let cancelled = false;
-    setDeliverySettings(null);
-    setDeliveryLoading(true);
+    /** Keep previous settings while refetching so the free-shipping bar does not reset / animate from empty each open. */
+    queueMicrotask(() => setDeliveryLoading(true));
     void fetchStoreDeliverySettings().then((s) => {
       if (cancelled) return;
       setDeliverySettings(s);
@@ -195,22 +197,28 @@ export function CartDrawer() {
 
   useEffect(() => {
     if (!isOpen) {
-      setRecoLoading(false);
+      queueMicrotask(() => setRecoLoading(false));
       return;
     }
     if (!showEmptyCartRecommendations) {
-      setRecommended([]);
-      setRecoLoading(false);
+      queueMicrotask(() => {
+        setRecommended([]);
+        setRecoLoading(false);
+      });
       return;
     }
     if (!hasCatalogDb()) {
-      setRecommended([]);
-      setRecoLoading(false);
+      queueMicrotask(() => {
+        setRecommended([]);
+        setRecoLoading(false);
+      });
       return;
     }
     let cancelled = false;
-    setRecoLoading(true);
-    setRecommended([]);
+    queueMicrotask(() => {
+      setRecoLoading(true);
+      setRecommended([]);
+    });
     void fetch("/api/catalog/random-products?limit=2")
       .then((r) => (r.ok ? r.json() : []))
       .then((data: Product[]) => {
@@ -233,7 +241,7 @@ export function CartDrawer() {
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-[180]"
+          className="fixed inset-0 z-180"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -254,7 +262,7 @@ export function CartDrawer() {
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
           />
           <motion.aside
-            className="absolute inset-y-0 right-0 z-[181] flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
+            className="absolute inset-y-0 right-0 z-181 flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
             style={{
               willChange: "transform",
               maxHeight: "100dvh",
@@ -384,7 +392,7 @@ export function CartDrawer() {
                         <Link
                           href={`/products/${product.slug}`}
                           onClick={closeCart}
-                          className="h-20 w-16 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-cover bg-center"
+                          className="size-24 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:size-28"
                           style={{ backgroundImage: `url(${product.image})` }}
                         />
                         <div className="min-w-0 flex-1">

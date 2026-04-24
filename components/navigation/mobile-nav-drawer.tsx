@@ -102,7 +102,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
   useScrollLock(open);
 
   useEffect(() => {
-    if (!open) setShopOpen(false);
+    if (!open) queueMicrotask(() => setShopOpen(false));
   }, [open]);
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-120 md:hidden"
+          className="fixed inset-0 z-170 md:hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

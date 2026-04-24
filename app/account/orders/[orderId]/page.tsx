@@ -188,7 +188,7 @@ export default async function OrderDetailPage({
         / <span className="text-neutral-400">{ref}</span>
       </p>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-sm ring-1 ring-neutral-950/[0.04]">
+      <div className="mt-8 overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-sm ring-1 ring-neutral-950/4">
         <div className="border-b border-neutral-200 bg-neutral-50/95 px-5 py-6 sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
             <div className="min-w-0">

@@ -45,7 +45,7 @@ export function Checkbox({
 
   return (
     <div
-      className={`select-none flex gap-2.5 text-sm text-[color:var(--colorTextBody)] ${
+      className={`select-none flex gap-2.5 text-sm text-(--colorTextBody) ${
         hasDescription ? "items-start" : "items-center"
       } ${disabled ? "opacity-50" : ""} ${className}`.trim()}
     >
@@ -66,12 +66,12 @@ export function Checkbox({
           {...(isControlled ? { checked } : defaultChecked !== undefined ? { defaultChecked } : {})}
         />
         <span
-          className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-[6px] border-2 border-[color:var(--colorBorder)] bg-[color:var(--colorBody)] transition-[border-color,background-color,box-shadow] duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] peer-checked:border-black peer-checked:bg-black peer-active:scale-[0.95] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-black peer-checked:shadow-[0_0_0_1px_rgba(0,0,0,0.06)]"
+          className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-[6px] border-2 border-(--colorBorder) bg-(--colorBody) transition-[border-color,background-color,box-shadow] duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] peer-checked:border-black peer-checked:bg-black peer-active:scale-[0.95] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-black peer-checked:shadow-[0_0_0_1px_rgba(0,0,0,0.06)]"
           aria-hidden
         >
           {/* Checkmark — fade + gentle lift and settle */}
           <motion.span
-            className="relative z-[1] flex items-center justify-center will-change-[opacity,transform]"
+            className="relative z-1 flex items-center justify-center will-change-[opacity,transform]"
             initial={false}
             animate={{
               opacity: checkedVisual ? 1 : 0,

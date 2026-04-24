@@ -188,7 +188,7 @@ function ChatBubble({ message, reduceMotion }: { message: Turn; reduceMotion: bo
         className={`overflow-hidden rounded-2xl shadow-md ${
           isUser
             ? "rounded-tr-md bg-neutral-900 text-white ring-1 ring-black/10"
-            : "rounded-tl-md border border-neutral-200/90 bg-gradient-to-b from-neutral-50 to-white text-neutral-900 ring-1 ring-neutral-900/5"
+            : "rounded-tl-md border border-neutral-200/90 bg-linear-to-b from-neutral-50 to-white text-neutral-900 ring-1 ring-neutral-900/5"
         }`}
       >
         {isUser ? (
@@ -202,7 +202,7 @@ function ChatBubble({ message, reduceMotion }: { message: Turn; reduceMotion: bo
           </motion.div>
         ) : streamingAssistant ? (
           <div className="px-4 py-2.5 text-sm leading-relaxed">
-            <div className="min-h-[1.35em] w-full min-w-0 whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-neutral-900 [overflow-wrap:anywhere] [text-rendering:optimizeLegibility]">
+            <div className="min-h-[1.35em] w-full min-w-0 whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-neutral-900 wrap-anywhere [text-rendering:optimizeLegibility]">
               {message.content}
               {!reduceMotion ? (
                 <span
@@ -630,13 +630,17 @@ export function AskTheStore() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[190] cursor-pointer bg-black/25 backdrop-blur-[1px]"
+            className="fixed inset-0 z-220 cursor-pointer bg-black/25 backdrop-blur-[1px]"
             onClick={closeAskStore}
           />
         ) : null}
       </AnimatePresence>
 
-      <div className="pointer-events-none fixed bottom-5 right-5 z-[210] flex flex-col-reverse items-end gap-3">
+      <div
+        className={`pointer-events-none fixed bottom-5 right-5 flex flex-col-reverse items-end gap-3 ${
+          open ? "z-221" : "z-150"
+        }`}
+      >
         <div className="pointer-events-auto">
           {open ? (
             <motion.button
@@ -748,7 +752,7 @@ export function AskTheStore() {
                       }
                       className="mr-auto flex max-w-[90%] flex-col items-start gap-1"
                     >
-                      <div className="flex items-center gap-2 overflow-hidden rounded-2xl rounded-tl-md border border-neutral-200/90 bg-gradient-to-b from-neutral-50 to-white px-4 py-3 text-sm text-neutral-500 shadow-md ring-1 ring-neutral-900/5">
+                      <div className="flex items-center gap-2 overflow-hidden rounded-2xl rounded-tl-md border border-neutral-200/90 bg-linear-to-b from-neutral-50 to-white px-4 py-3 text-sm text-neutral-500 shadow-md ring-1 ring-neutral-900/5">
                         <span className="inline-flex gap-0.5" aria-hidden>
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400 [animation-delay:-0.3s]" />
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400 [animation-delay:-0.15s]" />

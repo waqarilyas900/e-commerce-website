@@ -48,10 +48,12 @@ export function SignInModal({
 
   useEffect(() => {
     if (!open) return;
-    setEmail("");
-    setPassword("");
-    setError(null);
-    setLoading(false);
+    queueMicrotask(() => {
+      setEmail("");
+      setPassword("");
+      setError(null);
+      setLoading(false);
+    });
   }, [open]);
 
   const safeNext =

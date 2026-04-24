@@ -15,6 +15,7 @@
  *
  * Auto-provided: SUPABASE_URL
  */
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- ambient Deno types (not a runtime module)
 /// <reference path="../edge-ambient.d.ts" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 

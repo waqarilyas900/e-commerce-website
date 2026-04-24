@@ -46,10 +46,7 @@ export function HeaderAccount() {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  /** Ref avoids Webpack/React dev bugs that turned `setSession`/`setAuthSession` into undefined refs. */
-  const authSessionRef = useRef<Session | null>(null);
-  /** Bumped on every auth event so recovery-header JWT checks re-run even if `user` reference is unchanged. */
-  const [, bumpAuthUi] = useState(0);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -62,18 +59,16 @@ export function HeaderAccount() {
       const supabase = createClient();
 
       supabase.auth.getSession().then(({ data: { session: s } }) => {
-        authSessionRef.current = s ?? null;
+        setSession(s ?? null);
         setUser(s?.user ?? null);
-        bumpAuthUi((n) => n + 1);
         setLoading(false);
       });
 
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((event, nextSession) => {
-        authSessionRef.current = nextSession ?? null;
+        setSession(nextSession ?? null);
         setUser(nextSession?.user ?? null);
-        bumpAuthUi((n) => n + 1);
         if (event === "PASSWORD_RECOVERY" && nextSession) {
           markPasswordRecoveryFlow();
         }
@@ -96,7 +91,7 @@ export function HeaderAccount() {
   }, []);
 
   useEffect(() => {
-    setMenuOpen(false);
+    queueMicrotask(() => setMenuOpen(false));
   }, [pathname]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -121,7 +116,7 @@ export function HeaderAccount() {
   async function signOut() {
     closeMenu();
     clearPasswordRecoveryFlow();
-    authSessionRef.current = null;
+    setSession(null);
     const supabase = createClient();
     await supabase.auth.signOut();
     router.refresh();
@@ -136,7 +131,7 @@ export function HeaderAccount() {
   }
 
   /** Recovery / reset page: no avatar + name — not the normal “logged in” chrome. */
-  if (shouldUsePasswordRecoveryHeader(authSessionRef.current, pathname)) {
+  if (shouldUsePasswordRecoveryHeader(session, pathname)) {
     const onResetPage = pathname === "/reset-password";
     return (
       <span
@@ -218,7 +213,7 @@ export function HeaderAccount() {
               </span>
             )}
             <span
-              className="min-w-0 max-w-[7.5rem] truncate text-left text-xs font-normal text-neutral-700 sm:max-w-40 md:max-w-56"
+              className="min-w-0 max-w-30 truncate text-left text-xs font-normal text-neutral-700 sm:max-w-40 md:max-w-56"
               title={name}
             >
               {name}

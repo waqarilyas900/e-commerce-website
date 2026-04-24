@@ -82,15 +82,19 @@ export function CollectionFilterDrawer({
     runApply({});
   }, [runApply]);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
 
   useScrollLock(open);
 
   useEffect(() => {
     if (!open) return;
-    setAvailability(initial.availability);
-    setMinVal(initial.priceMin ?? 0);
-    setMaxVal(initial.priceMax ?? maxPriceCeil);
+    queueMicrotask(() => {
+      setAvailability(initial.availability);
+      setMinVal(initial.priceMin ?? 0);
+      setMaxVal(initial.priceMax ?? maxPriceCeil);
+    });
   }, [open, initial.availability, initial.priceMin, initial.priceMax, maxPriceCeil]);
 
   useEffect(() => {

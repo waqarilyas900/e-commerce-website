@@ -93,7 +93,7 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
     const hostname = window.location.hostname;
 
     if (allowed?.length) {
-      setLoadGsiScript(allowed.includes(origin));
+      queueMicrotask(() => setLoadGsiScript(allowed.includes(origin)));
       if (process.env.NODE_ENV === "development" && !allowed.includes(origin)) {
         console.info(
           `[Google One Tap] Skipped: origin ${origin} is not in NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS.`,
@@ -103,7 +103,7 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
     }
 
     if (process.env.NODE_ENV !== "development") {
-      setLoadGsiScript(true);
+      queueMicrotask(() => setLoadGsiScript(true));
       return;
     }
 
@@ -112,11 +112,11 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
       process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS === "1";
 
     if (allowAllDev || isLocalDevHostname(hostname)) {
-      setLoadGsiScript(true);
+      queueMicrotask(() => setLoadGsiScript(true));
       return;
     }
 
-    setLoadGsiScript(false);
+    queueMicrotask(() => setLoadGsiScript(false));
     console.info(
       `[Google One Tap] Skipped on ${origin}: add this exact origin to Google Cloud → OAuth client → Authorized JavaScript origins, or use http://localhost:3000, or set NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS=true / NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS=…`,
     );
@@ -191,8 +191,10 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
       return;
     }
     if (skipPromptRoute) {
-      setSessionChecked(true);
-      setSignedIn(false);
+      queueMicrotask(() => {
+        setSessionChecked(true);
+        setSignedIn(false);
+      });
       return;
     }
     let cancelled = false;
@@ -265,7 +267,7 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
         cancel_on_tap_outside: true,
         itp_support: true,
       });
-      setIdentityInitialized(true);
+      queueMicrotask(() => setIdentityInitialized(true));
 
       google.accounts.id.prompt((notification) => {
         if (process.env.NODE_ENV !== "development") return;

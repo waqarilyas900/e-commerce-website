@@ -81,7 +81,9 @@ export function HeaderSearchPopover({
   const scrollLockedRef = useRef(false);
   /** Latest `open` for exit callback — avoid unlocking if user re-opened before exit finished. */
   const openRef = useRef(open);
-  openRef.current = open;
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
   const terms = popularSearchTerms(
     navLinks,
     headerNavItems.map((h) => h.label),

@@ -1,4 +1,4 @@
-import { ContactForm } from "@/components/contact/ContactForm";
+import { ContactPageContent } from "@/components/contact/contact-page-content";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 
 export default function ContactPage() {
@@ -6,13 +6,11 @@ export default function ContactPage() {
     <>
       <TopStrip />
       <Header />
-      <main id="MainContent" className="main-content mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Need Help?</h1>
-        <p className="mt-2 text-neutral-600">
-          Generic support page template for your e-commerce business.
-        </p>
-
-        <ContactForm />
+      <main
+        id="MainContent"
+        className="main-content mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8"
+      >
+        <ContactPageContent />
       </main>
       <Footer />
     </>

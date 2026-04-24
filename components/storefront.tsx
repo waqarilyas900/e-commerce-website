@@ -68,13 +68,6 @@ function AnnouncementMessageRotator({
     return () => window.clearInterval(id);
   }, [sanitized.length, intervalMs]);
 
-  useEffect(() => {
-    setIndex((i) => {
-      if (sanitized.length === 0) return 0;
-      return i % sanitized.length;
-    });
-  }, [sanitized.length]);
-
   if (sanitized.length === 0) {
     return null;
   }
@@ -102,9 +95,9 @@ function AnnouncementMessageRotator({
       aria-live="polite"
     >
       <div className="relative mx-auto w-full max-w-5xl">
-        <div className="relative flex min-h-[1.25rem] w-full items-center justify-center">
+        <div className="relative flex min-h-5 w-full items-center justify-center">
           {sanitized.map((html, i) => {
-            const active = i === index;
+            const active = i === index % sanitized.length;
             return (
               <div
                 key={i}
