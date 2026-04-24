@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Calls GET /api/cron/restock-notifications with CRON_SECRET from .env
- * Usage (from e-commerece-website): node scripts/run-restock-cron.mjs
- * Optional: CRON_TEST_URL=https://your-domain.com/api/cron/restock-notifications
+ * Calls the Supabase Edge Function `restock-notifications` with CRON_SECRET from `.env`.
+ * Usage (from e-commerece-website): npm run cron:restock
+ *
+ * URL: CRON_TEST_URL if set, else NEXT_PUBLIC_SUPABASE_URL + `/functions/v1/restock-notifications`
  */
 import { config } from "dotenv";
 import { resolve, dirname } from "path";
@@ -11,8 +12,11 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(__dirname, "../.env") });
 
-const base =
-  process.env.CRON_TEST_URL?.trim() || "http://localhost:3000/api/cron/restock-notifications";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const defaultFn =
+  supabaseUrl &&
+  `${supabaseUrl.replace(/\/$/, "")}/functions/v1/restock-notifications`;
+const base = process.env.CRON_TEST_URL?.trim() || defaultFn;
 const secret = process.env.CRON_SECRET?.trim();
 
 async function main() {
@@ -20,9 +24,14 @@ async function main() {
     console.error("CRON_SECRET is missing from .env — add it to run the cron locally.");
     process.exit(1);
   }
-  const url = base.includes("/api/cron/") ? base : `${base.replace(/\/$/, "")}/api/cron/restock-notifications`;
-  console.log("GET", url);
-  const res = await fetch(url, {
+  if (!base) {
+    console.error(
+      "Set NEXT_PUBLIC_SUPABASE_URL (default function URL) or CRON_TEST_URL to the full Edge Function URL.",
+    );
+    process.exit(1);
+  }
+  console.log("GET", base);
+  const res = await fetch(base, {
     headers: {
       Authorization: `Bearer ${secret}`,
     },

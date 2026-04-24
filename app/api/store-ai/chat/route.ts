@@ -8,6 +8,9 @@ export const maxDuration = 120;
 /** Node runtime: reliable outbound HTTPS to OpenRouter (avoid Edge fetch limits). */
 export const runtime = "nodejs";
 
+/** Avoid caching / coalescing so the browser can read the SSE body incrementally. */
+export const dynamic = "force-dynamic";
+
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 const FETCH_TIMEOUT_MS = Math.min(
@@ -45,6 +48,7 @@ async function fetchOpenRouterChat(
   apiKey: string,
   hopHeaders: Record<string, string>,
   jsonBody: string,
+  stream: boolean,
 ): Promise<Response> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const controller = new AbortController();
@@ -57,7 +61,7 @@ async function fetchOpenRouterChat(
           ...hop,
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          Accept: "application/json",
+          Accept: stream ? "text/event-stream" : "application/json",
         },
         body: jsonBody,
         signal: controller.signal,
@@ -144,7 +148,7 @@ export async function POST(req: Request) {
 
   const systemContent = [
     `You are a helpful, concise store assistant for ${storeName} in this chat window.`,
-    "Answer in plain language. Prefer short paragraphs or bullet lists when listing options.",
+    "Answer in plain language. Use Markdown when it helps (headings, **bold**, lists, tables, `code`) — keep formatting readable in a narrow chat panel.",
     "Do not invent prices, discounts, shipping times, or stock levels. If the shopper needs exact numbers or policies, tell them to check the product page, cart, checkout, or site policies pages.",
     "Help order, account, refund, and complaint questions as best you can from general store knowledge — do not tell the shopper to open a separate contact page, email form, or off-site support unless they explicitly ask how to reach the business outside this chat.",
     "Do not request or store passwords, payment card numbers, or government IDs.",
@@ -159,7 +163,8 @@ export async function POST(req: Request) {
     model,
     messages: openRouterMessages,
     temperature: 0.6,
-    max_tokens: 600,
+    max_tokens: 800,
+    stream: true,
   });
 
   const hopHeaders: Record<string, string> = {
@@ -169,7 +174,7 @@ export async function POST(req: Request) {
 
   let res: Response;
   try {
-    res = await fetchOpenRouterChat(apiKey, hopHeaders, payload);
+    res = await fetchOpenRouterChat(apiKey, hopHeaders, payload, true);
   } catch (err: unknown) {
     console.error("[ask-the-store] OpenRouter fetch failed:", err);
     const timeout = isTimeoutLike(err);
@@ -180,15 +185,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const rawText = await res.text();
-  let data: unknown;
-  try {
-    data = rawText ? JSON.parse(rawText) : null;
-  } catch {
-    data = null;
-  }
-
   if (!res.ok) {
+    const rawText = await res.text();
+    let data: unknown;
+    try {
+      data = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      data = null;
+    }
     const errMsg =
       data &&
       typeof data === "object" &&
@@ -199,16 +203,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: errMsg }, { status: res.status >= 400 ? res.status : 502 });
   }
 
-  const choices = data && typeof data === "object" && "choices" in data ? (data as { choices?: unknown }).choices : null;
-  const first = Array.isArray(choices) ? choices[0] : null;
-  const msg =
-    first && typeof first === "object" && "message" in first
-      ? (first as { message?: { content?: unknown } }).message
-      : null;
-  const content = msg && typeof msg.content === "string" ? msg.content.trim() : "";
-  if (!content) {
-    return NextResponse.json({ ok: false, error: "Empty response from the model." }, { status: 502 });
+  if (!res.body) {
+    return NextResponse.json({ ok: false, error: "Empty response stream from the model." }, { status: 502 });
   }
 
-  return NextResponse.json({ ok: true, reply: content });
+  return new Response(res.body, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
