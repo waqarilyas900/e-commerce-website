@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /** Tree-shake heavy client packages to smaller per-route bundles (no UI change). */
+  experimental: {
+    optimizePackageImports: ["framer-motion", "sonner"],
+  },
   /** Next 16 defaults to Turbopack for `next build`; empty config acknowledges coexistence with `webpack`. */
   turbopack: {},
   /** Allow HMR / dev assets when opening the site via 127.0.0.1 or LAN IP (not only localhost). */
@@ -16,7 +20,9 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  poweredByHeader: false,
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

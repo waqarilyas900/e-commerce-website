@@ -43,7 +43,7 @@ export function ActiveWearBlock() {
                     fill
                     className="object-cover object-center"
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
+                    loading="lazy"
                   />
                 </div>
               </div>

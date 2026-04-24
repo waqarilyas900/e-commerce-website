@@ -310,11 +310,25 @@ export function ProductCard({
       viewport={{ once: true, amount: 0.18, margin: "0px 0px -8% 0px" }}
       transition={{ duration: 0.9, delay: revealDelay, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Link href={`/products/${product.slug}`} className="relative block shrink-0">
-        <div
-          className="h-60 bg-cover bg-center transition-transform duration-500 hover:scale-[1.03]"
-          style={{ backgroundImage: `url(${product.image})` }}
-        />
+      <Link
+        href={`/products/${product.slug}`}
+        className="group relative block shrink-0"
+      >
+        <div className="relative h-60 w-full overflow-hidden bg-neutral-100">
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes={
+                rail
+                  ? "(max-width: 767px) 55vw, 280px"
+                  : "(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
+              }
+              className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : null}
+        </div>
         {salePct ? (
           <span className="absolute left-2 top-2 rounded bg-black px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
             {salePct}% Off

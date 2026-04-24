@@ -213,6 +213,7 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
                     alt={slide.title}
                     fill
                     priority={index === 0}
+                    fetchPriority={index === 0 ? "high" : "low"}
                     sizes="100vw"
                     className="object-cover object-center"
                   />

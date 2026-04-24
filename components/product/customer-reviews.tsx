@@ -11,7 +11,6 @@ import {
   type FormEvent,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type { ProductReviewPdpRow } from "@/app/lib/db/catalog";
@@ -226,60 +225,68 @@ function CustomerReviewsInner({
     const mq = typeof window !== "undefined" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
     if (mq?.matches) return;
 
-    const zIndex = 260;
-    const colors = ["#22c55e", "#eab308", "#3b82f6", "#ec4899", "#f97316", "#a855f7"];
-    const burst = (origin: { x: number; y: number }, particleCount = 90, spread = 72) => {
-      void confetti({
-        particleCount,
-        spread,
-        origin,
-        colors,
-        zIndex,
-        disableForReducedMotion: true,
-      });
-    };
-
-    /** DOM `setTimeout` ids; avoid `NodeJS.Timeout` union from global typings. */
+    let cancelled = false;
     const timeouts: number[] = [];
-    const outer = window.setTimeout(() => {
-      burst({ x: 0.12, y: 0.7 });
-      burst({ x: 0.5, y: 0.55 }, 110, 85);
-      burst({ x: 0.88, y: 0.7 });
-      void confetti({
-        particleCount: 140,
-        spread: 100,
-        origin: { x: 0.5, y: 0.48 },
-        colors,
-        zIndex,
-        scalar: 1.05,
-        disableForReducedMotion: true,
-      });
-      timeouts.push(
-        window.setTimeout(() => {
-          void confetti({
-            particleCount: 70,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0, y: 0.68 },
-            colors,
-            zIndex,
-            disableForReducedMotion: true,
-          });
-          void confetti({
-            particleCount: 70,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1, y: 0.68 },
-            colors,
-            zIndex,
-            disableForReducedMotion: true,
-          });
-        }, 180),
-      );
-    }, 30);
-    timeouts.push(outer);
+
+    void import("canvas-confetti").then((mod) => {
+      if (cancelled) return;
+      const confetti = mod.default;
+      const zIndex = 260;
+      const colors = ["#22c55e", "#eab308", "#3b82f6", "#ec4899", "#f97316", "#a855f7"];
+      const burst = (origin: { x: number; y: number }, particleCount = 90, spread = 72) => {
+        void confetti({
+          particleCount,
+          spread,
+          origin,
+          colors,
+          zIndex,
+          disableForReducedMotion: true,
+        });
+      };
+
+      const outer = window.setTimeout(() => {
+        if (cancelled) return;
+        burst({ x: 0.12, y: 0.7 });
+        burst({ x: 0.5, y: 0.55 }, 110, 85);
+        burst({ x: 0.88, y: 0.7 });
+        void confetti({
+          particleCount: 140,
+          spread: 100,
+          origin: { x: 0.5, y: 0.48 },
+          colors,
+          zIndex,
+          scalar: 1.05,
+          disableForReducedMotion: true,
+        });
+        timeouts.push(
+          window.setTimeout(() => {
+            if (cancelled) return;
+            void confetti({
+              particleCount: 70,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0, y: 0.68 },
+              colors,
+              zIndex,
+              disableForReducedMotion: true,
+            });
+            void confetti({
+              particleCount: 70,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1, y: 0.68 },
+              colors,
+              zIndex,
+              disableForReducedMotion: true,
+            });
+          }, 180),
+        );
+      }, 30);
+      timeouts.push(outer);
+    });
 
     return () => {
+      cancelled = true;
       for (const id of timeouts) clearTimeout(id);
     };
   }, [reviewSubmitSuccess, reviewModalOpen]);
