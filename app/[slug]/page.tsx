@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import DOMPurify from "isomorphic-dompurify";
+import { PolicyHtml } from "@/components/policy/policy-html";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import { dbGetPolicyPage } from "@/app/lib/policy-pages-db";
 import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
@@ -40,10 +40,6 @@ export default async function FooterItemPage({ params }: Props) {
     notFound();
   }
 
-  const safe = DOMPurify.sanitize(policy.contentHtml.trim(), {
-    USE_PROFILES: { html: true },
-  });
-
   return (
     <>
       <TopStrip />
@@ -73,16 +69,7 @@ export default async function FooterItemPage({ params }: Props) {
           </header>
 
           <div className="py-6 sm:py-8">
-            {safe ? (
-              <article
-                className="policy-prose"
-                dangerouslySetInnerHTML={{ __html: safe }}
-              />
-            ) : (
-              <p className="rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-6 py-12 text-center text-sm text-neutral-600">
-                No content has been added for this page yet.
-              </p>
-            )}
+            <PolicyHtml html={policy.contentHtml} articleClassName="policy-prose" />
           </div>
         </div>
       </main>
