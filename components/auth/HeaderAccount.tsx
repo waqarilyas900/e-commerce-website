@@ -213,7 +213,7 @@ export function HeaderAccount() {
               </span>
             )}
             <span
-              className="min-w-0 max-w-30 truncate text-left text-xs font-normal text-neutral-700 sm:max-w-40 md:max-w-56"
+              className="hidden min-w-0 max-w-30 truncate text-left text-xs font-normal text-neutral-700 sm:inline sm:max-w-40 md:max-w-56"
               title={name}
             >
               {name}

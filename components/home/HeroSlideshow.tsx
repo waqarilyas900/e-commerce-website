@@ -109,27 +109,27 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
     setIndex((i) => (i - 1 + slides.length) % slides.length);
   }, [slides.length]);
 
-  const autoRun = !paused && !prefersReducedMotion;
+  const autoRun = !paused;
 
   useEffect(() => {
     if (!autoRun) return;
 
-    const start = performance.now();
-    let rafId: number;
-
-    const loop = (now: number) => {
-      const elapsed = now - start;
+    const start = Date.now();
+    setProgress(0);
+    const progressId = window.setInterval(() => {
+      const elapsed = Date.now() - start;
       const p = Math.min(1, elapsed / INTERVAL_MS);
       setProgress(p);
-      if (p >= 1) {
-        next();
-        return;
-      }
-      rafId = requestAnimationFrame(loop);
-    };
+    }, 100);
+    const advanceId = window.setTimeout(() => {
+      setProgress(1);
+      next();
+    }, INTERVAL_MS);
 
-    rafId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      window.clearInterval(progressId);
+      window.clearTimeout(advanceId);
+    };
   }, [index, autoRun, next]);
 
   useEffect(() => {

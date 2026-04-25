@@ -120,26 +120,6 @@ function CloseIcon({ className }: { className?: string }) {
   );
 }
 
-function TrashIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <path d="M3 6h18" />
-      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-      <path d="M10 11v6M14 11v6" />
-    </svg>
-  );
-}
-
 function SendIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -153,7 +133,6 @@ function SendIcon({ className }: { className?: string }) {
       aria-hidden
     >
       <path d="m22 2-7 20-4-9-9-4 20-7Z" />
-      <path d="M15 9 6 6l3 9 6-6Z" />
     </svg>
   );
 }
@@ -614,8 +593,6 @@ export function AskTheStore() {
     }
   };
 
-  const canClear = messages.length > 0 || Boolean(error);
-
   return (
     <>
       <AnimatePresence>
@@ -689,19 +666,12 @@ export function AskTheStore() {
                 </div>
                 <button
                   type="button"
-                  disabled={!canClear || loading}
-                  aria-label="Clear conversation"
-                  title="Clear conversation"
-                  onClick={() => {
-                    revealSessionRef.current?.cancel();
-                    revealSessionRef.current = null;
-                    setMessages([]);
-                    setError(null);
-                    setLoading(false);
-                  }}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900 disabled:pointer-events-none disabled:opacity-30"
+                  aria-label="Close chat"
+                  title="Close chat"
+                  onClick={closeAskStore}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
                 >
-                  <TrashIcon className="h-[18px] w-[18px]" />
+                  <CloseIcon className="h-[18px] w-[18px]" />
                 </button>
               </header>
 

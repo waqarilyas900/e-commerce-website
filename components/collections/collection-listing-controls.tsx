@@ -238,7 +238,7 @@ export function CollectionListingControls({
   return (
     <>
       {/* Reference: Filter + Sort equal half-width columns, aligned to listing grid below */}
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
@@ -259,7 +259,7 @@ export function CollectionListingControls({
           </svg>
           Filter
         </button>
-        <div className="min-w-0 sm:w-[220px]">
+        <div className="w-[min(58vw,220px)] min-w-[160px]">
           <AppSelect
             aria-label="Sort products"
             options={sortOptions}
