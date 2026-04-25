@@ -10,8 +10,9 @@
  * Secrets (Edge dashboard or `npm run cron:restock:deploy`):
  * - CRON_SECRET
  * - SERVICE_ROLE_KEY (Supabase CLI rejects secret names starting with SUPABASE_)
- * - RESEND_API_KEY, RESEND_FROM (optional; defaults to Resend test sender)
- * - PUBLIC_SITE_URL or NEXT_PUBLIC_SITE_URL (storefront base URL for product links)
+ * - RESEND_API_KEY, RESEND_FROM (optional), RESEND_DEFAULT_FROM (fallback when RESEND_FROM unset)
+ * - PUBLIC_SITE_URL | NEXT_PUBLIC_SITE_URL | EDGE_PUBLIC_SITE_URL (storefront base URL for product links)
+ * - EDGE_DEV_SITE_ORIGIN (optional last-resort fallback when none of the above are set, e.g. local edge tests)
  *
  * Auto-provided: SUPABASE_URL
  */
@@ -26,7 +27,15 @@ type QueueRow = {
 };
 
 const BATCH = 25;
-const RESEND_TEST_SENDER = "Store <onboarding@resend.dev>";
+const RESEND_ONBOARDING_FALLBACK = "Store <onboarding@resend.dev>";
+
+function resendFromLine(): string {
+  return (
+    Deno.env.get("RESEND_FROM")?.trim() ||
+    Deno.env.get("RESEND_DEFAULT_FROM")?.trim() ||
+    RESEND_ONBOARDING_FALLBACK
+  );
+}
 
 function escapeHtml(s: string): string {
   return s
@@ -50,7 +59,7 @@ async function sendRestockEmail(input: {
   productUrl: string;
 }): Promise<{ sent: boolean; error?: string }> {
   const apiKey = Deno.env.get("RESEND_API_KEY")?.trim();
-  const from = Deno.env.get("RESEND_FROM")?.trim() || RESEND_TEST_SENDER;
+  const from = resendFromLine();
   if (!apiKey) {
     return {
       sent: false,
@@ -135,8 +144,12 @@ Deno.serve(async (req) => {
 
   const rawSite =
     Deno.env.get("PUBLIC_SITE_URL")?.trim() ||
-    Deno.env.get("NEXT_PUBLIC_SITE_URL")?.trim();
-  const site = rawSite ? rawSite.replace(/\/$/, "") : "http://localhost:3000";
+    Deno.env.get("NEXT_PUBLIC_SITE_URL")?.trim() ||
+    Deno.env.get("EDGE_PUBLIC_SITE_URL")?.trim();
+  const site = rawSite
+    ? rawSite.replace(/\/$/, "")
+    : Deno.env.get("EDGE_DEV_SITE_ORIGIN")?.trim()?.replace(/\/$/, "") ||
+      "http://localhost:3000";
 
   const { data: rows, error: qErr } = await admin
     .from("restock_notification_queue")

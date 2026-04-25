@@ -115,7 +115,7 @@ export async function loadStoreBrandFromDatabase(): Promise<StoreBrandConfig> {
     const s = storeRes.data;
     const h = homeRes.data;
 
-    const storeName = (s.store_name ?? "").trim() || "Store";
+    const storeName = (s.store_name ?? "").trim();
     const siteTitleRaw = (s.site_title ?? "").trim();
     const siteDescription = (s.site_description ?? "").trim();
 
@@ -134,5 +134,35 @@ export async function loadStoreBrandFromDatabase(): Promise<StoreBrandConfig> {
     };
   } catch {
     return empty;
+  }
+}
+
+const FALLBACK_DISPLAY_NAME = "Store";
+
+/**
+ * Short display name from `store_settings` only (emails, geocode User-Agent, etc.).
+ * When the row is missing or both fields are empty, returns a generic label — not env.
+ */
+export async function getStoreDisplayNameFromDatabase(): Promise<string> {
+  if (!hasCatalogDb()) {
+    return FALLBACK_DISPLAY_NAME;
+  }
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("store_settings")
+      .select("store_name, site_title")
+      .eq("id", 1)
+      .maybeSingle();
+    if (error || !data) {
+      return FALLBACK_DISPLAY_NAME;
+    }
+    const name = (data.store_name ?? "").trim();
+    if (name) return name;
+    const title = (data.site_title ?? "").trim();
+    if (title) return title;
+    return FALLBACK_DISPLAY_NAME;
+  } catch {
+    return FALLBACK_DISPLAY_NAME;
   }
 }

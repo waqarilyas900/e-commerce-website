@@ -43,7 +43,8 @@ const showGoogleOneTap =
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await loadStoreBrandFromDatabase();
-  const title = brand.siteTitle.trim() || brand.storeName.trim() || "Store";
+  const title =
+    brand.siteTitle.trim() || brand.storeName.trim() || "Store";
   const description = brand.siteDescription.trim() || undefined;
   return {
     title,

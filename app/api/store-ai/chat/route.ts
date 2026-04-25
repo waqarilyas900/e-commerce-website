@@ -11,7 +11,12 @@ export const runtime = "nodejs";
 /** Avoid caching / coalescing so the browser can read the SSE body incrementally. */
 export const dynamic = "force-dynamic";
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+function openRouterChatUrl(): string {
+  return (
+    process.env.OPENROUTER_API_URL?.trim() ||
+    "https://openrouter.ai/api/v1/chat/completions"
+  );
+}
 
 const FETCH_TIMEOUT_MS = Math.min(
   120_000,
@@ -55,7 +60,7 @@ async function fetchOpenRouterChat(
     const tid = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     const hop = attempt === 0 ? hopHeaders : {};
     try {
-      const res = await fetch(OPENROUTER_URL, {
+      const res = await fetch(openRouterChatUrl(), {
         method: "POST",
         headers: {
           ...hop,
@@ -141,7 +146,10 @@ export async function POST(req: Request) {
   }
 
   const storeName = sanitizeStoreName(obj.storeName);
-  const model = process.env.OPENROUTER_MODEL?.trim() || "openai/gpt-4o-mini";
+  const model =
+    process.env.OPENROUTER_MODEL?.trim() ||
+    process.env.OPENROUTER_DEFAULT_MODEL?.trim() ||
+    "openai/gpt-4o-mini";
   const site = getPublicSiteUrl();
   const referer = process.env.OPENROUTER_HTTP_REFERER?.trim() || site;
   const title = process.env.OPENROUTER_APP_TITLE?.trim() || `${storeName} — Ask store AI`;

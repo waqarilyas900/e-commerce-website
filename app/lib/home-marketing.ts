@@ -39,7 +39,7 @@ function parseCssHex(input: string | null | undefined, fallback: string): string
 
 /**
  * Loads announcement bar settings for the root layout. On failure, returns defaults that
- * mirror the legacy strip (plain catalog/env announcement + default colors).
+ * mirror the legacy strip (empty messages + default colors until `home_page_settings` is configured).
  */
 export async function getAnnouncementBarForLayout(): Promise<AnnouncementBarSettings> {
   const fallback: AnnouncementBarSettings = {

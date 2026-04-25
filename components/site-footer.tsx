@@ -6,6 +6,10 @@ import { motion } from "framer-motion";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
+import {
+  getPublicFacebookUrl,
+  getPublicInstagramUrl,
+} from "@/lib/env/public-social";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -63,34 +67,39 @@ function FooterMark({ className }: { className?: string }) {
 }
 
 function SocialLinks({ className }: { className?: string }) {
-  const ig = process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/";
-  const fb = process.env.NEXT_PUBLIC_FACEBOOK_URL ?? "https://www.facebook.com/";
+  const ig = getPublicInstagramUrl();
+  const fb = getPublicFacebookUrl();
+  if (!ig && !fb) return null;
   return (
     <div className={className}>
-      <a
-        href={ig}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/90 text-white transition hover:bg-white/10"
-        aria-label="Instagram"
-      >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-          <rect x="3" y="3" width="18" height="18" rx="5" />
-          <circle cx="12" cy="12" r="4" />
-          <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none" />
-        </svg>
-      </a>
-      <a
-        href={fb}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition hover:bg-white/90"
-        aria-label="Facebook"
-      >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
-          <path d="M13.5 22v-8.2h2.7l.5-3.2H13.5V8.9c0-.9.3-1.5 1.6-1.5H17V4.4c-.3 0-1.4-.1-2.7-.1-2.7 0-4.5 1.6-4.5 4.6v2.6H7v3.2h2.8V22h3.7z" />
-        </svg>
-      </a>
+      {ig ? (
+        <a
+          href={ig}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/90 text-white transition hover:bg-white/10"
+          aria-label="Instagram"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <rect x="3" y="3" width="18" height="18" rx="5" />
+            <circle cx="12" cy="12" r="4" />
+            <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none" />
+          </svg>
+        </a>
+      ) : null}
+      {fb ? (
+        <a
+          href={fb}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition hover:bg-white/90"
+          aria-label="Facebook"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+            <path d="M13.5 22v-8.2h2.7l.5-3.2H13.5V8.9c0-.9.3-1.5 1.6-1.5H17V4.4c-.3 0-1.4-.1-2.7-.1-2.7 0-4.5 1.6-4.5 4.6v2.6H7v3.2h2.8V22h3.7z" />
+          </svg>
+        </a>
+      ) : null}
     </div>
   );
 }

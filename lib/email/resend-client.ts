@@ -1,10 +1,11 @@
 import { Resend } from "resend";
-import { RESEND_TEST_SENDER } from "@/lib/email/resend-defaults";
+import { getResendDefaultFrom } from "@/lib/email/resend-defaults";
 
 /**
  * Env (server-only):
  * - `RESEND_API_KEY` — Resend API key
- * - `RESEND_FROM` — optional; defaults to test sender (no domain)
+ * - `RESEND_FROM` — preferred “from”; if unset, see `RESEND_DEFAULT_FROM`
+ * - `RESEND_DEFAULT_FROM` — fallback “from” when `RESEND_FROM` is unset (default: Resend test sender)
  * - `RESEND_CONTACT_TO` — inbox for `/api/contact` (your real email while testing)
  */
 
@@ -23,8 +24,8 @@ export function getResend(): Resend | null {
   return client;
 }
 
-/** From line; uses Resend test sender when `RESEND_FROM` is unset. */
+/** From line: `RESEND_FROM`, else `RESEND_DEFAULT_FROM`, else Resend onboarding sender. */
 export function getResendFrom(): string | null {
   const v = process.env.RESEND_FROM?.trim();
-  return v || RESEND_TEST_SENDER;
+  return v || getResendDefaultFrom();
 }

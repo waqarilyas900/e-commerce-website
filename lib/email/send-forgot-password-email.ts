@@ -1,4 +1,4 @@
-import { getPublicStoreName } from "@/app/lib/store-name";
+import { getStoreDisplayNameFromDatabase } from "@/app/lib/store-brand-db";
 import {
   buildForgotPasswordEmailHtml,
   buildForgotPasswordEmailText,
@@ -15,7 +15,7 @@ export async function sendForgotPasswordEmail(input: {
     return { sent: false, error: "Email not configured (RESEND_API_KEY)" };
   }
 
-  const storeName = getPublicStoreName();
+  const storeName = await getStoreDisplayNameFromDatabase();
   const params = {
     storeName,
     resetUrl: input.resetUrl,

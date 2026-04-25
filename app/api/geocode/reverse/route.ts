@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { getPublicSiteUrl } from "@/lib/site-url";
+import { getStoreDisplayNameFromDatabase } from "@/app/lib/store-brand-db";
 
 export const dynamic = "force-dynamic";
 
@@ -91,12 +93,15 @@ async function reverseNominatim(lat: string, lon: string): Promise<AddressParts 
   url.searchParams.set("format", "json");
   url.searchParams.set("addressdetails", "1");
 
+  const displayName = await getStoreDisplayNameFromDatabase();
+  const userAgent = `${displayName.replace(/\s+/g, "-")}/1.0 (+${getPublicSiteUrl()})`;
+
   const res = await fetch(url.toString(), {
     headers: {
       Accept: "application/json",
       "Accept-Language": "en",
-      // Required by Nominatim; include a reachable site URL if you deploy publicly.
-      "User-Agent": "EcomStorefrontCheckout/1.0 (+https://github.com/)",
+      // Nominatim requires an identifiable User-Agent (store + public site URL).
+      "User-Agent": userAgent,
     },
     cache: "no-store",
   });
