@@ -12,7 +12,10 @@ import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider"
 import type { NavCollectionLink } from "@/app/lib/nav-collections";
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 
-/** Aligns with `TopStrip` (37px) + `Header` min-heights in storefront */
+/**
+ * Default when caller does not pass `panelOffsetClass`.
+ * Prefer passing offsets from `Header` so they match whether `TopStrip` is visible.
+ */
 const HEADER_TOP_OFFSET =
   "top-[101px] sm:top-[109px] md:top-[120px]";
 
@@ -91,6 +94,12 @@ export function HeaderSearchPopover({
     if (!open || !renderPanel) return;
     const t = window.setTimeout(() => inputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
+  }, [open, renderPanel]);
+
+  /** Close Shop mega menu so it does not sit in the gap above the search layer. */
+  useEffect(() => {
+    if (!open || !renderPanel) return;
+    window.dispatchEvent(new CustomEvent("storefront:close-mega-menus"));
   }, [open, renderPanel]);
 
   useEffect(() => {
