@@ -1,22 +1,21 @@
 #!/usr/bin/env node
 /**
- * Deploy restock Edge Function + DB schedule + secrets.
+ * Full Supabase deploy from `.env` (or `SUPABASE_DEPLOY_ENV_FILE` override):
  *
- * 1. `supabase db push` — applies migrations (pg_cron daily → Edge Function; Vault name edge_cron_shared_secret).
- * 2. Edge secrets: CRON_SECRET, SERVICE_ROLE_KEY, RESEND_*, PUBLIC_SITE_URL.
- * 3. `supabase functions deploy restock-notifications`.
- * 4. RPC `sync_edge_cron_vault_secret` — copies CRON_SECRET into Vault so pg_cron can send the same Bearer
- *    (one shared secret for all HTTP crons that use this Vault entry).
+ * 1. `supabase db push --yes` — all migrations (incl. pg_cron → Edge; Vault `edge_cron_shared_secret`).
+ * 2. Edge secrets — CRON_SECRET, SERVICE_ROLE_KEY, RESEND_*, site URL chain, optional Edge fallbacks.
+ * 3. `supabase functions deploy <each>` — every folder under `supabase/functions/` with `index.ts` (or `index.js`).
+ * 4. RPC `sync_edge_cron_vault_secret` — pg_cron Bearer matches Edge `CRON_SECRET`.
  *
- * CRON_SECRET: uses `.env` value; only generates if missing. `--rotate-cron` replaces it (update Supabase schedule is N/A — Vault + Edge secrets update on next deploy).
+ * Uses the **local** CLI from `node_modules/.bin` so Windows does not hit ENOENT on bare `supabase`.
  *
- * Requires: `supabase login`, linked project (or standard link), `.env` with
- * NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET (optional generate).
+ * CRON_SECRET: from `.env`; generates if missing. `--rotate-cron` writes a new secret to the env file.
  *
- * Multi-env: `SUPABASE_DEPLOY_ENV_FILE=.env.staging` loads `.env` then overrides from that file
- * (set by `npm run supabase:deploy -- staging|uat|prod`).
+ * Requires: `supabase login`, linked project, `.env` with NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
  *
- * Usage: npm run cron:restock:deploy
+ * Multi-env: `npm run supabase:deploy -- staging|uat|prod` sets `SUPABASE_DEPLOY_ENV_FILE`.
+ *
+ * Usage: `npm run supabase:all` or `npm run cron:restock:deploy`
  */
 import { config } from "dotenv";
 import {
@@ -25,6 +24,8 @@ import {
   writeFileSync,
   mkdtempSync,
   rmSync,
+  readdirSync,
+  statSync,
 } from "fs";
 import { tmpdir } from "os";
 import { join, resolve, dirname } from "path";
@@ -65,6 +66,58 @@ function envLine(key, value) {
     return `${key}="${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
   }
   return `${key}=${s}`;
+}
+
+/** Raw `.env` value without wrapping quotes. */
+function trimEnv(key) {
+  const v = process.env[key];
+  if (v === undefined || v === null) return "";
+  return String(v)
+    .trim()
+    .replace(/^["']|["']$/g, "");
+}
+
+/**
+ * Run Supabase CLI from project `node_modules` so `execFileSync("supabase")` works on Windows.
+ */
+function runSupabase(cliArgs) {
+  const binDir = join(root, "node_modules", ".bin");
+  const win = process.platform === "win32";
+  const local = join(binDir, win ? "supabase.cmd" : "supabase");
+  if (existsSync(local)) {
+    execFileSync(local, cliArgs, { cwd: root, stdio: "inherit" });
+    return;
+  }
+  execFileSync(win ? "npx.cmd" : "npx", ["supabase", ...cliArgs], {
+    cwd: root,
+    stdio: "inherit",
+  });
+}
+
+/** Subdirs of `supabase/functions` that look like Edge functions. */
+function listEdgeFunctionNames() {
+  const dir = join(root, "supabase", "functions");
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith(".") || name === "node_modules") continue;
+    const p = join(dir, name);
+    let st;
+    try {
+      st = statSync(p);
+    } catch {
+      continue;
+    }
+    if (!st.isDirectory()) continue;
+    if (
+      existsSync(join(p, "index.ts")) ||
+      existsSync(join(p, "index.js")) ||
+      existsSync(join(p, "index.tsx"))
+    ) {
+      out.push(name);
+    }
+  }
+  return out.sort();
 }
 
 async function main() {
@@ -112,50 +165,63 @@ async function main() {
   }
 
   const resendFrom =
-    process.env.RESEND_FROM?.replace(/^["']|["']$/g, "").trim() ||
-    "Store <onboarding@resend.dev>";
+    trimEnv("RESEND_FROM") || "Store <onboarding@resend.dev>";
   const publicSite =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+    trimEnv("PUBLIC_SITE_URL") ||
+    trimEnv("NEXT_PUBLIC_SITE_URL") ||
+    "http://localhost:3000";
+  const nextPublicSite = trimEnv("NEXT_PUBLIC_SITE_URL") || publicSite;
+  const edgePublicSite = trimEnv("EDGE_PUBLIC_SITE_URL");
+  const edgeDevOrigin =
+    trimEnv("EDGE_DEV_SITE_ORIGIN") || "http://localhost:3000";
+  const resendDefaultFrom =
+    trimEnv("RESEND_DEFAULT_FROM") || "Store <onboarding@resend.dev>";
 
   console.log("Applying database migrations (includes pg_cron schedule)…");
-  execFileSync("supabase", ["db", "push", "--yes"], {
-    cwd: root,
-    stdio: "inherit",
-  });
+  runSupabase(["db", "push", "--yes"]);
 
   const dir = mkdtempSync(join(tmpdir(), "restock-edge-"));
   const secretFile = join(dir, "secrets.env");
   const lines = [
     envLine("CRON_SECRET", cronSecret),
     envLine("SERVICE_ROLE_KEY", srk),
-    envLine("RESEND_API_KEY", process.env.RESEND_API_KEY?.trim() ?? ""),
+    envLine("RESEND_API_KEY", trimEnv("RESEND_API_KEY")),
     envLine("RESEND_FROM", resendFrom),
+    envLine("RESEND_DEFAULT_FROM", resendDefaultFrom),
     envLine("PUBLIC_SITE_URL", publicSite),
+    envLine("NEXT_PUBLIC_SITE_URL", nextPublicSite),
+    envLine("EDGE_PUBLIC_SITE_URL", edgePublicSite),
+    envLine("EDGE_DEV_SITE_ORIGIN", edgeDevOrigin),
     "",
   ].join("\n");
   writeFileSync(secretFile, lines, "utf8");
 
   try {
     console.log("Setting Edge Function secrets on Supabase…");
-    execFileSync(
-      "supabase",
-      ["secrets", "set", "--env-file", secretFile, "--project-ref", projectRef],
-      { cwd: root, stdio: "inherit" },
-    );
+    runSupabase([
+      "secrets",
+      "set",
+      "--env-file",
+      secretFile,
+      "--project-ref",
+      projectRef,
+    ]);
 
-    console.log("Deploying restock-notifications…");
-    execFileSync(
-      "supabase",
-      [
+    const fnNames = listEdgeFunctionNames();
+    if (!fnNames.length) {
+      console.warn("No Edge functions found under supabase/functions/ — skip deploy.");
+    }
+    for (const name of fnNames) {
+      console.log(`Deploying Edge function: ${name}…`);
+      runSupabase([
         "functions",
         "deploy",
-        "restock-notifications",
+        name,
         "--project-ref",
         projectRef,
         "--yes",
-      ],
-      { cwd: root, stdio: "inherit" },
-    );
+      ]);
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
