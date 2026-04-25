@@ -19,9 +19,7 @@ type Turn = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  /** ISO-8601 — shown in bubble footer. */
   createdAt: string;
-  /** In-flight streamed reply — cleared when the stream completes. */
   streaming?: boolean;
 };
 
