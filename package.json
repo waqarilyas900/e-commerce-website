@@ -13,6 +13,7 @@
     "supabase:login": "supabase login",
     "supabase:link": "node scripts/supabase-link.mjs",
     "supabase:push": "supabase db push",
+    "supabase:all": "node scripts/push-restock-edge.mjs",
     "supabase:deploy": "node scripts/deploy-supabase-env.mjs",
     "seed:admin": "node scripts/seed-admin.mjs",
     "seed:catalog": "tsx scripts/seed-catalog.ts",

@@ -4,10 +4,10 @@
  * Same behavior as the former Next.js route `/api/cron/restock-notifications`.
  *
  * Schedule: pg_cron job `restock_notifications_edge_daily` (UTC `0 0 * * *`) POSTs here with
- * Bearer from Vault `edge_cron_shared_secret`, synced from CRON_SECRET via `npm run cron:restock:deploy`.
+ * Bearer from Vault `edge_cron_shared_secret`, synced from CRON_SECRET via `npm run supabase:all` (or `cron:restock:deploy`).
  * Manual calls: `Authorization: Bearer <CRON_SECRET>` or `x-cron-secret`.
  *
- * Secrets (Edge dashboard or `npm run cron:restock:deploy`):
+ * Secrets (Edge dashboard or `npm run supabase:all`):
  * - CRON_SECRET
  * - SERVICE_ROLE_KEY (Supabase CLI rejects secret names starting with SUPABASE_)
  * - RESEND_API_KEY, RESEND_FROM (optional), RESEND_DEFAULT_FROM (fallback when RESEND_FROM unset)

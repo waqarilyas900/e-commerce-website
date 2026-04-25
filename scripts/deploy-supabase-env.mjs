@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * One-shot Supabase deploy for staging | uat | prod.
- * Delegates to `push-restock-edge.mjs`: db push → Edge secrets → deploy restock-notifications → Vault RPC.
+ * Delegates to `push-restock-edge.mjs`: db push → Edge secrets → deploy all Edge functions → Vault RPC.
  *
  * Usage:
  *   npm run supabase:deploy -- staging
