@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { motion } from "framer-motion";
 import { formatPkr } from "@/app/lib/format-currency";
 import type { ResolvedCartLine } from "@/app/providers/cart-provider";
+import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { ModalShell } from "@/components/ui/modal-shell";
 
 const easeCheckout: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -65,6 +66,9 @@ function CheckoutOrderSummaryBody({
   applyingVoucher = false,
   inert = false,
 }: SummaryBodyProps) {
+  const brand = useStoreBrand();
+  const supportPhone = brand.footer.phone?.trim();
+  const supportEmail = brand.footer.supportEmail?.trim();
   const voucherNoticeId = useId();
   const showNotice = Boolean(discountNotice);
   const inputError = showNotice && discountNoticeIsError;
@@ -232,8 +236,35 @@ function CheckoutOrderSummaryBody({
             try at least twice to deliver your order at the address indicated by you.
           </li>
           <li>
-            If you have any questions you can contact us at <strong>0302-2994444</strong> or email
-            us at <strong>support@radstore.pk</strong>.
+            {supportPhone || supportEmail ? (
+              <>
+                If you have any questions you can contact us
+                {supportPhone ? (
+                  <>
+                    {" "}
+                    at <strong>{supportPhone}</strong>
+                  </>
+                ) : null}
+                {supportPhone && supportEmail ? " or " : null}
+                {supportEmail ? (
+                  <>
+                    email us at{" "}
+                    <a href={`mailto:${supportEmail}`} className="font-semibold underline">
+                      {supportEmail}
+                    </a>
+                  </>
+                ) : null}
+                .
+              </>
+            ) : (
+              <>
+                If you have any questions, visit our{" "}
+                <Link href="/contact" className="font-semibold underline">
+                  contact page
+                </Link>
+                .
+              </>
+            )}
           </li>
         </ul>
       </ModalShell>

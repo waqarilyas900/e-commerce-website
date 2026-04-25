@@ -11,9 +11,9 @@ export function createStubVerticalCatalog(siteTitle: string): StoreCatalog {
       announcement: "",
       missionParagraph: "Browse our main collection for available products.",
       featured: {
-        eyebrow: "Store",
+        eyebrow: siteTitle,
         title: "Collections",
-        description: "Use NEXT_PUBLIC_STORE_VERTICAL=electronics for the live demo catalog.",
+        description: "Catalog is served from the database; seed demo data with npm run seed:catalog and optional SEED_VERTICAL.",
         imageUrl: placeholderImg,
         primaryLabel: "Shop",
         primaryHref: "/collections",
@@ -30,7 +30,7 @@ export function createStubVerticalCatalog(siteTitle: string): StoreCatalog {
         imageUrl: placeholderImg,
       },
       footer: {
-        supportEmail: "support@example.com",
+        supportEmail: process.env.NEXT_PUBLIC_DEFAULT_SUPPORT_EMAIL?.trim() || "",
         phone: "",
         hoursLine: "",
         exploreLinks: [{ label: "All collections", href: "/collections" }],

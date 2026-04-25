@@ -6,7 +6,7 @@
  *   npm run seed:catalog
  *
  * Env: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
- * Optional: SEED_VERTICAL=electronics|clothing|jewellery|home-compliance (default: NEXT_PUBLIC_STORE_VERTICAL or electronics)
+ * Optional: SEED_VERTICAL=electronics|clothing|jewellery|home-compliance (default: electronics)
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -32,7 +32,7 @@ function fail(msg: string): never {
 }
 
 function verticalFromEnv(): StoreVerticalId {
-  const v = process.env.SEED_VERTICAL ?? process.env.NEXT_PUBLIC_STORE_VERTICAL;
+  const v = process.env.SEED_VERTICAL;
   if (
     v === "jewellery" ||
     v === "home-compliance" ||

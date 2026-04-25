@@ -1,5 +1,12 @@
 /**
- * Resend test sender when you have no verified domain yet.
+ * Fallback “from” when `RESEND_FROM` is unset (Resend test inbox).
+ * Override with `RESEND_DEFAULT_FROM` in `.env` after verifying your domain.
+ *
  * @see https://resend.com/docs/knowledge-base/what-email-addresses-to-use-for-testing
  */
-export const RESEND_TEST_SENDER = "Store <onboarding@resend.dev>";
+const RESEND_ONBOARDING_FALLBACK = "Store <onboarding@resend.dev>";
+
+/** Server-only: reads `process.env.RESEND_DEFAULT_FROM`. */
+export function getResendDefaultFrom(): string {
+  return process.env.RESEND_DEFAULT_FROM?.trim() || RESEND_ONBOARDING_FALLBACK;
+}
