@@ -145,13 +145,24 @@ export function TopStrip() {
   );
 }
 
+/** Matches `TopStrip` visibility — search overlay `top` must include strip height only when it renders. */
+const SEARCH_PANEL_TOP_WITH_STRIP =
+  "top-[101px] sm:top-[109px] md:top-[120px]";
+const SEARCH_PANEL_TOP_HEADER_ONLY =
+  "top-[64px] sm:top-[72px] md:top-[83px]";
+
 export function Header() {
-  const { storeName } = useStoreBrand();
+  const { storeName, announcementBar } = useStoreBrand();
   const headerNavItems = useHeaderNavMenuItems();
   const { openCart, itemCount } = useCart();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [stickyActive, setStickyActive] = useState(false);
+
+  const topStripVisible = useMemo(() => {
+    if (!announcementBar?.enabled) return false;
+    return announcementBar.messages.some((m) => !isEffectivelyEmptyHtml(m));
+  }, [announcementBar]);
 
   useEffect(() => {
     const sync = () => {
@@ -214,8 +225,10 @@ export function Header() {
           renderPanel={isStickyHeader ? stickyActive : !stickyActive}
           panelOffsetClass={
             isStickyHeader
-              ? "top-[64px] sm:top-[72px] md:top-[83px]"
-              : "top-[101px] sm:top-[109px] md:top-[120px]"
+              ? SEARCH_PANEL_TOP_HEADER_ONLY
+              : topStripVisible
+                ? SEARCH_PANEL_TOP_WITH_STRIP
+                : SEARCH_PANEL_TOP_HEADER_ONLY
           }
         />
         <button
