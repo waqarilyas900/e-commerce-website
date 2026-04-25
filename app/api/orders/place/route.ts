@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { formatPkr } from "@/app/lib/format-currency";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { sendOrderConfirmationEmail } from "@/lib/email/send-order-confirmation";
 import type { OrderLineSummary } from "@/lib/email/send-order-confirmation";
 import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
@@ -22,6 +23,11 @@ export type PlaceOrderPayload = {
   voucher_code?: string;
   /** Optional reference to a previously saved checkout address (for audit/use tracking). */
   saved_address_id?: string;
+  /**
+   * When true and the session is authenticated, opt into marketing email after a successful order.
+   * Unchecked or guest checkout never removes an existing subscription (handled server-side).
+   */
+  newsletter_opt_in?: boolean;
   items: { variant_id: string; quantity: number }[];
 };
 
@@ -101,6 +107,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Cart is empty" }, { status: 400 });
   }
 
+  const newsletterOptIn = incoming.newsletter_opt_in === true;
+
   const rpcPayload: PlaceOrderPayload = {
     email: incoming.email,
     first_name: incoming.first_name,
@@ -151,6 +159,27 @@ export async function POST(req: Request) {
   }
 
   if ("ok" in result && result.ok === true) {
+    if (newsletterOptIn && rpcPayload.email?.trim()) {
+      try {
+        const srk = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+        if (!srk) {
+          console.warn("[orders/place] newsletter: SUPABASE_SERVICE_ROLE_KEY not set; skipping opt-in");
+        } else {
+          const { data: authData } = await supabase.auth.getUser();
+          const srv = createServiceRoleClient();
+          const { error: subErr } = await srv.rpc("newsletter_subscribe_after_order", {
+            p_email: rpcPayload.email.trim(),
+            p_auth_uid: authData.user?.id ?? null,
+          });
+          if (subErr) {
+            console.warn("[orders/place] newsletter_subscribe_after_order:", subErr.message);
+          }
+        }
+      } catch (e) {
+        console.warn("[orders/place] newsletter subscribe failed", e);
+      }
+    }
+
     void (async () => {
       try {
         const lines = await buildOrderLineSummaries(rpcPayload.items);

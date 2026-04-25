@@ -214,6 +214,7 @@ export default function CheckoutPage() {
   const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [discountNotice, setDiscountNotice] = useState<string | null>(null);
   const [discountNoticeIsError, setDiscountNoticeIsError] = useState(false);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
 
   const clearDiscountNotice = useCallback(() => {
     setDiscountNotice(null);
@@ -743,6 +744,7 @@ export default function CheckoutPage() {
           ...(discountApplied && discountCode.trim() !== ""
             ? { voucher_code: discountCode.trim() }
             : {}),
+          ...(newsletterOptIn ? { newsletter_opt_in: true } : {}),
         }),
       });
       const data = (await res.json()) as {
@@ -1014,6 +1016,23 @@ export default function CheckoutPage() {
                   applyingVoucher={applyingVoucher}
                 />
               </div>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-left text-sm text-neutral-800">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+                  checked={newsletterOptIn}
+                  onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                />
+                <span>
+                  Email me with news and offers
+                  {!signedIn ? (
+                    <span className="mt-1 block text-xs font-normal text-neutral-500">
+                      We&apos;ll use the email on this order. You can unsubscribe from any marketing email.
+                    </span>
+                  ) : null}
+                </span>
+              </label>
 
               {submitError ? (
                 <p
