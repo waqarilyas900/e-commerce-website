@@ -16,11 +16,24 @@ import {
 import { hasCatalogDb } from "@/app/lib/db/env";
 
 let warnedMissingCatalogSchema = false;
+let warnedCatalogNetworkIssue = false;
 
 function isMissingCatalogTableError(msg: string | undefined): boolean {
   if (!msg) return false;
   return (
     msg.includes("Could not find the table") || msg.includes("schema cache")
+  );
+}
+
+function isCatalogNetworkFetchError(msg: string | undefined): boolean {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes("fetch failed") ||
+    m.includes("failed to fetch") ||
+    m.includes("econnrefused") ||
+    m.includes("enotfound") ||
+    m.includes("getaddrinfo")
   );
 }
 
@@ -32,6 +45,15 @@ function logDbCatalogIssue(op: string, message: string | undefined) {
       warnedMissingCatalogSchema = true;
       console.warn(
         "[db] Supabase catalog tables are missing. Apply migrations (`supabase db push` or run SQL from supabase/migrations). Pages that support it will fall back to the static catalog.",
+      );
+    }
+    return;
+  }
+  if (isCatalogNetworkFetchError(message)) {
+    if (!warnedCatalogNetworkIssue) {
+      warnedCatalogNetworkIssue = true;
+      console.warn(
+        "[db] Supabase fetch failed. Check Supabase URL/keys, network access, and local env. Catalog-backed sections will temporarily fall back to empty/static data.",
       );
     }
     return;

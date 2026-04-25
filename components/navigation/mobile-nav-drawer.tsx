@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
 import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
+import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { useScrollLock } from "@/lib/scroll-lock";
+import { createClient } from "@/lib/supabase/client";
 import {
   getPublicFacebookUrl,
   getPublicInstagramUrl,
@@ -106,13 +110,34 @@ type Props = {
 export function MobileNavDrawer({ open, onClose }: Props) {
   const links = useNavCollections();
   const headerNavItems = useHeaderNavMenuItems();
+  const { storeName } = useStoreBrand();
   const [shopOpen, setShopOpen] = useState(false);
+  const [authUser, setAuthUser] = useState<User | null>(null);
 
   useScrollLock(open);
 
   useEffect(() => {
     if (!open) queueMicrotask(() => setShopOpen(false));
   }, [open]);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    try {
+      const supabase = createClient();
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setAuthUser(session?.user ?? null);
+      });
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        setAuthUser(nextSession?.user ?? null);
+      });
+      unsubscribe = () => subscription.unsubscribe();
+    } catch {
+      setAuthUser(null);
+    }
+    return () => unsubscribe?.();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -148,7 +173,24 @@ export function MobileNavDrawer({ open, onClose }: Props) {
             aria-modal="true"
             aria-label="Menu"
           >
-            <div className="flex shrink-0 justify-end border-b border-neutral-200 px-3 py-3">
+            <div className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-3 py-3">
+              <Link
+                href="/"
+                onClick={onClose}
+                aria-label={`${storeName} home`}
+                className="inline-flex min-w-0 items-center gap-2 rounded-md px-1 py-1"
+              >
+                <Image
+                  src="/dummy-logo.svg"
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 shrink-0"
+                />
+                <span className="truncate text-sm font-semibold tracking-wide text-neutral-900 sm:text-base">
+                  {storeName}
+                </span>
+              </Link>
               <button
                 type="button"
                 className="flex h-10 w-10 items-center justify-center rounded-md text-neutral-900 hover:bg-neutral-100"
@@ -229,9 +271,11 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                 {item.label}
               </Link>
             ))}
-            <Link href="/login" className={itemClass} onClick={onClose}>
-              Log in
-            </Link>
+            {!authUser ? (
+              <Link href="/login" className={itemClass} onClick={onClose}>
+                Log in
+              </Link>
+            ) : null}
 
             <div className="mt-auto border-t border-neutral-200 px-4 py-5">
               <DrawerSocialIcons />

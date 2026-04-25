@@ -116,7 +116,7 @@ function NeedHelpBlock({
       <p>Reach us at</p>
       <a
         href={mailto}
-        className="block font-semibold capitalize tracking-wide text-white underline-offset-4 hover:underline"
+        className="block font-semibold tracking-wide text-white underline-offset-4 hover:underline"
       >
         {footer.supportEmail}
       </a>
