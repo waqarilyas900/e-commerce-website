@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import DOMPurify from "isomorphic-dompurify";
+import { PolicyHtml } from "@/components/policy/policy-html";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import { dbGetPolicyPage } from "@/app/lib/policy-pages-db";
 import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
@@ -40,10 +40,6 @@ export default async function PolicyDetailsPage({ params }: Props) {
     notFound();
   }
 
-  const safe = DOMPurify.sanitize(policy.contentHtml.trim(), {
-    USE_PROFILES: { html: true },
-  });
-
   return (
     <>
       <TopStrip />
@@ -79,16 +75,10 @@ export default async function PolicyDetailsPage({ params }: Props) {
           </header>
 
           <div className="py-10 sm:py-12">
-            {safe ? (
-              <article
-                className="policy-prose rounded-2xl border border-neutral-200/80 bg-white px-5 py-8 shadow-sm sm:px-10 sm:py-12 lg:px-14 lg:py-14"
-                dangerouslySetInnerHTML={{ __html: safe }}
-              />
-            ) : (
-              <p className="rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-6 py-12 text-center text-sm text-neutral-600">
-                No content has been added for this page yet.
-              </p>
-            )}
+            <PolicyHtml
+              html={policy.contentHtml}
+              articleClassName="policy-prose rounded-2xl border border-neutral-200/80 bg-white px-5 py-8 shadow-sm sm:px-10 sm:py-12 lg:px-14 lg:py-14"
+            />
           </div>
         </div>
       </main>
