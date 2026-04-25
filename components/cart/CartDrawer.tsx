@@ -111,6 +111,27 @@ function DrawerRecoTile({ product }: { product: Product }) {
   );
 }
 
+/** Shown while `lines` exist but Supabase has not returned variant + product rows yet. */
+function CartLineResolvingSkeleton() {
+  return (
+    <div
+      className="flex gap-4 animate-pulse"
+      aria-busy="true"
+      aria-label="Loading cart line"
+    >
+      <div className="h-20 w-16 shrink-0 rounded-md bg-neutral-100" />
+      <div className="min-w-0 flex-1 space-y-2 py-0.5">
+        <div className="h-4 max-w-[14rem] rounded bg-neutral-100" />
+        <div className="h-3 max-w-[6rem] rounded bg-neutral-100" />
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="h-8 w-[6.5rem] rounded border border-neutral-200 bg-neutral-50" />
+          <div className="h-4 w-14 rounded bg-neutral-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Same shell as `DrawerRecoTile` while random products are fetched. */
 function DrawerRecoTileSkeleton() {
   return (
@@ -147,8 +168,8 @@ export function CartDrawer() {
   const [deliverySettings, setDeliverySettings] = useState<StoreDeliverySettingsState | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
 
-  /** Only when the cart has zero line items — any product added hides this block. */
-  const showRecommendations = lines.length === 0;
+  /** “You might also like” only when the cart is empty (Shopify-style). */
+  const showEmptyCartRecommendations = lines.length === 0;
 
   useScrollLock(isOpen);
 
@@ -173,7 +194,12 @@ export function CartDrawer() {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !showRecommendations) {
+    if (!isOpen) {
+      setRecoLoading(false);
+      return;
+    }
+    if (!showEmptyCartRecommendations) {
+      setRecommended([]);
       setRecoLoading(false);
       return;
     }
@@ -201,13 +227,13 @@ export function CartDrawer() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, showRecommendations]);
+  }, [isOpen, showEmptyCartRecommendations]);
 
   return (
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-80"
+          className="fixed inset-0 z-[180]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -228,7 +254,7 @@ export function CartDrawer() {
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
           />
           <motion.aside
-            className="absolute inset-y-0 right-0 z-81 flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
+            className="absolute inset-y-0 right-0 z-[181] flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"
             style={{
               willChange: "transform",
               maxHeight: "100dvh",
@@ -316,7 +342,7 @@ export function CartDrawer() {
             >
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain overscroll-y-contain">
-                  {resolvedLines.length === 0 ? (
+                  {lines.length === 0 ? (
                     <motion.p
                       className="text-sm text-neutral-600"
                       initial={{ opacity: 0 }}
@@ -331,6 +357,12 @@ export function CartDrawer() {
                         Continue shopping
                       </Link>
                     </motion.p>
+                  ) : resolvedLines.length === 0 ? (
+                    <div className="space-y-5">
+                      {lines.map((l) => (
+                        <CartLineResolvingSkeleton key={l.variantId} />
+                      ))}
+                    </div>
                   ) : (
                     resolvedLines.map(({ line, product, unitPrice, variantLabel }) => (
                       <motion.article
@@ -356,18 +388,17 @@ export function CartDrawer() {
                           style={{ backgroundImage: `url(${product.image})` }}
                         />
                         <div className="min-w-0 flex-1">
-                          {/* min(100%,max-content): short titles stay compact (icon beside name); long titles use full width */}
-                          <div className="flex w-[min(100%,max-content)] max-w-full flex-wrap items-start gap-x-1.5 gap-y-1">
+                          <div className="flex w-full min-w-0 items-center justify-between gap-2">
                             <Link
                               href={`/products/${product.slug}`}
                               onClick={closeCart}
-                              className="min-w-0 wrap-break-word text-sm font-medium leading-5 text-neutral-900 hover:underline"
+                              className="min-w-0 flex-1 wrap-break-word text-sm font-medium leading-5 text-neutral-900 hover:underline"
                             >
                               {product.name}
                             </Link>
                             <button
                               type="button"
-                              className="shrink-0 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
+                              className="flex shrink-0 items-center justify-center rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900"
                               aria-label={`Remove ${product.name}`}
                               onClick={() => removeItem(line.variantId)}
                             >
@@ -415,7 +446,7 @@ export function CartDrawer() {
                   )}
                 </div>
 
-                {showRecommendations && (recoLoading || recommended.length > 0) ? (
+                {showEmptyCartRecommendations && (recoLoading || recommended.length > 0) ? (
                   <div
                     className="mt-4 shrink-0 border-t border-neutral-200 pt-5"
                     aria-busy={recoLoading}
@@ -448,7 +479,9 @@ export function CartDrawer() {
               >
                 <div className="flex items-center justify-between text-xs font-semibold capitalize tracking-[0.2em] text-neutral-900">
                   <span>Subtotal</span>
-                  <span className="tabular-nums">{formatPkr(subtotal)}</span>
+                  <span className="tabular-nums text-neutral-600">
+                    {resolvedLines.length > 0 ? formatPkr(subtotal) : "…"}
+                  </span>
                 </div>
                 <p className="mt-3 text-xs text-neutral-500">
                   Shipping, taxes, and discount codes calculated at checkout.

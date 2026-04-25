@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CHECKOUT_THANK_YOU_META_KEY } from "@/app/lib/checkout-thank-you";
+import { toast } from "sonner";
+import {
+  CHECKOUT_PENDING_CART_CLEAR_KEY,
+  CHECKOUT_THANK_YOU_META_KEY,
+} from "@/app/lib/checkout-thank-you";
 // Alternate layout: import `GUEST_MINIMAL_CHECKOUT` from `@/app/lib/checkout-templates` and assign below.
 import { PAKISTAN_STANDARD_CHECKOUT } from "@/app/lib/checkout-templates";
 import { PAKISTAN_PROVINCE_OPTIONS } from "@/app/lib/checkout-templates/pakistan-provinces";
@@ -16,6 +20,8 @@ import {
   CheckoutPolicyFooterLinks,
 } from "@/components/checkout/checkout-order-summary-accordion";
 import { CheckoutTemplateFields } from "@/components/checkout/checkout-template-fields";
+import { SignInModal } from "@/components/auth/sign-in-modal";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
@@ -25,6 +31,7 @@ import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-setti
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { voucherErrorMessage } from "@/app/lib/voucher-user-messages";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
+import type { SavedAddress } from "@/app/lib/saved-addresses";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
 
@@ -62,6 +69,38 @@ type NominatimAddress = {
   state?: string;
 };
 
+function normalizeText(value: string | undefined): string {
+  return (value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function normalizePhone(value: string | undefined): string {
+  return (value ?? "").replace(/\D+/g, "");
+}
+
+function fingerprintCheckoutAddress(values: Record<string, string>): string {
+  return JSON.stringify({
+    first_name: normalizeText(values.first_name),
+    last_name: normalizeText(values.last_name),
+    phone: normalizePhone(values.phone),
+    shipping_street: normalizeText(values.shipping_street),
+    shipping_city: normalizeText(values.shipping_city),
+    shipping_postal_code: normalizeText(values.shipping_postal_code),
+    shipping_province: normalizeText(values.shipping_province),
+  });
+}
+
+function fingerprintSavedAddress(address: SavedAddress): string {
+  return JSON.stringify({
+    first_name: normalizeText(address.first_name),
+    last_name: normalizeText(address.last_name),
+    phone: normalizePhone(address.phone),
+    shipping_street: normalizeText(address.shipping_street),
+    shipping_city: normalizeText(address.shipping_city),
+    shipping_postal_code: normalizeText(address.shipping_postal_code),
+    shipping_province: normalizeText(address.shipping_province),
+  });
+}
+
 function MoneyBackBadge() {
   return (
     <div className="mt-4 flex items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
@@ -81,6 +120,39 @@ function MoneyBackBadge() {
   );
 }
 
+function CheckoutPageSkeleton() {
+  return (
+    <CheckoutChrome mode="checkout">
+      <main id="MainContent" className="pb-12 md:pb-0" aria-busy="true" aria-live="polite">
+        <div className="mx-auto w-full max-w-[1140px] md:grid md:min-h-screen md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="w-full bg-white px-4 py-6 sm:px-6 md:min-h-screen md:px-8 md:py-8 lg:px-12">
+            <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
+              <div className="h-6 w-36 animate-pulse rounded bg-neutral-100" />
+            </div>
+            <div className="space-y-5 md:space-y-7">
+              <div className="h-24 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
+              <div className="h-56 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
+              <div className="h-40 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
+              <div className="h-36 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
+              <div className="h-20 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
+              <div className="h-12 animate-pulse rounded-md bg-neutral-200" />
+            </div>
+          </div>
+          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block md:px-8 md:py-8 lg:px-10">
+            <div className="space-y-4">
+              <div className="h-8 w-36 animate-pulse rounded bg-neutral-200" />
+              <div className="h-20 animate-pulse rounded-lg border border-neutral-200 bg-white" />
+              <div className="h-20 animate-pulse rounded-lg border border-neutral-200 bg-white" />
+              <div className="h-20 animate-pulse rounded-lg border border-neutral-200 bg-white" />
+              <div className="h-24 animate-pulse rounded-lg border border-neutral-200 bg-white" />
+            </div>
+          </aside>
+        </div>
+      </main>
+    </CheckoutChrome>
+  );
+}
+
 function defaultFormValues(): Record<string, string> {
   return {
     email: "",
@@ -96,11 +168,20 @@ function defaultFormValues(): Record<string, string> {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { ready, resolvedLines, subtotal, clearCart, closeCart, openCart } = useCart();
+  const {
+    ready,
+    lines,
+    isResolvingCart,
+    resolvedLines,
+    subtotal,
+    closeCart,
+    openCart,
+  } = useCart();
   const { storeName } = useStoreBrand();
   const skipEmptyCartRedirectOnce = useRef(false);
 
   const [placing, setPlacing] = useState(false);
+  const [redirectingToConfirmation, setRedirectingToConfirmation] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [formValues, setFormValues] = useState<Record<string, string>>(defaultFormValues);
@@ -113,6 +194,17 @@ export default function CheckoutPage() {
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
+  const [savedAddressDeleteId, setSavedAddressDeleteId] = useState<string | null>(null);
+  const [saveForNextTime, setSaveForNextTime] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [savedAddressesLoading, setSavedAddressesLoading] = useState(false);
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [saveAddressErrors, setSaveAddressErrors] = useState<Partial<Record<string, string>>>({});
+  const saveIntentAfterSignInRef = useRef(false);
+  /** Always points at latest validator so `persistCurrentAddress` never hits TDZ if hooks are reordered. */
+  const validateSaveAddressFieldsRef = useRef<() => boolean>(() => false);
 
   const [topSummaryOpen, setTopSummaryOpen] = useState(false);
   const [bottomSummaryOpen, setBottomSummaryOpen] = useState(false);
@@ -121,6 +213,17 @@ export default function CheckoutPage() {
   const [discountPreviewCents, setDiscountPreviewCents] = useState<number | null>(null);
   const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [discountNotice, setDiscountNotice] = useState<string | null>(null);
+  const [discountNoticeIsError, setDiscountNoticeIsError] = useState(false);
+
+  const clearDiscountNotice = useCallback(() => {
+    setDiscountNotice(null);
+    setDiscountNoticeIsError(false);
+  }, []);
+
+  const setDiscountIssue = useCallback((message: string) => {
+    setDiscountNotice(message);
+    setDiscountNoticeIsError(true);
+  }, []);
 
   const [deliverySettings, setDeliverySettings] = useState<{
     standardPaisa: number;
@@ -130,19 +233,38 @@ export default function CheckoutPage() {
     freeThresholdsPaisa: [],
   });
 
-  const deliveryPkr = useMemo(
-    () =>
-      computeDeliveryPkr(subtotal, {
-        standard_delivery_paisa: deliverySettings.standardPaisa,
-        free_delivery_thresholds_paisa: deliverySettings.freeThresholdsPaisa,
-      }),
-    [subtotal, deliverySettings],
-  );
+  const cartResolving =
+    hasCatalogDb() && lines.length > 0 && resolvedLines.length === 0 && isResolvingCart;
+
+  const cartResolveFailed =
+    ready &&
+    hasCatalogDb() &&
+    lines.length > 0 &&
+    resolvedLines.length === 0 &&
+    !isResolvingCart;
+
+  const deliveryPkr = useMemo(() => {
+    if (cartResolving) return 0;
+    return computeDeliveryPkr(subtotal, {
+      standard_delivery_paisa: deliverySettings.standardPaisa,
+      free_delivery_thresholds_paisa: deliverySettings.freeThresholdsPaisa,
+    });
+  }, [cartResolving, subtotal, deliverySettings]);
 
   const freeDeliveryGapPkr = useMemo(
-    () => nextFreeDeliveryGapPkr(subtotal, deliverySettings.freeThresholdsPaisa),
-    [subtotal, deliverySettings.freeThresholdsPaisa],
+    () =>
+      cartResolving ? null : nextFreeDeliveryGapPkr(subtotal, deliverySettings.freeThresholdsPaisa),
+    [cartResolving, subtotal, deliverySettings.freeThresholdsPaisa],
   );
+
+  const shippingWaiverCutoffPkr = useMemo(() => {
+    if (cartResolving) return null;
+    const subPaisa = Math.round(subtotal * 100);
+    const qualified = deliverySettings.freeThresholdsPaisa
+      .filter((t) => Number.isFinite(t) && t > 0 && subPaisa >= t)
+      .sort((a, b) => b - a);
+    return qualified[0] != null ? qualified[0] / 100 : null;
+  }, [cartResolving, subtotal, deliverySettings.freeThresholdsPaisa]);
 
   const discountPkr =
     discountApplied && discountPreviewCents != null && discountPreviewCents > 0
@@ -160,24 +282,25 @@ export default function CheckoutPage() {
     setDiscountPreviewCents(null);
     setDiscountApplied(false);
     setDiscountNotice(null);
+    setDiscountNoticeIsError(false);
   }, [cartFingerprint]);
 
   const applyDiscount = useCallback(async () => {
     const c = discountCode.trim();
     if (!c) {
-      setDiscountNotice("Enter a discount code first.");
+      setDiscountIssue("Enter a discount code first.");
       return;
     }
     if (!signedIn) {
-      setDiscountNotice("Sign in to apply a voucher code.");
+      setDiscountIssue("Sign in to apply a voucher code.");
       return;
     }
     if (resolvedLines.length === 0) {
-      setDiscountNotice("Your cart is empty.");
+      setDiscountIssue("Your cart is empty.");
       return;
     }
     setApplyingVoucher(true);
-    setDiscountNotice(null);
+    clearDiscountNotice();
     try {
       const productIds = [...new Set(resolvedLines.map((r) => r.line.productId))];
       const res = await fetch("/api/vouchers/preview", {
@@ -199,7 +322,7 @@ export default function CheckoutPage() {
       if (!res.ok || data.ok === false) {
         setDiscountApplied(false);
         setDiscountPreviewCents(null);
-        setDiscountNotice(
+        setDiscountIssue(
           voucherErrorMessage(data.error_code, data.error ?? "That code could not be applied."),
         );
         return;
@@ -208,7 +331,7 @@ export default function CheckoutPage() {
       if (cents == null || !Number.isFinite(cents) || cents <= 0) {
         setDiscountApplied(false);
         setDiscountPreviewCents(null);
-        setDiscountNotice("No discount applies to this order.");
+        setDiscountIssue("No discount applies to this order.");
         return;
       }
       setDiscountPreviewCents(Math.round(cents));
@@ -216,11 +339,11 @@ export default function CheckoutPage() {
     } catch {
       setDiscountApplied(false);
       setDiscountPreviewCents(null);
-      setDiscountNotice("Could not verify the code. Try again.");
+      setDiscountIssue("Could not verify the code. Try again.");
     } finally {
       setApplyingVoucher(false);
     }
-  }, [discountCode, resolvedLines, signedIn, subtotal]);
+  }, [clearDiscountNotice, discountCode, resolvedLines, setDiscountIssue, signedIn, subtotal]);
 
   const applyGeocode = useCallback((addr: NominatimAddress) => {
     const parts = [
@@ -240,9 +363,213 @@ export default function CheckoutPage() {
     }));
   }, []);
 
+  const fetchSavedAddresses = useCallback(async () => {
+    if (!signedIn) {
+      setSavedAddresses([]);
+      setSelectedSavedAddressId(null);
+      return;
+    }
+    setSavedAddressesLoading(true);
+    try {
+      const res = await fetch("/api/checkout/saved-addresses", {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { ok?: boolean; addresses?: SavedAddress[] };
+      const list = Array.isArray(data.addresses) ? data.addresses : [];
+      setSavedAddresses(list);
+      setSelectedSavedAddressId((prev) => {
+        if (prev && list.some((a) => a.id === prev)) return prev;
+        return null;
+      });
+    } catch {
+      /* ignore */
+    } finally {
+      setSavedAddressesLoading(false);
+    }
+  }, [signedIn]);
+
+  const applySavedAddress = useCallback((addressId: string) => {
+    const selected = savedAddresses.find((a) => a.id === addressId);
+    if (!selected) return;
+    setSelectedSavedAddressId(addressId);
+    setFormValues((prev) => ({
+      ...prev,
+      first_name: selected.first_name.trim() || prev.first_name,
+      last_name: selected.last_name.trim() || prev.last_name,
+      phone: selected.phone.trim() || prev.phone,
+      shipping_street: selected.shipping_street,
+      shipping_city: selected.shipping_city,
+      shipping_postal_code: selected.shipping_postal_code,
+      shipping_province: selected.shipping_province || prev.shipping_province,
+    }));
+    setSaveAddressErrors({});
+  }, [savedAddresses]);
+
+  const validateSaveAddressFields = useCallback(() => {
+    const required: Array<{ id: string; label: string; value: string }> = [
+      { id: "first_name", label: "First name", value: formValues.first_name ?? "" },
+      { id: "last_name", label: "Last name", value: formValues.last_name ?? "" },
+      { id: "phone", label: "Phone number", value: formValues.phone ?? "" },
+      { id: "shipping_street", label: "Street address", value: formValues.shipping_street ?? "" },
+      { id: "shipping_city", label: "City", value: formValues.shipping_city ?? "" },
+    ];
+    const nextErrors: Partial<Record<string, string>> = {};
+    for (const field of required) {
+      if (!field.value.trim()) {
+        nextErrors[field.id] = `${field.label} is required.`;
+      }
+    }
+    setSaveAddressErrors(nextErrors);
+    const firstInvalid = required.find((field) => nextErrors[field.id]);
+    if (firstInvalid && typeof document !== "undefined") {
+      const el = document.getElementById(`co-${firstInvalid.id}`) as HTMLElement | null;
+      el?.focus();
+    }
+    return Object.keys(nextErrors).length === 0;
+  }, [
+    formValues.first_name,
+    formValues.last_name,
+    formValues.phone,
+    formValues.shipping_city,
+    formValues.shipping_street,
+  ]);
+
+  validateSaveAddressFieldsRef.current = validateSaveAddressFields;
+
+  const persistCurrentAddress = useCallback(async () => {
+    if (!signedIn) return false;
+    if (!validateSaveAddressFieldsRef.current()) return false;
+    setSavingAddress(true);
+    try {
+      const res = await fetch("/api/checkout/saved-addresses", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address_id: selectedSavedAddressId ?? undefined,
+          label: "",
+          first_name: formValues.first_name?.trim() ?? "",
+          last_name: formValues.last_name?.trim() ?? "",
+          phone: formValues.phone?.trim() ?? "",
+          shipping_street: formValues.shipping_street?.trim() ?? "",
+          shipping_city: formValues.shipping_city?.trim() ?? "",
+          shipping_postal_code: formValues.shipping_postal_code?.trim() ?? "",
+          shipping_province: formValues.shipping_province ?? "",
+          shipping_country: SHIPPING_COUNTRY_CODE,
+          set_default: false,
+        }),
+      });
+      if (!res.ok) {
+        toast.error("Could not save address. Please try again.");
+        return false;
+      }
+      const data = (await res.json()) as { ok?: boolean; address?: SavedAddress };
+      if (!data.ok || !data.address) {
+        toast.error("Could not save address. Please try again.");
+        return false;
+      }
+      await fetchSavedAddresses();
+      toast.success("Address saved.");
+      return true;
+    } catch {
+      toast.error("Could not save address. Please try again.");
+      return false;
+    } finally {
+      setSavingAddress(false);
+    }
+  }, [
+    fetchSavedAddresses,
+    formValues.first_name,
+    formValues.last_name,
+    formValues.phone,
+    formValues.shipping_city,
+    formValues.shipping_postal_code,
+    formValues.shipping_province,
+    formValues.shipping_street,
+    selectedSavedAddressId,
+    signedIn,
+  ]);
+
+  const openDeleteSavedAddressConfirm = useCallback((id: string) => {
+    setSavedAddressDeleteId(id);
+  }, []);
+
+  const confirmDeleteSavedAddress = useCallback(async () => {
+    const id = savedAddressDeleteId;
+    if (!id) return false;
+    setSavingAddress(true);
+    try {
+      const res = await fetch("/api/checkout/saved-addresses", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address_id: id }),
+      });
+      if (!res.ok) {
+        toast.error("Could not delete address.");
+        return false;
+      }
+      if (selectedSavedAddressId === id) {
+        setSelectedSavedAddressId(null);
+      }
+      await fetchSavedAddresses();
+      toast.success("Address deleted.");
+    } catch {
+      toast.error("Could not delete address.");
+      return false;
+    } finally {
+      setSavingAddress(false);
+    }
+  }, [fetchSavedAddresses, savedAddressDeleteId, selectedSavedAddressId]);
+
+  const savedAddressDeletePreview = useMemo(() => {
+    const a = savedAddresses.find((x) => x.id === savedAddressDeleteId);
+    if (!a) return null;
+    const line = [a.shipping_street, a.shipping_city, a.shipping_province]
+      .map((v) => v.trim())
+      .filter(Boolean)
+      .join(", ");
+    const title = a.label.trim() || "Saved address";
+    return { title, line };
+  }, [savedAddresses, savedAddressDeleteId]);
+
+  const handleEditSavedAddress = useCallback((id: string) => {
+    applySavedAddress(id);
+    setSaveForNextTime(true);
+  }, [applySavedAddress]);
+
+  const handleToggleSaveForNextTime = useCallback((checked: boolean) => {
+    if (checked && !signedIn) {
+      saveIntentAfterSignInRef.current = true;
+      setSignInModalOpen(true);
+      return;
+    }
+    setSaveForNextTime(checked);
+  }, [signedIn]);
+
   useEffect(() => {
     closeCart();
   }, [closeCart]);
+
+  useEffect(() => {
+    if (!signedIn) {
+      setSavedAddresses([]);
+      setSelectedSavedAddressId(null);
+      setSaveForNextTime(false);
+      setSaveAddressErrors({});
+      return;
+    }
+    void fetchSavedAddresses();
+  }, [fetchSavedAddresses, signedIn]);
+
+  useEffect(() => {
+    if (!signedIn || !saveIntentAfterSignInRef.current) return;
+    saveIntentAfterSignInRef.current = false;
+    setSignInModalOpen(false);
+    setSaveForNextTime(true);
+  }, [signedIn]);
 
   useEffect(() => {
     if (!hasCatalogDb()) return;
@@ -262,14 +589,14 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!ready) return;
-    if (resolvedLines.length === 0) {
-      if (skipEmptyCartRedirectOnce.current) {
-        skipEmptyCartRedirectOnce.current = false;
-        return;
-      }
-      router.replace("/");
+    /** Only bounce home when there are no raw cart lines — not while lines exist but still resolving. */
+    if (lines.length > 0) return;
+    if (skipEmptyCartRedirectOnce.current) {
+      skipEmptyCartRedirectOnce.current = false;
+      return;
     }
-  }, [ready, resolvedLines.length, router]);
+    router.replace("/");
+  }, [ready, lines.length, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -320,7 +647,26 @@ export default function CheckoutPage() {
     };
   }, [router]);
 
-  function useMyLocation() {
+  useEffect(() => {
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nowSignedIn = Boolean(session?.user);
+      setSignedIn(nowSignedIn);
+      if (!nowSignedIn) return;
+      setFormValues((prev) => ({
+        ...prev,
+        email: session?.user?.email ?? prev.email,
+      }));
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  function requestBrowserLocation() {
     setLocError(null);
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setLocError("Location is not supported in this browser.");
@@ -364,11 +710,19 @@ export default function CheckoutPage() {
     setFormError(null);
     setSubmitError(null);
     setPlacing(true);
+    let successNavigation = false;
     try {
       const items = resolvedLines.map(({ line }) => ({
         variant_id: line.variantId,
         quantity: line.quantity,
       }));
+      const selectedAddress = selectedSavedAddressId
+        ? savedAddresses.find((a) => a.id === selectedSavedAddressId) ?? null
+        : null;
+      const selectedAddressUnchanged = selectedAddress
+        ? fingerprintCheckoutAddress(formValues) === fingerprintSavedAddress(selectedAddress)
+        : false;
+      const savedAddressIdForOrder = selectedAddressUnchanged ? selectedSavedAddressId : null;
       const res = await fetch("/api/orders/place", {
         method: "POST",
         credentials: "same-origin",
@@ -385,6 +739,7 @@ export default function CheckoutPage() {
           shipping_country: SHIPPING_COUNTRY_CODE,
           currency: STORE_CURRENCY_CODE,
           items,
+          ...(savedAddressIdForOrder ? { saved_address_id: savedAddressIdForOrder } : {}),
           ...(discountApplied && discountCode.trim() !== ""
             ? { voucher_code: discountCode.trim() }
             : {}),
@@ -419,14 +774,23 @@ export default function CheckoutPage() {
       } catch {
         /* private mode / quota */
       }
+      try {
+        sessionStorage.setItem(CHECKOUT_PENDING_CART_CLEAR_KEY, "1");
+      } catch {
+        /* private mode / quota */
+      }
+      if (signedIn && saveForNextTime && !savedAddressIdForOrder) {
+        await persistCurrentAddress();
+      }
+      setRedirectingToConfirmation(true);
+      successNavigation = true;
       router.replace(
         `/checkout/thank-you?order=${encodeURIComponent(data.order_number)}&total_cents=${String(data.total_cents)}`,
       );
-      clearCart();
     } catch {
       setSubmitError("Network error. Please try again.");
     } finally {
-      setPlacing(false);
+      if (!successNavigation) setPlacing(false);
     }
   }
 
@@ -437,16 +801,35 @@ export default function CheckoutPage() {
   );
 
   if (!ready || !userLoaded) {
+    return <CheckoutPageSkeleton />;
+  }
+
+  if (redirectingToConfirmation) {
     return (
       <CheckoutChrome mode="checkout">
         <main
           id="MainContent"
-          className="flex min-h-[50vh] flex-col items-center justify-center text-center"
+          className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center"
+          aria-busy="true"
+          aria-live="polite"
         >
-          <p className="text-sm text-neutral-600">Loading checkout…</p>
+          <div
+            className="h-9 w-9 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900"
+            aria-hidden
+          />
+          <div>
+            <p className="text-base font-semibold text-neutral-900">Order placed</p>
+            <p className="mt-1.5 text-sm text-neutral-600">
+              Taking you to your confirmation…
+            </p>
+          </div>
         </main>
       </CheckoutChrome>
     );
+  }
+
+  if (cartResolving) {
+    return <CheckoutPageSkeleton />;
   }
 
   return (
@@ -502,10 +885,11 @@ export default function CheckoutPage() {
                   subtotal={subtotal}
                   shipping={deliveryPkr}
                   total={grandTotal}
+                  shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
-                    setDiscountNotice(null);
+                    clearDiscountNotice();
                     setDiscountApplied(false);
                     setDiscountPreviewCents(null);
                   }}
@@ -513,6 +897,7 @@ export default function CheckoutPage() {
                   discountApplied={discountApplied}
                   discountPkr={discountPkr}
                   discountNotice={discountNotice}
+                  discountNoticeIsError={discountNoticeIsError}
                   applyingVoucher={applyingVoucher}
                 />
               </div>
@@ -525,15 +910,44 @@ export default function CheckoutPage() {
                 template={CHECKOUT_TEMPLATE}
                 values={formValues}
                 onChange={(id, value) => {
+                  const nextValues = { ...formValues, [id]: value };
                   setField(id, value);
+                  if (selectedSavedAddressId) {
+                    const selected = savedAddresses.find((a) => a.id === selectedSavedAddressId);
+                    if (selected) {
+                      const unchanged =
+                        fingerprintCheckoutAddress(nextValues) === fingerprintSavedAddress(selected);
+                      if (!unchanged) {
+                        setSelectedSavedAddressId(null);
+                      }
+                    }
+                  }
                   if (id === "phone") setFormError(null);
+                  setSaveAddressErrors((prev) => {
+                    if (!prev[id]) return prev;
+                    const next = { ...prev };
+                    delete next[id];
+                    return next;
+                  });
                 }}
                 inputClassName={inputClass}
-                rootClassName="mt-0 space-y-8"
+                rootClassName="mt-0 space-y-4"
                 phoneError={formError}
                 locError={locError}
                 locLoading={locLoading}
-                onUseLocation={useMyLocation}
+                onUseLocation={requestBrowserLocation}
+                signedIn={signedIn}
+                onRequestSignIn={() => setSignInModalOpen(true)}
+                saveForNextTime={saveForNextTime}
+                onToggleSaveForNextTime={handleToggleSaveForNextTime}
+                savedAddresses={savedAddresses}
+                selectedSavedAddressId={selectedSavedAddressId}
+                onSelectSavedAddress={applySavedAddress}
+                loadingSavedAddresses={savedAddressesLoading}
+                onEditSavedAddress={handleEditSavedAddress}
+                onDeleteSavedAddress={openDeleteSavedAddressConfirm}
+                savingAddress={savingAddress}
+                saveAddressErrors={saveAddressErrors}
               />
             </div>
 
@@ -584,10 +998,11 @@ export default function CheckoutPage() {
                   subtotal={subtotal}
                   shipping={deliveryPkr}
                   total={grandTotal}
+                  shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
-                    setDiscountNotice(null);
+                    clearDiscountNotice();
                     setDiscountApplied(false);
                     setDiscountPreviewCents(null);
                   }}
@@ -595,6 +1010,7 @@ export default function CheckoutPage() {
                   discountApplied={discountApplied}
                   discountPkr={discountPkr}
                   discountNotice={discountNotice}
+                  discountNoticeIsError={discountNoticeIsError}
                   applyingVoucher={applyingVoucher}
                 />
               </div>
@@ -608,9 +1024,19 @@ export default function CheckoutPage() {
                 </p>
               ) : null}
 
+              {cartResolveFailed ? (
+                <p
+                  className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                  role="status"
+                >
+                  We couldn&apos;t load one or more items in your cart from the catalog. Open your
+                  cart and try again, or continue shopping.
+                </p>
+              ) : null}
+
               <button
                 type="submit"
-                disabled={placing}
+                disabled={placing || resolvedLines.length === 0 || cartResolveFailed}
                 className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {placing ? "Placing order…" : "Complete order"}
@@ -626,10 +1052,11 @@ export default function CheckoutPage() {
                 subtotal={subtotal}
                 shipping={deliveryPkr}
                 total={grandTotal}
+                shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
                 discountCode={discountCode}
                 onDiscountCodeChange={(v) => {
                   setDiscountCode(v);
-                  setDiscountNotice(null);
+                  clearDiscountNotice();
                   setDiscountApplied(false);
                   setDiscountPreviewCents(null);
                 }}
@@ -637,12 +1064,43 @@ export default function CheckoutPage() {
                 discountApplied={discountApplied}
                 discountPkr={discountPkr}
                 discountNotice={discountNotice}
+                discountNoticeIsError={discountNoticeIsError}
                 applyingVoucher={applyingVoucher}
               />
             </div>
           </aside>
         </div>
       </main>
+      <ConfirmationModal
+        open={savedAddressDeleteId != null}
+        onClose={() => setSavedAddressDeleteId(null)}
+        title="Delete this saved address?"
+        description="It will be removed from your account and won't appear in this list anymore."
+        tone="danger"
+        confirmLabel="Delete address"
+        cancelLabel="Keep address"
+        onConfirm={confirmDeleteSavedAddress}
+        confirmDisabled={savingAddress}
+      >
+        {savedAddressDeletePreview ? (
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5">
+            <p className="text-xs font-semibold text-neutral-900">{savedAddressDeletePreview.title}</p>
+            {savedAddressDeletePreview.line ? (
+              <p className="mt-1 text-xs leading-relaxed text-neutral-600">{savedAddressDeletePreview.line}</p>
+            ) : null}
+          </div>
+        ) : null}
+      </ConfirmationModal>
+      <SignInModal
+        open={signInModalOpen}
+        onClose={() => {
+          saveIntentAfterSignInRef.current = false;
+          setSignInModalOpen(false);
+        }}
+        nextPath="/checkout"
+        title="Sign in to save this information"
+        description="Sign in to save your delivery details for faster checkout next time. You will stay on this page."
+      />
     </CheckoutChrome>
   );
 }

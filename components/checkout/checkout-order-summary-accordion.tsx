@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useId, useState } from "react";
 import { motion } from "framer-motion";
 import { formatPkr } from "@/app/lib/format-currency";
 import type { ResolvedCartLine } from "@/app/providers/cart-provider";
+import { ModalShell } from "@/components/ui/modal-shell";
 
 const easeCheckout: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -15,6 +17,7 @@ type Props = {
   subtotal: number;
   shipping: number;
   total: number;
+  shippingWaiverCutoffPkr?: number | null;
   discountCode: string;
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
@@ -22,6 +25,8 @@ type Props = {
   /** When set, shown as the discount line (PKR). */
   discountPkr?: number;
   discountNotice: string | null;
+  /** When true, message is styled as an error and the code field gets a red border. */
+  discountNoticeIsError?: boolean;
   applyingVoucher?: boolean;
 };
 
@@ -32,12 +37,14 @@ type SummaryBodyProps = {
   subtotal: number;
   shipping: number;
   total: number;
+  shippingWaiverCutoffPkr?: number | null;
   discountCode: string;
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
   discountApplied: boolean;
   discountPkr?: number;
   discountNotice: string | null;
+  discountNoticeIsError?: boolean;
   applyingVoucher?: boolean;
   inert?: boolean;
 };
@@ -47,15 +54,22 @@ function CheckoutOrderSummaryBody({
   subtotal,
   shipping,
   total,
+  shippingWaiverCutoffPkr = null,
   discountCode,
   onDiscountCodeChange,
   onApplyDiscount,
   discountApplied,
   discountPkr = 0,
   discountNotice,
+  discountNoticeIsError = false,
   applyingVoucher = false,
   inert = false,
 }: SummaryBodyProps) {
+  const voucherNoticeId = useId();
+  const showNotice = Boolean(discountNotice);
+  const inputError = showNotice && discountNoticeIsError;
+  const [shippingPolicyOpen, setShippingPolicyOpen] = useState(false);
+
   return (
     <div
       className={`border-t border-neutral-200 bg-white px-4 py-4 md:border-t-0 md:bg-transparent md:px-0 ${inert ? "pointer-events-none" : ""}`}
@@ -99,7 +113,13 @@ function CheckoutOrderSummaryBody({
           onChange={(e) => onDiscountCodeChange(e.target.value)}
           placeholder="Discount code"
           autoComplete="off"
-          className="min-w-0 flex-1 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10"
+          aria-invalid={inputError}
+          aria-describedby={inputError ? voucherNoticeId : undefined}
+          className={
+            inputError
+              ? "min-w-0 flex-1 rounded-md border-2 border-red-500 bg-red-50/40 px-3 py-2.5 text-sm text-neutral-900 outline-none transition placeholder:text-red-900/40 focus:border-red-600 focus:ring-2 focus:ring-red-500/25"
+              : "min-w-0 flex-1 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10"
+          }
         />
         <button
           type="button"
@@ -110,8 +130,16 @@ function CheckoutOrderSummaryBody({
           {applyingVoucher ? "…" : "Apply"}
         </button>
       </div>
-      {discountNotice ? (
-        <p className="mt-2 text-xs text-neutral-600" role="status">
+      {showNotice ? (
+        <p
+          id={voucherNoticeId}
+          className={
+            discountNoticeIsError
+              ? "mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium leading-snug text-red-800"
+              : "mt-2 text-xs text-neutral-600"
+          }
+          role={discountNoticeIsError ? "alert" : "status"}
+        >
           {discountNotice}
         </p>
       ) : null}
@@ -124,14 +152,27 @@ function CheckoutOrderSummaryBody({
         <div className="flex justify-between gap-4 text-neutral-700">
           <span className="inline-flex items-center gap-1.5">
             Shipping
-            <span
-              className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-neutral-400 text-[10px] font-semibold text-neutral-600"
-              title="Delivery fee for your area. Final charges are confirmed before dispatch."
+            <button
+              type="button"
+              onClick={() => setShippingPolicyOpen(true)}
+              aria-label="View shipping policy"
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-neutral-400 text-[10px] font-semibold text-neutral-600 transition hover:bg-neutral-100"
             >
               ?
-            </span>
+            </button>
           </span>
-          <span className="tabular-nums">{formatPkr(shipping)}</span>
+          {shipping <= 0 ? (
+            <span className="text-right">
+              <span className="tabular-nums font-semibold text-emerald-700">
+                {shippingWaiverCutoffPkr != null && shippingWaiverCutoffPkr > 0
+                  ? `Waived (${formatPkr(shippingWaiverCutoffPkr)}+)`
+                  : "Waived"}
+              </span>
+              <span className="block text-[11px] text-neutral-500">Not added to total</span>
+            </span>
+          ) : (
+            <span className="tabular-nums">{formatPkr(shipping)}</span>
+          )}
         </div>
         {discountApplied && discountPkr > 0 ? (
           <div className="flex justify-between gap-4 text-emerald-800">
@@ -153,6 +194,49 @@ function CheckoutOrderSummaryBody({
         </div>
         <p className="mt-1 text-right text-xs text-neutral-500">Including Rs 0.00 in taxes</p>
       </div>
+
+      <ModalShell
+        open={shippingPolicyOpen}
+        onClose={() => setShippingPolicyOpen(false)}
+        title="Shipping"
+        maxWidthClassName="max-w-3xl"
+        zIndexClassName="z-[220]"
+      >
+        <ul className="list-disc space-y-4 pl-5 text-base leading-relaxed text-neutral-900">
+          <li>
+            <strong>Free Shipping</strong> on all orders over the value of <strong>Rs.3000</strong>.
+          </li>
+          <li>
+            We charge <strong>Rs.250</strong> for shipping on all orders under the value of{" "}
+            <strong>Rs.3000</strong>.
+          </li>
+          <li>
+            Orders placed by 12:00 pm (Pakistan Standard Time) will be shipped the same day via
+            Registered Courier Service. Orders received after 12:00 pm will be dispatched the next
+            day.
+          </li>
+          <li>
+            Orders received on Sundays and on Pakistan&apos;s National Holidays will be processed
+            and shipped on the next working day.
+          </li>
+          <li>
+            Delivery time is between <strong>4 to 7 working days</strong> (No delivery on Sundays).
+            However delivery can take up to 7 working days during the busy shopping season or our
+            mega sales events.
+          </li>
+          <li>
+            We will deliver to the home or office address indicated by you when you place an order.
+          </li>
+          <li>
+            We cannot deliver to PO boxes. All deliveries must be signed for upon receipt. We will
+            try at least twice to deliver your order at the address indicated by you.
+          </li>
+          <li>
+            If you have any questions you can contact us at <strong>0302-2994444</strong> or email
+            us at <strong>support@radstore.pk</strong>.
+          </li>
+        </ul>
+      </ModalShell>
     </div>
   );
 }
@@ -165,12 +249,14 @@ export function CheckoutOrderSummaryAccordion({
   subtotal,
   shipping,
   total,
+  shippingWaiverCutoffPkr,
   discountCode,
   onDiscountCodeChange,
   onApplyDiscount,
   discountApplied,
   discountPkr,
   discountNotice,
+  discountNoticeIsError,
   applyingVoucher,
 }: Props) {
   return (
@@ -220,12 +306,14 @@ export function CheckoutOrderSummaryAccordion({
           subtotal={subtotal}
           shipping={shipping}
           total={total}
+          shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
           discountCode={discountCode}
           onDiscountCodeChange={onDiscountCodeChange}
           onApplyDiscount={onApplyDiscount}
           discountApplied={discountApplied}
           discountPkr={discountPkr}
           discountNotice={discountNotice}
+          discountNoticeIsError={discountNoticeIsError}
           applyingVoucher={applyingVoucher}
           inert={!expanded}
         />

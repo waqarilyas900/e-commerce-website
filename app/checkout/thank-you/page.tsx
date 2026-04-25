@@ -1,10 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckoutChrome } from "@/components/checkout/checkout-chrome";
 import { OrderConfirmation } from "@/components/checkout/order-confirmation";
-import { CHECKOUT_THANK_YOU_META_KEY } from "@/app/lib/checkout-thank-you";
+import {
+  CHECKOUT_PENDING_CART_CLEAR_KEY,
+  CHECKOUT_THANK_YOU_META_KEY,
+} from "@/app/lib/checkout-thank-you";
+import { useCart } from "@/app/providers/cart-provider";
 import { createClient } from "@/lib/supabase/client";
 
 function ThankYouFallback() {
@@ -23,6 +27,8 @@ function ThankYouFallback() {
 function CheckoutThankYouInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { clearCart } = useCart();
+  const cartClearDone = useRef(false);
   const order = searchParams.get("order");
   const totalStr = searchParams.get("total_cents");
 
@@ -37,6 +43,23 @@ function CheckoutThankYouInner() {
     email?: string;
     signedIn: boolean;
   } | null>(null);
+
+  useEffect(() => {
+    if (!paramsValid || cartClearDone.current) return;
+    let fromCheckoutFlow = false;
+    try {
+      fromCheckoutFlow = sessionStorage.getItem(CHECKOUT_PENDING_CART_CLEAR_KEY) === "1";
+      if (fromCheckoutFlow) {
+        sessionStorage.removeItem(CHECKOUT_PENDING_CART_CLEAR_KEY);
+      }
+    } catch {
+      /* private mode / quota */
+    }
+    if (fromCheckoutFlow) {
+      cartClearDone.current = true;
+      clearCart();
+    }
+  }, [paramsValid, clearCart]);
 
   useEffect(() => {
     if (!paramsValid) {
