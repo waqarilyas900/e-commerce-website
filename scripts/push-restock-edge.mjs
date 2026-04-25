@@ -7,7 +7,7 @@
  * 3. `supabase functions deploy <each>` — every folder under `supabase/functions/` with `index.ts` (or `index.js`).
  * 4. RPC `sync_edge_cron_vault_secret` — pg_cron Bearer matches Edge `CRON_SECRET`.
  *
- * Uses the **local** CLI from `node_modules/.bin` so Windows does not hit ENOENT on bare `supabase`.
+ * Runs **`npx supabase`** (with `shell` on Windows). Direct `execFile` of `supabase.cmd` fails with EINVAL on Windows.
  *
  * CRON_SECRET: from `.env`; generates if missing. `--rotate-cron` writes a new secret to the env file.
  *
@@ -30,7 +30,7 @@ import {
 import { tmpdir } from "os";
 import { join, resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { execFileSync } from "child_process";
+import { spawnSync } from "child_process";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
@@ -78,20 +78,23 @@ function trimEnv(key) {
 }
 
 /**
- * Run Supabase CLI from project `node_modules` so `execFileSync("supabase")` works on Windows.
+ * Run Supabase CLI via `npx` from this project. On Windows, `execFile` on `.cmd` shims returns EINVAL;
+ * `spawnSync` + `shell: true` matches `scripts/supabase-link.mjs`.
  */
 function runSupabase(cliArgs) {
-  const binDir = join(root, "node_modules", ".bin");
   const win = process.platform === "win32";
-  const local = join(binDir, win ? "supabase.cmd" : "supabase");
-  if (existsSync(local)) {
-    execFileSync(local, cliArgs, { cwd: root, stdio: "inherit" });
-    return;
-  }
-  execFileSync(win ? "npx.cmd" : "npx", ["supabase", ...cliArgs], {
+  const r = spawnSync("npx", ["supabase", ...cliArgs], {
     cwd: root,
     stdio: "inherit",
+    env: process.env,
+    shell: win,
   });
+  if (r.error) {
+    throw r.error;
+  }
+  if (r.status !== 0 && r.status !== null) {
+    process.exit(r.status ?? 1);
+  }
 }
 
 /** Subdirs of `supabase/functions` that look like Edge functions. */

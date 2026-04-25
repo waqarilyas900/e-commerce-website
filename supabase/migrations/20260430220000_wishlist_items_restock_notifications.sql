@@ -62,7 +62,16 @@ create unique index if not exists restock_queue_pending_wishlist_uniq
   where processed_at is null;
 
 alter table public.restock_notification_queue enable row level security;
--- No policies: only service role / table owner (trigger) can access.
+
+-- Admins can read the queue from the admin panel; triggers/cron use service role (bypasses RLS).
+drop policy if exists "restock_notification_queue_select_admin" on public.restock_notification_queue;
+create policy "restock_notification_queue_select_admin"
+  on public.restock_notification_queue for select
+  to authenticated
+  using (public.is_active_admin());
+
+comment on policy "restock_notification_queue_select_admin" on public.restock_notification_queue is
+  'Cron and triggers use service role; authenticated admins can monitor pending/processed jobs.';
 
 -- ---------------------------------------------------------------------------
 -- Trigger: inventory crosses to sellable → enqueue; back to OOS → reset notified
