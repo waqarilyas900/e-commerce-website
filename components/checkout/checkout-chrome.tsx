@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { type ReactNode } from "react";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { StoreLogoMark } from "@/components/store-logo-mark";
 
 type Props = {
   children: ReactNode;
@@ -27,13 +27,7 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
         <header className="border-b border-neutral-200 bg-white">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <Link href="/" className="flex min-w-0 items-center gap-2.5">
-              <Image
-                src="/dummy-logo.svg"
-                alt=""
-                width={40}
-                height={40}
-                className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
-              />
+              <StoreLogoMark size={40} className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
               <span className="truncate text-sm font-semibold capitalize tracking-wide text-neutral-900 sm:text-base">
                 {storeName}
               </span>

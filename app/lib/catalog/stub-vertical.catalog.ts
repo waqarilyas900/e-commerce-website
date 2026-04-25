@@ -8,6 +8,7 @@ export function createStubVerticalCatalog(siteTitle: string): StoreCatalog {
     brand: {
       siteTitle,
       siteDescription: "Catalog not configured for this vertical.",
+      faviconUrl: "",
       announcement: "",
       missionParagraph: "Browse our main collection for available products.",
       featured: {
@@ -34,6 +35,8 @@ export function createStubVerticalCatalog(siteTitle: string): StoreCatalog {
         phone: "",
         hoursLine: "",
         exploreLinks: [{ label: "All collections", href: "/collections" }],
+        customerCareSectionTitle: "Customer care",
+        policyFooterLinks: [],
       },
     },
     products: [],

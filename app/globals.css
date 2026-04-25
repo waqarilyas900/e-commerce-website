@@ -183,3 +183,94 @@ body {
 .profile-phone-field .react-international-phone-input:focus {
   outline: none !important;
 }
+
+/* Policy / legal pages — wide readable prose (Shopify-style) */
+.policy-prose {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: rgb(64 64 64);
+  max-width: 52rem;
+}
+.policy-prose > * + * {
+  margin-top: 1rem;
+}
+.policy-prose h1,
+.policy-prose h2,
+.policy-prose h3,
+.policy-prose h4,
+.policy-prose h5,
+.policy-prose h6 {
+  color: rgb(23 23 23);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-transform: none;
+}
+.policy-prose h1 {
+  font-size: 1.75rem;
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+}
+.policy-prose h2 {
+  font-size: 1.35rem;
+  margin-top: 2rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgb(229 229 229);
+}
+.policy-prose h3 {
+  font-size: 1.125rem;
+  margin-top: 1.5rem;
+}
+.policy-prose p {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+.policy-prose ul,
+.policy-prose ol {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.35rem;
+}
+.policy-prose ul {
+  list-style-type: disc;
+}
+.policy-prose ol {
+  list-style-type: decimal;
+}
+.policy-prose li {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+.policy-prose a {
+  color: rgb(23 23 23);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.policy-prose a:hover {
+  color: rgb(0 0 0);
+}
+.policy-prose blockquote {
+  margin: 1.25rem 0;
+  border-left: 3px solid rgb(212 212 216);
+  padding-left: 1rem;
+  font-style: italic;
+  color: rgb(82 82 91);
+}
+.policy-prose strong {
+  font-weight: 600;
+  color: rgb(23 23 23);
+}
+.policy-prose hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid rgb(228 228 231);
+}
+.policy-prose pre {
+  margin: 1rem 0;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  background: rgb(250 250 250);
+  padding: 1rem;
+  font-size: 0.875rem;
+}

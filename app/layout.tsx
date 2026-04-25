@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Jost } from "next/font/google";
 import { getAnnouncementBarForLayout } from "@/app/lib/home-marketing";
 import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
+import { getPublicSiteUrl } from "@/lib/site-url";
 import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
 import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider";
@@ -46,14 +47,52 @@ const showGoogleOneTap =
   process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP === "1" ||
   process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP === "true";
 
+function faviconMimeType(url: string): string | undefined {
+  const path = url.split("?")[0]?.toLowerCase() ?? "";
+  if (path.endsWith(".svg")) return "image/svg+xml";
+  if (path.endsWith(".png")) return "image/png";
+  if (path.endsWith(".webp")) return "image/webp";
+  if (path.endsWith(".gif")) return "image/gif";
+  if (path.endsWith(".ico")) return "image/x-icon";
+  if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
+  return undefined;
+}
+
+/** Resolve root-relative favicon paths against the public site URL for metadata. */
+function absolutizeFavicon(href: string, base: string): string {
+  const t = href.trim();
+  if (!t) return "";
+  if (t.startsWith("http://") || t.startsWith("https://")) return t;
+  if (t.startsWith("//")) return `https:${t}`;
+  const origin = base.replace(/\/$/, "");
+  if (t.startsWith("/")) return `${origin}${t}`;
+  return `${origin}/${t}`;
+}
+
+function getEnvFaviconUrl(): string {
+  return process.env.NEXT_PUBLIC_FAVICON_URL?.trim() ?? "";
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await loadStoreBrandFromDatabase();
   const title =
     brand.siteTitle.trim() || brand.storeName.trim() || "Store";
   const description = brand.siteDescription.trim() || undefined;
+  const siteBase = getPublicSiteUrl();
+  const rawIcon = getEnvFaviconUrl() || brand.faviconUrl.trim();
+  const icon = rawIcon ? absolutizeFavicon(rawIcon, siteBase) : undefined;
+  const mime = icon ? faviconMimeType(icon) : undefined;
   return {
+    metadataBase: new URL(siteBase),
     title,
     description,
+    icons: icon
+      ? {
+          icon: [{ url: icon, ...(mime ? { type: mime } : {}) }],
+          shortcut: icon,
+          apple: [{ url: icon, sizes: "180x180", ...(mime ? { type: mime } : {}) }],
+        }
+      : undefined,
   };
 }
 
@@ -70,6 +109,10 @@ export default async function RootLayout({
       getHeaderNavMenuItems(),
     ]);
   const storeBrand = { ...baseBrand, announcementBar };
+  const envFavicon = getEnvFaviconUrl();
+  const faviconRaw = envFavicon || baseBrand.faviconUrl.trim();
+  const faviconHref = faviconRaw ? absolutizeFavicon(faviconRaw, getPublicSiteUrl()) : "";
+  const faviconType = faviconHref ? faviconMimeType(faviconHref) : undefined;
 
   return (
     <html
@@ -77,6 +120,24 @@ export default async function RootLayout({
       dir="ltr"
       className={`js ${jost.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {faviconHref ? (
+          <>
+            <link
+              rel="icon"
+              href={faviconHref}
+              sizes="any"
+              {...(faviconType ? { type: faviconType } : {})}
+            />
+            <link rel="shortcut icon" href={faviconHref} />
+            <link
+              rel="apple-touch-icon"
+              href={faviconHref}
+              {...(faviconType ? { type: faviconType } : {})}
+            />
+          </>
+        ) : null}
+      </head>
       <body
         className={`${jost.className} template-index loaded min-h-full bg-white text-[#1c1d1d]`}
         data-transitions="true"

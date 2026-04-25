@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +25,7 @@ import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session"
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { StoreLogoMark } from "@/components/store-logo-mark";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
 import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-settings";
 import { hasCatalogDb } from "@/app/lib/db/env";
@@ -842,14 +842,7 @@ export default function CheckoutPage() {
             <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
               <div className="flex items-center justify-between">
                 <Link href="/" className="flex min-w-0 items-center gap-2.5">
-                  <Image
-                    src="/dummy-logo.svg"
-                    alt=""
-                    width={40}
-                    height={40}
-                    priority
-                    className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
-                  />
+                  <StoreLogoMark size={40} className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
                   <span className="truncate text-sm font-semibold capitalize tracking-tight text-neutral-900 sm:text-base">
                     {storeName}
                   </span>
@@ -1056,7 +1049,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={placing || resolvedLines.length === 0 || cartResolveFailed}
-                className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {placing ? "Placing order…" : "Complete order"}
               </button>

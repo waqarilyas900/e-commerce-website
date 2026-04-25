@@ -371,24 +371,41 @@ export function CheckoutOrderSummaryPanel(props: Omit<SummaryBodyProps, "inert">
 }
 
 export function CheckoutPolicyFooterLinks() {
+  const { footer } = useStoreBrand();
+  const sectionTitle = footer.customerCareSectionTitle.trim() || "Customer care";
+  const linkClass = "text-neutral-600 underline underline-offset-2 transition hover:text-neutral-900";
+
   return (
     <div className="border-t border-neutral-200 pt-6">
+      <p className="mb-3 text-center text-sm font-semibold text-neutral-900">{sectionTitle}</p>
       <nav
-        className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-center text-xs text-neutral-600 sm:gap-x-6"
-        aria-label="Policies"
+        className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-center text-sm text-neutral-600 sm:gap-x-6"
+        aria-label={sectionTitle}
       >
-        <Link href="/policies/returns" className="underline underline-offset-2 hover:text-neutral-900">
-          Refund policy
+        <Link href="/contact" className={linkClass}>
+          Contact us
         </Link>
-        <Link href="/policies/shipping" className="underline underline-offset-2 hover:text-neutral-900">
-          Shipping
-        </Link>
-        <Link href="/policies/privacy" className="underline underline-offset-2 hover:text-neutral-900">
-          Privacy policy
-        </Link>
-        <Link href="/policies/terms" className="underline underline-offset-2 hover:text-neutral-900">
-          Terms of service
-        </Link>
+        {footer.policyFooterLinks.map((item) => {
+          const external = item.href.startsWith("http://") || item.href.startsWith("https://");
+          if (external) {
+            return (
+              <a
+                key={item.href + item.label}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                {item.label}
+              </a>
+            );
+          }
+          return (
+            <Link key={item.href + item.label} href={item.href} className={linkClass}>
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

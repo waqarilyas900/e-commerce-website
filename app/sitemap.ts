@@ -76,7 +76,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const pol of policies) {
     if (!pol.slug) continue;
-    const url = `${base}/policies/${encodeURIComponent(pol.slug)}`;
+    const url = `${base}/${encodeURIComponent(pol.slug)}`;
     byUrl.set(url, {
       url,
       lastModified,

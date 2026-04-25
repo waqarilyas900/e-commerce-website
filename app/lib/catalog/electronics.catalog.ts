@@ -7,6 +7,7 @@ export const electronicsCatalog: StoreCatalog = {
     siteTitle: "Electronics & tech",
     siteDescription:
       "Curated electronics — clear specs, fair pricing, and fast support.",
+    faviconUrl: "",
     announcement: "FREE shipping on orders over Rs. 3,000 · Easy returns within 14 days",
     missionParagraph:
       "We stock reliable gear for work and home: tested accessories, displays, and peripherals with transparent pricing and warranty-friendly returns.",
@@ -40,10 +41,9 @@ export const electronicsCatalog: StoreCatalog = {
       exploreLinks: [
         { label: "Electronics", href: `/collections/${COLLECTION_SLUG}` },
         { label: "Sale", href: "/collections/sale" },
-        { label: "Shipping", href: "/policies/shipping" },
-        { label: "Returns", href: "/policies/returns" },
-        { label: "Contact", href: "/contact" },
       ],
+      customerCareSectionTitle: "Customer care",
+      policyFooterLinks: [],
     },
   },
   homeHeroSlides: [
