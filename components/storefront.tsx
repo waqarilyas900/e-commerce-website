@@ -346,7 +346,7 @@ export function ProductCard({
           href={`/products/${product.slug}`}
           className={
             rail || clampTitle
-              ? "block min-h-10 line-clamp-2 text-sm font-semibold leading-snug text-neutral-900"
+              ? "product-card-title-clamp block min-h-10 text-sm font-semibold leading-snug text-neutral-900"
               : "block text-sm font-semibold leading-snug text-neutral-900"
           }
         >

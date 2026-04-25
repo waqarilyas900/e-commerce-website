@@ -32,6 +32,50 @@ function storefrontImageRemotePattern():
 
 const storefrontImages = storefrontImageRemotePattern();
 
+/** Comma-separated hostnames (no protocol), e.g. `img.kwcdn.com,cdn.vendor.com` — merged into `images.remotePatterns`. */
+function extraImageHostsFromEnv(): {
+  protocol: "https";
+  hostname: string;
+  pathname: string;
+}[] {
+  const raw = process.env.NEXT_PUBLIC_EXTRA_IMAGE_HOSTS?.trim();
+  if (!raw) return [];
+  const out: { protocol: "https"; hostname: string; pathname: string }[] = [];
+  const seen = new Set<string>();
+  for (const part of raw.split(",")) {
+    let h = part.trim();
+    if (!h) continue;
+    h = h.replace(/^https:\/\//i, "").replace(/^http:\/\//i, "");
+    const slash = h.indexOf("/");
+    if (slash >= 0) h = h.slice(0, slash);
+    const colon = h.indexOf(":");
+    if (colon >= 0) h = h.slice(0, colon);
+    if (!/^[a-zA-Z0-9*.-]+$/.test(h)) continue;
+    const key = h.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ protocol: "https", hostname: h, pathname: "/**" });
+  }
+  return out;
+}
+
+/**
+ * Common supplier CDNs (dropship imports). Use explicit host + `*.kwcdn.com` — `**.kwcdn.com`
+ * does not match `img.kwcdn.com` reliably in Next 16 image config.
+ */
+const commonProductImageHosts: {
+  protocol: "https";
+  hostname: string;
+  pathname: string;
+}[] = [
+  { protocol: "https", hostname: "img.kwcdn.com", pathname: "/**" },
+  { protocol: "https", hostname: "*.kwcdn.com", pathname: "/**" },
+  { protocol: "https", hostname: "m.media-amazon.com", pathname: "/**" },
+  { protocol: "https", hostname: "*.media-amazon.com", pathname: "/**" },
+  { protocol: "https", hostname: "ibrahimstores.com", pathname: "/**" },
+  { protocol: "https", hostname: "www.ibrahimstores.com", pathname: "/**" },
+];
+
 const nextConfig: NextConfig = {
   async rewrites() {
     return {
@@ -66,6 +110,8 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       ...(storefrontImages ? [storefrontImages] : []),
+      ...commonProductImageHosts,
+      ...extraImageHostsFromEnv(),
       /** Supabase Storage public URLs (home hero, collection heroes, product media, reviews) */
       {
         protocol: "https",
