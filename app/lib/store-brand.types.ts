@@ -27,6 +27,7 @@ export type StoreBrandConfig = {
   storeName: string;
   siteTitle: string;
   siteDescription: string;
+  faviconUrl: string;
   /**
    * When set (root layout), drives the top announcement bar: HTML, colors, rotation.
    */
@@ -55,6 +56,13 @@ export type StoreBrandConfig = {
     phone: string;
     hoursLine: string;
     exploreLinks: { label: string; href: string }[];
+    /** Admin-editable heading above policy links (Customer care block). */
+    customerCareSectionTitle: string;
+    /**
+     * Admin-defined labels, order, and destinations (resolved `href` per row).
+     * The storefront always prepends "Contact us" → `/contact`.
+     */
+    policyFooterLinks: { label: string; href: string }[];
   };
 };
 

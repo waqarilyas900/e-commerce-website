@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+/** When port 3000 is already in use (e.g. `next dev`), set `PW_PORT=3001` before `playwright test`. */
+const pwPort = process.env.PW_PORT?.trim() || "3000";
+const baseURL = `http://127.0.0.1:${pwPort}`;
+
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
@@ -10,13 +14,13 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: "npm run start",
-    url: "http://127.0.0.1:3000",
+    command: `npx next start -p ${pwPort}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     stdout: "pipe",

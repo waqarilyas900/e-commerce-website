@@ -13,22 +13,45 @@ import {
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-const policyLinks: { href: string; label: string }[] = [
-  { href: "/policies/size-charts", label: "Size Charts" },
-  { href: "/policies/about", label: "About us" },
-  { href: "/contact", label: "Contact us" },
-  { href: "/policies/returns", label: "Returns & Exchanges" },
-  { href: "/policies/shipping", label: "Shipping Policy" },
-  { href: "/policies/terms", label: "Terms of Service" },
-  { href: "/policies/privacy", label: "Privacy Policy" },
-];
+/** Always shown first in Customer care; not editable from admin. */
+const CONTACT_US_HREF = "/contact";
+const CONTACT_US_LABEL = "Contact us";
 
-/** Non-collection links appended after dynamic header nav items (collections). */
-const footerExploreExtras: { href: string; label: string }[] = [
-  { href: "/policies/shipping", label: "Shipping" },
-  { href: "/policies/returns", label: "Returns" },
-  { href: "/contact", label: "Contact" },
-];
+function normalizeFooterPath(href: string): string {
+  let path = href.split("#")[0]?.split("?")[0]?.trim() ?? "";
+  if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+  return path;
+}
+
+function customerCareReservedPaths(policyRows: { href: string }[]): Set<string> {
+  const s = new Set<string>([normalizeFooterPath(CONTACT_US_HREF)]);
+  for (const p of policyRows) {
+    const h = p.href?.trim() ?? "";
+    if (h.startsWith("/") && !h.startsWith("//")) {
+      s.add(normalizeFooterPath(h));
+    }
+  }
+  return s;
+}
+
+/**
+ * Explore = header nav only, minus URLs already used under Customer care
+ * (Contact us + admin policy links).
+ */
+function buildFooterExploreLinks(
+  headerItems: { href: string; label: string }[],
+  reservedPaths: Set<string>,
+): { href: string; label: string }[] {
+  const seen = new Set<string>();
+  const out: { href: string; label: string }[] = [];
+  for (const item of headerItems) {
+    const path = normalizeFooterPath(item.href);
+    if (!path || reservedPaths.has(path) || seen.has(path)) continue;
+    seen.add(path);
+    out.push({ href: path, label: item.label });
+  }
+  return out;
+}
 
 function FooterMark({ className }: { className?: string }) {
   return (
@@ -158,14 +181,35 @@ function ExploreLinksList({
   );
 }
 
-function PolicyLinksList() {
+const policyLinkClass = "transition-colors hover:text-white hover:underline";
+
+function PolicyNavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const external = href.startsWith("http://") || href.startsWith("https://");
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={policyLinkClass}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={href} className={policyLinkClass}>
+      {children}
+    </Link>
+  );
+}
+
+function PolicyLinksList({ policyRows }: { policyRows: { label: string; href: string }[] }) {
   return (
     <ul className="list-none space-y-2.5 pl-0 text-[15px] text-white/90">
-      {policyLinks.map((item) => (
-        <li key={item.href}>
-          <Link href={item.href} className="transition-colors hover:text-white hover:underline">
-            {item.label}
-          </Link>
+      <li key="__contact-us">
+        <Link href={CONTACT_US_HREF} className={policyLinkClass}>
+          {CONTACT_US_LABEL}
+        </Link>
+      </li>
+      {policyRows.map((item) => (
+        <li key={item.href + item.label}>
+          <PolicyNavLink href={item.href}>{item.label}</PolicyNavLink>
         </li>
       ))}
     </ul>
@@ -200,7 +244,7 @@ function MobileAccordion({
         onClick={() => onToggle(id)}
         className="flex w-full items-center justify-between gap-4 py-4 text-left"
       >
-        <span className="text-[12px] font-semibold capitalize tracking-[0.2em] text-white">{title}</span>
+        <span className="text-sm font-semibold text-white">{title}</span>
         <motion.span
           aria-hidden
           animate={{ rotate: open ? 180 : 0 }}
@@ -235,10 +279,15 @@ export function Footer() {
   const mailto = `mailto:${footer.supportEmail}`;
   const [openId, setOpenId] = useState<AccordionId | null>(null);
 
-  const footerExploreLinks = [
-    ...headerNavItems.map((n) => ({ href: n.href, label: n.label })),
-    ...footerExploreExtras,
-  ];
+  const customerCareTitle = footer.customerCareSectionTitle.trim() || "Customer care";
+  const policyRows = footer.policyFooterLinks;
+  const reservedPaths = customerCareReservedPaths(policyRows);
+
+  const footerExploreLinks = buildFooterExploreLinks(
+    headerNavItems.map((n) => ({ href: n.href, label: n.label })),
+    reservedPaths,
+  );
+  const hasExploreLinks = footerExploreLinks.length > 0;
 
   const toggle = (id: AccordionId) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -262,16 +311,16 @@ export function Footer() {
             >
               <NeedHelpBlock mailto={mailto} footer={footer} />
             </MobileAccordion>
-            <MobileAccordion id="explore" title="Explore" openId={openId} onToggle={toggle}>
-              <ExploreLinksList links={footerExploreLinks} />
-            </MobileAccordion>
+            {hasExploreLinks ? (
+              <MobileAccordion id="explore" title="Explore" openId={openId} onToggle={toggle}>
+                <ExploreLinksList links={footerExploreLinks} />
+              </MobileAccordion>
+            ) : null}
             {/* Customer care: always visible (not accordion); no divider below before brand row */}
             <div className="py-5">
-              <p className="text-[12px] font-semibold capitalize tracking-[0.2em] text-white">
-                Customer care
-              </p>
+              <h2 className="text-sm font-semibold text-white">{customerCareTitle}</h2>
               <div className="mt-4">
-                <PolicyLinksList />
+                <PolicyLinksList policyRows={policyRows} />
               </div>
             </div>
           </div>
@@ -282,33 +331,45 @@ export function Footer() {
             <SocialLinks className="flex shrink-0 items-center gap-3" />
           </div>
 
-          {/* Desktop 4 columns */}
-          <div className="hidden lg:grid lg:grid-cols-4 lg:gap-10 xl:gap-14">
-            <div>
-              <h2 className="text-[12px] font-semibold capitalize tracking-[0.2em] text-white">Need help?</h2>
-              <div className="mt-6">
-                <NeedHelpBlock mailto={mailto} footer={footer} />
+          {/* Desktop: aligned 4-column grid — same heading rhythm and left edge */}
+          <div className="hidden border-t border-white/10 pt-12 lg:block">
+            <div
+              className={
+                hasExploreLinks
+                  ? "grid grid-cols-4 items-start gap-10 xl:gap-14"
+                  : "grid grid-cols-3 items-start gap-10 xl:gap-14"
+              }
+            >
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-white">Need help?</h2>
+                <div className="mt-6">
+                  <NeedHelpBlock mailto={mailto} footer={footer} />
+                </div>
               </div>
-            </div>
-            <div>
-              <h2 className="text-[12px] font-semibold capitalize tracking-[0.2em] text-white">Explore</h2>
-              <div className="mt-6">
-                <ExploreLinksList links={footerExploreLinks} />
+              {hasExploreLinks ? (
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-white">Explore</h2>
+                  <div className="mt-6">
+                    <ExploreLinksList links={footerExploreLinks} />
+                  </div>
+                </div>
+              ) : null}
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-white">{customerCareTitle}</h2>
+                <div className="mt-6">
+                  <PolicyLinksList policyRows={policyRows} />
+                </div>
               </div>
-            </div>
-            <div className="lg:pt-9">
-              <h2 className="sr-only">Policies and information</h2>
-              <PolicyLinksList />
-            </div>
-            <div className="flex flex-col items-center text-center">
-              <FooterMark className="mx-auto h-20 w-16 text-white" />
-              <SocialLinks className="mt-8 flex items-center justify-center gap-4" />
+              <div className="flex min-w-0 flex-col items-start gap-6 border-l border-white/10 pl-10 xl:pl-14">
+                <FooterMark className="h-18 w-13 shrink-0 text-white" aria-hidden />
+                <SocialLinks className="flex flex-wrap items-center gap-3" />
+              </div>
             </div>
           </div>
         </div>
 
         <div className="border-t border-white/10">
-          <div className="mx-auto max-w-7xl px-5 py-5 text-center text-[11px] leading-relaxed text-white/55 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl px-5 py-5 text-center text-[11px] leading-relaxed text-white/55 sm:px-6 lg:px-8 lg:text-left">
             © {new Date().getFullYear()}{" "}
             <Link href="/" className="text-white/70 underline-offset-2 transition hover:text-white hover:underline">
               {storeName}

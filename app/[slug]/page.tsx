@@ -13,7 +13,7 @@ type Props = {
 function excerptFromHtml(html: string, max: number): string {
   const plain = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   if (!plain) return "";
-  return plain.length > max ? `${plain.slice(0, max - 1)}…` : plain;
+  return plain.length > max ? `${plain.slice(0, max - 1)}...` : plain;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [policy, brand] = await Promise.all([dbGetPolicyPage(slug), loadStoreBrandFromDatabase()]);
   const site = brand.siteTitle.trim() || brand.storeName.trim() || "Store";
   if (!policy) {
-    return { title: `Policy | ${site}` };
+    return { title: site };
   }
   const description = excerptFromHtml(policy.contentHtml, 155) || policy.title;
   const title = `${policy.title} | ${site}`;
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PolicyDetailsPage({ params }: Props) {
+export default async function FooterItemPage({ params }: Props) {
   const { slug } = await params;
   const policy = await dbGetPolicyPage(slug);
 
@@ -52,19 +52,13 @@ export default async function PolicyDetailsPage({ params }: Props) {
         id="MainContent"
         className="main-content bg-gradient-to-b from-neutral-50 to-white pb-16 pt-6 sm:pb-20 sm:pt-8"
       >
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav
             className="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-neutral-500"
             aria-label="Breadcrumb"
           >
             <Link href="/" className="transition hover:text-neutral-900">
               Home
-            </Link>
-            <span className="px-0.5 text-neutral-300" aria-hidden>
-              /
-            </span>
-            <Link href="/policies" className="transition hover:text-neutral-900">
-              Policies
             </Link>
             <span className="px-0.5 text-neutral-300" aria-hidden>
               /
@@ -78,10 +72,10 @@ export default async function PolicyDetailsPage({ params }: Props) {
             </h1>
           </header>
 
-          <div className="py-10 sm:py-12">
+          <div className="py-6 sm:py-8">
             {safe ? (
               <article
-                className="policy-prose rounded-2xl border border-neutral-200/80 bg-white px-5 py-8 shadow-sm sm:px-10 sm:py-12 lg:px-14 lg:py-14"
+                className="policy-prose"
                 dangerouslySetInnerHTML={{ __html: safe }}
               />
             ) : (
