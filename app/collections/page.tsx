@@ -46,6 +46,7 @@ export default async function CollectionsPage() {
                   key={product.id}
                   product={product}
                   revealDelay={Math.min(idx * 0.08, 0.36)}
+                  clampTitle
                 />
               ))}
             </div>

@@ -237,6 +237,14 @@ body {
 .policy-prose ol {
   list-style-type: decimal;
 }
+
+/* Product cards: hard clamp titles to 2 lines on listing grids. */
+.product-card-title-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
 .policy-prose li {
   margin-top: 0.35rem;
   margin-bottom: 0.35rem;
