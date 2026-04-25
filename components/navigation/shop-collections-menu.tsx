@@ -65,6 +65,12 @@ export function ShopCollectionsMenu() {
   }, [open]);
 
   useEffect(() => {
+    const onCloseMega = () => setOpen(false);
+    window.addEventListener("storefront:close-mega-menus", onCloseMega);
+    return () => window.removeEventListener("storefront:close-mega-menus", onCloseMega);
+  }, []);
+
+  useEffect(() => {
     return () => {
       clearCloseTimer();
     };
@@ -104,7 +110,7 @@ export function ShopCollectionsMenu() {
       {open ? (
         <div
           id={menuId}
-          className="absolute left-0 top-full z-50 mt-2 min-w-[240px] max-h-[min(70dvh,420px)] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1.5 shadow-xl"
+          className="absolute left-0 top-full z-50 mt-0.5 min-w-[240px] max-h-[min(70dvh,420px)] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1.5 shadow-xl"
           role="menu"
         >
           {links.length === 0 ? (
