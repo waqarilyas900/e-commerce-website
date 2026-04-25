@@ -33,6 +33,16 @@ function storefrontImageRemotePattern():
 const storefrontImages = storefrontImageRemotePattern();
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/favicon.ico",
+          destination: "/store-favicon",
+        },
+      ],
+    };
+  },
   /** Next 16 defaults to Turbopack for `next build`; empty config acknowledges coexistence with `webpack`. */
   turbopack: {},
   /** Dev HMR: `127.0.0.1` plus optional `NEXT_EXTRA_DEV_ORIGINS` (comma-separated hostnames). */

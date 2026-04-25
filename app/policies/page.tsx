@@ -1,37 +1,104 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import { dbListPolicySummaries } from "@/app/lib/policy-pages-db";
+import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
+
+function metaDescriptionFromPolicies(
+  siteDescription: string,
+  titles: string[],
+): string {
+  const base = siteDescription.trim();
+  if (base) return base.length > 320 ? `${base.slice(0, 317)}…` : base;
+  if (titles.length === 0) return "Policy and legal information.";
+  const joined = titles.join(" · ");
+  return joined.length > 320 ? `${joined.slice(0, 317)}…` : joined;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [policyPages, brand] = await Promise.all([
+    dbListPolicySummaries(),
+    loadStoreBrandFromDatabase(),
+  ]);
+  const site = brand.siteTitle.trim() || brand.storeName.trim() || "Store";
+  const titles = policyPages.map((p) => p.title.trim()).filter(Boolean);
+  const description = metaDescriptionFromPolicies(brand.siteDescription, titles);
+  return {
+    title: `Policies | ${site}`,
+    description,
+    openGraph: { title: `Policies | ${site}`, description },
+  };
+}
 
 export default async function PoliciesPage() {
-  const policyPages = await dbListPolicySummaries();
+  const [policyPages, brand] = await Promise.all([
+    dbListPolicySummaries(),
+    loadStoreBrandFromDatabase(),
+  ]);
+
+  const storeLabel = brand.storeName.trim() || brand.siteTitle.trim() || "";
+  const pageHeading = storeLabel ? `Policies — ${storeLabel}` : "Policies";
+  const intro =
+    brand.siteDescription.trim() ||
+    (policyPages.length > 0
+      ? titlesToIntro(policyPages.map((p) => p.title))
+      : "");
 
   return (
     <>
       <TopStrip />
       <Header />
-      <main id="MainContent" className="main-content mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Store Policies</h1>
-        <p className="mt-2 text-neutral-600">
-          Shipping, returns, privacy, and terms — managed in the database.
-        </p>
+      <main
+        id="MainContent"
+        className="main-content bg-gradient-to-b from-neutral-50 to-white pb-16 pt-6 sm:pb-20 sm:pt-8"
+      >
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <nav className="text-sm text-neutral-500">
+            <Link href="/" className="transition hover:text-neutral-900">
+              Home
+            </Link>
+            <span className="px-1 text-neutral-300">/</span>
+            <span className="font-medium text-neutral-900">Policies</span>
+          </nav>
 
-        {policyPages.length === 0 ? (
-          <p className="mt-6 text-sm text-neutral-600">No policy pages yet.</p>
-        ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {policyPages.map((policy) => (
-              <Link
-                key={policy.slug}
-                href={`/policies/${policy.slug}`}
-                className="rounded-xl border border-neutral-200 bg-white p-5"
-              >
-                <p className="font-semibold">{policy.title}</p>
-              </Link>
-            ))}
-          </div>
-        )}
+          <header className="mt-8 border-b border-neutral-200/90 pb-8">
+            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl">
+              {pageHeading}
+            </h1>
+            {intro ? (
+              <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-neutral-600">{intro}</p>
+            ) : null}
+          </header>
+
+          {policyPages.length === 0 ? (
+            <p className="mt-10 text-sm text-neutral-600">No policy pages are published yet.</p>
+          ) : (
+            <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {policyPages.map((policy) => (
+                <li key={policy.slug}>
+                  <Link
+                    href={`/${policy.slug}`}
+                    className="group flex h-full flex-col rounded-2xl border border-neutral-200/90 bg-white p-6 shadow-sm transition hover:border-neutral-300 hover:shadow-md"
+                  >
+                    <span className="text-lg font-semibold text-neutral-900 group-hover:underline">
+                      {policy.title}
+                    </span>
+                    <span className="mt-2 font-mono text-xs text-neutral-400">/{policy.slug}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </main>
       <Footer />
     </>
   );
+}
+
+function titlesToIntro(titles: string[]): string {
+  const t = titles.map((x) => x.trim()).filter(Boolean);
+  if (t.length === 0) return "";
+  if (t.length <= 4) return t.join(" · ");
+  return `${t.slice(0, 4).join(" · ")} · +${t.length - 4} more`;
 }
