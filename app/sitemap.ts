@@ -9,6 +9,16 @@ import {
 import { dbListPolicySummaries } from "@/app/lib/policy-pages-db";
 import { createClient } from "@/lib/supabase/server";
 
+/**
+ * Always render at request time. Pre-rendering the sitemap at build time can
+ * fail when Supabase isn't reachable from the Vercel build sandbox, and a
+ * 1-hour cache window keeps Googlebot from hammering Postgres on every fetch
+ * while still propagating new products within an SEO-acceptable freshness
+ * window.
+ */
+export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
 const defaultModified = () => new Date();
 
 type ProductTimestampRow = { slug: string; updated_at: string | null; created_at: string | null };
@@ -85,15 +95,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return staticPaths;
   }
 
-  const [products, collections, policies, homeSections, productTs, collectionTs] =
-    await Promise.all([
-      dbListAllActiveProductsForCards(),
-      dbListCollections(),
-      dbListPolicySummaries(),
-      dbListActiveHomePageSectionsWithTags(),
-      fetchProductTimestamps(),
-      fetchCollectionTimestamps(),
-    ]);
+  // Defensive fetch: if any catalog query throws (schema drift, RLS, network),
+  // we still return at least the curated `staticPaths` so the route never
+  // 500s. Google Search Console rejects sitemaps that respond with 500
+  // ("Invalid sitemap address") and stops retrying for hours, so degraded
+  // output here is a much smaller SEO penalty than total absence.
+  let products: Awaited<ReturnType<typeof dbListAllActiveProductsForCards>> = [];
+  let collections: Awaited<ReturnType<typeof dbListCollections>> = [];
+  let policies: Awaited<ReturnType<typeof dbListPolicySummaries>> = [];
+  let homeSections: Awaited<ReturnType<typeof dbListActiveHomePageSectionsWithTags>> = [];
+  let productTs = new Map<string, Date>();
+  let collectionTs = new Map<string, Date>();
+
+  try {
+    [products, collections, policies, homeSections, productTs, collectionTs] =
+      await Promise.all([
+        dbListAllActiveProductsForCards(),
+        dbListCollections(),
+        dbListPolicySummaries(),
+        dbListActiveHomePageSectionsWithTags(),
+        fetchProductTimestamps(),
+        fetchCollectionTimestamps(),
+      ]);
+  } catch (err) {
+    console.error("[sitemap] dynamic fetch failed, returning static paths:", err);
+    return staticPaths;
+  }
 
   const byUrl = new Map<string, MetadataRoute.Sitemap[0]>();
   for (const e of staticPaths) {
