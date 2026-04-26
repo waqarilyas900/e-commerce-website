@@ -24,7 +24,7 @@ export function ActiveWearBlock() {
       className="shopify-section index-section border-b border-[#e8e8e1] bg-white py-6"
       data-section-type="collection-callout"
     >
-      <ScrollReveal className="page-width mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <ScrollReveal className="page-width mx-auto max-w-7xl shell-x">
         <div
           className={`feature-row grid min-h-[360px] md:min-h-[400px] md:items-stretch md:gap-0 ${
             hasImage ? "md:grid-cols-2" : "md:grid-cols-1"

@@ -300,7 +300,7 @@ export function Footer() {
         data-section-id="sections--footer"
         data-section-type="footer"
       >
-        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl shell-x py-10 sm:py-12 lg:py-14">
           {/* Mobile accordions */}
           <div className="border-t border-white/10 lg:hidden">
             <MobileAccordion
@@ -369,7 +369,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-white/10">
-          <div className="mx-auto max-w-7xl px-5 py-5 text-center text-[11px] leading-relaxed text-white/55 sm:px-6 lg:px-8 lg:text-left">
+          <div className="mx-auto max-w-7xl shell-x py-4 text-center text-[11px] leading-relaxed text-white/55 lg:text-left">
             © {new Date().getFullYear()}{" "}
             <Link href="/" className="text-white/70 underline-offset-2 transition hover:text-white hover:underline">
               {storeName}

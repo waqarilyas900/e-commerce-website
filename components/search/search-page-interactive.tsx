@@ -56,7 +56,7 @@ export function SearchPageInteractive({ initialQuery, initialProducts }: Props) 
 
   return (
     <>
-      <form onSubmit={(e) => void onSubmit(e)} className="mt-6 flex max-w-xl gap-2">
+      <form onSubmit={(e) => void onSubmit(e)} className="mt-4 flex max-w-xl gap-2 sm:mt-5">
         <label htmlFor="search-page-q" className="sr-only">
           Search query
         </label>
@@ -88,14 +88,14 @@ export function SearchPageInteractive({ initialQuery, initialProducts }: Props) 
       ) : null}
 
       {loading ? (
-        <div className="mt-8 space-y-4" aria-live="polite" aria-busy>
+        <div className="mt-6 space-y-3 sm:mt-8 sm:space-y-4" aria-live="polite" aria-busy>
           <p className="text-sm font-medium tracking-wide text-neutral-500">Searching catalog…</p>
           <SearchResultsSkeleton />
         </div>
       ) : activeQuery.length === 0 ? (
-        <p className="mt-8 text-sm text-neutral-600">Enter a term to search the catalog.</p>
+        <p className="mt-6 text-sm text-neutral-600 sm:mt-8">Enter a term to search the catalog.</p>
       ) : products.length === 0 ? (
-        <p className="mt-8 text-sm text-neutral-600">
+        <p className="mt-6 text-sm text-neutral-600 sm:mt-8">
           No products matched &ldquo;{activeQuery}&rdquo;.{" "}
           <Link href="/collections" className="font-medium text-neutral-900 underline">
             Browse collections
@@ -103,10 +103,10 @@ export function SearchPageInteractive({ initialQuery, initialProducts }: Props) 
         </p>
       ) : (
         <ScrollReveal delay={0.05}>
-          <p className="mt-6 text-sm text-neutral-600">
+          <p className="mt-4 text-sm text-neutral-600 sm:mt-5">
             {products.length} result{products.length === 1 ? "" : "s"} for &ldquo;{activeQuery}&rdquo;
           </p>
-          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-1 sm:mt-4 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
             {products.map((product, idx) => (
               <ProductCard
                 key={product.id}

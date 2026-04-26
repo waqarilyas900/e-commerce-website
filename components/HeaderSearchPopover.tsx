@@ -247,7 +247,7 @@ export function HeaderSearchPopover({
                 reduceMotion ? { duration: 0.22 } : panelEnterTransition
               }
             >
-              <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+              <div className="mx-auto max-w-7xl shell-x py-3 sm:py-4">
                 <form onSubmit={handleSubmit} className="relative">
                   <label htmlFor={`${panelId}-q`} className="sr-only">
                     Search products

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import {
   useCallback,
@@ -213,10 +214,14 @@ function ChatBubble({ message, reduceMotion }: { message: Turn; reduceMotion: bo
 }
 
 export function AskTheStore() {
+  const pathname = usePathname();
   const titleId = useId();
   const reduceMotion = useReducedMotion();
   const { storeName } = useStoreBrand();
   const { open, openAskStore, closeAskStore } = useAskTheStore();
+  /** PDP has its own product UX; hide the floating launcher (chat still works if already open). */
+  const isProductDetailPage = pathname.startsWith("/products/");
+  const showFloatingUi = open || !isProductDetailPage;
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Turn[]>([]);
   const [loading, setLoading] = useState(false);
@@ -611,53 +616,54 @@ export function AskTheStore() {
         ) : null}
       </AnimatePresence>
 
-      <div
-        className={`pointer-events-none fixed bottom-5 right-5 flex flex-col-reverse items-end gap-3 ${
-          open ? "z-221" : "z-150"
-        }`}
-      >
-        <div className="pointer-events-auto">
-          {open ? (
-            <motion.button
-              type="button"
-              initial={false}
-              animate={{ scale: 1 }}
-              whileTap={{ scale: 0.94 }}
-              onClick={closeAskStore}
-              aria-label="Close Ask store AI"
-              aria-expanded
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-900 shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
-            >
-              <CloseIcon className="h-5 w-5" />
-            </motion.button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => openAskStore()}
-              className="cursor-pointer rounded-full border border-neutral-200 bg-neutral-900 px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
-              aria-haspopup="dialog"
-              aria-expanded={false}
-            >
-              Ask store AI
-            </button>
-          )}
-        </div>
+      {showFloatingUi ? (
+        <div
+          className={`pointer-events-none fixed bottom-5 right-5 flex flex-col-reverse items-end gap-3 ${
+            open ? "z-221" : "z-150"
+          }`}
+        >
+          <div className="pointer-events-auto">
+            {open ? (
+              <motion.button
+                type="button"
+                initial={false}
+                animate={{ scale: 1 }}
+                whileTap={{ scale: 0.94 }}
+                onClick={closeAskStore}
+                aria-label="Close Ask store AI"
+                aria-expanded
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-900 shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+              >
+                <CloseIcon className="h-5 w-5" />
+              </motion.button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAskStore()}
+                className="cursor-pointer rounded-full border border-neutral-200 bg-neutral-900 px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+                aria-haspopup="dialog"
+                aria-expanded={false}
+              >
+                Ask store AI
+              </button>
+            )}
+          </div>
 
-        <AnimatePresence>
-          {open ? (
-            <motion.div
-              key="ask-store-panel"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby={titleId}
-              initial={{ opacity: 0, y: 14, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 14, scale: 0.97 }}
-              transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.85 }}
-              className="pointer-events-auto flex h-[min(84dvh,660px)] w-[min(calc(100vw-1.5rem),30rem)] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_18px_48px_-8px_rgba(0,0,0,0.22)]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3 sm:px-5">
+          <AnimatePresence>
+            {open ? (
+              <motion.div
+                key="ask-store-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 14, scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.85 }}
+                className="pointer-events-auto flex h-[min(84dvh,660px)] w-[min(calc(100vw-1.5rem),30rem)] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_18px_48px_-8px_rgba(0,0,0,0.22)]"
+                onClick={(e) => e.stopPropagation()}
+              >
+              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-neutral-100 shell-x py-3">
                 <div className="min-w-0">
                   <h2 id={titleId} className="truncate text-base font-semibold tracking-tight text-neutral-900">
                     Ask store AI
@@ -677,7 +683,7 @@ export function AskTheStore() {
 
               <div
                 ref={listRef}
-                className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-4 py-4 sm:px-5"
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth shell-x py-4"
               >
                 <LayoutGroup>
                   <div className="flex min-h-full flex-col justify-end gap-3">
@@ -740,7 +746,7 @@ export function AskTheStore() {
                 </LayoutGroup>
               </div>
 
-              <footer className="shrink-0 border-t border-neutral-100 bg-neutral-50/95 px-4 pb-3 pt-3 sm:px-5">
+              <footer className="shrink-0 border-t border-neutral-100 bg-neutral-50/95 shell-x pb-3 pt-3">
                 {error ? (
                   <p className="mb-2 whitespace-pre-wrap rounded-lg bg-red-50 px-2.5 py-2 text-xs text-red-800" role="alert">
                     {error}
@@ -786,10 +792,11 @@ export function AskTheStore() {
                   </p>
                 ) : null}
               </footer>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      ) : null}
     </>
   );
 }

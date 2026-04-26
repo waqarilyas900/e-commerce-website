@@ -8,7 +8,7 @@ export default function ContactPage() {
       <Header />
       <main
         id="MainContent"
-        className="main-content mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8"
+        className="main-content mx-auto max-w-3xl shell-x py-6 sm:py-10"
       >
         <ContactPageContent />
       </main>

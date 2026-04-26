@@ -7,7 +7,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
       <Header />
       <main
         id="MainContent"
-        className="main-content mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8"
+        className="main-content mx-auto w-full max-w-7xl shell-x py-6 sm:py-8"
       >
         {children}
       </main>

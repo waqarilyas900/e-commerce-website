@@ -222,7 +222,7 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
                   className="pointer-events-none absolute inset-0 z-1"
                   style={{ backgroundImage: HERO_OVERLAY }}
                 />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center px-4 pb-20 sm:pb-24 md:pb-28">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-20 sm:pb-24 md:pb-28">
                   <motion.div
                     key={`hero-title-${slideStableKey(slide, index)}`}
                     initial={

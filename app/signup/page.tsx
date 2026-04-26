@@ -10,7 +10,7 @@ export default function SignupPage() {
       <SignedOutOnly whenSignedInHref="/account">
         <main
           id="MainContent"
-          className="main-content mx-auto max-w-md px-4 py-10 sm:px-6 sm:py-14 lg:px-8"
+          className="main-content mx-auto max-w-md shell-x py-10 sm:py-14"
         >
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
             Create account

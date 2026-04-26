@@ -3,7 +3,7 @@
 export function TrustRatingStrip() {
   return (
     <section className="border-t border-neutral-200 bg-white py-6">
-      <div className="mx-auto flex max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-center shell-x">
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-neutral-800">
           <span className="inline-flex items-center text-emerald-600" aria-hidden>
             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
