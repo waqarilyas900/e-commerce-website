@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
       <Header />
       <main
         id="MainContent"
-        className="main-content mx-auto max-w-md px-4 py-12 sm:px-6 lg:px-8"
+        className="main-content mx-auto max-w-md shell-x py-12"
       >
         <h1 className="text-3xl font-semibold tracking-tight">Reset password</h1>
         <p className="mt-2 text-sm text-neutral-600">

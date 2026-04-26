@@ -170,12 +170,12 @@ function CollectionSidebar({
 function ProductCardSkeleton() {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white">
-      <div className="h-60 shrink-0 animate-pulse bg-neutral-100" />
-      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-        <div className="h-3 w-28 animate-pulse rounded bg-neutral-100" />
-        <div className="h-4 w-full max-w-[90%] animate-pulse rounded bg-neutral-100" />
-        <div className="h-3 w-24 animate-pulse rounded bg-neutral-100" />
-        <div className="mt-auto h-9 w-full animate-pulse rounded-md bg-neutral-100" />
+      <div className="aspect-4/5 w-full shrink-0 animate-pulse bg-neutral-100 sm:aspect-auto sm:h-60" />
+      <div className="flex min-h-0 flex-1 flex-col gap-1 p-1.5 sm:gap-1.5 sm:p-2.5">
+        <div className="h-2.5 w-24 animate-pulse rounded bg-neutral-100 sm:h-3 sm:w-28" />
+        <div className="h-3.5 w-full max-w-[90%] animate-pulse rounded bg-neutral-100 sm:h-4" />
+        <div className="h-2.5 w-20 animate-pulse rounded bg-neutral-100 sm:h-3 sm:w-24" />
+        <div className="mt-auto h-8 w-full animate-pulse rounded-md bg-neutral-100 sm:h-9" />
       </div>
     </div>
   );
@@ -282,7 +282,7 @@ export function CollectionListingControls({
         ) : (
           <>
             {/* Empty: keep nav + message (reference-style flow on small screens) */}
-            <div className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden">
+            <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:hidden">
               <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
                 <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
               </div>
@@ -290,7 +290,7 @@ export function CollectionListingControls({
                 No products match your filters.
               </div>
             </div>
-            <div className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid">
+            <div className="hidden grid-cols-4 items-stretch gap-1 sm:gap-1.5 lg:gap-2 lg:grid">
               <aside className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
                 <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
               </aside>
@@ -305,7 +305,7 @@ export function CollectionListingControls({
           {hideCollectionNav ? (
             <>
               <div
-                className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden"
+                className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:hidden"
                 aria-busy={isListPending}
                 aria-live="polite"
               >
@@ -327,7 +327,7 @@ export function CollectionListingControls({
                     ))}
               </div>
               <div
-                className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid"
+                className="hidden grid-cols-4 items-stretch gap-1 sm:gap-1.5 lg:gap-2 lg:grid"
                 aria-busy={isListPending}
                 aria-live="polite"
               >
@@ -357,7 +357,7 @@ export function CollectionListingControls({
                 lg+: sidebar column + 3-col product grid.
               */}
               <div
-                className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2.5 md:grid-cols-3 lg:hidden"
+                className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:hidden"
                 aria-busy={isListPending}
                 aria-live="polite"
               >
@@ -383,7 +383,7 @@ export function CollectionListingControls({
               </div>
 
               <div
-                className="hidden grid-cols-4 items-stretch gap-1.5 sm:gap-2.5 lg:grid"
+                className="hidden grid-cols-4 items-stretch gap-1 sm:gap-1.5 lg:gap-2 lg:grid"
                 aria-busy={isListPending}
                 aria-live="polite"
               >

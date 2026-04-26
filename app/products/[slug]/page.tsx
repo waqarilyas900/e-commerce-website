@@ -36,7 +36,7 @@ export default async function ProductPage({ params }: Props) {
         <Header />
         <main
           id="MainContent"
-          className="main-content mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+          className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
         >
           <ProductPdp
             key={detail.product.id}
@@ -48,9 +48,9 @@ export default async function ProductPage({ params }: Props) {
             assets={detail.assets}
             colorById={detail.colorById}
           />
-          <section className="mt-10">
+          <section className="mt-8 sm:mt-10">
             <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
-            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-1 sm:mt-4 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
               {related.map((item, idx) => (
                 <ProductCard
                   key={item.id}

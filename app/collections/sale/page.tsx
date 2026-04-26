@@ -20,20 +20,20 @@ type Props = {
 
 function ListingFallback() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="grid grid-cols-2 gap-3">
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
       </div>
-      <div className="grid grid-cols-2 items-start gap-4 sm:gap-6 md:grid-cols-3 lg:hidden">
+      <div className="grid grid-cols-2 items-start gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:hidden">
         <div className="h-40 max-w-36 animate-pulse rounded-lg bg-neutral-100" />
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
         ))}
       </div>
-      <div className="hidden gap-6 lg:grid lg:grid-cols-4">
+      <div className="hidden gap-2 lg:grid lg:grid-cols-4">
         <div className="h-40 animate-pulse rounded-lg bg-neutral-100" />
-        <div className="grid min-w-0 grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:col-span-3 lg:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:col-span-3 lg:grid-cols-3 lg:gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
           ))}
@@ -76,7 +76,7 @@ export default async function CollectionsSalePage({ searchParams }: Props) {
     <>
       <TopStrip />
       <Header />
-      <main id="MainContent" className="main-content mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
             Sale and Discount

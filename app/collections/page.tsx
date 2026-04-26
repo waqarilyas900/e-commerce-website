@@ -1,8 +1,7 @@
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
-import { dbListAllActiveProductsForCards, dbListCollections } from "@/app/lib/db/catalog";
+import { dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export default async function CollectionsPage() {
@@ -10,41 +9,25 @@ export default async function CollectionsPage() {
     notFound();
   }
 
-  const listCols = await dbListCollections();
   const allProducts = await dbListAllActiveProductsForCards();
 
   return (
     <>
       <TopStrip />
       <Header />
-      <main id="MainContent" className="main-content mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+      <main
+        id="MainContent"
+        className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
+      >
         <ScrollReveal>
           <section>
-            <h1 className="text-3xl font-semibold tracking-tight">Shop Collections</h1>
-            <p className="mt-2 text-neutral-600">Browse collections and products from the catalog.</p>
-            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {listCols.map((collection) => (
-                <Link
-                  key={collection.slug}
-                  href={`/collections/${collection.slug}`}
-                  className="rounded-xl border border-neutral-200 bg-white p-4"
-                >
-                  <p className="font-semibold">{collection.name}</p>
-                  <p className="mt-1 text-sm text-neutral-600">{collection.description}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </ScrollReveal>
-
-        <ScrollReveal delay={0.06}>
-          <section>
-            <h2 className="text-2xl font-semibold tracking-tight">All Products</h2>
-            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <h1 className="text-3xl font-semibold tracking-tight">All Products</h1>
+            <div className="mt-3 grid grid-cols-2 gap-1 sm:mt-4 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
               {allProducts.map((product, idx) => (
                 <ProductCard
                   key={product.id}
                   product={product}
+                  showAddToCart={false}
                   revealDelay={Math.min(idx * 0.08, 0.36)}
                   clampTitle
                 />

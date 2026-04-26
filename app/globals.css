@@ -115,6 +115,24 @@ body {
   min-height: 300px;
 }
 
+/**
+ * Horizontal inset for `max-w-*` page shells (header, footer, main, home sections).
+ * Single source: px-2 → sm:px-3 → lg:px-4 (tighter than legacy sm:px-5 / lg:px-6).
+ */
+.shell-x {
+  padding-inline: 0.5rem;
+}
+@media (min-width: 640px) {
+  .shell-x {
+    padding-inline: 0.75rem;
+  }
+}
+@media (min-width: 1024px) {
+  .shell-x {
+    padding-inline: 1rem;
+  }
+}
+
 /* Home collection rails — scrollbar hidden until user scrolls (see .rail-scroll--interacting) */
 .rail-scroll {
   -ms-overflow-style: none;

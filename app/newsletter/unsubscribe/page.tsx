@@ -59,7 +59,7 @@ export default async function NewsletterUnsubscribePage({
   return (
     <main
       id="MainContent"
-      className="mx-auto flex min-h-[60vh] max-w-lg flex-col justify-center px-6 py-16 text-center"
+      className="mx-auto flex min-h-[60vh] max-w-lg flex-col justify-center shell-x py-16 text-center"
     >
       <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
       <p className={`mt-3 text-sm leading-relaxed ${ok ? "text-neutral-600" : "text-neutral-700"}`}>

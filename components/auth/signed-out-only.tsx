@@ -58,7 +58,7 @@ export function SignedOutOnly({ children, whenSignedInHref }: Props) {
     return (
       <main
         id="MainContent"
-        className="main-content mx-auto max-w-md px-4 py-12 sm:px-6 lg:px-8"
+        className="main-content mx-auto max-w-md shell-x py-12"
       >
         <p className="text-sm text-neutral-600" role="status">
           Loading…

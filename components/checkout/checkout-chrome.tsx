@@ -18,14 +18,14 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
     ? "min-h-screen bg-[#f6f6f6]"
     : "min-h-screen bg-white md:bg-[linear-gradient(to_right,#ffffff_0%,#ffffff_50%,#f5f5f5_50%,#f5f5f5_100%)]";
   const contentWrapClass = isComplete
-    ? "mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8"
-    : "mx-auto max-w-7xl px-4 pb-6 pt-0 sm:px-6 lg:px-8";
+    ? "mx-auto max-w-7xl shell-x py-5 sm:py-6"
+    : "mx-auto max-w-7xl shell-x pb-5 pt-0 sm:pb-6";
 
   return (
     <div className={chromeClass}>
       {isComplete ? (
         <header className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 shell-x py-3 sm:gap-4 sm:py-4">
             <Link href="/" className="flex min-w-0 items-center gap-2.5">
               <StoreLogoMark size={40} className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
               <span className="truncate text-sm font-semibold capitalize tracking-wide text-neutral-900 sm:text-base">
@@ -56,7 +56,7 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
 
       {!isComplete ? (
         <div className="hidden border-b border-neutral-200 bg-white sm:block md:hidden">
-          <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl shell-x py-2.5 sm:py-3">
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-xs text-neutral-700 sm:text-sm">
               <span className="font-medium text-neutral-900">Delivery across Pakistan</span>
               <span className="hidden text-neutral-300 sm:inline" aria-hidden>
@@ -72,7 +72,7 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
         </div>
       ) : (
         <div className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl shell-x py-2.5 sm:py-3">
             <p className="text-center text-xs text-neutral-600 sm:text-sm">
               Thank you — your order is saved. Keep your order number for support.
             </p>

@@ -7,7 +7,7 @@ function LoginMain() {
   return (
     <main
       id="MainContent"
-      className="main-content mx-auto max-w-md px-4 py-12 sm:px-6 lg:px-8"
+      className="main-content mx-auto max-w-md shell-x py-12"
     >
       <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
       <p className="mt-2 text-sm text-neutral-600">
@@ -33,7 +33,7 @@ export default function LoginPage() {
         fallback={
           <main
             id="MainContent"
-            className="main-content mx-auto max-w-md px-4 py-12 sm:px-6 lg:px-8"
+            className="main-content mx-auto max-w-md shell-x py-12"
           >
             <p className="text-sm text-neutral-500">Loading…</p>
           </main>
