@@ -1,8 +1,32 @@
+import type { Metadata } from "next";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
+import {
+  buildPageMetadata,
+  loadSeoOverrideForRoute,
+  loadSiteIdentity,
+} from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [identity, override] = await Promise.all([
+    loadSiteIdentity(),
+    loadSeoOverrideForRoute("/collections"),
+  ]);
+  return buildPageMetadata({
+    pathname: "/collections",
+    identity,
+    override,
+    defaults: {
+      title: "All Products",
+      description:
+        identity.siteDescription ||
+        `Browse the full catalog at ${identity.storeName || identity.siteTitle || "our store"}.`,
+    },
+  });
+}
 
 export default async function CollectionsPage() {
   if (!hasCatalogDb()) {

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import { dbGetCollectionBySlug, dbListProductsByCollectionSlug } from "@/app/lib/db/catalog";
@@ -13,6 +14,17 @@ import {
 } from "@/app/lib/collection-query";
 import { CollectionListingControls } from "@/components/collections/collection-listing-controls";
 import type { Product } from "@/app/lib/catalog/types";
+import {
+  buildPageMetadata,
+  canonicalUrlFor,
+  loadSeoOverrideForSubject,
+  loadSiteIdentity,
+} from "@/lib/seo";
+import {
+  JsonLd,
+  breadcrumbJsonLd,
+  collectionJsonLd,
+} from "@/lib/seo/jsonld";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -42,6 +54,54 @@ function ListingFallback() {
       </div>
     </div>
   );
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const sp = searchParams != null ? await searchParams : {};
+  const pathname = `/collections/${slug}`;
+
+  if (!hasCatalogDb()) {
+    const identity = await loadSiteIdentity();
+    return buildPageMetadata({
+      pathname,
+      searchParams: sp,
+      identity,
+      override: null,
+      defaults: { title: "Collection", description: identity.siteDescription, forceNoindex: true },
+    });
+  }
+
+  const [collection, identity] = await Promise.all([
+    dbGetCollectionBySlug(slug),
+    loadSiteIdentity(),
+  ]);
+
+  if (!collection) {
+    return buildPageMetadata({
+      pathname,
+      searchParams: sp,
+      identity,
+      override: null,
+      defaults: { title: "Collection not found", description: identity.siteDescription, forceNoindex: true },
+    });
+  }
+
+  const override = await loadSeoOverrideForSubject("collection", collection.id);
+
+  return buildPageMetadata({
+    pathname,
+    searchParams: sp,
+    identity,
+    override,
+    defaults: {
+      title: collection.name,
+      description: collection.description,
+      images: collection.hero_image
+        ? [{ url: collection.hero_image, alt: collection.name }]
+        : [],
+    },
+  });
 }
 
 export default async function CollectionDetailsPage({ params, searchParams }: Props) {
@@ -89,8 +149,23 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
   );
   list = sortCollectionProducts(list, parsed.sort, featuredIndex);
 
+  const canonical = canonicalUrlFor(`/collections/${slug}`);
+  const collectionLd = collectionJsonLd({
+    url: canonical,
+    name: collection.name,
+    description: collection.description,
+    products: baseline,
+  });
+  const crumbs = breadcrumbJsonLd([
+    { name: "Home", url: "/" },
+    { name: "Collections", url: "/collections" },
+    { name: collection.name, url: `/collections/${slug}` },
+  ]);
+
   return (
     <>
+      <JsonLd id="ld-collection" data={collectionLd} />
+      <JsonLd id="ld-breadcrumb" data={crumbs} />
       <TopStrip />
       <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">

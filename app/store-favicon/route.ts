@@ -19,8 +19,9 @@ function absolutizeFavicon(href: string, base: string): string {
  * request the legacy path get the admin-configured asset instead of Next's default.
  */
 export async function GET() {
+  const envIcon = process.env.NEXT_PUBLIC_FAVICON_URL?.trim() ?? "";
   const brand = await loadStoreBrandFromDatabase();
-  const raw = brand.faviconUrl.trim();
+  const raw = envIcon || brand.faviconUrl.trim();
   if (!raw) {
     return new NextResponse(null, { status: 404 });
   }

@@ -1,15 +1,42 @@
+import type { Metadata } from "next";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { SearchPageInteractive } from "@/components/search/search-page-interactive";
 import { dbSearchProducts } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
+import {
+  buildPageMetadata,
+  loadSeoOverrideForRoute,
+  loadSiteIdentity,
+} from "@/lib/seo";
 
 type Props = {
   searchParams: Promise<{ q?: string }>;
 };
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { q = "" } = await searchParams;
+  const query = q.trim();
+  const [identity, override] = await Promise.all([
+    loadSiteIdentity(),
+    loadSeoOverrideForRoute("/search"),
+  ]);
+  const title = query ? `Search: ${query}` : "Search";
+  return buildPageMetadata({
+    pathname: "/search",
+    searchParams: { q: query || undefined },
+    identity,
+    override,
+    defaults: {
+      title,
+      description: identity.siteDescription || `Search products at ${identity.storeName || identity.siteTitle || "our store"}.`,
+      forceNoindex: true,
+    },
+  });
+}
 
 export default async function SearchPage({ searchParams }: Props) {
   if (!hasCatalogDb()) {

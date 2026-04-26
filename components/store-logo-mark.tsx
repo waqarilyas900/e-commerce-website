@@ -9,7 +9,7 @@ type Props = {
 };
 
 /**
- * Header / drawer logo: uses DB `favicon_url` when set, otherwise `/dummy-logo.svg`.
+ * Header / drawer logo: uses store brand `faviconUrl` when set, otherwise `/dummy-logo.svg`.
  * Remote favicons use `<img>` so Next does not inject `<link rel="preload">` for LCP like it does for `next/image` + `priority`.
  */
 export function StoreLogoMark({ size, className }: Props) {

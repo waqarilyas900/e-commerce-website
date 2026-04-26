@@ -15,6 +15,12 @@ import { AppToaster } from "@/components/ui/app-toaster";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
 import { DiscountNotificationPrompt } from "@/components/ui/discount-notification-prompt";
 import { AskTheStore } from "@/components/ask-the-store/ask-the-store";
+import { loadAnalyticsConfig, loadSiteIdentity } from "@/lib/seo";
+import {
+  JsonLd,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo/jsonld";
 import "./globals.css";
 
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
@@ -74,18 +80,30 @@ function getEnvFaviconUrl(): string {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await loadStoreBrandFromDatabase();
-  const title =
-    brand.siteTitle.trim() || brand.storeName.trim() || "Store";
-  const description = brand.siteDescription.trim() || undefined;
+  const [brand, identity] = await Promise.all([
+    loadStoreBrandFromDatabase(),
+    loadSiteIdentity(),
+  ]);
+  const siteName =
+    identity.siteTitle.trim() ||
+    brand.siteTitle.trim() ||
+    identity.storeName.trim() ||
+    brand.storeName.trim() ||
+    "Store";
+  const description =
+    identity.siteDescription.trim() || brand.siteDescription.trim() || undefined;
   const siteBase = getPublicSiteUrl();
   const rawIcon = getEnvFaviconUrl() || brand.faviconUrl.trim();
   const icon = rawIcon ? absolutizeFavicon(rawIcon, siteBase) : undefined;
   const mime = icon ? faviconMimeType(icon) : undefined;
+
+  // Per-page generateMetadata returns its own title; keep `default` for any page
+  // that doesn't override (e.g. error boundaries).
   return {
     metadataBase: new URL(siteBase),
-    title,
+    title: { default: siteName, template: `%s | ${siteName}` },
     description,
+    applicationName: siteName,
     icons: icon
       ? {
           icon: [{ url: icon, ...(mime ? { type: mime } : {}) }],
@@ -93,6 +111,21 @@ export async function generateMetadata(): Promise<Metadata> {
           apple: [{ url: icon, sizes: "180x180", ...(mime ? { type: mime } : {}) }],
         }
       : undefined,
+    verification: {
+      google: identity.verifications.google || undefined,
+      yandex: identity.verifications.yandex || undefined,
+      other: {
+        ...(identity.verifications.bing
+          ? { "msvalidate.01": identity.verifications.bing }
+          : {}),
+        ...(identity.verifications.facebookDomain
+          ? { "facebook-domain-verification": identity.verifications.facebookDomain }
+          : {}),
+        ...(identity.verifications.pinterest
+          ? { "p:domain_verify": identity.verifications.pinterest }
+          : {}),
+      },
+    },
   };
 }
 
@@ -101,22 +134,37 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [baseBrand, announcementBar, collectionLinks, headerNavMenuItems] =
+  const [baseBrand, announcementBar, collectionLinks, headerNavMenuItems, identity, analytics] =
     await Promise.all([
       loadStoreBrandFromDatabase(),
       getAnnouncementBarForLayout(),
       getNavCollectionLinks(),
       getHeaderNavMenuItems(),
+      loadSiteIdentity(),
+      loadAnalyticsConfig(),
     ]);
   const storeBrand = { ...baseBrand, announcementBar };
   const envFavicon = getEnvFaviconUrl();
   const faviconRaw = envFavicon || baseBrand.faviconUrl.trim();
   const faviconHref = faviconRaw ? absolutizeFavicon(faviconRaw, getPublicSiteUrl()) : "";
   const faviconType = faviconHref ? faviconMimeType(faviconHref) : undefined;
+  const orgLd = organizationJsonLd({
+    ...identity,
+    storeName: identity.storeName || baseBrand.storeName,
+    siteTitle: identity.siteTitle || baseBrand.siteTitle,
+    organizationLogoUrl: identity.organizationLogoUrl || baseBrand.faviconUrl,
+  });
+  const siteLd = websiteJsonLd({
+    ...identity,
+    siteTitle: identity.siteTitle || baseBrand.siteTitle,
+    storeName: identity.storeName || baseBrand.storeName,
+  });
+  const htmlLang = (identity.locale || "en_US").split("_")[0] || "en";
+  const analyticsId = analytics.googleAnalyticsId;
 
   return (
     <html
-      lang="en"
+      lang={htmlLang}
       dir="ltr"
       className={`js ${jost.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
@@ -134,6 +182,21 @@ export default async function RootLayout({
               rel="apple-touch-icon"
               href={faviconHref}
               {...(faviconType ? { type: faviconType } : {})}
+            />
+          </>
+        ) : null}
+        <JsonLd id="ld-organization" data={orgLd} />
+        <JsonLd id="ld-website" data={siteLd} />
+        {analyticsId ? (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${analyticsId}',{anonymize_ip:true});`,
+              }}
             />
           </>
         ) : null}

@@ -1,5 +1,28 @@
+import type { Metadata } from "next";
 import { ContactPageContent } from "@/components/contact/contact-page-content";
 import { Footer, Header, TopStrip } from "@/components/storefront";
+import {
+  buildPageMetadata,
+  loadSeoOverrideForRoute,
+  loadSiteIdentity,
+} from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [identity, override] = await Promise.all([
+    loadSiteIdentity(),
+    loadSeoOverrideForRoute("/contact"),
+  ]);
+  const storeName = identity.storeName || identity.siteTitle || "our store";
+  return buildPageMetadata({
+    pathname: "/contact",
+    identity,
+    override,
+    defaults: {
+      title: "Contact",
+      description: `Get in touch with ${storeName} — questions, orders, partnerships, and support.`,
+    },
+  });
+}
 
 export default function ContactPage() {
   return (

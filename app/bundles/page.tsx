@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { AddBundleButton } from "@/components/cart/AddBundleButton";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import { mapProductCard, dbGetProductDetailBySlug } from "@/app/lib/db/catalog";
@@ -5,6 +6,29 @@ import { hasCatalogDb } from "@/app/lib/db/env";
 import { dbGetHomeBundles } from "@/app/lib/home-bundles-db";
 import type { Product } from "@/app/lib/catalog/types";
 import { notFound } from "next/navigation";
+import {
+  buildPageMetadata,
+  loadSeoOverrideForRoute,
+  loadSiteIdentity,
+} from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [identity, override] = await Promise.all([
+    loadSiteIdentity(),
+    loadSeoOverrideForRoute("/bundles"),
+  ]);
+  return buildPageMetadata({
+    pathname: "/bundles",
+    identity,
+    override,
+    defaults: {
+      title: "Bundle Deals",
+      description:
+        identity.siteDescription ||
+        `Curated bundle deals from ${identity.storeName || identity.siteTitle || "our store"}.`,
+    },
+  });
+}
 
 async function resolveSlug(slug: string): Promise<{
   card: Product | null;

@@ -56,7 +56,7 @@ export type StoreBrandConfig = {
     phone: string;
     hoursLine: string;
     exploreLinks: { label: string; href: string }[];
-    /** Admin-editable heading above policy links (Customer care block). */
+    /** Heading above policy/footer links (Customer care block); from `footer_settings`. */
     customerCareSectionTitle: string;
     /**
      * Admin-defined labels, order, and destinations (resolved `href` per row).

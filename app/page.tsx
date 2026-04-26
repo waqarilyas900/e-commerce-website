@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   Footer,
   Header,
@@ -11,6 +12,29 @@ import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
 import { getHomeMarketingData } from "@/app/lib/home-marketing";
 import { getHomeRailSections } from "@/app/lib/home-rails";
+import {
+  buildPageMetadata,
+  loadSeoOverrideForRoute,
+  loadSiteIdentity,
+} from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [identity, override] = await Promise.all([
+    loadSiteIdentity(),
+    loadSeoOverrideForRoute("/"),
+  ]);
+  return buildPageMetadata({
+    pathname: "/",
+    identity,
+    override,
+    defaults: {
+      title: identity.siteTitle || identity.storeName || "Store",
+      description:
+        identity.siteDescription ||
+        `Shop at ${identity.storeName || identity.siteTitle || "our store"}.`,
+    },
+  });
+}
 
 export default async function Home() {
   const [railSections, homeMarketing] = await Promise.all([

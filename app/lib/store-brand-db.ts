@@ -46,52 +46,6 @@ function normalizeInternalNavPath(href: string): string {
   return p;
 }
 
-function isAllowedFooterNavHref(href: string): boolean {
-  const t = href.trim();
-  if (!t || t.length > 2048) return false;
-  const lower = t.toLowerCase();
-  if (lower.startsWith("javascript:") || lower.startsWith("data:")) return false;
-  if (/[\s<>"`]/.test(t)) return false;
-  if (t.startsWith("/") && !t.startsWith("//")) return true;
-  if (t.startsWith("https://")) return true;
-  if (t.startsWith("http://localhost") || t.startsWith("http://127.0.0.1")) return true;
-  return false;
-}
-
-/** Resolve DB row to `{ label, href }` for the storefront. */
-function parseFooterPolicyLinks(raw: unknown): { label: string; href: string }[] {
-  if (!Array.isArray(raw)) return [];
-  const out: { label: string; href: string }[] = [];
-  const seen = new Set<string>();
-  const contact = normalizeInternalNavPath("/contact");
-
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const o = item as Record<string, unknown>;
-    const label = typeof o.label === "string" ? o.label.trim() : "";
-    if (!label) continue;
-
-    const hrefRaw = typeof o.href === "string" ? o.href.trim() : "";
-    const slugRaw = typeof o.slug === "string" ? o.slug.trim().toLowerCase() : "";
-
-    let href = "";
-    if (hrefRaw && isAllowedFooterNavHref(hrefRaw)) {
-      href = hrefRaw.startsWith("/") ? normalizeInternalNavPath(hrefRaw) : hrefRaw;
-    } else if (slugRaw && SLUG_RE.test(slugRaw)) {
-      href = `/${slugRaw}`;
-    } else {
-      continue;
-    }
-
-    const dedupeKey = href.startsWith("/") ? normalizeInternalNavPath(href) : href;
-    if (dedupeKey === contact) continue;
-    if (seen.has(dedupeKey)) continue;
-    seen.add(dedupeKey);
-    out.push({ label, href });
-  }
-  return out;
-}
-
 function mapFooterItemsFromPolicyPages(
   rows: unknown,
 ): { label: string; href: string }[] {
@@ -144,8 +98,8 @@ function parseWhyShopBlock(raw: unknown): StoreBrandConfig["whyShop"] {
 }
 
 /**
- * Live storefront identity and marketing blocks from `store_settings` + `home_page_settings`.
- * No static catalog or env fallbacks.
+ * Live storefront identity and marketing blocks from `store_settings`, `footer_settings`,
+ * `home_page_settings`, and `policy_pages` (footer links).
  */
 export async function loadStoreBrandFromDatabase(): Promise<StoreBrandConfig> {
   const empty: StoreBrandConfig = {
@@ -171,12 +125,17 @@ export async function loadStoreBrandFromDatabase(): Promise<StoreBrandConfig> {
 
   try {
     const supabase = await createClient();
-    const [storeRes, homeRes, footerItemsRes] = await Promise.all([
+    const [storeRes, footerTitleRes, homeRes, footerItemsRes] = await Promise.all([
       supabase
         .from("store_settings")
         .select(
-          "store_name, site_title, site_description, favicon_url, support_email, footer_phone, footer_hours_line, footer_links, footer_customer_care_title, footer_policy_links",
+          "store_name, site_title, site_description, support_email, footer_phone, footer_hours_line, footer_links",
         )
+        .eq("id", 1)
+        .maybeSingle(),
+      supabase
+        .from("footer_settings")
+        .select("customer_care_title")
         .eq("id", 1)
         .maybeSingle(),
       supabase
@@ -200,18 +159,22 @@ export async function loadStoreBrandFromDatabase(): Promise<StoreBrandConfig> {
     const footerItems =
       !footerItemsRes.error && footerItemsRes.data
         ? mapFooterItemsFromPolicyPages(footerItemsRes.data)
-        : parseFooterPolicyLinks(s.footer_policy_links);
+        : [];
 
     const storeName = (s.store_name ?? "").trim();
     const siteTitleRaw = (s.site_title ?? "").trim();
     const siteDescription = (s.site_description ?? "").trim();
-    const faviconUrl = (s.favicon_url ?? "").trim();
+    const careRaw =
+      !footerTitleRes.error && footerTitleRes.data
+        ? String((footerTitleRes.data as { customer_care_title?: string }).customer_care_title ?? "").trim()
+        : "";
+    const customerCareTitle = careRaw || "Customer care";
 
     return {
       storeName,
       siteTitle: siteTitleRaw || storeName,
       siteDescription,
-      faviconUrl,
+      faviconUrl: "",
       featured: parseFeaturedBlock(h?.featured_block),
       whyShop: parseWhyShopBlock(h?.why_shop_block),
       footer: {
@@ -219,7 +182,7 @@ export async function loadStoreBrandFromDatabase(): Promise<StoreBrandConfig> {
         phone: (s.footer_phone ?? "").trim(),
         hoursLine: (s.footer_hours_line ?? "").trim(),
         exploreLinks: parseFooterLinks(s.footer_links),
-        customerCareSectionTitle: (s.footer_customer_care_title ?? "").trim() || "Customer care",
+        customerCareSectionTitle: customerCareTitle,
         policyFooterLinks: footerItems,
       },
     };

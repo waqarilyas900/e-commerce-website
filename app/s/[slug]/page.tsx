@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import {
@@ -16,11 +17,64 @@ import {
 } from "@/app/lib/collection-query";
 import { CollectionListingControls } from "@/components/collections/collection-listing-controls";
 import type { Product } from "@/app/lib/catalog/types";
+import {
+  buildPageMetadata,
+  canonicalUrlFor,
+  loadSeoOverrideForSubject,
+  loadSiteIdentity,
+} from "@/lib/seo";
+import {
+  JsonLd,
+  breadcrumbJsonLd,
+  collectionJsonLd,
+} from "@/lib/seo/jsonld";
 
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const sp = searchParams != null ? await searchParams : {};
+  const pathname = `/s/${slug}`;
+
+  if (!hasCatalogDb()) {
+    const identity = await loadSiteIdentity();
+    return buildPageMetadata({
+      pathname,
+      searchParams: sp,
+      identity,
+      override: null,
+      defaults: { title: "Section", description: identity.siteDescription, forceNoindex: true },
+    });
+  }
+
+  const [section, identity] = await Promise.all([
+    dbGetActiveHomePageSectionWithTagsBySlug(slug),
+    loadSiteIdentity(),
+  ]);
+  if (!section) {
+    return buildPageMetadata({
+      pathname,
+      searchParams: sp,
+      identity,
+      override: null,
+      defaults: { title: "Section not found", description: "", forceNoindex: true },
+    });
+  }
+  const override = await loadSeoOverrideForSubject("home_section", section.id);
+  return buildPageMetadata({
+    pathname,
+    searchParams: sp,
+    identity,
+    override,
+    defaults: {
+      title: section.name,
+      description: `${section.name} from ${identity.storeName || identity.siteTitle || "our store"}.`,
+    },
+  });
+}
 
 function ListingFallback() {
   return (
@@ -76,8 +130,21 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
   );
   list = sortCollectionProducts(list, parsed.sort, featuredIndex);
 
+  const canonical = canonicalUrlFor(`/s/${slug}`);
+  const collectionLd = collectionJsonLd({
+    url: canonical,
+    name: section.name,
+    products: baseline,
+  });
+  const crumbs = breadcrumbJsonLd([
+    { name: "Home", url: "/" },
+    { name: section.name, url: `/s/${slug}` },
+  ]);
+
   return (
     <>
+      <JsonLd id="ld-section" data={collectionLd} />
+      <JsonLd id="ld-breadcrumb-section" data={crumbs} />
       <TopStrip />
       <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
