@@ -17,6 +17,7 @@ import {
   loadSiteIdentity,
   stripHtml,
 } from "@/lib/seo";
+import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 import {
   JsonLd,
   breadcrumbJsonLd,
@@ -150,6 +151,7 @@ export default async function ProductPage({ params }: Props) {
           variants={detail.variants}
           assets={detail.assets}
           colorById={detail.colorById}
+          safeDescriptionHtml={sanitizeRichHtml(detail.product.description)}
         />
         <section className="mt-8 sm:mt-10">
           <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>

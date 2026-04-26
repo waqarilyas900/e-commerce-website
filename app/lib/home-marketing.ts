@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { isEffectivelyEmptyHtml } from "./html-content";
+import { sanitizeRichHtml, sanitizeRichHtmlList } from "@/lib/sanitize-rich-html";
 import type { AnnouncementBarSettings, HeroSlide } from "./store-brand.types";
 
 const DEFAULT_ANNOUNCEMENT_BG = "#1c1d1d";
@@ -65,7 +66,10 @@ export async function getAnnouncementBarForLayout(): Promise<AnnouncementBarSett
       return fallback;
     }
 
-    const messages = parseAnnouncementMessagesJson(data.announcement_messages);
+    const rawMessages = parseAnnouncementMessagesJson(data.announcement_messages);
+    // Sanitize on the server so client components only render trusted HTML and
+    // we never pull a server-side DOM (jsdom) into the storefront bundle.
+    const messages = sanitizeRichHtmlList(rawMessages);
     const html = messages[0] ?? "";
 
     const rawMs = data.announcement_rotation_ms;
@@ -112,7 +116,9 @@ export async function getHomeMarketingData(): Promise<{
     }
 
     const rawMission = settingsRes.data?.mission_paragraph ?? "";
-    const missionParagraph = isEffectivelyEmptyHtml(rawMission) ? "" : rawMission;
+    const missionParagraph = isEffectivelyEmptyHtml(rawMission)
+      ? ""
+      : sanitizeRichHtml(rawMission);
 
     const rows = slidesRes.data ?? [];
     const slides: HeroSlide[] = rows.flatMap((r) => {

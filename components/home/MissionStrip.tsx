@@ -1,26 +1,16 @@
-"use client";
-
-import { useMemo } from "react";
-import DOMPurify from "isomorphic-dompurify";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 type MissionStripProps = {
-  /** Rich HTML from the admin editor (TipTap); sanitized before render. */
+  /**
+   * Sanitized rich HTML from the admin editor (TipTap). The caller MUST sanitize
+   * before passing this in (the server-side `getHomeMarketingData` already does).
+   */
   missionHtml: string;
 };
 
-/** Client-only: avoids jsdom / isomorphic-dompurify SSR edge cases on serverless (e.g. Vercel). */
+/** Server component: sanitization happens upstream so SSR never touches jsdom. */
 export function MissionStrip({ missionHtml }: MissionStripProps) {
-  const safe = useMemo(() => {
-    try {
-      return DOMPurify.sanitize(missionHtml.trim(), {
-        USE_PROFILES: { html: true },
-      });
-    } catch {
-      return "";
-    }
-  }, [missionHtml]);
-
+  const safe = missionHtml.trim();
   if (!safe) return null;
 
   return (

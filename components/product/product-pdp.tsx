@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from "react";
-import DOMPurify from "isomorphic-dompurify";
 import ReactStars from "react-rating-stars-component";
 import { AnimatePresence, motion } from "framer-motion";
 import { AddToCartVariantButton } from "@/components/cart/AddToCartVariantButton";
@@ -133,6 +132,11 @@ type Props = {
   assets?: DbProductAssetRow[];
   /** For color swatches; keyed by `colors.id` from variants. */
   colorById?: Record<string, ProductDetailColorMeta>;
+  /**
+   * Sanitized product description HTML (sanitized on the server with
+   * `sanitizeRichHtml`). Empty string when there is no description.
+   */
+  safeDescriptionHtml: string;
 };
 
 export function ProductPdp({
@@ -143,6 +147,7 @@ export function ProductPdp({
   variants,
   assets,
   colorById = {},
+  safeDescriptionHtml,
 }: Props) {
   const { isOpen: cartDrawerOpen } = useCart();
 
@@ -296,12 +301,6 @@ export function ProductPdp({
   );
   const [activeMedia, setActiveMedia] = useState(0);
   const main = gallery[activeMedia] ?? gallery[0];
-
-  const safeDescriptionHtml = useMemo(() => {
-    const raw = product.description?.trim();
-    if (!raw) return "";
-    return DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
-  }, [product.description]);
 
   const purchaseBlockRef = useRef<HTMLDivElement>(null);
   /** True only after the user scrolls down so the primary CTAs sit above the viewport (not when they are still below the fold on load). */

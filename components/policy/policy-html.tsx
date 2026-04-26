@@ -1,24 +1,31 @@
-"use client";
-
-import dynamic from "next/dynamic";
-
-const PolicyBody = dynamic(() => import("./policy-body"), {
-  ssr: false,
-  loading: () => (
-    <article
-      className="policy-prose min-h-[12rem] animate-pulse rounded-2xl bg-neutral-100/70 sm:min-h-[16rem]"
-      aria-busy={true}
-      aria-label="Loading content"
-    />
-  ),
-});
+import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 
 export type PolicyHtmlProps = {
   html: string;
+  /** Classes on the wrapping `<article>` (layout + prose). */
   articleClassName?: string;
 };
 
-/** Client-only sanitization + render; safe for serverless (no JSDOM on the server). */
+/**
+ * Server component: sanitizes admin policy HTML on the server (no `jsdom`) so
+ * the page is fully rendered on the first response — important for OG/SEO and
+ * crawlers that don't execute JavaScript.
+ */
 export function PolicyHtml({ html, articleClassName }: PolicyHtmlProps) {
-  return <PolicyBody html={html} articleClassName={articleClassName} />;
+  const safe = sanitizeRichHtml(html);
+
+  if (!safe) {
+    return (
+      <p className="rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-6 py-12 text-center text-sm text-neutral-600">
+        No content has been added for this page yet.
+      </p>
+    );
+  }
+
+  return (
+    <article
+      className={articleClassName ?? "policy-prose"}
+      dangerouslySetInnerHTML={{ __html: safe }}
+    />
+  );
 }

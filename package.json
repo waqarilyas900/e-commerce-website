@@ -27,7 +27,6 @@
     "@supabase/supabase-js": "^2.103.0",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.38.0",
-    "isomorphic-dompurify": "^3.8.0",
     "next": "16.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -39,6 +38,7 @@
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.10.0",
+    "sanitize-html": "^2.17.3",
     "sonner": "^2.0.7"
   },
   "devDependencies": {
@@ -48,6 +48,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sanitize-html": "^2.16.1",
     "dotenv": "^16.4.7",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",

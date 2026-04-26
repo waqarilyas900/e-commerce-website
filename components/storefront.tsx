@@ -25,7 +25,6 @@ import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigatio
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import type { Product } from "@/app/lib/catalog/types";
 import { formatPkr } from "@/app/lib/format-currency";
-import DOMPurify from "isomorphic-dompurify";
 import { isEffectivelyEmptyHtml } from "@/app/lib/html-content";
 
 const stripShellClass =
@@ -47,15 +46,13 @@ function AnnouncementMessageRotator({
   textColor,
   intervalMs,
 }: AnnouncementRotatorProps) {
-  const sanitized = useMemo(() => {
-    return messagesHtml
-      .map((raw) =>
-        DOMPurify.sanitize(raw.trim(), {
-          USE_PROFILES: { html: true },
-        }),
-      )
-      .filter((s) => s.length > 0);
-  }, [messagesHtml]);
+  // `messagesHtml` is sanitized on the server before reaching the client (see
+  // `getAnnouncementBarForLayout`). Just drop any empties so the rotator never
+  // pauses on a blank slot.
+  const sanitized = useMemo(
+    () => messagesHtml.map((raw) => raw.trim()).filter((s) => s.length > 0),
+    [messagesHtml],
+  );
 
   const [index, setIndex] = useState(0);
 
