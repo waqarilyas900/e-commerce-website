@@ -74,6 +74,15 @@ const commonProductImageHosts: {
   { protocol: "https", hostname: "*.media-amazon.com", pathname: "/**" },
   { protocol: "https", hostname: "ibrahimstores.com", pathname: "/**" },
   { protocol: "https", hostname: "www.ibrahimstores.com", pathname: "/**" },
+  // Squarespace asset CDN — many imported supplier feeds reference
+  // `images.squarespace-cdn.com/...?format=...` URLs. Both the explicit host
+  // and the single-level wildcard are listed because Next 16 image config
+  // matches `*` exactly one subdomain segment and the supplier links can
+  // also originate from `static.squarespace.com`.
+  { protocol: "https", hostname: "images.squarespace-cdn.com", pathname: "/**" },
+  { protocol: "https", hostname: "*.squarespace-cdn.com", pathname: "/**" },
+  { protocol: "https", hostname: "static1.squarespace.com", pathname: "/**" },
+  { protocol: "https", hostname: "*.squarespace.com", pathname: "/**" },
 ];
 
 const nextConfig: NextConfig = {

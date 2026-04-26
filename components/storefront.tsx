@@ -287,6 +287,13 @@ function productImageUseNativeImg(src: string): boolean {
     if (h === "kwcdn.com" || h.endsWith(".kwcdn.com")) return true;
     if (h === "m.media-amazon.com" || h.endsWith(".media-amazon.com")) return true;
     if (h.endsWith(".ssl-images-amazon.com")) return true;
+    // Squarespace asset CDN — supplier feeds use `?format=` query strings
+    // that Vercel's image optimizer can intermittently reject. Skip the
+    // optimizer for these hosts so cards always paint, even if a deploy
+    // hasn't picked up the latest `next.config` remotePatterns.
+    if (h.endsWith(".squarespace-cdn.com") || h.endsWith(".squarespace.com")) {
+      return true;
+    }
     return false;
   } catch {
     return false;
