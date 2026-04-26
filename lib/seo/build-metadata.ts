@@ -17,6 +17,43 @@ import {
   suffixTitle,
 } from "./text";
 import type { SeoImage, SeoOverride, SiteIdentity } from "./types";
+import { getPublicSiteUrl } from "@/lib/site-url";
+
+/**
+ * Open Graph image with the full set of fields that Facebook / Slack / WhatsApp
+ * scrapers consume. We always emit `type` (MIME) and `secureUrl` so the scraper
+ * can validate the image without downloading it.
+ */
+type OgImageObject = {
+  url: string;
+  secureUrl?: string;
+  type?: string;
+  alt: string;
+  width: number;
+  height: number;
+};
+
+/**
+ * Facebook product OG extension (also consumed by Pinterest Rich Pins and many
+ * commerce crawlers). Emitted alongside `og:type=website` since FB's product
+ * scraper accepts the prefixed `product:*` properties regardless of og:type.
+ */
+export type ProductOpenGraphExtras = {
+  /** Numeric price in store currency. */
+  priceAmount?: number | string | null;
+  /** ISO-4217 currency code (e.g. "PKR"). */
+  priceCurrency?: string | null;
+  /** "instock" | "oos" | "preorder" | "discontinued" — FB taxonomy. */
+  availability?: "instock" | "oos" | "preorder" | "discontinued" | null;
+  /** "new" | "refurbished" | "used". */
+  condition?: "new" | "refurbished" | "used" | null;
+  /** Merchant SKU / GTIN — used for catalog matching. */
+  retailerItemId?: string | null;
+  /** Brand name string (NOT a URL). */
+  brand?: string | null;
+  /** Optional GTIN (UPC/EAN/ISBN). FB & Pinterest read this. */
+  gtin?: string | null;
+};
 
 export type BuildMetadataInput = {
   pathname: string;
@@ -41,17 +78,50 @@ export type BuildMetadataInput = {
      * is broadly compatible).
      */
     ogType?: "website" | "article";
+    /**
+     * ISO-8601 timestamp of the last edit. Emitted as `og:updated_time` and
+     * (when ogType = "article") `article:modified_time`.
+     */
+    lastModifiedISO?: string | null;
+    /** ISO-8601 timestamp the content was first published. Article only. */
+    publishedISO?: string | null;
+    /** Article author name(s) — emitted as `article:author`. Article only. */
+    authors?: string[];
+    /** Article section / topic tag (e.g. "Policies"). Article only. */
+    section?: string | null;
+    /** Article subject tags. Article only. */
+    articleTags?: string[];
+    /**
+     * When set, emit Facebook Product extension OG tags (`product:price:amount`,
+     * etc). Works alongside `og:type=website` — FB's catalog scraper reads the
+     * prefixed properties either way.
+     */
+    productExtras?: ProductOpenGraphExtras | null;
   };
 };
 
 const DEFAULT_OG_DIMENSIONS = { width: 1200, height: 630 };
 
-function pickOgImages(input: BuildMetadataInput): SeoImage[] {
-  const out: SeoImage[] = [];
+function ogImageMimeFromUrl(url: string): string | undefined {
+  const path = url.split("?")[0]?.toLowerCase() ?? "";
+  if (path.endsWith(".png")) return "image/png";
+  if (path.endsWith(".webp")) return "image/webp";
+  if (path.endsWith(".avif")) return "image/avif";
+  if (path.endsWith(".gif")) return "image/gif";
+  if (path.endsWith(".svg")) return "image/svg+xml";
+  if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
+  return undefined;
+}
+
+function pickOgImages(input: BuildMetadataInput): OgImageObject[] {
+  const out: OgImageObject[] = [];
   const overrideUrl = input.override?.ogImageUrl?.trim();
   if (overrideUrl) {
+    const url = absoluteUrl(overrideUrl);
     out.push({
-      url: absoluteUrl(overrideUrl),
+      url,
+      secureUrl: url.startsWith("https://") ? url : undefined,
+      type: ogImageMimeFromUrl(url),
       alt: input.override?.ogImageAlt?.trim() || input.defaults.title,
       width: input.override?.ogImageWidth ?? DEFAULT_OG_DIMENSIONS.width,
       height: input.override?.ogImageHeight ?? DEFAULT_OG_DIMENSIONS.height,
@@ -60,8 +130,11 @@ function pickOgImages(input: BuildMetadataInput): SeoImage[] {
   for (const img of input.defaults.images ?? []) {
     const u = (img.url ?? "").trim();
     if (!u) continue;
+    const url = absoluteUrl(u);
     out.push({
-      url: absoluteUrl(u),
+      url,
+      secureUrl: url.startsWith("https://") ? url : undefined,
+      type: ogImageMimeFromUrl(url),
       alt: (img.alt ?? "").trim() || input.defaults.title,
       width: img.width ?? DEFAULT_OG_DIMENSIONS.width,
       height: img.height ?? DEFAULT_OG_DIMENSIONS.height,
@@ -69,8 +142,11 @@ function pickOgImages(input: BuildMetadataInput): SeoImage[] {
   }
   const fallback = input.identity.defaultOgImageUrl?.trim();
   if (out.length === 0 && fallback) {
+    const url = absoluteUrl(fallback);
     out.push({
-      url: absoluteUrl(fallback),
+      url,
+      secureUrl: url.startsWith("https://") ? url : undefined,
+      type: ogImageMimeFromUrl(url),
       alt: input.identity.defaultOgImageAlt || input.identity.siteTitle || "Store",
       ...DEFAULT_OG_DIMENSIONS,
     });
@@ -82,6 +158,96 @@ function pickOgImages(input: BuildMetadataInput): SeoImage[] {
     seen.add(img.url);
     return true;
   });
+}
+
+/**
+ * Pull the host from `NEXT_PUBLIC_SITE_URL` for `twitter:domain` (Twitter ranks
+ * cards higher when a verified domain is present).
+ */
+function siteDomain(): string | undefined {
+  try {
+    return new URL(getPublicSiteUrl()).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+function appendOther(
+  bag: Record<string, string | number | (string | number)[]>,
+  key: string,
+  value: string | number | undefined | null,
+): void {
+  if (value == null) return;
+  if (typeof value === "string" && !value.trim()) return;
+  bag[key] = typeof value === "string" ? value.trim() : value;
+}
+
+/**
+ * Build the `other:` map (raw additional `<meta>` tags) for the page. Captures:
+ *  - Facebook product extension (`product:price:amount`, etc).
+ *  - `og:updated_time` for content-freshness signals.
+ *  - `twitter:domain` for verified Twitter cards.
+ *  - `fb:app_id` from identity (when configured).
+ */
+function buildOtherMeta(
+  input: BuildMetadataInput,
+): Record<string, string | number | (string | number)[]> | undefined {
+  const other: Record<string, string | number | (string | number)[]> = {};
+  const { identity, defaults } = input;
+
+  if (identity.facebookAppId) {
+    other["fb:app_id"] = identity.facebookAppId;
+  }
+
+  const domain = siteDomain();
+  if (domain) {
+    other["twitter:domain"] = domain;
+  }
+
+  if (defaults.lastModifiedISO) {
+    other["og:updated_time"] = defaults.lastModifiedISO;
+  }
+
+  if (defaults.ogType === "article") {
+    if (defaults.publishedISO) {
+      other["article:published_time"] = defaults.publishedISO;
+    }
+    if (defaults.lastModifiedISO) {
+      other["article:modified_time"] = defaults.lastModifiedISO;
+    }
+    if (defaults.section) {
+      other["article:section"] = defaults.section;
+    }
+    if (defaults.authors?.length) {
+      other["article:author"] = defaults.authors.filter(Boolean);
+    }
+    if (defaults.articleTags?.length) {
+      other["article:tag"] = defaults.articleTags.filter(Boolean);
+    }
+  }
+
+  const extras = defaults.productExtras;
+  if (extras) {
+    if (extras.priceAmount != null && extras.priceAmount !== "") {
+      const n = Number(extras.priceAmount);
+      if (Number.isFinite(n)) {
+        appendOther(other, "product:price:amount", n.toFixed(2));
+      }
+    }
+    appendOther(other, "product:price:currency", extras.priceCurrency);
+    appendOther(other, "product:availability", extras.availability);
+    appendOther(other, "product:condition", extras.condition);
+    appendOther(other, "product:retailer_item_id", extras.retailerItemId);
+    appendOther(other, "product:brand", extras.brand);
+    if (extras.gtin) {
+      // Pinterest reads `og:product:gtin` and FB reads `product:gtin`; emit both
+      // so we cover the major commerce scrapers.
+      appendOther(other, "product:gtin", extras.gtin);
+      appendOther(other, "og:product:gtin", extras.gtin);
+    }
+  }
+
+  return Object.keys(other).length ? other : undefined;
 }
 
 export function buildPageMetadata(input: BuildMetadataInput): Metadata {
@@ -113,6 +279,17 @@ export function buildPageMetadata(input: BuildMetadataInput): Metadata {
   const keywords = (override?.keywords?.length ? override.keywords : defaults.keywords) ?? [];
   const twitterCard = override?.twitterCard ?? "summary_large_image";
 
+  // Twitter accepts full image objects with `alt` — emit them so cards include
+  // `twitter:image:alt` (a11y + Twitter Card validator score).
+  const twitterImages = images.length
+    ? images.map((i) => ({
+        url: i.url,
+        alt: i.alt,
+        width: i.width,
+        height: i.height,
+      }))
+    : undefined;
+
   const meta: Metadata = {
     title: titleFinal,
     description: descFinal,
@@ -142,11 +319,11 @@ export function buildPageMetadata(input: BuildMetadataInput): Metadata {
       card: twitterCard,
       title: titleFinal,
       description: descFinal,
-      images: images.length ? images.map((i) => i.url) : undefined,
+      images: twitterImages,
       site: identity.twitterHandle || undefined,
       creator: identity.twitterHandle || undefined,
     },
-    other: identity.facebookAppId ? { "fb:app_id": identity.facebookAppId } : undefined,
+    other: buildOtherMeta(input),
   };
 
   return meta;

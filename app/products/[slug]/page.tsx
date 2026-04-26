@@ -16,6 +16,7 @@ import {
   loadSeoOverrideForSubject,
   loadSiteIdentity,
   stripHtml,
+  type ProductOpenGraphExtras,
 } from "@/lib/seo";
 import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 import {
@@ -23,6 +24,53 @@ import {
   breadcrumbJsonLd,
   productJsonLd,
 } from "@/lib/seo/jsonld";
+
+/**
+ * Compute Facebook product OG extension fields from a `ProductDetail`:
+ * `product:price:amount`, `product:price:currency`, `product:availability`,
+ * `product:condition`, `product:retailer_item_id`, `product:brand`. These are
+ * the fields Facebook Catalog and Pinterest Rich Pins read.
+ */
+function computeProductOgExtras(args: {
+  variants: Array<{ price: number; quantity_on_hand?: number; quantity_reserved?: number; sku?: string }>;
+  identity: { currency: string; storeName: string; siteTitle: string; organizationLegalName: string };
+  brandName?: string;
+  gtin?: string;
+}): ProductOpenGraphExtras | null {
+  const { variants, identity } = args;
+  if (!variants.length) return null;
+
+  let low = Infinity;
+  let anyAvailable = false;
+  let preferredSku = "";
+  for (const v of variants) {
+    const p = Number(v.price);
+    if (Number.isFinite(p) && p < low) {
+      low = p;
+      preferredSku = v.sku || preferredSku;
+    }
+    const stock = Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
+    if (stock > 0) anyAvailable = true;
+  }
+  if (!Number.isFinite(low)) return null;
+
+  const brand =
+    (args.brandName ?? "").trim() ||
+    identity.organizationLegalName.trim() ||
+    identity.storeName.trim() ||
+    identity.siteTitle.trim() ||
+    undefined;
+
+  return {
+    priceAmount: low,
+    priceCurrency: identity.currency || "PKR",
+    availability: anyAvailable ? "instock" : "oos",
+    condition: "new",
+    retailerItemId: preferredSku || undefined,
+    brand,
+    gtin: args.gtin?.trim() || undefined,
+  };
+}
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -66,7 +114,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     });
   }
 
-  const override = await loadSeoOverrideForSubject("product", detail.product.id, identity.locale);
+  const [override, seoExtras] = await Promise.all([
+    loadSeoOverrideForSubject("product", detail.product.id, identity.locale),
+    loadProductSeoExtras(detail.product.id),
+  ]);
   const description =
     stripHtml(detail.product.short_description) ||
     stripHtml(detail.product.description);
@@ -74,6 +125,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .filter((a) => a.kind === "image" && a.url)
     .slice(0, 4)
     .map((a) => ({ url: a.url, alt: a.alt_text || detail.product.name }));
+
+  const productExtras = computeProductOgExtras({
+    variants: detail.variants,
+    identity,
+    brandName: seoExtras.brandName,
+    gtin: seoExtras.gtin,
+  });
 
   return buildPageMetadata({
     pathname,
@@ -85,6 +143,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images,
       keywords: detail.product.tags ?? [],
       ogType: "website",
+      productExtras,
     },
   });
 }
@@ -122,6 +181,9 @@ export default async function ProductPage({ params }: Props) {
     mpn: seoExtras.mpn,
     reviewsAreSynthetic: PDP_REVIEWS_ARE_SYNTHETIC,
     seoOverride,
+    shoppingExtras: seoExtras,
+    optionDefinitions: detail.optionDefinitions,
+    category: detail.collectionSlug,
   });
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },

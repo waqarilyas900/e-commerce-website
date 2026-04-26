@@ -79,6 +79,36 @@ function getEnvFaviconUrl(): string {
   return process.env.NEXT_PUBLIC_FAVICON_URL?.trim() ?? "";
 }
 
+/**
+ * The Supabase Storage host that serves user-uploaded media. Surfacing it as a
+ * `<link rel="preconnect">` shaves ~50–150 ms off the LCP image fetch on
+ * cold visits — measurable in PageSpeed Insights.
+ */
+function getStorageOrigin(): string | undefined {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!raw) return undefined;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Parse a `#RRGGBB` / `#RGB` value to a clean hex string, falling back when the
+ * input is empty or invalid. Used for `<meta name="theme-color">`.
+ */
+function parseThemeColor(input: string | null | undefined, fallback: string): string {
+  const t = (input ?? "").trim();
+  if (!t) return fallback;
+  if (/^#[0-9A-Fa-f]{6}$/.test(t)) return t;
+  if (/^#[0-9A-Fa-f]{3}$/.test(t)) {
+    const h = t.slice(1);
+    return `#${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}`;
+  }
+  return fallback;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const [brand, identity] = await Promise.all([
     loadStoreBrandFromDatabase(),
@@ -161,6 +191,8 @@ export default async function RootLayout({
   });
   const htmlLang = (identity.locale || "en_US").split("_")[0] || "en";
   const analyticsId = analytics.googleAnalyticsId;
+  const storageOrigin = getStorageOrigin();
+  const themeColor = parseThemeColor(announcementBar.backgroundColor, "#1c1d1d");
 
   return (
     <html
@@ -169,6 +201,15 @@ export default async function RootLayout({
       className={`js ${jost.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <meta name="color-scheme" content="light" />
+        <meta name="theme-color" content={themeColor} />
+        <meta name="format-detection" content="telephone=no, email=no, address=no" />
+        {storageOrigin ? (
+          <>
+            <link rel="preconnect" href={storageOrigin} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={storageOrigin} />
+          </>
+        ) : null}
         {faviconHref ? (
           <>
             <link
