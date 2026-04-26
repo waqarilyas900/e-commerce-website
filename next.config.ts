@@ -83,7 +83,16 @@ const commonProductImageHosts: {
   { protocol: "https", hostname: "*.squarespace-cdn.com", pathname: "/**" },
   { protocol: "https", hostname: "static1.squarespace.com", pathname: "/**" },
   { protocol: "https", hostname: "*.squarespace.com", pathname: "/**" },
+  // Joom supplier CDN — e.g. `img.joomcdn.net/<hash>_original.jpeg`.
+  { protocol: "https", hostname: "img.joomcdn.net", pathname: "/**" },
+  { protocol: "https", hostname: "*.joomcdn.net", pathname: "/**" },
 ];
+
+// Note: the ProductCard on storefront grids falls back to plain `<img>` for
+// any host not served by us, Supabase Storage, or our CDN — see
+// `productImageUseNativeImg` in `components/storefront.tsx`. The entries in
+// `commonProductImageHosts` are only needed for code paths that still use
+// `next/image` directly (e.g. Server Components rendering supplier URLs).
 
 const nextConfig: NextConfig = {
   async rewrites() {
