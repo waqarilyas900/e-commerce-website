@@ -63,7 +63,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       defaults: { title: "Section not found", description: "", forceNoindex: true },
     });
   }
-  const override = await loadSeoOverrideForSubject("home_section", section.id);
+  const override = await loadSeoOverrideForSubject("home_section", section.id, identity.locale);
   return buildPageMetadata({
     pathname,
     searchParams: sp,

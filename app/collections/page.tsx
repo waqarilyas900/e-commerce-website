@@ -11,10 +11,8 @@ import {
 } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [identity, override] = await Promise.all([
-    loadSiteIdentity(),
-    loadSeoOverrideForRoute("/collections"),
-  ]);
+  const identity = await loadSiteIdentity();
+  const override = await loadSeoOverrideForRoute("/collections", identity.locale);
   return buildPageMetadata({
     pathname: "/collections",
     identity,

@@ -32,10 +32,8 @@ type Props = {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const sp = searchParams != null ? await searchParams : {};
-  const [identity, override] = await Promise.all([
-    loadSiteIdentity(),
-    loadSeoOverrideForRoute("/collections/sale"),
-  ]);
+  const identity = await loadSiteIdentity();
+  const override = await loadSeoOverrideForRoute("/collections/sale", identity.locale);
   const baseDescription = `Sale and discounted products at ${identity.storeName || identity.siteTitle || "our store"}.`;
   return buildPageMetadata({
     pathname: "/collections/sale",

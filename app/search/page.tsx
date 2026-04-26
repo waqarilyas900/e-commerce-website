@@ -20,10 +20,8 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q = "" } = await searchParams;
   const query = q.trim();
-  const [identity, override] = await Promise.all([
-    loadSiteIdentity(),
-    loadSeoOverrideForRoute("/search"),
-  ]);
+  const identity = await loadSiteIdentity();
+  const override = await loadSeoOverrideForRoute("/search", identity.locale);
   const title = query ? `Search: ${query}` : "Search";
   return buildPageMetadata({
     pathname: "/search",

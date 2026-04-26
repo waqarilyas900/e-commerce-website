@@ -1,5 +1,6 @@
 /** Server-side reader for `public.seo_meta` overrides. Graceful when migration not applied. */
 
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import type { SeoOverride, SeoSubjectType } from "./types";
@@ -79,62 +80,97 @@ function rowToOverride(row: SeoMetaRow): SeoOverride {
   };
 }
 
-/** Fetch override for an entity row (`product`, `collection`, `policy_page`, ...). */
-export async function loadSeoOverrideForSubject(
+/**
+ * Tries the storefront locale first, then common equivalents (`en` vs `en_US`),
+ * so admin-saved rows match even when `seo_site.locale` and `seo_meta.locale` differ.
+ */
+function seoLocaleCandidates(hint?: string | null): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const add = (s: string | undefined | null) => {
+    const t = (s ?? "").trim();
+    if (!t || seen.has(t)) return;
+    seen.add(t);
+    out.push(t);
+  };
+  add(hint);
+  const h = (hint ?? "").trim();
+  if (h.includes("_")) add(h.split("_")[0]);
+  if (h.includes("-")) add(h.split("-")[0]);
+  const norm = h.toLowerCase().replace(/-/g, "_");
+  if (norm === "en_us") add("en");
+  if (norm === "en") add("en_US");
+  add("en");
+  add("en_US");
+  return out;
+}
+
+async function loadSeoOverrideForSubjectImpl(
   subjectType: Exclude<SeoSubjectType, "route" | "site_default">,
   subjectId: string,
-  locale = "en",
+  localeHint?: string | null,
 ): Promise<SeoOverride | null> {
   if (!hasCatalogDb()) return null;
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("seo_meta")
-      .select(SELECT_COLUMNS)
-      .eq("subject_type", subjectType)
-      .eq("subject_id", subjectId)
-      .eq("locale", locale)
-      .maybeSingle<SeoMetaRow>();
-    if (error) {
-      if (error.message?.includes("Could not find the table") || error.message?.includes("schema cache")) {
-        warnMissing(error.message);
+    for (const loc of seoLocaleCandidates(localeHint)) {
+      const { data, error } = await supabase
+        .from("seo_meta")
+        .select(SELECT_COLUMNS)
+        .eq("subject_type", subjectType)
+        .eq("subject_id", subjectId)
+        .eq("locale", loc)
+        .maybeSingle<SeoMetaRow>();
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.message?.includes("schema cache")) {
+          warnMissing(error.message);
+        }
+        return null;
       }
-      return null;
+      if (data) return rowToOverride(data);
     }
-    return data ? rowToOverride(data) : null;
+    return null;
   } catch (e) {
     warnMissing(String(e));
     return null;
   }
 }
 
-/** Fetch override for a static route (key like `/`, `/search`, `/contact`, `site_default`). */
-export async function loadSeoOverrideForRoute(
+async function loadSeoOverrideForRouteImpl(
   subjectKey: string,
-  locale = "en",
+  localeHint?: string | null,
 ): Promise<SeoOverride | null> {
   if (!hasCatalogDb()) return null;
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("seo_meta")
-      .select(SELECT_COLUMNS)
-      .eq("subject_type", "route")
-      .eq("subject_key", subjectKey)
-      .eq("locale", locale)
-      .maybeSingle<SeoMetaRow>();
-    if (error) {
-      if (error.message?.includes("Could not find the table") || error.message?.includes("schema cache")) {
-        warnMissing(error.message);
+    for (const loc of seoLocaleCandidates(localeHint)) {
+      const { data, error } = await supabase
+        .from("seo_meta")
+        .select(SELECT_COLUMNS)
+        .eq("subject_type", "route")
+        .eq("subject_key", subjectKey)
+        .eq("locale", loc)
+        .maybeSingle<SeoMetaRow>();
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.message?.includes("schema cache")) {
+          warnMissing(error.message);
+        }
+        return null;
       }
-      return null;
+      if (data) return rowToOverride(data);
     }
-    return data ? rowToOverride(data) : null;
+    return null;
   } catch (e) {
     warnMissing(String(e));
     return null;
   }
 }
+
+/** Fetch override for an entity row (`product`, `collection`, `policy_page`, ...). Cached per request. */
+export const loadSeoOverrideForSubject = cache(loadSeoOverrideForSubjectImpl);
+
+/** Fetch override for a static route (key like `/`, `/search`, `/contact`). Cached per request. */
+export const loadSeoOverrideForRoute = cache(loadSeoOverrideForRouteImpl);
 
 export function emptyOverrideFor(subjectType: SeoSubjectType): SeoOverride {
   return { subjectType, ...EMPTY_OVERRIDE };

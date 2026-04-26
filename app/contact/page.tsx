@@ -8,10 +8,8 @@ import {
 } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [identity, override] = await Promise.all([
-    loadSiteIdentity(),
-    loadSeoOverrideForRoute("/contact"),
-  ]);
+  const identity = await loadSiteIdentity();
+  const override = await loadSeoOverrideForRoute("/contact", identity.locale);
   const storeName = identity.storeName || identity.siteTitle || "our store";
   return buildPageMetadata({
     pathname: "/contact",

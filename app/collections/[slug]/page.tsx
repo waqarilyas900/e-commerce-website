@@ -87,7 +87,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     });
   }
 
-  const override = await loadSeoOverrideForSubject("collection", collection.id);
+  const override = await loadSeoOverrideForSubject("collection", collection.id, identity.locale);
 
   return buildPageMetadata({
     pathname,

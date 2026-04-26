@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     });
   }
 
-  const override = await loadSeoOverrideForSubject("product", detail.product.id);
+  const override = await loadSeoOverrideForSubject("product", detail.product.id, identity.locale);
   const description =
     stripHtml(detail.product.short_description) ||
     stripHtml(detail.product.description);
@@ -106,6 +106,7 @@ export default async function ProductPage({ params }: Props) {
     loadSiteIdentity(),
     loadProductSeoExtras(detail.product.id),
   ]);
+  const seoOverride = await loadSeoOverrideForSubject("product", detail.product.id, identity.locale);
   const related = relatedDb.filter((item) => item.slug !== slug).slice(0, 4);
 
   const canonical = canonicalUrlFor(`/products/${slug}`);
@@ -119,6 +120,7 @@ export default async function ProductPage({ params }: Props) {
     gtin: seoExtras.gtin,
     mpn: seoExtras.mpn,
     reviewsAreSynthetic: PDP_REVIEWS_ARE_SYNTHETIC,
+    seoOverride,
   });
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },

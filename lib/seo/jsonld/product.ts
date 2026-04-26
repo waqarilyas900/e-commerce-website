@@ -20,7 +20,7 @@ import type {
 } from "@/app/lib/db/types";
 import { absoluteUrl } from "../canonical";
 import { stripHtml } from "../text";
-import type { SiteIdentity } from "../types";
+import type { SeoOverride, SiteIdentity } from "../types";
 import { getPublicSiteUrl } from "@/lib/site-url";
 
 export type ProductJsonLdInput = {
@@ -36,6 +36,11 @@ export type ProductJsonLdInput = {
   mpn?: string;
   /** When true, omit aggregateRating (synthetic-review safe mode). */
   reviewsAreSynthetic?: boolean;
+  /**
+   * When admin fills `seo_meta` title/description/OG image, mirror those on the
+   * Product JSON-LD so structured data matches Open Graph / meta tags.
+   */
+  seoOverride?: SeoOverride | null;
 };
 
 function uniqueImages(input: ProductJsonLdInput): string[] {
@@ -60,6 +65,15 @@ function uniqueImages(input: ProductJsonLdInput): string[] {
     }
   }
   return [...out].slice(0, 8);
+}
+
+/** Prefer admin OG image first, then gallery images (deduped). */
+function mergedProductImages(input: ProductJsonLdInput): string[] {
+  const og = input.seoOverride?.ogImageUrl?.trim();
+  const primary = og ? [absoluteUrl(og)] : [];
+  const rest = uniqueImages(input);
+  const merged = [...new Set([...primary, ...rest])];
+  return merged.slice(0, 8);
 }
 
 function pricesOf(variants: DbProductVariantRow[]): {
@@ -141,15 +155,19 @@ function priceValidUntilFromNow(): string {
 }
 
 export function productJsonLd(input: ProductJsonLdInput): Record<string, unknown> {
-  const { product, identity, url, brandName, gtin, mpn, reviewsAreSynthetic } = input;
-  const description = stripHtml(product.description) || stripHtml(product.short_description) || "";
-  const images = uniqueImages(input);
+  const { product, identity, url, brandName, gtin, mpn, reviewsAreSynthetic, seoOverride } = input;
+  const ovTitle = seoOverride?.title?.trim();
+  const ovDesc = seoOverride?.description?.trim();
+  const baseDescription =
+    stripHtml(product.description) || stripHtml(product.short_description) || "";
+  const description = ovDesc || baseDescription;
+  const images = mergedProductImages(input);
 
   const node: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
     "@id": `${url}#product`,
-    name: product.name,
+    name: ovTitle || product.name,
     description: description || undefined,
     image: images.length ? images : undefined,
     sku: product.id,
