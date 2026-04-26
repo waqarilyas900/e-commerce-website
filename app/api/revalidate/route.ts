@@ -12,6 +12,9 @@
  *      without baking a secret into the browser bundle.
  *   - Per-IP rate limit on top in case credentials leak.
  *
+ * Cross-origin (browser): admin origin must be listed in `REVALIDATE_CORS_ORIGINS`
+ * (comma-separated exact origins, e.g. https://admin.example.com,http://localhost:5173).
+ *
  * Body shape (any combination):
  *   {
  *     paths?:        string[]   // explicit pathnames, e.g. "/products/foo"
@@ -30,6 +33,38 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
+
+function parseCorsAllowlist(): string[] {
+  const raw = process.env.REVALIDATE_CORS_ORIGINS?.trim();
+  if (!raw) return [];
+  return [...new Set(raw.split(",").map((s) => s.trim()).filter(Boolean))];
+}
+
+/** Headers to allow browser `fetch` from the admin app (different origin). */
+function corsHeadersForRequest(req: Request): Record<string, string> | undefined {
+  const origin = req.headers.get("origin");
+  if (!origin) return undefined;
+  const list = parseCorsAllowlist();
+  if (!list.includes(origin)) return undefined;
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "authorization, content-type, x-revalidate-secret, x-csrf-token, x-requested-with",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
+
+function withCors(req: Request, res: NextResponse): NextResponse {
+  const c = corsHeadersForRequest(req);
+  if (c) {
+    for (const [k, v] of Object.entries(c)) {
+      res.headers.set(k, v);
+    }
+  }
+  return res;
+}
 
 async function isActiveAdminJwt(jwt: string): Promise<boolean> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -77,10 +112,15 @@ function dedupePaths(paths: string[]): string[] {
   return out;
 }
 
+export async function OPTIONS(req: Request) {
+  const c = corsHeadersForRequest(req);
+  return new NextResponse(null, { status: 204, headers: c ?? undefined });
+}
+
 export async function POST(req: Request) {
   const ip = getRequestIp(req);
   const limit = rateLimit(`revalidate:${ip}`, 60, 60_000);
-  if (!limit.ok) return rateLimitResponse(limit.retryAfterMs);
+  if (!limit.ok) return withCors(req, rateLimitResponse(limit.retryAfterMs));
 
   const secret = process.env.REVALIDATE_SECRET?.trim();
   const providedSecret = req.headers.get("x-revalidate-secret")?.trim();
@@ -96,19 +136,22 @@ export async function POST(req: Request) {
 
   if (!isSecretOk && !isAdminJwt) {
     if (!secret && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return NextResponse.json(
-        { ok: false, error: "Revalidate is disabled: set REVALIDATE_SECRET or Supabase env vars." },
-        { status: 503 },
+      return withCors(
+        req,
+        NextResponse.json(
+          { ok: false, error: "Revalidate is disabled: set REVALIDATE_SECRET or Supabase env vars." },
+          { status: 503 },
+        ),
       );
     }
-    return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    return withCors(req, NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 }));
   }
 
   let body: Payload;
   try {
     body = (await req.json()) as Payload;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+    return withCors(req, NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 }));
   }
 
   const paths: string[] = [];
@@ -154,16 +197,22 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({
-    ok: true,
-    revalidated: unique,
-    tag: body.tag ?? null,
-  });
+  return withCors(
+    req,
+    NextResponse.json({
+      ok: true,
+      revalidated: unique,
+      tag: body.tag ?? null,
+    }),
+  );
 }
 
-export async function GET() {
-  return NextResponse.json(
-    { ok: false, error: "Use POST" },
-    { status: 405, headers: { Allow: "POST" } },
+export async function GET(req: Request) {
+  return withCors(
+    req,
+    NextResponse.json(
+      { ok: false, error: "Use POST" },
+      { status: 405, headers: { Allow: "POST, OPTIONS" } },
+    ),
   );
 }

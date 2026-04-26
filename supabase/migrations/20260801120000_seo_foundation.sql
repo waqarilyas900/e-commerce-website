@@ -221,12 +221,11 @@ create table if not exists public.seo_meta (
   updated_by uuid references public.admins (id) on delete set null,
 
   -- One override per (subject_type, subject_id|subject_key, locale).
+  -- Must not be DEFERRABLE: PostgREST upsert uses ON CONFLICT on these columns.
   constraint seo_meta_subject_id_locale_uniq
-    unique (subject_type, subject_id, locale)
-    deferrable initially deferred,
+    unique (subject_type, subject_id, locale),
   constraint seo_meta_subject_key_locale_uniq
-    unique (subject_type, subject_key, locale)
-    deferrable initially deferred,
+    unique (subject_type, subject_key, locale),
   -- Either subject_id or subject_key must be present.
   constraint seo_meta_subject_present check (
     (subject_id is not null) or (subject_key is not null)
