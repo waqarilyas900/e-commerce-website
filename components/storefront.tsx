@@ -29,7 +29,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { isEffectivelyEmptyHtml } from "@/app/lib/html-content";
 
 const stripShellClass =
-  "shopify-section shopify-section-group-header-group flex min-h-[37px] w-full shrink-0 items-center justify-center overflow-hidden px-4 py-1.5 text-center text-[13px] font-medium leading-snug tracking-wide";
+  "shopify-section shopify-section-group-header-group flex min-h-[37px] w-full shrink-0 items-center justify-center overflow-hidden shell-x py-1.5 text-center text-[13px] font-medium leading-snug tracking-wide";
 
 const announcementProseClass =
   "announcement-bar-prose w-full text-center [&_a]:underline [&_a]:text-inherit [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_p]:m-0 [&_p]:inline [&_strong]:font-semibold";
@@ -178,7 +178,7 @@ export function Header() {
   }, []);
 
   const headerContent = (isStickyHeader: boolean) => (
-    <div className="header-wrapper mx-auto grid min-h-[64px] max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:min-h-[72px] sm:px-6 md:min-h-[83px] lg:px-8">
+    <div className="header-wrapper mx-auto grid min-h-[64px] max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 shell-x sm:min-h-[72px] md:min-h-[83px]">
       <div className="flex h-full min-h-0 min-w-0 items-center gap-3 justify-self-start">
         <button
           type="button"
@@ -277,6 +277,41 @@ export function Header() {
   );
 }
 
+/**
+ * Hosts where we use `<img>` instead of `next/image`: `remotePatterns` may be correct in
+ * `next.config` but dev/prod can still throw (stale Turbopack cache, deploy drift). Plain `<img>`
+ * skips the optimizer allowlist for these URLs.
+ */
+function productImageUseNativeImg(src: string): boolean {
+  if (!src || src.startsWith("/")) return false;
+  try {
+    const h = new URL(src).hostname.toLowerCase();
+    if (h === "ibrahimstores.com" || h === "www.ibrahimstores.com") return true;
+    if (h === "kwcdn.com" || h.endsWith(".kwcdn.com")) return true;
+    if (h === "m.media-amazon.com" || h.endsWith(".media-amazon.com")) return true;
+    if (h.endsWith(".ssl-images-amazon.com")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function ProductCardStarRow({ rating }: { rating: number }) {
+  const filled = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)));
+  return (
+    <div
+      className="mt-0.5 flex gap-px text-[13px] leading-none sm:text-sm"
+      aria-label={`${rating.toFixed(1)} out of 5 stars`}
+    >
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} className={i <= filled ? "text-amber-400" : "text-neutral-200"} aria-hidden>
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function ProductCard({
   product,
   showAddToCart = true,
@@ -298,9 +333,25 @@ export function ProductCard({
   }
 
   const salePct =
-    product.compareAtPrice && product.compareAtPrice > product.price
+    product.compareAtPrice != null && product.compareAtPrice > product.price
       ? Math.round((1 - product.price / product.compareAtPrice) * 100)
       : null;
+  const soldOut = product.inStock === false;
+  const badgeLabel = soldOut ? "Sold out" : salePct != null ? `${salePct}% off` : null;
+  const badgeClass = soldOut
+    ? "bg-black text-white"
+    : "bg-red-600 text-white";
+  const badgeSizeClass =
+    "whitespace-nowrap px-2.5 py-1.5 text-[11px] font-semibold tracking-wide sm:px-3.5 sm:py-2 sm:text-xs";
+
+  const useNativeProductImg = Boolean(product.image && productImageUseNativeImg(product.image));
+  /**
+   * Fill the frame (no letterboxing). Grid: `object-top` keeps more of the packshot visible like
+   * storefront refs; rail: centered for horizontal tiles.
+   */
+  const productImgClassName = rail
+    ? "object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+    : "object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]";
 
   return (
     <motion.article
@@ -314,70 +365,79 @@ export function ProductCard({
         href={`/products/${product.slug}`}
         className="group relative block shrink-0"
       >
-        <div className="relative h-60 w-full overflow-hidden bg-neutral-100">
+        <div
+          className={
+            rail
+              ? "relative h-56 w-full overflow-hidden bg-neutral-100 sm:h-60"
+              : "relative aspect-4/5 w-full overflow-hidden bg-neutral-50 sm:aspect-auto sm:h-60"
+          }
+        >
           {product.image ? (
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              sizes={
-                rail
-                  ? "(max-width: 767px) 55vw, 280px"
-                  : "(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
-              }
-              className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
-            />
+            useNativeProductImg ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                loading="lazy"
+                decoding="async"
+                className={`absolute inset-0 h-full w-full ${productImgClassName}`}
+              />
+            ) : (
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                sizes={
+                  rail
+                    ? "(max-width: 767px) 55vw, 280px"
+                    : "(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
+                }
+                className={productImgClassName}
+              />
+            )
           ) : null}
         </div>
-        {salePct ? (
-          <span className="absolute left-2 top-2 rounded bg-black px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-            {salePct}% Off
+        {badgeLabel ? (
+          <span
+            className={`pointer-events-none absolute right-0 top-0 z-10 uppercase leading-tight tracking-wide ${badgeSizeClass} ${badgeClass} rounded-none`}
+          >
+            {badgeLabel}
           </span>
         ) : null}
       </Link>
       {/* Single column: mt-auto only on the button so it pins to the bottom when the row stretches */}
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3">
-        <p className="text-xs text-neutral-500">
-          {product.reviews > 0
-            ? `${product.rating.toFixed(1)} ★ · ${product.reviews} reviews`
-            : "New · no reviews yet"}
-        </p>
+      <div className="flex min-h-0 flex-1 flex-col gap-1 p-2 text-[13px] leading-snug text-neutral-900 sm:gap-1.5 sm:p-2.5 sm:text-sm">
         <Link
           href={`/products/${product.slug}`}
           className={
             rail || clampTitle
-              ? "product-card-title-clamp block min-h-10 text-sm font-semibold leading-snug text-neutral-900"
-              : "block text-sm font-semibold leading-snug text-neutral-900"
+              ? "product-card-title-clamp block min-h-9 font-semibold leading-snug text-neutral-900"
+              : "block font-semibold leading-snug text-neutral-900"
           }
         >
           {product.name}
         </Link>
-        <div className="flex flex-wrap content-start items-baseline gap-x-2 gap-y-0.5 text-xs">
-          {product.compareAtPrice ? (
-            <>
-              <span className="text-neutral-500 line-through">
-                Regular price {formatPkr(product.compareAtPrice)}
-              </span>
-              <span className="font-semibold text-neutral-900">
-                Sale price {formatPkr(product.price)}
-              </span>
-              <span className="text-emerald-700">
-                Save {formatPkr(product.compareAtPrice - product.price)}
-              </span>
-            </>
-          ) : (
-            <span className="font-semibold text-neutral-900">{formatPkr(product.price)}</span>
-          )}
-        </div>
-        {product.defaultVariantId ? (
-          <p className="pt-1 text-xs text-neutral-500">Multiple sizes / colors on product page</p>
+        {product.reviews > 0 || product.rating > 0 ? (
+          <ProductCardStarRow rating={product.rating} />
         ) : null}
+        {product.compareAtPrice != null && product.compareAtPrice > product.price ? (
+          <>
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+              <span className="text-neutral-500 line-through">{formatPkr(product.compareAtPrice)}</span>
+              <span className="font-semibold text-neutral-900">{formatPkr(product.price)}</span>
+            </div>
+            <p className="text-[12px] font-medium text-red-600 sm:text-[13px]">
+              Save {formatPkr(product.compareAtPrice - product.price)}
+            </p>
+          </>
+        ) : (
+          <p className="mt-0.5 font-semibold text-neutral-900">{formatPkr(product.price)}</p>
+        )}
         {showAddToCart ? (
-          <div className="mt-auto pt-2">
+          <div className="mt-auto pt-1 sm:pt-2">
             <AddToCartButton
               product={product}
               openDrawer
-              className="w-full rounded-md py-2 text-xs"
+              className="w-full rounded-md py-1.5 text-[11px] sm:py-2 sm:text-xs"
               label="Add to cart"
             />
           </div>
@@ -391,10 +451,10 @@ export function ProductCard({
 
 /**
  * ~1 full card + peek of next (reference store). Visible ≈ W + gap + W/2 → W = (viewport pad − gap) / 1.5
- * ul uses px-4 → 2rem horizontal; gap-3 → 0.75rem
+ * ul bleeds with `-mx-2` / `px-2` to match `.shell-x`; gap-1 → 0.25rem
  */
 const RAIL_COL =
-  "w-[calc((100vw-2.75rem)/1.5)] min-w-[172px] max-w-[232px] shrink-0 sm:w-[200px] sm:max-w-none md:w-[220px]";
+  "w-[calc((100vw-1.25rem)/1.5)] min-w-[172px] max-w-[232px] shrink-0 sm:w-[200px] sm:max-w-none md:w-[220px]";
 const RAIL_SNAP = "snap-start snap-always";
 /** Product tile in the home rail (same as `${RAIL_COL} ${RAIL_SNAP} flex flex-col`). */
 const RAIL_ITEM = `${RAIL_COL} ${RAIL_SNAP} flex flex-col`;
@@ -428,7 +488,7 @@ function RailScrollStrip({ children }: { children: ReactNode }) {
   );
 
   const railUlClass =
-    "rail-scroll -mx-4 flex list-none items-stretch gap-1.5 overflow-x-auto scroll-px-4 scroll-smooth px-4 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-2 sm:px-0 sm:scroll-px-0";
+    "rail-scroll -mx-2 flex list-none items-stretch gap-1 overflow-x-auto scroll-px-2 scroll-smooth px-2 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-1.5 sm:px-0 sm:scroll-px-0";
 
   return (
     <ul
@@ -464,7 +524,7 @@ export function ProductSection({
   if (layout === "rail") {
     return (
       <section className="bg-neutral-100/80">
-        <ScrollReveal className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+        <ScrollReveal className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
           <div className="mb-4 flex items-end justify-between gap-4">
             <h2 className="text-xl font-semibold tracking-tight text-neutral-900">{title}</h2>
             <Link
@@ -483,6 +543,7 @@ export function ProductSection({
                       product={product}
                       showAddToCart={showAddToCart}
                       rail
+                      clampTitle
                       revealDelay={Math.min(idx * 0.09, 0.36)}
                     />
                   </div>
@@ -504,12 +565,13 @@ export function ProductSection({
               </li>
             </RailScrollStrip>
           </div>
-          <div className="hidden items-stretch gap-1.5 md:grid md:grid-cols-3 lg:grid-cols-4">
+          <div className="hidden items-stretch gap-1 sm:gap-1.5 md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
             {railItems.map((product, idx) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 showAddToCart={showAddToCart}
+                clampTitle
                 revealDelay={Math.min(idx * 0.08, 0.36)}
               />
             ))}
@@ -520,7 +582,7 @@ export function ProductSection({
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
       <ScrollReveal>
         <div className="mb-4 flex items-end justify-between gap-4">
           <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
@@ -528,12 +590,13 @@ export function ProductSection({
             View all
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3 lg:grid-cols-4 items-stretch">
+        <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2 items-stretch">
           {items.map((product, idx) => (
             <ProductCard
               key={product.id}
               product={product}
               showAddToCart={showAddToCart}
+              clampTitle
               revealDelay={Math.min(idx * 0.08, 0.36)}
             />
           ))}
@@ -558,7 +621,7 @@ export function WhyShop() {
   return (
     <section className="border-t border-neutral-200 bg-white py-12 sm:py-16">
       <ScrollReveal
-        className={`mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 md:items-center md:gap-12 lg:px-8 ${
+        className={`mx-auto grid max-w-7xl gap-8 shell-x md:items-center md:gap-12 ${
           hasImage ? "md:grid-cols-2" : "md:grid-cols-1"
         }`}
       >

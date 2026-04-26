@@ -125,7 +125,7 @@ function CheckoutPageSkeleton() {
     <CheckoutChrome mode="checkout">
       <main id="MainContent" className="pb-12 md:pb-0" aria-busy="true" aria-live="polite">
         <div className="mx-auto w-full max-w-[1140px] md:grid md:min-h-screen md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="w-full bg-white px-4 py-6 sm:px-6 md:min-h-screen md:px-8 md:py-8 lg:px-12">
+          <div className="w-full bg-white shell-x py-6 md:min-h-screen md:py-8">
             <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
               <div className="h-6 w-36 animate-pulse rounded bg-neutral-100" />
             </div>
@@ -138,7 +138,7 @@ function CheckoutPageSkeleton() {
               <div className="h-12 animate-pulse rounded-md bg-neutral-200" />
             </div>
           </div>
-          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block md:px-8 md:py-8 lg:px-10">
+          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block shell-x md:py-8">
             <div className="space-y-4">
               <div className="h-8 w-36 animate-pulse rounded bg-neutral-200" />
               <div className="h-20 animate-pulse rounded-lg border border-neutral-200 bg-white" />
@@ -811,7 +811,7 @@ export default function CheckoutPage() {
       <CheckoutChrome mode="checkout">
         <main
           id="MainContent"
-          className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center"
+          className="flex min-h-[60vh] flex-col items-center justify-center gap-4 shell-x text-center"
           aria-busy="true"
           aria-live="polite"
         >
@@ -838,7 +838,7 @@ export default function CheckoutPage() {
     <CheckoutChrome mode="checkout">
       <main id="MainContent" className="pb-12 md:pb-0">
         <div className="mx-auto w-full max-w-[1140px] md:grid md:min-h-screen md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="w-full bg-white px-4 py-6 sm:px-6 md:min-h-screen md:px-8 md:py-8 lg:px-12">
+          <div className="w-full bg-white shell-x py-6 md:min-h-screen md:py-8">
             <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
               <div className="flex items-center justify-between">
                 <Link href="/" className="flex min-w-0 items-center gap-2.5">
@@ -1057,7 +1057,7 @@ export default function CheckoutPage() {
               <CheckoutPolicyFooterLinks />
             </form>
           </div>
-          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block md:px-8 md:py-0 lg:px-10">
+          <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block shell-x md:py-0">
             <div className="md:sticky md:top-0 md:h-screen md:overflow-y-auto md:pt-8 md:pb-8">
               <CheckoutOrderSummaryPanel
                 lines={resolvedLines}

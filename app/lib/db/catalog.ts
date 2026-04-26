@@ -73,12 +73,21 @@ function minPrice(variants: { price: number }[]): number {
   return Math.min(...variants.map((v) => v.price));
 }
 
-function minCompareAt(variants: { compare_at_price: number | null; price: number }[]): number | undefined {
-  const vals = variants
+/**
+ * Card shows the cheapest variant price. Compare-at must come from that same price tier;
+ * using global min(compare_at) vs min(price) can pair unrelated SKUs and hide sale badges.
+ */
+function cardDisplayCompareAt(
+  variants: { compare_at_price: number | null; price: number }[],
+): number | undefined {
+  if (!variants.length) return undefined;
+  const minP = Math.min(...variants.map((v) => v.price));
+  const tier = variants.filter((v) => v.price === minP);
+  const vals = tier
     .map((v) => v.compare_at_price)
-    .filter((x): x is number => x != null && x > 0);
+    .filter((x): x is number => x != null && x > minP);
   if (!vals.length) return undefined;
-  return Math.min(...vals);
+  return Math.max(...vals);
 }
 
 function pickDefaultVariantId(variants: DbProductVariantRow[]): string | undefined {
@@ -127,7 +136,7 @@ export function mapProductCard(
   collectionSlug: string,
 ): Product {
   const price = minPrice(variants);
-  const compareAt = minCompareAt(variants);
+  const compareAt = cardDisplayCompareAt(variants);
   return {
     id: p.id,
     slug: p.slug,

@@ -44,7 +44,7 @@ export default async function BundlesPage() {
     <>
       <TopStrip />
       <Header />
-      <main id="MainContent" className="main-content mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <main id="MainContent" className="main-content mx-auto max-w-7xl space-y-6 shell-x py-5 sm:space-y-8 sm:py-6">
         <section>
           <h1 className="text-3xl font-semibold tracking-tight">Bundle Deals</h1>
           <p className="mt-2 text-neutral-600">
@@ -56,13 +56,13 @@ export default async function BundlesPage() {
         {sections.length === 0 ? (
           <p className="text-sm text-neutral-600">No bundles configured yet.</p>
         ) : (
-          <div className="grid gap-8">
+          <div className="grid gap-6 sm:gap-7">
             {sections.map(({ bundle, cards, lines }) => (
               <section
                 key={bundle.slug}
-                className="rounded-2xl border border-neutral-200 bg-white p-6"
+                className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5"
               >
-                <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div>
                     <p className="text-xs font-semibold capitalize tracking-wide text-neutral-500">
                       {bundle.discountLabel}
@@ -71,8 +71,8 @@ export default async function BundlesPage() {
                   </div>
                   <AddBundleButton lines={lines} />
                 </div>
-                <p className="mb-5 text-sm text-neutral-600">{bundle.description}</p>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3">
+                <p className="mb-4 text-sm text-neutral-600 sm:mb-5">{bundle.description}</p>
+                <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-3 lg:gap-2">
                   {cards.map((product, idx) => (
                     <ProductCard
                       key={product.id}

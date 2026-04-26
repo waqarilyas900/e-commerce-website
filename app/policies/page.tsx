@@ -50,9 +50,9 @@ export default async function PoliciesPage() {
       <Header />
       <main
         id="MainContent"
-        className="main-content bg-gradient-to-b from-neutral-50 to-white pb-16 pt-6 sm:pb-20 sm:pt-8"
+        className="main-content bg-gradient-to-b from-neutral-50 to-white pb-12 pt-4 sm:pb-16 sm:pt-6 md:pb-20 md:pt-8"
       >
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl shell-x">
           <nav className="text-sm text-neutral-500">
             <Link href="/" className="transition hover:text-neutral-900">
               Home
