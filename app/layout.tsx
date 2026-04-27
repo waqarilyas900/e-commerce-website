@@ -191,6 +191,8 @@ export default async function RootLayout({
   });
   const htmlLang = (identity.locale || "en_US").split("_")[0] || "en";
   const analyticsId = analytics.googleAnalyticsId;
+  const gtmId = analytics.googleTagManagerId;
+  const analyticsAllowed = !analytics.consentRequired;
   const storageOrigin = getStorageOrigin();
   const themeColor = parseThemeColor(announcementBar.backgroundColor, "#1c1d1d");
 
@@ -228,7 +230,18 @@ export default async function RootLayout({
         ) : null}
         <JsonLd id="ld-organization" data={orgLd} />
         <JsonLd id="ld-website" data={siteLd} />
-        {analyticsId ? (
+        {analyticsAllowed && gtmId ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode?.insertBefore(j,f);
+})(window,document,'script','dataLayer','${gtmId}');`,
+            }}
+          />
+        ) : null}
+        {!gtmId && analyticsAllowed && analyticsId ? (
           <>
             <script
               async
@@ -259,6 +272,16 @@ export default async function RootLayout({
         data-aos-duration="400"
         data-aos-delay="0"
       >
+        {analyticsAllowed && gtmId ? (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        ) : null}
         <StoreBrandProvider brand={storeBrand}>
           <AskTheStoreProvider>
             <NavCollectionsProvider links={collectionLinks}>
