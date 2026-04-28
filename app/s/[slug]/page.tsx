@@ -149,7 +149,7 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
         </header>
 
         <section>
-          <Suspense fallback={<ListingFallback cardShowAddToCart />}>
+          <Suspense fallback={<ListingFallback />}>
             <CollectionListingControls
               maxPriceCeil={maxCeil}
               parsed={parsed}
@@ -157,7 +157,6 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
               navLinks={navLinks}
               products={list}
               hideCollectionNav
-              cardShowAddToCart
             />
           </Suspense>
         </section>
