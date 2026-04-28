@@ -35,8 +35,17 @@ export function useGoogleIdentity() {
   return useContext(GoogleIdentityContext);
 }
 
-/** Skip One Tap prompt on auth routes (OAuth return / noise). */
-const SKIP_PROMPT_PREFIXES = ["/auth/"];
+/**
+ * Skip One Tap prompt on auth and password routes to avoid overlap with
+ * login/signup forms and modal UI in the same viewport.
+ */
+const SKIP_PROMPT_PREFIXES = [
+  "/auth/",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+];
 
 function shouldSkipPromptRoute(pathname: string): boolean {
   return SKIP_PROMPT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

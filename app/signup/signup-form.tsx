@@ -14,6 +14,7 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -197,16 +198,26 @@ export function SignupForm() {
         <label htmlFor="signup-password" className="mb-1.5 block text-sm font-medium text-neutral-800">
           Password
         </label>
-        <input
-          id="signup-password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={inputClass}
-        />
+        <div className="relative">
+          <input
+            id="signup-password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={`${inputClass} pr-16`}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute inset-y-0 right-2 my-auto h-7 rounded px-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
         <p className="mt-1.5 text-xs leading-relaxed text-neutral-500">
           Use at least 8 characters with uppercase, lowercase, a number, and a symbol — so your
           account stays secure.

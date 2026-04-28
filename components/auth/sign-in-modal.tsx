@@ -43,6 +43,7 @@ export function SignInModal({
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +52,7 @@ export function SignInModal({
     queueMicrotask(() => {
       setEmail("");
       setPassword("");
+      setShowPassword(false);
       setError(null);
       setLoading(false);
     });
@@ -152,15 +154,25 @@ export function SignInModal({
                 Forgot password?
               </Link>
             </div>
-            <input
-              id={passwordId}
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-full border border-neutral-300 px-4 py-2.5 text-sm outline-none ring-neutral-900/10 transition focus:border-neutral-800 focus:ring-2"
-            />
+            <div className="relative">
+              <input
+                id={passwordId}
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-full border border-neutral-300 px-4 py-2.5 pr-18 text-sm outline-none ring-neutral-900/10 transition focus:border-neutral-800 focus:ring-2"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-2 my-auto h-7 rounded px-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
         </form>
 

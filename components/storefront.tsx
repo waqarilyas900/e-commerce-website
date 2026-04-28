@@ -275,22 +275,57 @@ export function Header() {
 }
 
 /**
- * Hosts where we use `<img>` instead of `next/image`: `remotePatterns` may be correct in
- * `next.config` but dev/prod can still throw (stale Turbopack cache, deploy drift). Plain `<img>`
- * skips the optimizer allowlist for these URLs.
+ * Decide whether a product image should render via plain `<img>` (bypassing
+ * `next/image` and its host allowlist) or via the optimizer.
+ *
+ * Default is **plain `<img>` for any external host** so supplier CDN URLs
+ * (Squarespace, Joom, Amazon mirrors, etc.) can never trip the
+ * "hostname is not configured" runtime error — admins paste arbitrary URLs
+ * into the product editor and we don't want every new host to require a
+ * `next.config.ts` edit + redeploy.
+ *
+ * We only return `false` (→ use `next/image`) for hosts we control and have
+ * explicitly configured: our own storefront/site host, the Supabase public
+ * storage bucket, and Unsplash (used for design stubs). This gives us the
+ * optimizer's srcset/WebP conversion on first-party media while keeping
+ * third-party URLs resilient.
  */
 function productImageUseNativeImg(src: string): boolean {
-  if (!src || src.startsWith("/")) return false;
-  try {
-    const h = new URL(src).hostname.toLowerCase();
-    if (h === "ibrahimstores.com" || h === "www.ibrahimstores.com") return true;
-    if (h === "kwcdn.com" || h.endsWith(".kwcdn.com")) return true;
-    if (h === "m.media-amazon.com" || h.endsWith(".media-amazon.com")) return true;
-    if (h.endsWith(".ssl-images-amazon.com")) return true;
+  if (!src) return false;
+  if (src.startsWith("/") || src.startsWith("data:") || src.startsWith("blob:")) {
     return false;
+  }
+  let host: string;
+  try {
+    host = new URL(src).hostname.toLowerCase();
   } catch {
     return false;
   }
+
+  const siteHostRaw = (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_DEV_SITE_ORIGIN ||
+    ""
+  ).trim();
+  let siteHost = "";
+  if (siteHostRaw) {
+    try {
+      siteHost = new URL(siteHostRaw).hostname.toLowerCase();
+    } catch {
+      /* ignore */
+    }
+  }
+  const cdnHost = (process.env.NEXT_PUBLIC_CDN_IMAGE_HOST || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "");
+
+  if (siteHost && (host === siteHost || host === `www.${siteHost}`)) return false;
+  if (cdnHost && host === cdnHost) return false;
+  if (host.endsWith(".supabase.co")) return false;
+  if (host === "images.unsplash.com") return false;
+
+  return true;
 }
 
 function ProductCardStarRow({ rating }: { rating: number }) {
@@ -353,10 +388,17 @@ export function ProductCard({
   return (
     <motion.article
       className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
-      initial={{ opacity: 0, y: 20 }}
+      /**
+       * Reveal animation tightened for performance:
+       * - shorter distance (8px vs 20px) and shorter duration (0.45s vs 0.9s)
+       *   keeps scroll at 60fps on mid-range Android by giving framer-motion
+       *   far less work per card on large grids;
+       * - earlier viewport trigger so cards don't pop in mid-scroll.
+       */
+      initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.18, margin: "0px 0px -8% 0px" }}
-      transition={{ duration: 0.9, delay: revealDelay, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, amount: 0.05, margin: "0px 0px 5% 0px" }}
+      transition={{ duration: 0.45, delay: revealDelay, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link
         href={`/products/${product.slug}`}
