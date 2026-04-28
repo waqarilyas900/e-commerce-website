@@ -406,6 +406,12 @@ export function ProductPdp({
 
   const purchaseStockMessage =
     matchedVariant && maxQty > 0 ? `${maxQty} in stock` : "Out of stock";
+  const purchaseDiscountPct =
+    matchedVariant &&
+    priceVariant.compare_at_price != null &&
+    priceVariant.compare_at_price > priceVariant.price
+      ? Math.round((1 - Number(priceVariant.price) / Number(priceVariant.compare_at_price)) * 100)
+      : null;
 
   const purchaseStockBadgeClass =
     matchedVariant && maxQty > 0
@@ -664,6 +670,11 @@ export function ProductPdp({
                       <p className="text-2xl font-semibold">
                         {formatPkr(Number(priceVariant.price))}
                       </p>
+                      {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
+                        <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
+                          {purchaseDiscountPct}% OFF
+                        </span>
+                      ) : null}
                     </>
                   ) : (
                     <p className="text-2xl font-semibold">
