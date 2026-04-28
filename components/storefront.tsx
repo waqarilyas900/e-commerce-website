@@ -378,12 +378,16 @@ export function ProductCard({
 
   const useNativeProductImg = Boolean(product.image && productImageUseNativeImg(product.image));
   /**
-   * Fill the frame (no letterboxing). Grid: `object-top` keeps more of the packshot visible like
-   * storefront refs; rail: centered for horizontal tiles.
+   * `object-cover` + `object-top` fills the tile edge-to-edge (no grey band under the photo).
+   * Top alignment keeps packshots/labeled tops visible; a sliver of the bottom may crop — same
+   * trade-off as typical listing grids when the photo isn’t exactly the tile aspect ratio.
    */
-  const productImgClassName = rail
-    ? "object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
-    : "object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]";
+  const productImgClassName =
+    "object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]";
+  const productImgFitStyle = {
+    objectFit: "cover" as const,
+    objectPosition: "top center" as const,
+  };
 
   return (
     <motion.article
@@ -407,8 +411,8 @@ export function ProductCard({
         <div
           className={
             rail
-              ? "relative h-56 w-full overflow-hidden bg-neutral-100 sm:h-60"
-              : "relative aspect-4/5 w-full overflow-hidden bg-neutral-50 sm:aspect-auto sm:h-60"
+              ? "relative h-[248px] w-full overflow-hidden bg-neutral-100 sm:h-64"
+              : "relative aspect-4/5 w-full overflow-hidden bg-neutral-50 sm:aspect-auto sm:h-64 md:h-72 lg:h-80"
           }
         >
           {product.image ? (
@@ -418,6 +422,7 @@ export function ProductCard({
                 alt={product.name}
                 loading="lazy"
                 decoding="async"
+                style={productImgFitStyle}
                 className={`absolute inset-0 h-full w-full ${productImgClassName}`}
               />
             ) : (
@@ -427,9 +432,10 @@ export function ProductCard({
                 fill
                 sizes={
                   rail
-                    ? "(max-width: 767px) 55vw, 280px"
-                    : "(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
+                    ? "(max-width: 767px) 60vw, 300px"
+                    : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 340px"
                 }
+                style={productImgFitStyle}
                 className={productImgClassName}
               />
             )
