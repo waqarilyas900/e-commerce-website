@@ -149,6 +149,10 @@ export function ProductPdp({
   colorById = {},
   safeDescriptionHtml,
 }: Props) {
+  const showCollectionLabel =
+    typeof collectionLabel === "string" &&
+    collectionLabel.trim() !== "" &&
+    collectionLabel.toLowerCase() !== "uncategorized";
   const { isOpen: cartDrawerOpen } = useCart();
 
   const variantKeys = useMemo(
@@ -489,9 +493,11 @@ export function ProductPdp({
           ) : null}
         </div>
         <div className="space-y-4">
-          <p className="text-sm capitalize tracking-wide text-neutral-500">
-            {collectionLabel}
-          </p>
+          {showCollectionLabel ? (
+            <p className="text-sm capitalize tracking-wide text-neutral-500">
+              {collectionLabel}
+            </p>
+          ) : null}
           <h1 className="text-3xl font-semibold tracking-tight">
             {product.name}
           </h1>
