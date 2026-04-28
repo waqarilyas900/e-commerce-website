@@ -25,6 +25,53 @@ type ProductTimestampRow = { slug: string; updated_at: string | null; created_at
 type CollectionTimestampRow = { slug: string; updated_at: string | null };
 
 /**
+ * Slug guard for sitemap loc-paths: rejects any string with whitespace, control
+ * characters, or characters that would corrupt XML even after percent-encoding.
+ * Bad inputs from the admin (paste from Word/Excel, accidental newline, etc.)
+ * have been the recurring source of "Sitemap parse error" in Search Console.
+ */
+function safeSlug(input: string | null | undefined): string | null {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (trimmed === "") return null;
+  // No whitespace, no control chars, no XML-meta chars in raw slug.
+  if (/[\s\u0000-\u001f\u007f<>"'`]/.test(trimmed)) return null;
+  return trimmed;
+}
+
+/**
+ * Image URL guard for the `<image:loc>` extension. Must:
+ *  - Parse as a real http(s) URL (no `data:`, `javascript:`, etc.)
+ *  - Have no whitespace, control chars, or XML-meta chars
+ *  - Resolve to an absolute URL we can safely embed
+ *
+ * Returns the cleaned absolute URL or `null` to skip.
+ */
+function safeImageUrl(raw: string | null | undefined, base: string): string | null {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (trimmed === "") return null;
+  if (/[\s\u0000-\u001f\u007f]/.test(trimmed)) return null;
+
+  let absolute: string;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    absolute = trimmed;
+  } else if (trimmed.startsWith("/")) {
+    absolute = `${base}${trimmed}`;
+  } else {
+    absolute = `${base}/${trimmed}`;
+  }
+
+  try {
+    const u = new URL(absolute);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Best-effort `updated_at` per product. Falls back to `created_at` then "now".
  * Done as a separate query so we keep the lighter `dbListAllActiveProductsForCards`
  * for the listing page.
@@ -127,40 +174,60 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     byUrl.set(e.url, e);
   }
 
+  let skippedProducts = 0;
+  let skippedImages = 0;
+  let skippedCollections = 0;
+  let skippedPolicies = 0;
+  let skippedSections = 0;
+
   for (const p of products) {
-    if (!p.slug) continue;
-    const url = `${base}/products/${encodeURIComponent(p.slug)}`;
+    const slug = safeSlug(p.slug);
+    if (!slug) {
+      skippedProducts += 1;
+      continue;
+    }
+    const url = `${base}/products/${encodeURIComponent(slug)}`;
     const lastMod =
-      productTs.get(p.slug) ?? (p.createdAt ? new Date(p.createdAt) : lastModified);
+      productTs.get(slug) ?? (p.createdAt ? new Date(p.createdAt) : lastModified);
     const entryItem: MetadataRoute.Sitemap[0] = {
       url,
       lastModified: lastMod,
       changeFrequency: "weekly",
       priority: 0.85,
     };
-    if (p.image) {
+    const safeImage = safeImageUrl(p.image, base);
+    if (safeImage) {
       // `images` is consumed by the Google Image extension to the sitemap protocol.
-      (entryItem as MetadataRoute.Sitemap[0] & { images?: string[] }).images = [
-        p.image.startsWith("http") ? p.image : `${base}${p.image.startsWith("/") ? p.image : `/${p.image}`}`,
-      ];
+      // Skip image silently if the URL is malformed — better than emitting bad XML.
+      (entryItem as MetadataRoute.Sitemap[0] & { images?: string[] }).images = [safeImage];
+    } else if (p.image) {
+      skippedImages += 1;
     }
     byUrl.set(url, entryItem);
   }
 
   for (const c of collections) {
-    if (!c.slug) continue;
-    const url = `${base}/collections/${encodeURIComponent(c.slug)}`;
+    const slug = safeSlug(c.slug);
+    if (!slug) {
+      skippedCollections += 1;
+      continue;
+    }
+    const url = `${base}/collections/${encodeURIComponent(slug)}`;
     byUrl.set(url, {
       url,
-      lastModified: collectionTs.get(c.slug) ?? lastModified,
+      lastModified: collectionTs.get(slug) ?? lastModified,
       changeFrequency: "daily",
       priority: 0.8,
     });
   }
 
   for (const pol of policies) {
-    if (!pol.slug) continue;
-    const url = `${base}/${encodeURIComponent(pol.slug)}`;
+    const slug = safeSlug(pol.slug);
+    if (!slug) {
+      skippedPolicies += 1;
+      continue;
+    }
+    const url = `${base}/${encodeURIComponent(slug)}`;
     byUrl.set(url, {
       url,
       lastModified,
@@ -170,14 +237,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const s of homeSections) {
-    if (!s.slug) continue;
-    const url = `${base}/s/${encodeURIComponent(s.slug)}`;
+    const slug = safeSlug(s.slug);
+    if (!slug) {
+      skippedSections += 1;
+      continue;
+    }
+    const url = `${base}/s/${encodeURIComponent(slug)}`;
     byUrl.set(url, {
       url,
       lastModified,
       changeFrequency: "weekly",
       priority: 0.7,
     });
+  }
+
+  if (
+    skippedProducts ||
+    skippedImages ||
+    skippedCollections ||
+    skippedPolicies ||
+    skippedSections
+  ) {
+    console.warn(
+      "[sitemap] skipped invalid entries:",
+      JSON.stringify({
+        skippedProducts,
+        skippedImages,
+        skippedCollections,
+        skippedPolicies,
+        skippedSections,
+      }),
+    );
   }
 
   return [...byUrl.values()];
