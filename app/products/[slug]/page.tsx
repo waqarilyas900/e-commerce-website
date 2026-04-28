@@ -168,6 +168,9 @@ export default async function ProductPage({ params }: Props) {
   ]);
   const seoOverride = await loadSeoOverrideForSubject("product", detail.product.id, identity.locale);
   const related = relatedDb.filter((item) => item.slug !== slug).slice(0, 4);
+  const hasRealCollection =
+    detail.collectionSlug.trim() !== "" &&
+    detail.collectionSlug.toLowerCase() !== "uncategorized";
 
   const canonical = canonicalUrlFor(`/products/${slug}`);
   const productLd = productJsonLd({
@@ -187,10 +190,14 @@ export default async function ProductPage({ params }: Props) {
   });
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
-    {
-      name: detail.collectionSlug,
-      url: `/collections/${detail.collectionSlug}`,
-    },
+    ...(hasRealCollection
+      ? [
+          {
+            name: detail.collectionSlug,
+            url: `/collections/${detail.collectionSlug}`,
+          },
+        ]
+      : []),
     { name: detail.product.name, url: `/products/${slug}` },
   ]);
 
@@ -209,7 +216,7 @@ export default async function ProductPage({ params }: Props) {
           product={detail.product}
           productSlug={slug}
           optionDefinitions={detail.optionDefinitions}
-          collectionLabel={detail.collectionSlug}
+          collectionLabel={hasRealCollection ? detail.collectionSlug : ""}
           variants={detail.variants}
           assets={detail.assets}
           colorById={detail.colorById}
