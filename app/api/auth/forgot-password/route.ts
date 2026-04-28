@@ -9,7 +9,11 @@ export async function POST(req: Request) {
   const ip = getRequestIp(req);
   const limited = rateLimit(`forgot-password:${ip}`, 5, 60 * 60 * 1000);
   if (!limited.ok) {
-    return rateLimitResponse(limited.retryAfterMs);
+    const minutes = Math.max(1, Math.ceil(limited.retryAfterMs / 60000));
+    return rateLimitResponse(
+      limited.retryAfterMs,
+      `Too many reset attempts from this network. Please wait about ${minutes} minute${minutes === 1 ? "" : "s"} and try again.`,
+    );
   }
 
   let body: { email?: string };

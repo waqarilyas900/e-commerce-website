@@ -28,6 +28,7 @@ import {
   breadcrumbJsonLd,
   collectionJsonLd,
 } from "@/lib/seo/jsonld";
+import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -76,24 +77,17 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   });
 }
 
-function ListingFallback() {
+function ListingFallback({ cardShowAddToCart = false }: { cardShowAddToCart?: boolean }) {
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="grid grid-cols-2 gap-3">
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
       </div>
-      <div className="grid grid-cols-2 items-start gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:hidden">
+      <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
+          <ProductCardSkeleton key={i} showAddToCart={cardShowAddToCart} />
         ))}
-      </div>
-      <div className="hidden gap-2 lg:grid lg:grid-cols-4">
-        <div className="grid min-w-0 grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:col-span-4 lg:grid-cols-4 lg:gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-80 animate-pulse rounded-md bg-neutral-100" />
-          ))}
-        </div>
       </div>
     </div>
   );

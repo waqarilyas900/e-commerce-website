@@ -100,9 +100,10 @@ function advanceNGraphemes(s: string, revealedLen: number, maxSteps: number): nu
 const MODEL_LABEL = process.env.NEXT_PUBLIC_ASK_STORE_MODEL_LABEL?.trim();
 
 const SUGGESTIONS = [
+  "What products do you sell?",
+  "Show me anything on sale",
   "How does shipping work?",
   "What is your return policy?",
-  "Help me find a product",
 ] as const;
 
 function CloseIcon({ className }: { className?: string }) {

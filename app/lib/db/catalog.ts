@@ -213,60 +213,77 @@ const PRODUCT_SELECT =
 /** All active products with variant-derived prices (for /collections grid, sale filter). */
 export async function dbListAllActiveProductsForCards(): Promise<Product[]> {
   if (!hasCatalogDb()) return [];
-  const supabase = await createClient();
-  const { data: products, error: pErr } = await supabase
-    .from("products")
-    .select(PRODUCT_SELECT)
-    .eq("status", "active");
+  try {
+    const supabase = await createClient();
+    const { data: products, error: pErr } = await supabase
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("status", "active");
 
-  if (pErr || !products?.length) {
-    if (pErr) logDbCatalogIssue("listAllActiveProducts", pErr.message);
+    if (pErr || !products?.length) {
+      if (pErr) logDbCatalogIssue("listAllActiveProducts", pErr.message);
+      return [];
+    }
+
+    const plist = products as DbProductRow[];
+    const ids = plist.map((p) => p.id);
+    const displaySlug = await primaryDisplaySlugByProductId(supabase, ids);
+
+    const { data: rawVariants } = await supabase
+      .from("product_variants")
+      .select("id, product_id, sku, option_values, price, compare_at_price, size_id, color_id")
+      .in("product_id", ids);
+
+    const variants = await mergeInventoryForVariants(
+      supabase,
+      (rawVariants ?? []) as Omit<
+        DbProductVariantRow,
+        "quantity_on_hand" | "quantity_reserved"
+      >[],
+    );
+
+    const byProduct = new Map<string, DbProductVariantRow[]>();
+    for (const v of variants) {
+      const row = v;
+      const list = byProduct.get(row.product_id) ?? [];
+      list.push(row);
+      byProduct.set(row.product_id, list);
+    }
+
+    return plist.map((p) => {
+      const slug = displaySlug.get(p.id) ?? "uncategorized";
+      return mapProductCard(p, byProduct.get(p.id) ?? [], slug);
+    });
+  } catch (err) {
+    // Defensive: callers like /sitemap.xml must never 500 from this helper.
+    logDbCatalogIssue(
+      "listAllActiveProducts",
+      err instanceof Error ? err.message : String(err),
+    );
     return [];
   }
-
-  const plist = products as DbProductRow[];
-  const ids = plist.map((p) => p.id);
-  const displaySlug = await primaryDisplaySlugByProductId(supabase, ids);
-
-  const { data: rawVariants } = await supabase
-    .from("product_variants")
-    .select("id, product_id, sku, option_values, price, compare_at_price, size_id, color_id")
-    .in("product_id", ids);
-
-  const variants = await mergeInventoryForVariants(
-    supabase,
-    (rawVariants ?? []) as Omit<
-      DbProductVariantRow,
-      "quantity_on_hand" | "quantity_reserved"
-    >[],
-  );
-
-  const byProduct = new Map<string, DbProductVariantRow[]>();
-  for (const v of variants) {
-    const row = v;
-    const list = byProduct.get(row.product_id) ?? [];
-    list.push(row);
-    byProduct.set(row.product_id, list);
-  }
-
-  return plist.map((p) => {
-    const slug = displaySlug.get(p.id) ?? "uncategorized";
-    return mapProductCard(p, byProduct.get(p.id) ?? [], slug);
-  });
 }
 
 export async function dbListCollections(): Promise<DbCollectionRow[]> {
   if (!hasCatalogDb()) return [];
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("collections")
-    .select("id, slug, name, description, hero_image, sort_order, collection_type")
-    .order("sort_order", { ascending: true });
-  if (error) {
-    logDbCatalogIssue("listCollections", error.message);
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("collections")
+      .select("id, slug, name, description, hero_image, sort_order, collection_type")
+      .order("sort_order", { ascending: true });
+    if (error) {
+      logDbCatalogIssue("listCollections", error.message);
+      return [];
+    }
+    return (data ?? []) as DbCollectionRow[];
+  } catch (err) {
+    logDbCatalogIssue(
+      "listCollections",
+      err instanceof Error ? err.message : String(err),
+    );
     return [];
   }
-  return (data ?? []) as DbCollectionRow[];
 }
 
 export async function dbGetCollectionBySlug(
@@ -632,41 +649,49 @@ export async function dbListActiveHomePageSectionsWithTags(): Promise<
   HomePageSectionWithTags[]
 > {
   if (!hasCatalogDb()) return [];
-  const supabase = await createClient();
-  const { data: sections, error } = await supabase
-    .from("home_page_sections")
-    .select("id, name, slug, sort_order")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-  if (error || !sections?.length) {
-    if (error) logDbCatalogIssue("listHomePageSections", error.message);
-    return [];
-  }
-  const ids = (sections as { id: string }[]).map((s) => s.id);
-  const { data: links, error: lErr } = await supabase
-    .from("home_page_section_tags")
-    .select("section_id, tag_id")
-    .in("section_id", ids);
-  if (lErr) {
-    logDbCatalogIssue("listHomePageSectionTags", lErr.message);
-  }
-  const bySection = new Map<string, string[]>();
-  for (const row of links ?? []) {
-    const sid = (row as { section_id: string; tag_id: string }).section_id;
-    const tid = (row as { section_id: string; tag_id: string }).tag_id;
-    const arr = bySection.get(sid) ?? [];
-    arr.push(tid);
-    bySection.set(sid, arr);
-  }
-  return (sections as Pick<DbHomePageSectionRow, "id" | "name" | "slug" | "sort_order">[]).map(
-    (s) => ({
+  try {
+    const supabase = await createClient();
+    const { data: sections, error } = await supabase
+      .from("home_page_sections")
+      .select("id, name, slug, sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    if (error || !sections?.length) {
+      if (error) logDbCatalogIssue("listHomePageSections", error.message);
+      return [];
+    }
+    const ids = (sections as { id: string }[]).map((s) => s.id);
+    const { data: links, error: lErr } = await supabase
+      .from("home_page_section_tags")
+      .select("section_id, tag_id")
+      .in("section_id", ids);
+    if (lErr) {
+      logDbCatalogIssue("listHomePageSectionTags", lErr.message);
+    }
+    const bySection = new Map<string, string[]>();
+    for (const row of links ?? []) {
+      const sid = (row as { section_id: string; tag_id: string }).section_id;
+      const tid = (row as { section_id: string; tag_id: string }).tag_id;
+      const arr = bySection.get(sid) ?? [];
+      arr.push(tid);
+      bySection.set(sid, arr);
+    }
+    return (
+      sections as Pick<DbHomePageSectionRow, "id" | "name" | "slug" | "sort_order">[]
+    ).map((s) => ({
       id: s.id,
       name: s.name,
       slug: s.slug,
       sort_order: s.sort_order,
       tagIds: bySection.get(s.id) ?? [],
-    }),
-  );
+    }));
+  } catch (err) {
+    logDbCatalogIssue(
+      "listHomePageSections",
+      err instanceof Error ? err.message : String(err),
+    );
+    return [];
+  }
 }
 
 export async function dbGetActiveHomePageSectionBySlug(

@@ -149,6 +149,10 @@ export function ProductPdp({
   colorById = {},
   safeDescriptionHtml,
 }: Props) {
+  const showCollectionLabel =
+    typeof collectionLabel === "string" &&
+    collectionLabel.trim() !== "" &&
+    collectionLabel.toLowerCase() !== "uncategorized";
   const { isOpen: cartDrawerOpen } = useCart();
 
   const variantKeys = useMemo(
@@ -406,6 +410,12 @@ export function ProductPdp({
 
   const purchaseStockMessage =
     matchedVariant && maxQty > 0 ? `${maxQty} in stock` : "Out of stock";
+  const purchaseDiscountPct =
+    matchedVariant &&
+    priceVariant.compare_at_price != null &&
+    priceVariant.compare_at_price > priceVariant.price
+      ? Math.round((1 - Number(priceVariant.price) / Number(priceVariant.compare_at_price)) * 100)
+      : null;
 
   const purchaseStockBadgeClass =
     matchedVariant && maxQty > 0
@@ -416,7 +426,11 @@ export function ProductPdp({
     <>
       <section className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="relative min-h-[500px] overflow-hidden rounded-2xl bg-neutral-100">
+          <div
+            className={`relative overflow-hidden rounded-2xl bg-neutral-100 ${
+              main?.kind === "video" || !main ? "min-h-[520px]" : ""
+            }`}
+          >
             {showImageOosBadge ? (
               <div
                 className="absolute right-3 top-3 z-10 max-w-[min(calc(100%-1.5rem),16rem)] rounded-lg border border-white/15 bg-neutral-950/95 px-3 py-2 text-center shadow-lg backdrop-blur-sm"
@@ -433,15 +447,19 @@ export function ProductPdp({
                 src={main.url}
                 controls
                 playsInline
-                className="h-full min-h-[500px] w-full object-contain"
+                className="h-full min-h-[520px] w-full object-contain"
               />
             ) : main ? (
-              <div
-                className="min-h-[500px] w-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${main.url})` }}
+              <img
+                src={main.url}
+                alt={product.name}
+                className="mx-auto block h-auto w-full max-h-[min(92vh,900px)] max-w-full bg-transparent align-top"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
             ) : (
-              <div className="flex min-h-[500px] items-center justify-center text-sm text-neutral-400">
+              <div className="flex min-h-[520px] items-center justify-center text-sm text-neutral-400">
                 No media
               </div>
             )}
@@ -475,9 +493,11 @@ export function ProductPdp({
           ) : null}
         </div>
         <div className="space-y-4">
-          <p className="text-sm capitalize tracking-wide text-neutral-500">
-            {collectionLabel}
-          </p>
+          {showCollectionLabel ? (
+            <p className="text-sm capitalize tracking-wide text-neutral-500">
+              {collectionLabel}
+            </p>
+          ) : null}
           <h1 className="text-3xl font-semibold tracking-tight">
             {product.name}
           </h1>
@@ -664,6 +684,11 @@ export function ProductPdp({
                       <p className="text-2xl font-semibold">
                         {formatPkr(Number(priceVariant.price))}
                       </p>
+                      {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
+                        <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
+                          {purchaseDiscountPct}% OFF
+                        </span>
+                      ) : null}
                     </>
                   ) : (
                     <p className="text-2xl font-semibold">
