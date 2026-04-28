@@ -422,7 +422,11 @@ export function ProductPdp({
     <>
       <section className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="relative min-h-[520px] overflow-hidden rounded-2xl bg-neutral-100">
+          <div
+            className={`relative overflow-hidden rounded-2xl bg-neutral-100 ${
+              main?.kind === "video" || !main ? "min-h-[520px]" : ""
+            }`}
+          >
             {showImageOosBadge ? (
               <div
                 className="absolute right-3 top-3 z-10 max-w-[min(calc(100%-1.5rem),16rem)] rounded-lg border border-white/15 bg-neutral-950/95 px-3 py-2 text-center shadow-lg backdrop-blur-sm"
@@ -442,9 +446,13 @@ export function ProductPdp({
                 className="h-full min-h-[520px] w-full object-contain"
               />
             ) : main ? (
-              <div
-                className="min-h-[520px] w-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${main.url})` }}
+              <img
+                src={main.url}
+                alt={product.name}
+                className="mx-auto block h-auto w-full max-h-[min(92vh,900px)] max-w-full bg-transparent align-top"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
             ) : (
               <div className="flex min-h-[520px] items-center justify-center text-sm text-neutral-400">

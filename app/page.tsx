@@ -18,6 +18,7 @@ import {
   loadSeoOverrideForRoute,
   loadSiteIdentity,
 } from "@/lib/seo";
+import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -92,18 +93,14 @@ async function HomeRails() {
 
 function HomeRailsFallback() {
   return (
-    <section className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 md:py-10 lg:px-8">
-      <div className="h-7 w-40 animate-pulse rounded bg-neutral-200" />
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="overflow-hidden rounded-md border border-neutral-200 bg-white">
-            <div className="aspect-4/5 w-full animate-pulse bg-neutral-200" />
-            <div className="space-y-2 p-3">
-              <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-200" />
-              <div className="h-4 w-1/2 animate-pulse rounded bg-neutral-200" />
-            </div>
-          </div>
-        ))}
+    <section className="bg-neutral-100/80">
+      <div className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
+        <div className="mb-4 h-7 w-40 animate-pulse rounded bg-neutral-200" />
+        <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ProductCardSkeleton key={i} showAddToCart={false} />
+          ))}
+        </div>
       </div>
     </section>
   );
