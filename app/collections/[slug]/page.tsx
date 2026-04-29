@@ -86,8 +86,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       override: null,
       defaults: { title: "Collection not found", description: identity.siteDescription, forceNoindex: true },
     });
-  }
-
+  } 
+// aaa 
   const override = await loadSeoOverrideForSubject("collection", collection.id, identity.locale);
 
   return buildPageMetadata({
