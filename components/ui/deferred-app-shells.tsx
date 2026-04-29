@@ -1,7 +1,13 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+
+function isCheckoutPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname === "/checkout" || pathname.startsWith("/checkout/");
+}
 
 const DiscountNotificationPrompt = dynamic(
   () =>
@@ -26,6 +32,7 @@ const AskTheStore = dynamic(
  * render after their own internal triggers (timer / button click).
  */
 export function DeferredAppShells() {
+  const pathname = usePathname();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -47,10 +54,12 @@ export function DeferredAppShells() {
 
   if (!ready) return null;
 
+  const hideStoreAi = isCheckoutPath(pathname);
+
   return (
     <>
       <DiscountNotificationPrompt />
-      <AskTheStore />
+      {hideStoreAi ? null : <AskTheStore />}
     </>
   );
 }
