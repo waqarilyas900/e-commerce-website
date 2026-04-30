@@ -579,9 +579,12 @@ export function ProductPdp({
                       Video
                     </span>
                   ) : (
-                    <div
-                      className="h-full w-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${item.url})` }}
+                    <img
+                      src={item.url}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover"
                     />
                   )}
                 </button>
@@ -598,12 +601,6 @@ export function ProductPdp({
           <h1 className="text-3xl font-semibold tracking-tight">
             {product.name}
           </h1>
-          {safeDescriptionHtml ? (
-            <div
-              className="text-neutral-600 [&_a]:text-neutral-900 [&_a]:underline [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
-              dangerouslySetInnerHTML={{ __html: safeDescriptionHtml }}
-            />
-          ) : null}
           <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
             <ReactStars
               count={5}
@@ -793,8 +790,14 @@ export function ProductPdp({
                     </p>
                   )
                 ) : (
-                  <></>
-                  // <p className="text-2xl font-semibold text-neutral-400">—</p>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-semibold text-neutral-900">
+                      {formatPkr(Number(priceVariant.price))}
+                    </p>
+                    <p className="text-sm text-neutral-500">
+                      Select all options to see stock and add to cart.
+                    </p>
+                  </div>
                 )}
               </div>
               <div
@@ -981,6 +984,13 @@ export function ProductPdp({
               This product has no purchasable variants.
             </p>
           )}
+
+          {safeDescriptionHtml ? (
+            <div
+              className="max-w-full overflow-x-auto text-neutral-600 [&_a]:text-neutral-900 [&_a]:underline [&_img]:h-auto [&_img]:max-w-full [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+              dangerouslySetInnerHTML={{ __html: safeDescriptionHtml }}
+            />
+          ) : null}
         </div>
       </section>
 
