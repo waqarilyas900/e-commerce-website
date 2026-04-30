@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
 import {
   useCallback,
   useEffect,
@@ -404,7 +405,7 @@ export function ProductCard({
       viewport={{ once: true, amount: 0.05, margin: "0px 0px 5% 0px" }}
       transition={{ duration: 0.45, delay: revealDelay, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Link
+      <HoverPrefetchLink
         href={`/products/${product.slug}`}
         className="group relative block shrink-0"
       >
@@ -448,10 +449,10 @@ export function ProductCard({
             {badgeLabel}
           </span>
         ) : null}
-      </Link>
+      </HoverPrefetchLink>
       {/* Single column: mt-auto only on the button so it pins to the bottom when the row stretches */}
       <div className="flex min-h-0 flex-1 flex-col gap-1 p-2 text-[13px] leading-snug text-neutral-900 sm:gap-1.5 sm:p-2.5 sm:text-sm">
-        <Link
+        <HoverPrefetchLink
           href={`/products/${product.slug}`}
           className={
             rail || clampTitle
@@ -460,7 +461,7 @@ export function ProductCard({
           }
         >
           {product.name}
-        </Link>
+        </HoverPrefetchLink>
         {product.reviews > 0 || product.rating > 0 ? (
           <ProductCardStarRow rating={product.rating} />
         ) : null}

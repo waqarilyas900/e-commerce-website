@@ -1,13 +1,15 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPdp } from "@/components/product/product-pdp";
 import { CustomerReviews } from "@/components/product/customer-reviews";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
+import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
+import { dbListProductReviewsForPdp } from "@/app/lib/db/catalog";
 import {
-  dbGetProductDetailBySlug,
-  dbListProductReviewsForPdp,
-  dbListProductsByCollectionSlug,
-} from "@/app/lib/db/catalog";
+  getCachedProductDetailBySlug,
+  getCachedProductsByCollectionSlug,
+} from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import {
   buildPageMetadata,
@@ -97,7 +99,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const [detail, identity] = await Promise.all([
-    dbGetProductDetailBySlug(slug),
+    getCachedProductDetailBySlug(slug),
     loadSiteIdentity(),
   ]);
 
@@ -155,19 +157,19 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
 
-  const detail = await dbGetProductDetailBySlug(slug);
+  const detail = await getCachedProductDetailBySlug(slug);
   if (!detail || detail.variants.length === 0) {
     notFound();
   }
 
-  const [relatedDb, initialReviews, identity, seoExtras] = await Promise.all([
-    dbListProductsByCollectionSlug(detail.collectionSlug),
-    dbListProductReviewsForPdp(detail.product.id),
+  // Critical-path data (above-the-fold buy box + structured data) — block on
+  // these. Related products and reviews are streamed in via Suspense below
+  // so the user sees the buy box before those slower joins finish.
+  const [identity, seoExtras] = await Promise.all([
     loadSiteIdentity(),
     loadProductSeoExtras(detail.product.id),
   ]);
   const seoOverride = await loadSeoOverrideForSubject("product", detail.product.id, identity.locale);
-  const related = relatedDb.filter((item) => item.slug !== slug).slice(0, 4);
   const hasRealCollection =
     detail.collectionSlug.trim() !== "" &&
     detail.collectionSlug.toLowerCase() !== "uncategorized";
@@ -222,28 +224,131 @@ export default async function ProductPage({ params }: Props) {
           colorById={detail.colorById}
           safeDescriptionHtml={sanitizeRichHtml(detail.product.description)}
         />
-        <section className="mt-8 sm:mt-10">
-          <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
-          <div className="mt-3 grid grid-cols-2 gap-1 sm:mt-4 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
-            {related.map((item, idx) => (
-              <ProductCard
-                key={item.id}
-                product={item}
-                showAddToCart={false}
-                clampTitle
-                revealDelay={Math.min(idx * 0.08, 0.36)}
-              />
-            ))}
-          </div>
-        </section>
-        <CustomerReviews
-          productId={detail.product.id}
-          rating={Number(detail.product.rating ?? 0)}
-          reviewsCount={Number(detail.product.reviews_count ?? 0)}
-          initialReviews={initialReviews}
-        />
+        <Suspense fallback={<RelatedProductsFallback />}>
+          {/* Streamed in after the buy box renders. The query joins
+              product_collections → product_variants → inventory and runs ~150-300ms
+              on cold cache; with above-the-fold streaming the user can interact
+              with the PDP before this section paints. */}
+          <RelatedProductsSection
+            collectionSlug={detail.collectionSlug}
+            currentSlug={slug}
+          />
+        </Suspense>
+        <Suspense fallback={<ReviewsFallback />}>
+          <ProductReviewsSection
+            productId={detail.product.id}
+            rating={Number(detail.product.rating ?? 0)}
+            reviewsCount={Number(detail.product.reviews_count ?? 0)}
+          />
+        </Suspense>
       </main>
       <Footer />
     </>
+  );
+}
+
+// ---- Streamed sub-sections (rendered behind <Suspense>) ----
+
+async function RelatedProductsSection({
+  collectionSlug,
+  currentSlug,
+}: {
+  collectionSlug: string;
+  currentSlug: string;
+}) {
+  const relatedDb = await getCachedProductsByCollectionSlug(collectionSlug);
+  const related = relatedDb.filter((item) => item.slug !== currentSlug).slice(0, 4);
+  if (related.length === 0) return null;
+  return (
+    <section className="mt-8 sm:mt-10">
+      <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
+      <div className="mt-3 sm:mt-4 md:hidden">
+        <ul
+          className="-mx-2 flex list-none items-stretch gap-1 overflow-x-auto scroll-px-2 scroll-smooth px-2 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-1.5 sm:px-0 sm:scroll-px-0"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          {related.map((item, idx) => (
+            <li
+              key={item.id}
+              className="w-[calc((100vw-1.25rem)/1.5)] min-w-[172px] max-w-[232px] shrink-0 snap-start snap-always flex flex-col sm:w-[200px] sm:max-w-none"
+            >
+              <div className="flex h-full min-h-0 flex-1 flex-col">
+                <ProductCard
+                  product={item}
+                  showAddToCart={false}
+                  rail
+                  clampTitle
+                  revealDelay={Math.min(idx * 0.08, 0.36)}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="hidden md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+        {related.map((item, idx) => (
+          <ProductCard
+            key={item.id}
+            product={item}
+            showAddToCart={false}
+            clampTitle
+            revealDelay={Math.min(idx * 0.08, 0.36)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RelatedProductsFallback() {
+  return (
+    <section className="mt-8 sm:mt-10">
+      <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 md:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <ProductCardSkeleton key={idx} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function ProductReviewsSection({
+  productId,
+  rating,
+  reviewsCount,
+}: {
+  productId: string;
+  rating: number;
+  reviewsCount: number;
+}) {
+  const initialReviews = await dbListProductReviewsForPdp(productId);
+  return (
+    <CustomerReviews
+      productId={productId}
+      rating={rating}
+      reviewsCount={reviewsCount}
+      initialReviews={initialReviews}
+    />
+  );
+}
+
+function ReviewsFallback() {
+  return (
+    <section className="mt-10">
+      <div className="h-8 w-48 animate-pulse rounded-md bg-zinc-200/70 dark:bg-zinc-800/60" />
+      <div className="mt-4 space-y-3">
+        {Array.from({ length: 2 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="rounded-2xl border border-zinc-200/70 bg-white p-4 dark:border-zinc-800/70 dark:bg-zinc-900"
+          >
+            <div className="h-4 w-32 animate-pulse rounded bg-zinc-200/80 dark:bg-zinc-800/70" />
+            <div className="mt-2 h-3 w-full animate-pulse rounded bg-zinc-200/70 dark:bg-zinc-800/60" />
+            <div className="mt-2 h-3 w-3/4 animate-pulse rounded bg-zinc-200/70 dark:bg-zinc-800/60" />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

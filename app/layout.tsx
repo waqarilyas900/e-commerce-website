@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Jost } from "next/font/google";
 import Script from "next/script";
-import { getAnnouncementBarForLayout } from "@/app/lib/home-marketing";
-import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
+import NextTopLoader from "nextjs-toploader";
+import {
+  getCachedAnalyticsConfig,
+  getCachedAnnouncementBar,
+  getCachedHeaderNavMenu,
+  getCachedNavCollections,
+  getCachedSiteIdentity,
+  getCachedStoreBrand,
+} from "@/lib/cache/layout-data";
 import { getPublicSiteUrl } from "@/lib/site-url";
 import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
@@ -10,12 +17,9 @@ import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider
 import { HeaderNavMenuProvider } from "@/app/providers/header-nav-menu-provider";
 import { AskTheStoreProvider } from "@/app/providers/ask-the-store-provider";
 import { StoreBrandProvider } from "@/app/providers/store-brand-provider";
-import { getNavCollectionLinks } from "@/app/lib/nav-collections";
-import { getHeaderNavMenuItems } from "@/app/lib/header-nav-menu";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
 import { DeferredAppShells } from "@/components/ui/deferred-app-shells";
-import { loadAnalyticsConfig, loadSiteIdentity } from "@/lib/seo";
 import {
   JsonLd,
   organizationJsonLd,
@@ -111,8 +115,8 @@ function parseThemeColor(input: string | null | undefined, fallback: string): st
 
 export async function generateMetadata(): Promise<Metadata> {
   const [brand, identity] = await Promise.all([
-    loadStoreBrandFromDatabase(),
-    loadSiteIdentity(),
+    getCachedStoreBrand(),
+    getCachedSiteIdentity(),
   ]);
   const siteName =
     identity.siteTitle.trim() ||
@@ -166,12 +170,12 @@ export default async function RootLayout({
 }>) {
   const [baseBrand, announcementBar, collectionLinks, headerNavMenuItems, identity, analytics] =
     await Promise.all([
-      loadStoreBrandFromDatabase(),
-      getAnnouncementBarForLayout(),
-      getNavCollectionLinks(),
-      getHeaderNavMenuItems(),
-      loadSiteIdentity(),
-      loadAnalyticsConfig(),
+      getCachedStoreBrand(),
+      getCachedAnnouncementBar(),
+      getCachedNavCollections(),
+      getCachedHeaderNavMenu(),
+      getCachedSiteIdentity(),
+      getCachedAnalyticsConfig(),
     ]);
   const storeBrand = { ...baseBrand, announcementBar };
   const envFavicon = getEnvFaviconUrl();
@@ -284,6 +288,22 @@ export default async function RootLayout({
             />
           </noscript>
         ) : null}
+        {/**
+         * Click-to-navigate progress bar. Shown the instant a `<Link>` is
+         * activated (long before the server has finished rendering the next
+         * RSC payload), so users get immediate confirmation that their click
+         * registered. Anchored to the brand's announcement-bar color so the
+         * bar always reads as part of the storefront, not a dev tool.
+         */}
+        <NextTopLoader
+          color={themeColor}
+          height={3}
+          showSpinner={false}
+          shadow={`0 0 8px ${themeColor}, 0 0 4px ${themeColor}`}
+          crawlSpeed={180}
+          speed={260}
+          easing="ease"
+        />
         <StoreBrandProvider brand={storeBrand}>
           <AskTheStoreProvider>
             <NavCollectionsProvider links={collectionLinks}>

@@ -1,12 +1,12 @@
 import { cache } from "react";
 import type { Product } from "@/app/lib/catalog/types";
 import {
-  dbGetProductsBySlugs,
-  dbListActiveHomePageSectionsWithTags,
-  dbListAllActiveProductsForCards,
-  dbListProductsByCollectionSlug,
-  dbListProductsForHomeSectionTags,
-} from "@/app/lib/db/catalog";
+  getCachedActiveHomePageSectionsWithTags,
+  getCachedAllActiveProductsForCards,
+  getCachedProductsByCollectionSlug,
+  getCachedProductsBySlugs,
+  getCachedProductsForHomeSectionTags,
+} from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { dbGetHomeRailsConfig } from "@/app/lib/home-rails-from-db";
 import type { HomeCategoryRail } from "@/app/lib/store-brand.types";
@@ -28,12 +28,12 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
 
   if (slug === "sale") {
     if (!hasCatalogDb()) return 0;
-    const all = await dbListAllActiveProductsForCards();
+    const all = await getCachedAllActiveProductsForCards();
     return all.filter((p) => p.compareAtPrice != null && p.compareAtPrice > p.price).length;
   }
 
   if (!hasCatalogDb()) return 0;
-  const list = await dbListProductsByCollectionSlug(slug);
+  const list = await getCachedProductsByCollectionSlug(slug);
   return list.length;
 }
 
@@ -42,12 +42,12 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
     return [];
   }
 
-  const configuredSections = await dbListActiveHomePageSectionsWithTags();
+  const configuredSections = await getCachedActiveHomePageSectionsWithTags();
   const sectionsWithTags = configuredSections.filter((s) => s.tagIds.length > 0);
   if (sectionsWithTags.length > 0) {
     return Promise.all(
       sectionsWithTags.map(async (s) => {
-        const items = await dbListProductsForHomeSectionTags(s.tagIds, s.slug);
+        const items = await getCachedProductsForHomeSectionTags(s.tagIds, s.slug);
         const rail: HomeCategoryRail = {
           title: s.name,
           viewAllHref: `/s/${s.slug}`,
@@ -66,7 +66,7 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
   return Promise.all(
     rails.map(async (rail) => {
       const totalProductCount = await getTotalProductsForViewAllHref(rail.viewAllHref);
-      const fromDb = await dbGetProductsBySlugs(rail.productSlugs);
+      const fromDb = await getCachedProductsBySlugs(rail.productSlugs);
       return { ...rail, items: fromDb, totalProductCount };
     }),
   );
