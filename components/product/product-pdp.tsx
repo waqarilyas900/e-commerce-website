@@ -3,12 +3,12 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import ReactStars from "react-rating-stars-component";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { AddToCartVariantButton } from "@/components/cart/AddToCartVariantButton";
 import {
@@ -118,6 +118,51 @@ function buildGallery(
   const img = firstImage(fallbackImages);
   if (img) return [{ kind: "image", url: img, alt: "" }];
   return [];
+}
+
+/** Read-only stars — avoids `react-rating-stars-component`, which often breaks React 19 hydration on mobile and nukes everything below it in the tree. */
+function ReadOnlyStarRating({ value }: { value: number }) {
+  const uid = useId().replace(/:/g, "");
+  const v = Math.max(0, Math.min(5, Number(value) || 0));
+  return (
+    <span className="inline-flex items-center gap-px text-amber-500" aria-hidden>
+      {[1, 2, 3, 4, 5].map((i) => {
+        const filled = v >= i;
+        const half = !filled && v >= i - 0.5;
+        const gradId = `pdp-star-half-${uid}-${i}`;
+        return (
+          <svg
+            key={i}
+            width={22}
+            height={22}
+            viewBox="0 0 24 24"
+            className="shrink-0"
+            fill="currentColor"
+          >
+            {half ? (
+              <>
+                <defs>
+                  <linearGradient id={gradId} x1="0" x2="100%" y1="0" y2="0">
+                    <stop offset="50%" stopColor="currentColor" />
+                    <stop offset="50%" stopColor="#d4d4d8" />
+                  </linearGradient>
+                </defs>
+                <path
+                  fill={`url(#${gradId})`}
+                  d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                />
+              </>
+            ) : (
+              <path
+                fill={filled ? "currentColor" : "#d4d4d8"}
+                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+              />
+            )}
+          </svg>
+        );
+      })}
+    </span>
+  );
 }
 
 type Props = {
@@ -466,8 +511,8 @@ export function ProductPdp({
 
   return (
     <>
-      <section className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+      <section className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 *:min-w-0">
+        <div className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:self-start">
           <div
             className={`relative overflow-hidden rounded-2xl bg-neutral-100 ${
               main?.kind === "video" || !main ? "min-h-[520px]" : ""
@@ -592,7 +637,7 @@ export function ProductPdp({
             </div>
           ) : null}
         </div>
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {showCollectionLabel ? (
             <p className="text-sm capitalize tracking-wide text-neutral-500">
               {collectionLabel}
@@ -601,15 +646,12 @@ export function ProductPdp({
           <h1 className="text-3xl font-semibold tracking-tight">
             {product.name}
           </h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
-            <ReactStars
-              count={5}
-              value={Number(product.rating ?? 0)}
-              size={22}
-              activeColor="#eab308"
-              isHalf
-              edit={false}
-            />
+          <div
+            className="flex flex-wrap items-center gap-2 text-sm text-neutral-600"
+            role="img"
+            aria-label={`Rated ${(product.rating ?? 0).toFixed(1)} out of 5 stars`}
+          >
+            <ReadOnlyStarRating value={Number(product.rating ?? 0)} />
             <span>
               {(product.rating ?? 0).toFixed(1)}/5 ({product.reviews_count ?? 0}{" "}
               reviews)

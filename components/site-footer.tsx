@@ -135,18 +135,20 @@ function NeedHelpBlock({
   footer: { supportEmail: string; phone: string; hoursLine: string };
 }) {
   return (
-    <div className="space-y-1 text-[15px] leading-relaxed text-white/90">
-      <p>Reach us at</p>
+    <div className="space-y-2 text-[15px] leading-relaxed text-white/85">
+      <p className="text-sm text-white/70">Reach us at</p>
       <a
         href={mailto}
-        className="block font-semibold tracking-wide text-white underline-offset-4 hover:underline"
+        className="block break-all font-semibold tracking-wide text-white underline-offset-4 transition hover:underline"
       >
         {footer.supportEmail}
       </a>
-      <p className="pt-4">
-        Call/Whatsapp : <span className="font-semibold text-white">{footer.phone}</span>
+      <p className="pt-3 text-white/85">
+        Call / WhatsApp: <span className="font-semibold text-white">{footer.phone}</span>
       </p>
-      <p className="text-white/80">{footer.hoursLine}</p>
+      {footer.hoursLine?.trim() ? (
+        <p className="text-sm leading-relaxed text-white/65">{footer.hoursLine}</p>
+      ) : null}
     </div>
   );
 }
@@ -157,7 +159,7 @@ function ExploreLinksList({
   links: { label: string; href: string }[];
 }) {
   return (
-    <ul className="list-none space-y-2.5 pl-0 text-[15px] text-white/90">
+    <ul className="list-none space-y-3 pl-0 text-[15px] leading-snug text-white/88">
       {links.map((item) => {
         const isSale =
           item.href === "/collections/sale" ||
@@ -201,7 +203,7 @@ function PolicyNavLink({ href, children }: { href: string; children: React.React
 
 function PolicyLinksList({ policyRows }: { policyRows: { label: string; href: string }[] }) {
   return (
-    <ul className="list-none space-y-2.5 pl-0 text-[15px] text-white/90">
+    <ul className="list-none space-y-3 pl-0 text-[15px] leading-snug text-white/88">
       <li key="__contact-us">
         <Link href={CONTACT_US_HREF} className={policyLinkClass}>
           {CONTACT_US_LABEL}
@@ -235,21 +237,21 @@ function MobileAccordion({
   const panelId = `footer-panel-${id}`;
 
   return (
-    <div className="border-b border-white/10 last:border-b-0">
+    <div className="min-w-0">
       <button
         type="button"
         id={`footer-trigger-${id}`}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => onToggle(id)}
-        className="flex w-full items-center justify-between gap-4 py-4 text-left"
+        className="touch-manipulation flex min-h-[52px] w-full items-center justify-between gap-4 py-3 text-left transition-colors active:bg-white/6 lg:active:bg-transparent"
       >
-        <span className="text-sm font-semibold text-white">{title}</span>
+        <span className="text-[15px] font-semibold tracking-wide text-white">{title}</span>
         <motion.span
           aria-hidden
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.3, ease: easeFooter }}
-          className="inline-flex h-6 w-6 shrink-0 items-center justify-center text-white/90"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 text-white/90"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 7.5 L10 12.5 L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -267,7 +269,7 @@ function MobileAccordion({
         transition={{ duration: 0.38, ease: easeFooter }}
         className="overflow-hidden"
       >
-        <div className="pb-5 pr-1 pt-0">{children}</div>
+        <div className="border-t border-white/8 pb-6 pl-0 pr-0 pt-4">{children}</div>
       </motion.div>
     </div>
   );
@@ -300,35 +302,38 @@ export function Footer() {
         data-section-id="sections--footer"
         data-section-type="footer"
       >
-        <div className="mx-auto max-w-7xl shell-x py-10 sm:py-12 lg:py-14">
-          {/* Mobile accordions */}
-          <div className="border-t border-white/10 lg:hidden">
-            <MobileAccordion
-              id="help"
-              title="Need help?"
-              openId={openId}
-              onToggle={toggle}
-            >
-              <NeedHelpBlock mailto={mailto} footer={footer} />
-            </MobileAccordion>
-            {hasExploreLinks ? (
-              <MobileAccordion id="explore" title="Explore" openId={openId} onToggle={toggle}>
-                <ExploreLinksList links={footerExploreLinks} />
+        <div className="mx-auto max-w-7xl shell-x pb-10 pt-12 sm:pb-12 sm:pt-12 lg:py-14">
+          {/* Mobile: clear sections + comfortable tap targets */}
+          <div className="border-t border-white/12 lg:hidden">
+            <div className="divide-y divide-white/10">
+              <MobileAccordion
+                id="help"
+                title="Need help?"
+                openId={openId}
+                onToggle={toggle}
+              >
+                <NeedHelpBlock mailto={mailto} footer={footer} />
               </MobileAccordion>
-            ) : null}
-            {/* Customer care: always visible (not accordion); no divider below before brand row */}
-            <div className="py-5">
-              <h2 className="text-sm font-semibold text-white">{customerCareTitle}</h2>
-              <div className="mt-4">
-                <PolicyLinksList policyRows={policyRows} />
+              {hasExploreLinks ? (
+                <MobileAccordion id="explore" title="Explore" openId={openId} onToggle={toggle}>
+                  <ExploreLinksList links={footerExploreLinks} />
+                </MobileAccordion>
+              ) : null}
+              <div className="py-6">
+                <h2 className="text-[15px] font-semibold tracking-wide text-white">{customerCareTitle}</h2>
+                <div className="mt-5">
+                  <PolicyLinksList policyRows={policyRows} />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Mobile: mark left, social right — no border above this row (reference) */}
-          <div className="flex w-full items-center justify-between gap-4 pt-8 lg:hidden">
-            <FooterMark className="h-14 w-11 shrink-0 text-white" aria-hidden />
-            <SocialLinks className="flex shrink-0 items-center gap-3" />
+          <div className="flex w-full items-center justify-between gap-6 border-t border-white/12 pt-10 lg:hidden">
+            <div className="min-w-0">
+              <p className="sr-only">{storeName}</p>
+              <FooterMark className="h-12 w-10 text-white sm:h-14 sm:w-11" aria-hidden />
+            </div>
+            <SocialLinks className="flex shrink-0 items-center gap-2.5 sm:gap-3" />
           </div>
 
           {/* Desktop: aligned 4-column grid — same heading rhythm and left edge */}
@@ -368,13 +373,13 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10">
-          <div className="mx-auto max-w-7xl shell-x py-4 text-center text-[11px] leading-relaxed text-white/55 lg:text-left">
+        <div className="border-t border-white/12 bg-black">
+          <div className="mx-auto max-w-7xl shell-x py-5 text-center text-xs leading-relaxed tracking-wide text-white/50 sm:py-4 lg:text-left">
             © {new Date().getFullYear()}{" "}
-            <Link href="/" className="text-white/70 underline-offset-2 transition hover:text-white hover:underline">
+            <Link href="/" className="text-white/65 underline-offset-2 transition hover:text-white hover:underline">
               {storeName}
-            </Link>{" "}
-            All Rights Reserved
+            </Link>
+            . All rights reserved.
           </div>
         </div>
       </footer>
