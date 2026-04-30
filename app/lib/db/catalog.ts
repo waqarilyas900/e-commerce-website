@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAnonServerSupabase } from "@/lib/supabase/anon-server";
 import type {
   DbCollectionRow,
   DbHomePageSectionRow,
@@ -14,6 +15,19 @@ import {
   type VariantOptionSchemaEntry,
 } from "@/app/lib/catalog/variant-option-schema";
 import { hasCatalogDb } from "@/app/lib/db/env";
+
+/**
+ * Public catalog reads (products, collections, variants, assets, inventory,
+ * home sections, tags) never depend on the signed-in user — they're driven
+ * entirely by `status = 'active'`. Using the cookie-free anon client here is
+ * what lets us wrap these queries in `unstable_cache` (which forbids
+ * `cookies()`) and tag-revalidate them from `/api/revalidate`. The original
+ * cookie-bound `createClient` is kept ONLY for the reviews helper, which
+ * joins `auth.users` and respects per-user RLS.
+ */
+function catalogClient(): SupabaseClient {
+  return createAnonServerSupabase();
+}
 
 let warnedMissingCatalogSchema = false;
 let warnedCatalogNetworkIssue = false;
@@ -214,7 +228,7 @@ const PRODUCT_SELECT =
 export async function dbListAllActiveProductsForCards(): Promise<Product[]> {
   if (!hasCatalogDb()) return [];
   try {
-    const supabase = await createClient();
+    const supabase = catalogClient();
     const { data: products, error: pErr } = await supabase
       .from("products")
       .select(PRODUCT_SELECT)
@@ -267,7 +281,7 @@ export async function dbListAllActiveProductsForCards(): Promise<Product[]> {
 export async function dbListCollections(): Promise<DbCollectionRow[]> {
   if (!hasCatalogDb()) return [];
   try {
-    const supabase = await createClient();
+    const supabase = catalogClient();
     const { data, error } = await supabase
       .from("collections")
       .select("id, slug, name, description, hero_image, sort_order, collection_type")
@@ -290,7 +304,7 @@ export async function dbGetCollectionBySlug(
   slug: string,
 ): Promise<DbCollectionRow | null> {
   if (!hasCatalogDb()) return null;
-  const supabase = await createClient();
+  const supabase = catalogClient();
   const { data, error } = await supabase
     .from("collections")
     .select("id, slug, name, description, hero_image, sort_order, collection_type")
@@ -310,7 +324,7 @@ export async function dbListProductsByCollectionSlug(
   const col = await dbGetCollectionBySlug(collectionSlug);
   if (!col) return [];
 
-  const supabase = await createClient();
+  const supabase = catalogClient();
 
   let productIds: string[] = [];
 
@@ -408,7 +422,7 @@ export async function dbListProductsByCollectionSlug(
 
 export async function dbGetProductsBySlugs(slugs: string[]): Promise<Product[]> {
   if (!slugs.length || !hasCatalogDb()) return [];
-  const supabase = await createClient();
+  const supabase = catalogClient();
   const { data: products, error: pErr } = await supabase
     .from("products")
     .select(PRODUCT_SELECT)
@@ -474,7 +488,7 @@ export async function dbGetProductDetailBySlug(
   slug: string,
 ): Promise<ProductDetail | null> {
   if (!hasCatalogDb()) return null;
-  const supabase = await createClient();
+  const supabase = catalogClient();
   const { data: p, error: pErr } = await supabase
     .from("products")
     .select(PRODUCT_SELECT)
@@ -589,7 +603,7 @@ export async function dbSearchProducts(q: string): Promise<Product[]> {
   const term = q.trim().replace(/[,%]/g, " ");
   if (!term || !hasCatalogDb()) return [];
 
-  const supabase = await createClient();
+  const supabase = catalogClient();
   const pattern = `%${term}%`;
 
   const { data: products, error: pErr } = await supabase
@@ -650,7 +664,7 @@ export async function dbListActiveHomePageSectionsWithTags(): Promise<
 > {
   if (!hasCatalogDb()) return [];
   try {
-    const supabase = await createClient();
+    const supabase = catalogClient();
     const { data: sections, error } = await supabase
       .from("home_page_sections")
       .select("id, name, slug, sort_order")
@@ -698,7 +712,7 @@ export async function dbGetActiveHomePageSectionBySlug(
   slug: string,
 ): Promise<{ id: string; name: string; slug: string } | null> {
   if (!hasCatalogDb()) return null;
-  const supabase = await createClient();
+  const supabase = catalogClient();
   const { data, error } = await supabase
     .from("home_page_sections")
     .select("id, name, slug")
@@ -717,7 +731,7 @@ export async function dbGetActiveHomePageSectionWithTagsBySlug(
   slug: string,
 ): Promise<{ id: string; name: string; slug: string; tagIds: string[] } | null> {
   if (!hasCatalogDb()) return null;
-  const supabase = await createClient();
+  const supabase = catalogClient();
   const { data: row, error } = await supabase
     .from("home_page_sections")
     .select("id, name, slug")
@@ -750,7 +764,7 @@ export async function dbListProductsForHomeSectionTags(
   sectionSlug: string,
 ): Promise<Product[]> {
   if (!hasCatalogDb() || !tagIds.length) return [];
-  const supabase = await createClient();
+  const supabase = catalogClient();
 
   const { data: ptRows, error: ptErr } = await supabase
     .from("product_tags")

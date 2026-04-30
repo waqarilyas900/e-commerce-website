@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import {
-  dbGetActiveHomePageSectionWithTagsBySlug,
-  dbListProductsForHomeSectionTags,
-} from "@/app/lib/db/catalog";
+  getCachedActiveHomePageSectionWithTagsBySlug,
+  getCachedProductsForHomeSectionTags,
+} from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
 import {
@@ -52,7 +52,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   }
 
   const [section, identity] = await Promise.all([
-    dbGetActiveHomePageSectionWithTagsBySlug(slug),
+    getCachedActiveHomePageSectionWithTagsBySlug(slug),
     loadSiteIdentity(),
   ]);
   if (!section) {
@@ -102,14 +102,14 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
     notFound();
   }
 
-  const section = await dbGetActiveHomePageSectionWithTagsBySlug(slug);
+  const section = await getCachedActiveHomePageSectionWithTagsBySlug(slug);
   if (!section) {
     notFound();
   }
 
   let baseline: Product[] = [];
   if (section.tagIds.length > 0) {
-    baseline = await dbListProductsForHomeSectionTags(section.tagIds, section.slug);
+    baseline = await getCachedProductsForHomeSectionTags(section.tagIds, section.slug);
   }
 
   const navLinks = await getNavCollectionLinks();
