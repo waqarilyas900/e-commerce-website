@@ -17,7 +17,8 @@
     "supabase:deploy": "node scripts/deploy-supabase-env.mjs",
     "seed:admin": "node scripts/seed-admin.mjs",
     "seed:catalog": "tsx scripts/seed-catalog.ts",
-    "seed:electronics": "tsx scripts/seed-electronics.ts",
+    "seed:demo": "tsx scripts/seed-outflint-demo.ts",
+    "seed:tailoring": "tsx scripts/seed-outflint-demo.ts",
     "cron:restock": "node scripts/run-restock-cron.mjs",
     "cron:restock:deploy": "node scripts/push-restock-edge.mjs"
   },

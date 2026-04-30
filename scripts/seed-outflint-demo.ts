@@ -1,13 +1,14 @@
 /**
- * Seeds the Electronics collection + 5 products with varied variant strategies:
- * - USB hub: single option "Configuration" (no size/color FKs)
- * - Mouse: color-only variants with color_id (Black / White)
- * - Monitor: size variants (27″ / 32″ QHD) + compare-at sale on 27″
- * - Speaker: storage tiers + sale on entry tier
- * - Keyboard: Switch × Color matrix with tiered pricing
+ * Seeds the default Outflint demo collection + 5 products (tailoring /
+ * stitching accessories) with varied variant strategies:
+ * - Presser foot kit: single option "Style" (no size/color FKs)
+ * - Thread snips: color-only variants with color_id (Black / White)
+ * - Needle assortment: pack size variants + compare-at sale on smaller pack
+ * - Machine oil: bottle size tiers + sale on entry tier
+ * - Edge guide: Guide width × Color matrix with tiered pricing
  *
  * From nextjs-project:
- *   npm run seed:electronics
+ *   npm run seed:demo
  *
  * Env: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
@@ -16,7 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { electronicsCatalog } from "../app/lib/catalog/electronics.catalog";
+import { outflintDemoCatalog } from "../app/lib/catalog/outflint.catalog";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..");
@@ -45,10 +46,10 @@ type VariantSeed = {
 };
 
 const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
-  "orbit-usb-c-hub": [
+  "outflint-universal-presser-foot-kit": [
     {
-      sku: "orbit-hub-4in1",
-      option_values: { Configuration: "4-in-1" },
+      sku: "outflint-foot-std",
+      option_values: { Style: "Standard shank" },
       sizeLabel: null,
       colorName: null,
       price: 4990,
@@ -56,8 +57,8 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 60,
     },
     {
-      sku: "orbit-hub-7in1-sd",
-      option_values: { Configuration: "7-in-1 + SD" },
+      sku: "outflint-foot-hi",
+      option_values: { Style: "Industrial high-shank" },
       sizeLabel: null,
       colorName: null,
       price: 8990,
@@ -65,9 +66,9 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 45,
     },
   ],
-  "pulse-wireless-mouse": [
+  "outflint-thread-snips": [
     {
-      sku: "pulse-mouse-blk",
+      sku: "outflint-snips-blk",
       option_values: { Color: "Black" },
       sizeLabel: null,
       colorName: "Black",
@@ -76,7 +77,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 55,
     },
     {
-      sku: "pulse-mouse-wht",
+      sku: "outflint-snips-wht",
       option_values: { Color: "White" },
       sizeLabel: null,
       colorName: "White",
@@ -85,50 +86,50 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 50,
     },
   ],
-  "vector-qhd-monitor": [
+  "outflint-hand-needle-assortment": [
     {
-      sku: "vector-mon-27qhd",
-      option_values: { size: "27″ QHD" },
+      sku: "outflint-needle-10",
+      option_values: { size: "10-piece pack" },
       sizeLabel: null,
       colorName: null,
-      price: 45900,
-      compare_at_price: 52900,
+      price: 1200,
+      compare_at_price: 1650,
       quantity_on_hand: 22,
     },
     {
-      sku: "vector-mon-32qhd",
-      option_values: { size: "32″ QHD" },
+      sku: "outflint-needle-50",
+      option_values: { size: "50-piece pack" },
       sizeLabel: null,
       colorName: null,
-      price: 62900,
+      price: 4500,
       compare_at_price: null,
       quantity_on_hand: 12,
     },
   ],
-  "echo-mini-smart-speaker": [
+  "outflint-machine-oil-bottle": [
     {
-      sku: "echo-mini-8gb",
-      option_values: { Storage: "8 GB" },
+      sku: "outflint-oil-100",
+      option_values: { Size: "100 ml" },
       sizeLabel: null,
       colorName: null,
-      price: 15990,
-      compare_at_price: 19990,
+      price: 450,
+      compare_at_price: 590,
       quantity_on_hand: 80,
     },
     {
-      sku: "echo-mini-16gb",
-      option_values: { Storage: "16 GB" },
+      sku: "outflint-oil-250",
+      option_values: { Size: "250 ml" },
       sizeLabel: null,
       colorName: null,
-      price: 19990,
+      price: 950,
       compare_at_price: null,
       quantity_on_hand: 40,
     },
   ],
-  "typeforge-mechanical-keyboard": [
+  "outflint-adjustable-edge-guide": [
     {
-      sku: "typeforge-lin-blk",
-      option_values: { Switch: "Linear", Color: "Black" },
+      sku: "outflint-guide-narrow-blk",
+      option_values: { Guide: "Narrow", Color: "Black" },
       sizeLabel: null,
       colorName: "Black",
       price: 8490,
@@ -136,8 +137,8 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 30,
     },
     {
-      sku: "typeforge-lin-wht",
-      option_values: { Switch: "Linear", Color: "White" },
+      sku: "outflint-guide-narrow-wht",
+      option_values: { Guide: "Narrow", Color: "White" },
       sizeLabel: null,
       colorName: "White",
       price: 8690,
@@ -145,8 +146,8 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 28,
     },
     {
-      sku: "typeforge-tac-blk",
-      option_values: { Switch: "Tactile", Color: "Black" },
+      sku: "outflint-guide-wide-blk",
+      option_values: { Guide: "Wide", Color: "Black" },
       sizeLabel: null,
       colorName: "Black",
       price: 9190,
@@ -154,8 +155,8 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 24,
     },
     {
-      sku: "typeforge-tac-wht",
-      option_values: { Switch: "Tactile", Color: "White" },
+      sku: "outflint-guide-wide-wht",
+      option_values: { Guide: "Wide", Color: "White" },
       sizeLabel: null,
       colorName: "White",
       price: 9490,
@@ -165,21 +166,23 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
   ],
 };
 
-export async function seedElectronicsCatalog(): Promise<void> {
+const LOG = "[seed-demo]";
+
+export async function seedOutflintDemoCatalog(): Promise<void> {
   if (!url) fail("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL.");
   if (!serviceKey)
     fail(
       "Missing SUPABASE_SERVICE_ROLE_KEY (Dashboard → Settings → API → service_role).",
     );
 
-  const catalog = electronicsCatalog;
+  const catalog = outflintDemoCatalog;
   const supabase = createClient(url, serviceKey);
 
   const { data: sizeRows, error: sizeErr } = await supabase
     .from("sizes")
     .select("id, display_name");
   if (sizeErr) {
-    console.error("[seed-electronics] sizes", sizeErr.message);
+    console.error(LOG, "sizes", sizeErr.message);
     fail(sizeErr.message);
   }
   const sizeIdByLabel = new Map(
@@ -193,7 +196,7 @@ export async function seedElectronicsCatalog(): Promise<void> {
     .from("colors")
     .select("id, name");
   if (colorErr) {
-    console.error("[seed-electronics] colors", colorErr.message);
+    console.error(LOG, "colors", colorErr.message);
     fail(colorErr.message);
   }
   const colorIdByName = new Map(
@@ -221,7 +224,7 @@ export async function seedElectronicsCatalog(): Promise<void> {
       .single();
 
     if (error) {
-      console.error("[seed-electronics] collection upsert", c.slug, error.message);
+      console.error(LOG, "collection upsert", c.slug, error.message);
       fail(error.message);
     }
     collectionSlugToId.set(c.slug, data!.id);
@@ -231,7 +234,7 @@ export async function seedElectronicsCatalog(): Promise<void> {
     const collectionId = collectionSlugToId.get(p.collection) ?? null;
     const variantDefs = VARIANTS_BY_SLUG[p.slug];
     if (!variantDefs?.length) {
-      console.error("[seed-electronics] Missing variant matrix for", p.slug);
+      console.error(LOG, "Missing variant matrix for", p.slug);
       fail(`No VARIANTS_BY_SLUG entry for ${p.slug}`);
     }
 
@@ -264,7 +267,7 @@ export async function seedElectronicsCatalog(): Promise<void> {
       .single();
 
     if (pErr) {
-      console.error("[seed-electronics] product upsert", p.slug, pErr.message);
+      console.error(LOG, "product upsert", p.slug, pErr.message);
       fail(pErr.message);
     }
 
@@ -282,7 +285,7 @@ export async function seedElectronicsCatalog(): Promise<void> {
         alt_text: "",
       });
       if (astErr) {
-        console.error("[seed-electronics] product_assets", p.slug, astErr.message);
+        console.error(LOG, "product_assets", p.slug, astErr.message);
         fail(astErr.message);
       }
     }
@@ -294,7 +297,7 @@ export async function seedElectronicsCatalog(): Promise<void> {
         collection_id: collectionId,
       });
       if (pcErr) {
-        console.error("[seed-electronics] product_collections", p.slug, pcErr.message);
+        console.error(LOG, "product_collections", p.slug, pcErr.message);
         fail(pcErr.message);
       }
     }
@@ -317,7 +320,7 @@ export async function seedElectronicsCatalog(): Promise<void> {
       .select("id");
 
     if (vErr || !inserted?.length) {
-      console.error("[seed-electronics] variants", p.slug, vErr?.message);
+      console.error(LOG, "variants", p.slug, vErr?.message);
       fail(vErr?.message ?? "variant insert failed");
     }
 
@@ -329,13 +332,13 @@ export async function seedElectronicsCatalog(): Promise<void> {
       })),
     );
     if (invInsertErr) {
-      console.error("[seed-electronics] inventory", p.slug, invInsertErr.message);
+      console.error(LOG, "inventory", p.slug, invInsertErr.message);
       fail(invInsertErr.message);
     }
   }
 
   console.log(
-    `[seed-electronics] Done. collection="${catalog.collections[0]?.slug}" products=${catalog.products.length}`,
+    `${LOG} Done. collection="${catalog.collections[0]?.slug}" products=${catalog.products.length}`,
   );
 }
 
@@ -350,7 +353,7 @@ function isRunDirectly(): boolean {
 }
 
 if (isRunDirectly()) {
-  seedElectronicsCatalog().catch((e) => {
+  seedOutflintDemoCatalog().catch((e) => {
     console.error(e);
     process.exit(1);
   });
