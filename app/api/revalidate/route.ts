@@ -184,7 +184,6 @@ export async function POST(req: Request) {
     const slug = body.collectionSlug.trim();
     paths.push(`/collections/${slug}`);
     paths.push("/collections");
-    paths.push("/collections/sale");
     // Collection edits can change the header nav + side nav + footer chips.
     tagsToRevalidate.add(LAYOUT_CACHE_TAGS.navCollections);
     tagsToRevalidate.add(LAYOUT_CACHE_TAGS.headerNavMenu);

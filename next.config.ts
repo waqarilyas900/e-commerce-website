@@ -95,6 +95,17 @@ const commonProductImageHosts: {
 // `next/image` directly (e.g. Server Components rendering supplier URLs).
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // Retired landing pages — keep permanent redirects so search engines
+      // drop them and consolidate signals to the collections index.
+      { source: "/bundles", destination: "/collections", permanent: true },
+      { source: "/collections/sale", destination: "/collections", permanent: true },
+      { source: "/sale", destination: "/collections", permanent: true },
+      // Legacy renamed collection slug.
+      { source: "/collections/needle-case", destination: "/collections", permanent: true },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [

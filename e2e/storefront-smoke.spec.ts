@@ -31,9 +31,9 @@ test.describe("Storefront smoke (Shopify-style paths)", () => {
     await expect(page.locator("#MainContent, main").first()).toBeVisible({ timeout: 30_000 });
   });
 
-  test("/sale redirects to /collections/sale", async ({ page }) => {
+  test("/sale redirects to /collections", async ({ page }) => {
     await page.goto("/sale", { waitUntil: "commit" });
-    await expect(page).toHaveURL(/\/collections\/sale\/?$/);
+    await expect(page).toHaveURL(/\/collections\/?$/);
   });
 
   test("contact page loads", async ({ page }) => {

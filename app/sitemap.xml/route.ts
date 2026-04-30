@@ -158,8 +158,6 @@ export async function GET(): Promise<NextResponse> {
   const staticEntries: SitemapEntry[] = [
     { url: `${base}/`, lastModified, changeFrequency: "daily", priority: 1 },
     { url: `${base}/collections`, lastModified, changeFrequency: "daily", priority: 0.95 },
-    { url: `${base}/collections/sale`, lastModified, changeFrequency: "daily", priority: 0.85 },
-    { url: `${base}/bundles`, lastModified, changeFrequency: "weekly", priority: 0.75 },
     { url: `${base}/contact`, lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/policies`, lastModified, changeFrequency: "monthly", priority: 0.45 },
   ];
