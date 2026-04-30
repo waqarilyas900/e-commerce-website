@@ -6,7 +6,7 @@
  *   npm run seed:catalog
  *
  * Env: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
- * Optional: SEED_VERTICAL=electronics|clothing|jewellery|home-compliance (default: electronics)
+ * Optional: SEED_VERTICAL=tailoring|clothing|jewellery|home-compliance (default: tailoring).
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -15,7 +15,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getCatalog } from "../app/lib/catalog/index";
 import type { StoreVerticalId } from "../app/lib/store-brand.types";
-import { seedElectronicsCatalog } from "./seed-electronics";
+import { seedOutflintDemoCatalog } from "./seed-outflint-demo";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..");
@@ -32,16 +32,17 @@ function fail(msg: string): never {
 }
 
 function verticalFromEnv(): StoreVerticalId {
-  const v = process.env.SEED_VERTICAL;
+  const v = process.env.SEED_VERTICAL?.trim();
+  if (!v) return "tailoring";
   if (
     v === "jewellery" ||
     v === "home-compliance" ||
-    v === "electronics" ||
+    v === "tailoring" ||
     v === "clothing"
   ) {
     return v;
   }
-  return "electronics";
+  return "tailoring";
 }
 
 async function main() {
@@ -52,8 +53,8 @@ async function main() {
     );
 
   const vertical = verticalFromEnv();
-  if (vertical === "electronics") {
-    await seedElectronicsCatalog();
+  if (vertical === "tailoring") {
+    await seedOutflintDemoCatalog();
     return;
   }
 
