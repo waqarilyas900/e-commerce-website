@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
-import { dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
+import { getCachedAllActiveProductsForCards } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
 import {
@@ -31,7 +31,7 @@ export default async function CollectionsPage() {
     notFound();
   }
 
-  const allProducts = await dbListAllActiveProductsForCards();
+  const allProducts = await getCachedAllActiveProductsForCards();
 
   return (
     <>

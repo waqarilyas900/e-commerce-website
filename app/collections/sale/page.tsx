@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Footer, Header, TopStrip } from "@/components/storefront";
-import { dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
+import { getCachedAllActiveProductsForCards } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
@@ -87,7 +87,7 @@ export default async function CollectionsSalePage({ searchParams }: Props) {
   const sp = searchParams != null ? await searchParams : {};
   const parsed = parseCollectionSearchParams(sp);
 
-  const base = await dbListAllActiveProductsForCards();
+  const base = await getCachedAllActiveProductsForCards();
   const baseline = saleBaseline(base);
 
   const navLinks = await getNavCollectionLinks();

@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import ReactStars from "react-rating-stars-component";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { AddToCartVariantButton } from "@/components/cart/AddToCartVariantButton";
 import {
   PdpWishlistActions,
@@ -304,7 +304,35 @@ export function ProductPdp({
     [assets, product.images],
   );
   const [activeMedia, setActiveMedia] = useState(0);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [slideDir, setSlideDir] = useState<1 | -1>(1);
   const main = gallery[activeMedia] ?? gallery[0];
+
+  const goToNextMedia = useCallback(() => {
+    if (gallery.length < 2) return;
+    setSlideDir(1);
+    setActiveMedia((idx) => (idx + 1) % gallery.length);
+  }, [gallery.length]);
+
+  const goToPrevMedia = useCallback(() => {
+    if (gallery.length < 2) return;
+    setSlideDir(-1);
+    setActiveMedia((idx) => (idx - 1 + gallery.length) % gallery.length);
+  }, [gallery.length]);
+
+  const handleGalleryDragEnd = useCallback((info: PanInfo) => {
+    if (gallery.length < 2) return;
+    const swipe = info.offset.x + info.velocity.x * 0.2;
+    const SWIPE_THRESHOLD = 72;
+    if (swipe <= -SWIPE_THRESHOLD) goToNextMedia();
+    else if (swipe >= SWIPE_THRESHOLD) goToPrevMedia();
+  }, [goToNextMedia, goToPrevMedia]);
+
+  const slideVariants = {
+    enter: (dir: 1 | -1) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 1 }),
+    center: { x: "0%", opacity: 1 },
+    exit: (dir: 1 | -1) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 1 }),
+  } as const;
 
   const purchaseBlockRef = useRef<HTMLDivElement>(null);
   /** True only after the user scrolls down so the primary CTAs sit above the viewport (not when they are still below the fold on load). */
@@ -399,6 +427,20 @@ export function ProductPdp({
     };
   }, [showStickyPurchase, cartDrawerOpen]);
 
+  useEffect(() => {
+    if (!isZoomOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onEsc(ev: KeyboardEvent) {
+      if (ev.key === "Escape") setIsZoomOpen(false);
+    }
+    window.addEventListener("keydown", onEsc);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onEsc);
+    };
+  }, [isZoomOpen]);
+
   const pdpEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
   const selectionComplete =
@@ -450,19 +492,71 @@ export function ProductPdp({
                 className="h-full min-h-[520px] w-full object-contain"
               />
             ) : main ? (
-              <img
-                src={main.url}
-                alt={product.name}
-                className="mx-auto block h-auto w-full max-h-[min(92vh,900px)] max-w-full bg-transparent align-top"
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-              />
+              <div className="relative w-full">
+                {/* Invisible sizer: wrapper inherits natural image height so absolute slides do not collapse to 0. Old + new slide together for the carousel feel. */}
+                <img
+                  src={main.url}
+                  alt=""
+                  aria-hidden
+                  className="invisible block h-auto w-full max-h-[min(92vh,900px)]"
+                />
+                <AnimatePresence initial={false} custom={slideDir}>
+                  <motion.div
+                    key={`pdp-main-${activeMedia}`}
+                    custom={slideDir}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                    drag={gallery.length > 1 ? "x" : false}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.14}
+                    dragMomentum={false}
+                    onDragEnd={(_, info) => handleGalleryDragEnd(info)}
+                    style={{ touchAction: "pan-y" }}
+                    className="absolute inset-0"
+                  >
+                    <img
+                      src={main.url}
+                      alt={product.name}
+                      className="mx-auto block h-auto w-full max-h-[min(92vh,900px)] max-w-full bg-transparent align-top"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                      draggable={false}
+                    />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             ) : (
               <div className="flex min-h-[520px] items-center justify-center text-sm text-neutral-400">
                 No media
               </div>
             )}
+            {main?.kind === "image" ? (
+              <button
+                type="button"
+                onClick={() => setIsZoomOpen(true)}
+                className="absolute bottom-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-neutral-950/85 text-white shadow-lg backdrop-blur-sm transition hover:bg-neutral-900"
+                aria-label="Open image fullscreen"
+                title="View fullscreen"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                  aria-hidden
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </button>
+            ) : null}
           </div>
           {gallery.length > 1 ? (
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -470,7 +564,10 @@ export function ProductPdp({
                 <button
                   key={`${item.url}-${i}`}
                   type="button"
-                  onClick={() => setActiveMedia(i)}
+                  onClick={() => {
+                    setSlideDir(i > activeMedia ? 1 : -1);
+                    setActiveMedia(i);
+                  }}
                   className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
                     activeMedia === i
                       ? "border-neutral-950"
@@ -886,6 +983,80 @@ export function ProductPdp({
           )}
         </div>
       </section>
+
+      <AnimatePresence>
+        {isZoomOpen && main?.kind === "image" ? (
+          <motion.div
+            className="fixed inset-0 z-80 bg-black/92"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setIsZoomOpen(false)}
+          >
+            <button
+              type="button"
+              aria-label="Close fullscreen image"
+              className="absolute right-4 top-4 z-81 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-black/50 text-white"
+              onClick={() => setIsZoomOpen(false)}
+            >
+              ✕
+            </button>
+
+            {gallery.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Previous image"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToPrevMedia();
+                  }}
+                  className="absolute left-3 top-1/2 z-81 -translate-y-1/2 rounded-full border border-white/25 bg-black/45 px-3 py-2 text-white"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next image"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToNextMedia();
+                  }}
+                  className="absolute right-3 top-1/2 z-81 -translate-y-1/2 rounded-full border border-white/25 bg-black/45 px-3 py-2 text-white"
+                >
+                  ›
+                </button>
+              </>
+            ) : null}
+
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden p-4 sm:p-6">
+              <AnimatePresence initial={false} custom={slideDir}>
+                <motion.img
+                  key={`pdp-zoom-${activeMedia}`}
+                  custom={slideDir}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                  src={main.url}
+                  alt={product.name}
+                  className="absolute inset-0 m-auto max-h-full max-w-full object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                  drag={gallery.length > 1 ? "x" : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.14}
+                  dragMomentum={false}
+                  onDragEnd={(_, info) => handleGalleryDragEnd(info)}
+                  style={{ touchAction: "pan-y" }}
+                  draggable={false}
+                />
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/* Mobile / tablet: compact sticky bar — thumbnail left, small actions right; page gets bottom padding so copyright clears the bar */}
       <div className="lg:hidden" aria-hidden={!showMobileStickyBar}>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
+import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
 
 /** Shared style for primary header nav labels (Shop + dynamic header menu items). */
 export const primaryNavLinkClass =
@@ -117,7 +118,7 @@ export function ShopCollectionsMenu() {
             <p className="px-4 py-3 text-sm text-neutral-500">No collections yet.</p>
           ) : (
             links.map((l) => (
-              <Link
+              <HoverPrefetchLink
                 key={l.slug}
                 href={`/collections/${l.slug}`}
                 className={collectionMenuItemClass}
@@ -128,7 +129,7 @@ export function ShopCollectionsMenu() {
                 }}
               >
                 {l.name}
-              </Link>
+              </HoverPrefetchLink>
             ))
           )}
         </div>

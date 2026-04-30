@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Footer, Header, TopStrip } from "@/components/storefront";
-import { dbGetCollectionBySlug, dbListProductsByCollectionSlug } from "@/app/lib/db/catalog";
+import {
+  getCachedCollectionBySlug,
+  getCachedProductsByCollectionSlug,
+} from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { getNavCollectionLinks } from "@/app/lib/nav-collections";
 import {
@@ -74,7 +77,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   }
 
   const [collection, identity] = await Promise.all([
-    dbGetCollectionBySlug(slug),
+    getCachedCollectionBySlug(slug),
     loadSiteIdentity(),
   ]);
 
@@ -86,8 +89,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       override: null,
       defaults: { title: "Collection not found", description: identity.siteDescription, forceNoindex: true },
     });
-  } 
-// aaa 
+  }
+
+// this is comment line
+// aaa
   const override = await loadSeoOverrideForSubject("collection", collection.id, identity.locale);
 
   return buildPageMetadata({
@@ -123,7 +128,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     notFound();
   }
 
-  const dbCol = await dbGetCollectionBySlug(slug);
+  const dbCol = await getCachedCollectionBySlug(slug);
   if (dbCol) {
     collection = {
       slug: dbCol.slug,
@@ -131,7 +136,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
       description: dbCol.description,
       heroImage: dbCol.hero_image,
     };
-    baseline = await dbListProductsByCollectionSlug(slug);
+    baseline = await getCachedProductsByCollectionSlug(slug);
   }
 
   if (!collection) {

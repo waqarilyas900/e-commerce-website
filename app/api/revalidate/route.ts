@@ -31,6 +31,14 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import {
+  ALL_LAYOUT_CACHE_TAGS,
+  LAYOUT_CACHE_TAGS,
+} from "@/lib/cache/layout-data";
+import {
+  ALL_CATALOG_BROAD_TAGS,
+  CATALOG_CACHE_TAGS,
+} from "@/lib/cache/catalog-data";
 
 export const runtime = "nodejs";
 
@@ -155,28 +163,62 @@ export async function POST(req: Request) {
   }
 
   const paths: string[] = [];
+  // Layout-data cache tags to bust alongside path revalidation. Whenever a
+  // change can affect the header/footer/SEO surfaces (collection rename,
+  // policy publish, store settings edit, analytics rotation, etc.) we evict
+  // the cached layout reads so the next render sees the new value
+  // immediately instead of waiting for the 5-minute TTL.
+  const tagsToRevalidate = new Set<string>();
+
   if (Array.isArray(body.paths)) paths.push(...body.paths);
   if (body.productSlug?.trim()) {
-    paths.push(`/products/${body.productSlug.trim()}`);
+    const slug = body.productSlug.trim();
+    paths.push(`/products/${slug}`);
+    // Bust the cached PDP detail + any related-products lists that include this
+    // product. Per-slug tag is precise; the broad `products` tag covers home
+    // rails, /collections grids, and search snapshots.
+    tagsToRevalidate.add(CATALOG_CACHE_TAGS.product(slug));
+    tagsToRevalidate.add(CATALOG_CACHE_TAGS.products);
   }
   if (body.collectionSlug?.trim()) {
-    paths.push(`/collections/${body.collectionSlug.trim()}`);
+    const slug = body.collectionSlug.trim();
+    paths.push(`/collections/${slug}`);
     paths.push("/collections");
     paths.push("/collections/sale");
+    // Collection edits can change the header nav + side nav + footer chips.
+    tagsToRevalidate.add(LAYOUT_CACHE_TAGS.navCollections);
+    tagsToRevalidate.add(LAYOUT_CACHE_TAGS.headerNavMenu);
+    // Per-collection cached listing + any home rail pointing at it.
+    tagsToRevalidate.add(CATALOG_CACHE_TAGS.collection(slug));
+    tagsToRevalidate.add(CATALOG_CACHE_TAGS.collections);
   }
   if (body.policySlug?.trim()) {
     paths.push(`/${body.policySlug.trim()}`);
     paths.push(`/policies/${body.policySlug.trim()}`);
     paths.push("/policies");
+    // Policy publish/unpublish reshuffles the footer "Customer care" links.
+    tagsToRevalidate.add(LAYOUT_CACHE_TAGS.storeBrand);
   }
   if (body.homeSectionSlug?.trim()) {
-    paths.push(`/s/${body.homeSectionSlug.trim()}`);
+    const slug = body.homeSectionSlug.trim();
+    paths.push(`/s/${slug}`);
     paths.push("/");
+    // Home/section settings can touch announcement bar messaging.
+    tagsToRevalidate.add(LAYOUT_CACHE_TAGS.announcementBar);
+    tagsToRevalidate.add(LAYOUT_CACHE_TAGS.storeBrand);
+    // Per-section cached listing on /s/<slug> + the home rails that feed it.
+    tagsToRevalidate.add(CATALOG_CACHE_TAGS.homeSection(slug));
+    tagsToRevalidate.add(CATALOG_CACHE_TAGS.homeSections);
   }
   if (body.all) {
     paths.push("/");
     paths.push("/sitemap.xml");
     paths.push("/robots.txt");
+    // Wholesale bust: clear every cached layout + catalog slice so any admin
+    // edit that doesn't fit the categories above is still picked up on the
+    // next render.
+    for (const tag of ALL_LAYOUT_CACHE_TAGS) tagsToRevalidate.add(tag);
+    for (const tag of ALL_CATALOG_BROAD_TAGS) tagsToRevalidate.add(tag);
   }
 
   const unique = dedupePaths(paths);
@@ -189,11 +231,17 @@ export async function POST(req: Request) {
   }
 
   if (body.tag?.trim()) {
+    tagsToRevalidate.add(body.tag.trim());
+  }
+
+  const revalidatedTags: string[] = [];
+  for (const tag of tagsToRevalidate) {
     try {
       // Next.js 16 signature: (tag, profile). 'max' clears the tag immediately.
-      revalidateTag(body.tag.trim(), "max");
+      revalidateTag(tag, "max");
+      revalidatedTags.push(tag);
     } catch {
-      /* swallow */
+      /* swallow — never let one bad tag block the others */
     }
   }
 
@@ -202,7 +250,7 @@ export async function POST(req: Request) {
     NextResponse.json({
       ok: true,
       revalidated: unique,
-      tag: body.tag ?? null,
+      tags: revalidatedTags,
     }),
   );
 }
