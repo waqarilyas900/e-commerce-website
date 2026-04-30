@@ -273,7 +273,15 @@ export function CollectionListingControls({
           <>
             {/* Empty: keep nav + message (reference-style flow on small screens) */}
             <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:hidden">
-              <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+              {/*
+                Mobile sidebar height MUST be capped: when a store has ~15+
+                collections, an unbounded sidebar inflates the grid's first
+                row to 800-1000px and pushes every product below the fold.
+                On a real phone the user only sees the nav and assumes the
+                page is empty. The cap + overflow keeps the grid stable
+                regardless of catalog size.
+              */}
+              <div className="min-w-0 self-start max-h-64 overflow-y-auto border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
                 <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
               </div>
               <div className="col-span-2 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600 md:col-span-2">
@@ -327,7 +335,12 @@ export function CollectionListingControls({
                 aria-busy={isListPending}
                 aria-live="polite"
               >
-                <div className="min-w-0 self-start border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
+                {/*
+                  Cap mobile sidebar height — see note in the empty-state
+                  block above. Without this an unbounded list of collections
+                  hides every product behind the fold on a real phone.
+                */}
+                <div className="min-w-0 self-start max-h-64 overflow-y-auto border-r border-neutral-100 pr-2 text-[13px] sm:pr-3 sm:text-sm">
                   <CollectionSidebar navLinks={navLinks} currentSlug={currentSlug} />
                 </div>
                 {isListPending
