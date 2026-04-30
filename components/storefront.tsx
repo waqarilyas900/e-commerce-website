@@ -394,15 +394,18 @@ export function ProductCard({
     <motion.article
       className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
       /**
-       * Reveal animation tightened for performance:
-       * - shorter distance (8px vs 20px) and shorter duration (0.45s vs 0.9s)
-       *   keeps scroll at 60fps on mid-range Android by giving framer-motion
-       *   far less work per card on large grids;
+       * Reveal animation:
+       * - 8px translate instead of opacity-fade so the SSR HTML is still
+       *   readable when hydration stalls (e.g. third-party script error).
+       *   Previously `opacity: 0` made the entire grid invisible until JS
+       *   ran successfully, which left the page blank in pathological cases.
+       * - shorter distance + duration to keep scroll at 60fps on mid-range
+       *   Android by giving framer-motion less work per card.
        * - earlier viewport trigger so cards don't pop in mid-scroll.
        */
-      initial={{ opacity: 0, y: 8 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.05, margin: "0px 0px 5% 0px" }}
+      initial={{ y: 8 }}
+      whileInView={{ y: 0 }}
+      viewport={{ once: true, amount: 0, margin: "0px 0px 5% 0px" }}
       transition={{ duration: 0.45, delay: revealDelay, ease: [0.22, 1, 0.36, 1] }}
     >
       <HoverPrefetchLink
