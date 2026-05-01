@@ -95,6 +95,25 @@ const commonProductImageHosts: {
 // `next/image` directly (e.g. Server Components rendering supplier URLs).
 
 const nextConfig: NextConfig = {
+  /**
+   * Production: tell browsers to use HTTPS only (HSTS) and avoid MIME sniffing.
+   * Complements Vercel TLS + `proxy.ts` redirects; helps Search Console / page experience signals.
+   */
+  async headers() {
+    if (process.env.NODE_ENV !== "production") return [];
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       // Retired landing pages — keep permanent redirects so search engines
