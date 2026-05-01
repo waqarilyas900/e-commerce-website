@@ -11,8 +11,10 @@ import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
 import { HeroSlideshow } from "@/components/home/HeroSlideshow";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
+import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
 import { getHomeMarketingData } from "@/app/lib/home-marketing";
 import { getHomeRailSections } from "@/app/lib/home-rails";
+import { getCachedStoreReviewAggregate } from "@/lib/cache/store-review-aggregate";
 import {
   buildPageMetadata,
   loadSeoOverrideForRoute,
@@ -38,6 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Home() {
   const homeMarketing = await getHomeMarketingData();
+  const storeReviews = await getCachedStoreReviewAggregate();
   const firstHeroImage = homeMarketing.slides[0]?.image ?? "";
 
   return (
@@ -70,6 +73,7 @@ export default async function Home() {
           <HomeRails />
         </Suspense>
         <WhyShop />
+        <TrustRatingStrip aggregate={storeReviews} />
       </main>
       <Footer />
     </>
