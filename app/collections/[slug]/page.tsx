@@ -91,8 +91,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     });
   }
 
-// this is comment line
-// aaa
   const override = await loadSeoOverrideForSubject("collection", collection.id, identity.locale);
 
   return buildPageMetadata({

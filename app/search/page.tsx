@@ -30,7 +30,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     override,
     defaults: {
       title,
-      description: identity.siteDescription || `Search products at ${identity.storeName || identity.siteTitle || "our store"}.`,
+      description:
+        identity.siteDescription ||
+        `Search tailoring supplies, threads, dressmaking tools, and stitching accessories at ${identity.storeName || identity.siteTitle || "our shop"}.`,
       forceNoindex: true,
     },
   });

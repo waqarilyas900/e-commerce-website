@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     override,
     defaults: {
       title: "Contact",
-      description: `Get in touch with ${storeName} — questions, orders, partnerships, and support.`,
+      description: `Get in touch with ${storeName} — orders, tailoring supplies questions, partnerships, and customer support.`,
     },
   });
 }

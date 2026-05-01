@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: identity.siteTitle || identity.storeName || "Store",
       description:
         identity.siteDescription ||
-        `Shop at ${identity.storeName || identity.siteTitle || "our store"}.`,
+        `Tailoring supplies, dressmaking notions, and stitching accessories from ${identity.storeName || identity.siteTitle || "our shop"}.`,
     },
   });
 }
