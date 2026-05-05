@@ -25,7 +25,7 @@ import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session"
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
-import { StoreLogoMark } from "@/components/store-logo-mark";
+import { OutflintLogoMark } from "@/components/outflint-wordmark";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
 import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-settings";
 import { hasCatalogDb } from "@/app/lib/db/env";
@@ -841,11 +841,12 @@ export default function CheckoutPage() {
           <div className="w-full bg-white shell-x py-6 md:min-h-screen md:py-8">
             <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
               <div className="flex items-center justify-between">
-                <Link href="/" className="flex min-w-0 items-center gap-2.5">
-                  <StoreLogoMark size={40} className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
-                  <span className="truncate text-sm font-semibold capitalize tracking-tight text-neutral-900 sm:text-base">
-                    {storeName}
-                  </span>
+                <Link
+                  href="/"
+                  className="flex min-w-0 items-center"
+                  aria-label={`${storeName} home`}
+                >
+                  <OutflintLogoMark size="large" />
                 </Link>
                 <button
                   type="button"

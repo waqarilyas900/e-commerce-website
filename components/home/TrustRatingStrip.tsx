@@ -1,9 +1,8 @@
 import Link from "next/link";
 import type { StoreReviewAggregate } from "@/lib/cache/store-review-aggregate";
 
-/** Dark teal accent aligned with reference trust strip (~ verified ecommerce badges). */
-const accent = "text-[#0a5d52]";
-const accentMuted = "text-[#0a5d52]/85";
+/** Body text matches storefront system (`text-neutral-900` elsewhere in grids/PDP). */
+const bodyText = "text-neutral-900";
 
 type Props = {
   aggregate: StoreReviewAggregate;
@@ -16,7 +15,7 @@ function TrustStars({ value }: { value: number }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-px ${accent}`}
+      className={`inline-flex items-center gap-px ${bodyText}`}
       aria-hidden
     >
       {[1, 2, 3, 4, 5].map((i) => {
@@ -96,7 +95,7 @@ export function TrustRatingStrip({ aggregate }: Props) {
             Customer ratings
           </h2>
           <div
-            className={`flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 text-center ${accent}`}
+            className={`flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 text-center ${bodyText}`}
           >
             <VerifiedBadge />
             <span className="text-2xl font-semibold leading-none tracking-tight sm:text-[1.65rem]">
@@ -109,7 +108,7 @@ export function TrustRatingStrip({ aggregate }: Props) {
             <Link
               href="/collections"
               title="Browse our catalog"
-              className={`text-sm font-normal underline decoration-[#0a5d52]/35 underline-offset-[5px] transition hover:decoration-[#0a5d52] sm:text-[15px] ${accentMuted}`}
+              className="text-sm font-normal text-neutral-900 underline decoration-neutral-400 underline-offset-[5px] transition hover:decoration-neutral-900 sm:text-[15px]"
             >
               {sentence}
             </Link>

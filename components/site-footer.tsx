@@ -10,6 +10,7 @@ import {
   getPublicFacebookUrl,
   getPublicInstagramUrl,
 } from "@/lib/env/public-social";
+import { OutflintLogoFull } from "@/components/outflint-wordmark";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -51,42 +52,6 @@ function buildFooterExploreLinks(
     out.push({ href: path, label: item.label });
   }
   return out;
-}
-
-function FooterMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 64 72"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M10 6 L32 30 L54 6"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M16 18 L32 36 L48 18"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={0.95}
-      />
-      <path
-        d="M22 28 L32 40 L42 28"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={0.9}
-      />
-    </svg>
-  );
 }
 
 function SocialLinks({ className }: { className?: string }) {
@@ -331,7 +296,7 @@ export function Footer() {
           <div className="flex w-full items-center justify-between gap-6 border-t border-white/12 pt-10 lg:hidden">
             <div className="min-w-0">
               <p className="sr-only">{storeName}</p>
-              <FooterMark className="h-12 w-10 text-white sm:h-14 sm:w-11" aria-hidden />
+              <OutflintLogoFull />
             </div>
             <SocialLinks className="flex shrink-0 items-center gap-2.5 sm:gap-3" />
           </div>
@@ -366,7 +331,7 @@ export function Footer() {
                 </div>
               </div>
               <div className="flex min-w-0 flex-col items-start gap-6 border-l border-white/10 pl-10 xl:pl-14">
-                <FooterMark className="h-18 w-13 shrink-0 text-white" aria-hidden />
+                <OutflintLogoFull className="shrink-0" />
                 <SocialLinks className="flex flex-wrap items-center gap-3" />
               </div>
             </div>

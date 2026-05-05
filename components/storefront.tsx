@@ -21,7 +21,7 @@ import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
-import { StoreLogoMark } from "@/components/store-logo-mark";
+import { OutflintLogoMark } from "@/components/outflint-wordmark";
 import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import type { Product } from "@/app/lib/catalog/types";
@@ -208,12 +208,10 @@ export function Header() {
       </div>
       <Link
         href="/"
-        className="flex h-full min-h-0 min-w-0 max-w-[min(100%,240px)] items-center justify-center gap-2 justify-self-center self-center sm:max-w-none md:gap-2.5"
+        className="flex h-full min-h-0 min-w-0 max-w-[min(100%,240px)] items-center justify-center justify-self-center self-center sm:max-w-none"
+        aria-label={`${storeName} home`}
       >
-        <StoreLogoMark size={40} className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
-        <span className="hidden min-w-0 max-h-12 truncate text-center text-sm font-semibold capitalize leading-tight tracking-wide text-neutral-900 sm:inline md:text-base">
-          {storeName}
-        </span>
+        <OutflintLogoMark priority />
       </Link>
       <div className="flex min-h-0 items-center justify-end gap-0.5 text-neutral-800 sm:gap-2 lg:gap-3">
         <HeaderAccount />

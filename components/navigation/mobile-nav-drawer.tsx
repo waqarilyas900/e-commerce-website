@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
 import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
-import { StoreLogoMark } from "@/components/store-logo-mark";
+import { OutflintLogoMark } from "@/components/outflint-wordmark";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { useScrollLock } from "@/lib/scroll-lock";
 import { createClient } from "@/lib/supabase/client";
@@ -178,12 +178,9 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                 href="/"
                 onClick={onClose}
                 aria-label={`${storeName} home`}
-                className="inline-flex min-w-0 items-center gap-2 rounded-md px-1 py-1"
+                className="inline-flex min-w-0 items-center rounded-md px-1 py-1"
               >
-                <StoreLogoMark size={32} className="h-8 w-8 shrink-0" />
-                <span className="truncate text-sm font-semibold tracking-wide text-neutral-900 sm:text-base">
-                  {storeName}
-                </span>
+                <OutflintLogoMark size="compact" />
               </Link>
               <button
                 type="button"
