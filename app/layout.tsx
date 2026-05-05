@@ -25,6 +25,10 @@ import {
   organizationJsonLd,
   websiteJsonLd,
 } from "@/lib/seo/jsonld";
+import {
+  metaPixelInlineScript,
+  tiktokPixelInlineScript,
+} from "@/lib/seo/pixel-snippets";
 import "./globals.css";
 
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
@@ -196,7 +200,11 @@ export default async function RootLayout({
   const htmlLang = (identity.locale || "en_US").split("_")[0] || "en";
   const analyticsId = analytics.googleAnalyticsId;
   const gtmId = analytics.googleTagManagerId;
+  const metaPixelId = analytics.metaPixelId;
+  const tiktokPixelId = analytics.tiktokPixelId;
   const analyticsAllowed = !analytics.consentRequired;
+  /** Avoid double-firing: GTM should own GA + pixels when present. */
+  const standaloneMarketingTags = analyticsAllowed && !gtmId;
   const storageOrigin = getStorageOrigin();
   const themeColor = parseThemeColor(announcementBar.backgroundColor, "#1c1d1d");
 
@@ -247,7 +255,7 @@ export default async function RootLayout({
             strategy="afterInteractive"
           >{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode&&f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}</Script>
         ) : null}
-        {!gtmId && analyticsAllowed && analyticsId ? (
+        {standaloneMarketingTags && analyticsId ? (
           <>
             <Script
               id="ga-loader"
@@ -257,8 +265,20 @@ export default async function RootLayout({
             <Script
               id="ga-init"
               strategy="afterInteractive"
-            >{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${analyticsId}',{anonymize_ip:true});`}</Script>
+            >{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`}</Script>
           </>
+        ) : null}
+        {standaloneMarketingTags && metaPixelId ? (
+          <Script
+            id="meta-pixel"
+            strategy="afterInteractive"
+          >{metaPixelInlineScript(metaPixelId)}</Script>
+        ) : null}
+        {standaloneMarketingTags && tiktokPixelId ? (
+          <Script
+            id="tiktok-pixel"
+            strategy="afterInteractive"
+          >{tiktokPixelInlineScript(tiktokPixelId)}</Script>
         ) : null}
       </head>
       <body
@@ -285,6 +305,17 @@ export default async function RootLayout({
               height="0"
               width="0"
               style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        ) : null}
+        {standaloneMarketingTags && metaPixelId ? (
+          <noscript>
+            <img
+              height={1}
+              width={1}
+              style={{ display: "none" }}
+              alt=""
+              src={`https://www.facebook.com/tr?id=${encodeURIComponent(metaPixelId)}&ev=PageView&noscript=1`}
             />
           </noscript>
         ) : null}
