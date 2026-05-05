@@ -153,7 +153,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
   );
   list = sortCollectionProducts(list, parsed.sort, featuredIndex);
 
-  const canonical = canonicalUrlFor(`/collections/${slug}`);
+  const canonical = canonicalUrlFor(`/collections/${slug}`, sp);
   const collectionLd = collectionJsonLd({
     url: canonical,
     name: collection.name,
@@ -163,7 +163,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
     { name: "Collections", url: "/collections" },
-    { name: collection.name, url: `/collections/${slug}` },
+    { name: collection.name, url: canonical },
   ]);
 
   return (
