@@ -31,6 +31,9 @@ import {
 } from "@/lib/seo/pixel-snippets";
 import "./globals.css";
 
+/** Google AdSense client (hardcoded — verification + auto ads script). */
+const ADSENSE_CLIENT_ID = "ca-pub-9696696438221700";
+
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
 export const dynamic = "force-dynamic";
 
@@ -218,6 +221,13 @@ export default async function RootLayout({
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content={themeColor} />
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
+        <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID} />
+        <Script
+          id="adsense-loader"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT_ID)}`}
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
         {storageOrigin ? (
           <>
             <link rel="preconnect" href={storageOrigin} crossOrigin="anonymous" />
