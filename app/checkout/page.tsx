@@ -967,7 +967,7 @@ export default function CheckoutPage() {
               <h2 className="text-base font-semibold text-neutral-900">Shipping method</h2>
               <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-sm">
                 <span className="text-sm leading-tight text-neutral-800">
-                  Standard delivery (dispatch in 3–5 business days)
+                  Standard delivery — ships in 3–5 business days
                 </span>
                 <span className="shrink-0 tabular-nums font-semibold text-neutral-900">
                   {deliveryPkr <= 0 ? "Free" : formatPkr(deliveryPkr)}
