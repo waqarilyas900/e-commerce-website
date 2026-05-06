@@ -581,9 +581,10 @@ async function _loadSiteIdentity(): Promise<SiteIdentity> {
 }
 
 async function _loadAnalytics(): Promise<AnalyticsConfig> {
-  const fallbackGa = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID?.trim() ?? "";
+  /** Optional Vercel/env backup when `seo_analytics.google_analytics_id` is empty. */
+  const envGa = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID?.trim() ?? "";
   if (!hasCatalogDb()) {
-    return { ...EMPTY_ANALYTICS, googleAnalyticsId: fallbackGa };
+    return { ...EMPTY_ANALYTICS, googleAnalyticsId: envGa };
   }
   try {
     const supabase = createAnonServerSupabase();
@@ -594,17 +595,19 @@ async function _loadAnalytics(): Promise<AnalyticsConfig> {
       )
       .eq("id", 1)
       .maybeSingle();
-    if (error || !data) return { ...EMPTY_ANALYTICS, googleAnalyticsId: fallbackGa };
+    if (error || !data) {
+      return { ...EMPTY_ANALYTICS, googleAnalyticsId: envGa };
+    }
     const row = data as unknown as Record<string, unknown>;
     return {
-      googleAnalyticsId: String(row.google_analytics_id ?? "").trim() || fallbackGa,
+      googleAnalyticsId: String(row.google_analytics_id ?? "").trim() || envGa,
       googleTagManagerId: String(row.google_tag_manager_id ?? "").trim(),
       metaPixelId: String(row.meta_pixel_id ?? "").trim(),
       tiktokPixelId: String(row.tiktok_pixel_id ?? "").trim(),
       consentRequired: Boolean(row.consent_required),
     };
   } catch {
-    return { ...EMPTY_ANALYTICS, googleAnalyticsId: fallbackGa };
+    return { ...EMPTY_ANALYTICS, googleAnalyticsId: envGa };
   }
 }
 

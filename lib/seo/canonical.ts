@@ -5,8 +5,8 @@
  *   1. Bare paths are the canonical surface — no trailing slash, no UTM, no `?sort=`.
  *   2. A small set of "content-changing" params per route stays in the canonical
  *      (e.g. `q` on `/search`, future: a curated `color` filter).
- *   3. Faceted/sort variants of collection pages are noindex,follow with canonical
- *      pointing back to the bare URL.
+ *   3. Listing pages (`/collections/*`, `/s/*`) allow sort/stock/price params on
+ *      the canonical so filtered views are indexable without UTMs/gclid noise.
  */
 
 import { getPublicSiteUrl } from "@/lib/site-url";
@@ -33,13 +33,26 @@ const NEVER_KEEP = new Set([
 ]);
 
 /**
+ * Query keys used by `parseCollectionSearchParams` on `/collections/[slug]` and
+ * `/s/[slug]` (home section rails). Preserved on canonical; pages stay indexable
+ * when only these are present (UTMs etc. still trigger noindex via `NEVER_KEEP`).
+ */
+export const COLLECTION_LISTING_PARAM_KEYS = ["sort", "stock", "min", "max"] as const;
+
+/**
  * Per-route allow-list of meaningful query params (preserved on canonical and
  * keep page indexable). Everything else collapses to the bare URL.
  */
 const ROUTE_ALLOWED_PARAMS: Array<{ test: (p: string) => boolean; allow: string[] }> = [
   { test: (p) => p === "/search" || p.startsWith("/search/"), allow: ["q"] },
-  // Collection / sale / home-section listing controls — none indexable yet.
-  { test: () => false, allow: [] },
+  {
+    test: (p) => p.startsWith("/collections/"),
+    allow: [...COLLECTION_LISTING_PARAM_KEYS],
+  },
+  {
+    test: (p) => p.startsWith("/s/"),
+    allow: [...COLLECTION_LISTING_PARAM_KEYS],
+  },
 ];
 
 function pathnameOf(input: string): string {

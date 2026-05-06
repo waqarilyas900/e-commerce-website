@@ -371,7 +371,7 @@ export function ProductPdp({
     const SWIPE_THRESHOLD = 72;
     if (swipe <= -SWIPE_THRESHOLD) goToNextMedia();
     else if (swipe >= SWIPE_THRESHOLD) goToPrevMedia();
-  }, [goToNextMedia, goToPrevMedia]);
+  }, [gallery.length, goToNextMedia, goToPrevMedia]);
 
   const slideVariants = {
     enter: (dir: 1 | -1) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 1 }),
@@ -539,6 +539,7 @@ export function ProductPdp({
             ) : main ? (
               <div className="relative w-full">
                 {/* Invisible sizer: wrapper inherits natural image height so absolute slides do not collapse to 0. Old + new slide together for the carousel feel. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={main.url}
                   alt=""
@@ -562,6 +563,7 @@ export function ProductPdp({
                     style={{ touchAction: "pan-y" }}
                     className="absolute inset-0"
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={main.url}
                       alt={product.name}
@@ -624,6 +626,7 @@ export function ProductPdp({
                       Video
                     </span>
                   ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.url}
                       alt=""
@@ -646,6 +649,12 @@ export function ProductPdp({
           <h1 className="text-3xl font-semibold tracking-tight">
             {product.name}
           </h1>
+          {product.free_delivery ? (
+            <p className="text-sm font-medium text-emerald-800">
+              Free standard delivery on this item. Other items in your cart still use normal
+              delivery rules.
+            </p>
+          ) : null}
           <div
             className="flex flex-wrap items-center gap-2 text-sm text-neutral-600"
             role="img"

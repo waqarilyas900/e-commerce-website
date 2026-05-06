@@ -34,6 +34,8 @@ export type DbProductRow = {
   rating: number | null;
   reviews_count: number | null;
   stock_total: number | null;
+  /** Opt-in: line total excluded from standard shipping / free-delivery threshold basis. */
+  free_delivery?: boolean;
   created_at?: string;
 };
 

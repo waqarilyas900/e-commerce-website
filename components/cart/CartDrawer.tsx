@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
 import { useScrollLock } from "@/lib/scroll-lock";
@@ -168,6 +168,16 @@ export function CartDrawer() {
   const [deliverySettings, setDeliverySettings] = useState<StoreDeliverySettingsState | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
 
+  const merchandiseShippingBasisPkr = useMemo(
+    () =>
+      resolvedLines.reduce(
+        (sum, { line, unitPrice, product }) =>
+          product.freeDelivery ? sum : sum + unitPrice * line.quantity,
+        0,
+      ),
+    [resolvedLines],
+  );
+
   /** “You might also like” only when the cart is empty (Shopify-style). */
   const showEmptyCartRecommendations = lines.length === 0;
 
@@ -328,7 +338,7 @@ export function CartDrawer() {
 
             {lines.length > 0 ? (
               <CartFreeDeliveryProgress
-                subtotalPkr={subtotal}
+                subtotalPkr={merchandiseShippingBasisPkr}
                 settings={deliverySettings}
                 loading={deliveryLoading}
               />

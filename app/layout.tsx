@@ -25,7 +25,14 @@ import {
   organizationJsonLd,
   websiteJsonLd,
 } from "@/lib/seo/jsonld";
+import {
+  metaPixelInlineScript,
+  tiktokPixelInlineScript,
+} from "@/lib/seo/pixel-snippets";
 import "./globals.css";
+
+/** Google AdSense client (hardcoded — verification + auto ads script). */
+const ADSENSE_CLIENT_ID = "ca-pub-9696696438221700";
 
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
 export const dynamic = "force-dynamic";
@@ -196,7 +203,11 @@ export default async function RootLayout({
   const htmlLang = (identity.locale || "en_US").split("_")[0] || "en";
   const analyticsId = analytics.googleAnalyticsId;
   const gtmId = analytics.googleTagManagerId;
+  const metaPixelId = analytics.metaPixelId;
+  const tiktokPixelId = analytics.tiktokPixelId;
   const analyticsAllowed = !analytics.consentRequired;
+  /** Avoid double-firing: GTM should own GA + pixels when present. */
+  const standaloneMarketingTags = analyticsAllowed && !gtmId;
   const storageOrigin = getStorageOrigin();
   const themeColor = parseThemeColor(announcementBar.backgroundColor, "#1c1d1d");
 
@@ -210,6 +221,13 @@ export default async function RootLayout({
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content={themeColor} />
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
+        <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID} />
+        <Script
+          id="adsense-loader"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT_ID)}`}
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
         {storageOrigin ? (
           <>
             <link rel="preconnect" href={storageOrigin} crossOrigin="anonymous" />
@@ -235,30 +253,41 @@ export default async function RootLayout({
         <JsonLd id="ld-organization" data={orgLd} />
         <JsonLd id="ld-website" data={siteLd} />
         {/**
-         * Analytics scripts are loaded via `next/script` so Next can defer them
-         * to the `afterInteractive` window — i.e. after FCP/LCP and the main
-         * thread has paint-critical JS done. This is what removes ~80-150 ms
-         * from mobile TBT compared to inline `<script>` tags in the document
-         * head.
+         * GA / GTM use `beforeInteractive` so they are injected in the initial HTML
+         * from the server. Google's setup assistant and simple HTML crawlers often
+         * miss `afterInteractive` scripts (they run only after hydration).
+         * Meta / TikTok stay `afterInteractive` to reduce main-thread contention.
          */}
         {analyticsAllowed && gtmId ? (
           <Script
             id="gtm-loader"
-            strategy="afterInteractive"
+            strategy="beforeInteractive"
           >{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode&&f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}</Script>
         ) : null}
-        {!gtmId && analyticsAllowed && analyticsId ? (
+        {standaloneMarketingTags && analyticsId ? (
           <>
             <Script
               id="ga-loader"
               src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}
-              strategy="afterInteractive"
+              strategy="beforeInteractive"
             />
             <Script
               id="ga-init"
-              strategy="afterInteractive"
-            >{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${analyticsId}',{anonymize_ip:true});`}</Script>
+              strategy="beforeInteractive"
+            >{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`}</Script>
           </>
+        ) : null}
+        {standaloneMarketingTags && metaPixelId ? (
+          <Script
+            id="meta-pixel"
+            strategy="afterInteractive"
+          >{metaPixelInlineScript(metaPixelId)}</Script>
+        ) : null}
+        {standaloneMarketingTags && tiktokPixelId ? (
+          <Script
+            id="tiktok-pixel"
+            strategy="afterInteractive"
+          >{tiktokPixelInlineScript(tiktokPixelId)}</Script>
         ) : null}
       </head>
       <body
@@ -285,6 +314,18 @@ export default async function RootLayout({
               height="0"
               width="0"
               style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        ) : null}
+        {standaloneMarketingTags && metaPixelId ? (
+          <noscript>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              height={1}
+              width={1}
+              style={{ display: "none" }}
+              alt=""
+              src={`https://www.facebook.com/tr?id=${encodeURIComponent(metaPixelId)}&ev=PageView&noscript=1`}
             />
           </noscript>
         ) : null}
