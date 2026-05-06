@@ -341,6 +341,7 @@ export function CartDrawer() {
                 subtotalPkr={merchandiseShippingBasisPkr}
                 settings={deliverySettings}
                 loading={deliveryLoading}
+                shippingBasisKnown={resolvedLines.length > 0}
               />
             ) : null}
 
