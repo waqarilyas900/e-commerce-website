@@ -120,7 +120,7 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
     if (!autoRun) return;
 
     const start = Date.now();
-    setProgress(0);
+    queueMicrotask(() => setProgress(0));
     const progressId = window.setInterval(() => {
       const elapsed = Date.now() - start;
       const p = Math.min(1, elapsed / INTERVAL_MS);

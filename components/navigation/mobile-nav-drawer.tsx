@@ -133,9 +133,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
         setAuthUser(nextSession?.user ?? null);
       });
       unsubscribe = () => subscription.unsubscribe();
-    } catch {
-      setAuthUser(null);
-    }
+    } catch {}
     return () => unsubscribe?.();
   }, []);
 
