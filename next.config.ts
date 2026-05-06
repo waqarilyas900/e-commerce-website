@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import type { NextConfig } from "next";
 
 /** Comma-separated hostnames for `next dev` when using LAN IP (e.g. `192.168.1.5`). */
@@ -142,8 +144,13 @@ const nextConfig: NextConfig = {
       ],
     };
   },
-  /** Next 16 defaults to Turbopack for `next build`; empty config acknowledges coexistence with `webpack`. */
-  turbopack: {},
+  /**
+   * Next 16 uses Turbopack for `next build`. Pin the workspace root so builds do not infer a parent
+   * directory when another lockfile exists higher on disk (matches Vercel/Linux project root).
+   */
+  turbopack: {
+    root: path.join(process.cwd()),
+  },
   /** Dev HMR: `127.0.0.1` plus optional `NEXT_EXTRA_DEV_ORIGINS` (comma-separated hostnames). */
   allowedDevOrigins: ["127.0.0.1", ...extraDevOrigins()],
   /**
