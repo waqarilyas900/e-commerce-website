@@ -116,6 +116,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Canonical host: force apex to `www` with a permanent redirect.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "outflint.pk" }],
+        destination: "https://www.outflint.pk/:path*",
+        permanent: true,
+      },
       // Retired landing pages — keep permanent redirects so search engines
       // drop them and consolidate signals to the collections index.
       { source: "/bundles", destination: "/collections", permanent: true },
