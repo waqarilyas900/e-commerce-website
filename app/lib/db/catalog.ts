@@ -222,7 +222,7 @@ async function primaryDisplaySlugByProductId(
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, short_description, description, status, images, tags, rating, reviews_count, stock_total, created_at";
+  "id, slug, name, short_description, description, status, images, tags, rating, reviews_count, stock_total, free_delivery, created_at";
 
 /** All active products with variant-derived prices (for /collections grid, sale filter). */
 export async function dbListAllActiveProductsForCards(): Promise<Product[]> {

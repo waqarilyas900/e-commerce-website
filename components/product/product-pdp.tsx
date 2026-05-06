@@ -649,6 +649,12 @@ export function ProductPdp({
           <h1 className="text-3xl font-semibold tracking-tight">
             {product.name}
           </h1>
+          {product.free_delivery ? (
+            <p className="text-sm font-medium text-emerald-800">
+              Free standard delivery on this item. Other items in your cart still use normal
+              delivery rules.
+            </p>
+          ) : null}
           <div
             className="flex flex-wrap items-center gap-2 text-sm text-neutral-600"
             role="img"

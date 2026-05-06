@@ -5,7 +5,10 @@ export type DeliverySettingsPaisa = {
   free_delivery_thresholds_paisa: number[];
 };
 
-/** Merchandise subtotal in PKR; returns delivery line in PKR (0 when any free rule applies). */
+/**
+ * Shipping line in PKR from the **shipping basis** subtotal (merchandise that is not per-product
+ * free delivery). Pass full cart subtotal only when no products use `free_delivery`.
+ */
 export function computeDeliveryPkr(
   subtotalPkr: number,
   settings: DeliverySettingsPaisa,
@@ -23,7 +26,7 @@ export function computeDeliveryPkr(
   return standardPaisa / 100;
 }
 
-/** Shortfall until the next free-delivery tier (same currency as subtotal). Null if none or already qualified. */
+/** Shortfall until the next free-delivery tier; `subtotalPkr` should match the shipping basis used in `computeDeliveryPkr`. */
 export function nextFreeDeliveryGapPkr(
   subtotalPkr: number,
   thresholdsPaisa: number[],

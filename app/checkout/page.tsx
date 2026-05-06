@@ -244,28 +244,44 @@ export default function CheckoutPage() {
     resolvedLines.length === 0 &&
     !isResolvingCart;
 
+  /** Subtotal of lines that count toward standard delivery and store free-delivery thresholds. */
+  const merchandiseShippingBasisPkr = useMemo(
+    () =>
+      resolvedLines.reduce(
+        (sum, { line, unitPrice, product }) =>
+          product.freeDelivery ? sum : sum + unitPrice * line.quantity,
+        0,
+      ),
+    [resolvedLines],
+  );
+
   const deliveryPkr = useMemo(() => {
     if (cartResolving) return 0;
-    return computeDeliveryPkr(subtotal, {
+    return computeDeliveryPkr(merchandiseShippingBasisPkr, {
       standard_delivery_paisa: deliverySettings.standardPaisa,
       free_delivery_thresholds_paisa: deliverySettings.freeThresholdsPaisa,
     });
-  }, [cartResolving, subtotal, deliverySettings]);
+  }, [cartResolving, merchandiseShippingBasisPkr, deliverySettings]);
 
   const freeDeliveryGapPkr = useMemo(
     () =>
-      cartResolving ? null : nextFreeDeliveryGapPkr(subtotal, deliverySettings.freeThresholdsPaisa),
-    [cartResolving, subtotal, deliverySettings.freeThresholdsPaisa],
+      cartResolving
+        ? null
+        : nextFreeDeliveryGapPkr(
+            merchandiseShippingBasisPkr,
+            deliverySettings.freeThresholdsPaisa,
+          ),
+    [cartResolving, merchandiseShippingBasisPkr, deliverySettings.freeThresholdsPaisa],
   );
 
   const shippingWaiverCutoffPkr = useMemo(() => {
     if (cartResolving) return null;
-    const subPaisa = Math.round(subtotal * 100);
+    const subPaisa = Math.round(merchandiseShippingBasisPkr * 100);
     const qualified = deliverySettings.freeThresholdsPaisa
       .filter((t) => Number.isFinite(t) && t > 0 && subPaisa >= t)
       .sort((a, b) => b - a);
     return qualified[0] != null ? qualified[0] / 100 : null;
-  }, [cartResolving, subtotal, deliverySettings.freeThresholdsPaisa]);
+  }, [cartResolving, merchandiseShippingBasisPkr, deliverySettings.freeThresholdsPaisa]);
 
   const discountPkr =
     discountApplied && discountPreviewCents != null && discountPreviewCents > 0
@@ -959,8 +975,9 @@ export default function CheckoutPage() {
               </div>
               {freeDeliveryGapPkr != null && freeDeliveryGapPkr > 0 ? (
                 <p className="mt-2 text-xs text-emerald-800">
-                  Add {formatPkr(freeDeliveryGapPkr)} more in products (before delivery) for free
-                  standard delivery.
+                  Add {formatPkr(freeDeliveryGapPkr)} more from items that pay standard delivery to
+                  unlock free standard delivery on this order (free-delivery products don&apos;t
+                  count toward this total).
                 </p>
               ) : null}
               <p className="mt-3 text-xs text-neutral-600">

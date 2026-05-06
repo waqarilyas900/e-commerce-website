@@ -27,7 +27,14 @@ export type CartLine = {
 export type ResolvedCartLine = {
   line: CartLine;
   unitPrice: number;
-  product: { id: string; slug: string; name: string; image: string };
+  product: {
+    id: string;
+    slug: string;
+    name: string;
+    image: string;
+    /** Product-level opt-in; that line's total is excluded from shipping basis. */
+    freeDelivery: boolean;
+  };
   variantLabel: string;
 };
 
@@ -201,7 +208,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           productIds.length > 0
             ? await supabase
                 .from("products")
-                .select("id, slug, name, images")
+                .select("id, slug, name, images, free_delivery")
                 .in("id", productIds)
             : { data: [], error: null };
 
@@ -244,6 +251,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
               slug: pr.slug,
               name: pr.name,
               image: firstImage(pr.images),
+              freeDelivery: Boolean(pr.free_delivery),
             },
             variantLabel: formatVariantLabel(vr.option_values),
           });
