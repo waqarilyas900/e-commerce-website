@@ -221,7 +221,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const byProductId = new Map(
           (productRows ?? []).map((p) => [
             p.id as string,
-            p as { id: string; slug: string; name: string; images: unknown },
+            p as {
+              id: string;
+              slug: string;
+              name: string;
+              images: unknown;
+              free_delivery?: boolean | null;
+            },
           ]),
         );
 
