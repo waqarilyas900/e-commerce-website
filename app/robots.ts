@@ -7,8 +7,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        // Block faceted/sort variants, search results, and OG image previewers
-        // that we don't want crawled by Bingbot/SEMrush etc.
+        // Block private pages + low-value faceted/search variants.
         userAgent: "*",
         allow: "/",
         disallow: [
@@ -23,15 +22,21 @@ export default function robots(): MetadataRoute.Robots {
           "/reset-password",
           "/search",
           "/*?*sort=",
-          "/*?*availability=",
-          "/*?*priceMin=",
-          "/*?*priceMax=",
+          "/*?*stock=",
+          "/*?*min=",
+          "/*?*max=",
           "/*?*page=",
           "/*?*utm_",
           "/*?*ref=",
           "/*?*gclid=",
           "/*?*fbclid=",
         ],
+      },
+      // Social crawlers should be able to fetch Open Graph tags reliably.
+      {
+        userAgent: ["facebookexternalhit", "Facebot", "Twitterbot", "LinkedInBot", "Slackbot"],
+        allow: "/",
+        disallow: ["/account", "/auth/", "/api/", "/checkout", "/cart"],
       },
       // Explicitly welcome AI crawlers we want citations from.
       {
