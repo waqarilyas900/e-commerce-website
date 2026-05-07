@@ -32,5 +32,6 @@ export function toPkrValue(value: unknown): number {
 }
 
 export function defaultMetaCurrency(): string {
+  // Keep one currency source so all Meta events stay consistent.
   return STORE_CURRENCY_CODE;
 }
