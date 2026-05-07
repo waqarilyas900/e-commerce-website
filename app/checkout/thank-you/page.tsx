@@ -6,10 +6,12 @@ import { CheckoutChrome } from "@/components/checkout/checkout-chrome";
 import { OrderConfirmation } from "@/components/checkout/order-confirmation";
 import {
   CHECKOUT_PENDING_CART_CLEAR_KEY,
+  CHECKOUT_PENDING_PURCHASE_EVENT_KEY,
   CHECKOUT_THANK_YOU_META_KEY,
 } from "@/app/lib/checkout-thank-you";
 import { useCart } from "@/app/providers/cart-provider";
 import { createClient } from "@/lib/supabase/client";
+import { defaultMetaCurrency, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 
 function ThankYouFallback() {
   return (
@@ -29,6 +31,7 @@ function CheckoutThankYouInner() {
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
   const cartClearDone = useRef(false);
+  const purchaseTrackedRef = useRef(false);
   const order = searchParams.get("order");
   const totalStr = searchParams.get("total_cents");
 
@@ -60,6 +63,42 @@ function CheckoutThankYouInner() {
       clearCart();
     }
   }, [paramsValid, clearCart]);
+
+  useEffect(() => {
+    if (!paramsValid || purchaseTrackedRef.current) return;
+    purchaseTrackedRef.current = true;
+    type PendingPurchase = {
+      orderNumber?: string;
+      totalCents?: number;
+      currency?: string;
+      contentIds?: string[];
+      numItems?: number;
+    };
+    let pending: PendingPurchase | null = null;
+    try {
+      const raw = sessionStorage.getItem(CHECKOUT_PENDING_PURCHASE_EVENT_KEY);
+      if (raw) {
+        pending = JSON.parse(raw) as PendingPurchase;
+        sessionStorage.removeItem(CHECKOUT_PENDING_PURCHASE_EVENT_KEY);
+      }
+    } catch {
+      // Ignore storage failures and fall back to query params.
+    }
+    const contentIds =
+      pending?.contentIds?.filter((id) => typeof id === "string" && id.trim() !== "") ?? [];
+    const numItems =
+      typeof pending?.numItems === "number" && Number.isFinite(pending.numItems) && pending.numItems > 0
+        ? Math.round(pending.numItems)
+        : undefined;
+    trackMetaPixel("Purchase", {
+      content_ids: contentIds,
+      content_type: "product",
+      currency: pending?.currency?.trim() || defaultMetaCurrency(),
+      value: toPkrValue(totalCents / 100),
+      ...(order ? { order_id: order } : {}),
+      ...(numItems != null ? { num_items: numItems } : {}),
+    });
+  }, [paramsValid, order, totalCents]);
 
   useEffect(() => {
     if (!paramsValid) {

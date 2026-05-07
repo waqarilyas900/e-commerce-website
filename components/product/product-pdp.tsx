@@ -29,8 +29,9 @@ import type {
   DbProductRow,
   DbProductVariantRow,
 } from "@/app/lib/db/types";
-import { formatPkr } from "@/app/lib/format-currency";
+import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { useCart } from "@/app/providers/cart-provider";
+import { toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 
 function sellableQty(v: DbProductVariantRow): number {
   return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
@@ -222,6 +223,7 @@ export function ProductPdp({
   );
 
   const [authTick, setAuthTick] = useState(0);
+  const viewedVariantKeysRef = useRef<Set<string>>(new Set());
   /** Baseline + last seen auth user id — avoids extra bulk refetch when Supabase emits duplicate SIGNED_IN for the same session. */
   const lastAuthUserIdRef = useRef<string | null | undefined>(undefined);
   const [wishlistVariantIds, setWishlistVariantIds] = useState<Set<string>>(
@@ -337,6 +339,21 @@ export function ProductPdp({
   const [quantity, setQuantity] = useState(1);
 
   const maxQty = matchedVariant ? sellableQty(matchedVariant) : 0;
+
+  useEffect(() => {
+    const variantForTracking = matchedVariant ?? priceVariant;
+    if (!variantForTracking) return;
+    const dedupeKey = `${product.id}:${variantForTracking.id}`;
+    if (viewedVariantKeysRef.current.has(dedupeKey)) return;
+    viewedVariantKeysRef.current.add(dedupeKey);
+    trackMetaPixel("ViewContent", {
+      content_ids: [variantForTracking.id],
+      content_type: "product",
+      content_name: product.name,
+      currency: STORE_CURRENCY_CODE,
+      value: toPkrValue(variantForTracking.price),
+    });
+  }, [matchedVariant, priceVariant, product.id, product.name]);
 
   /** User picks each dimension freely; we never auto-switch size/color to force a valid SKU. */
   function setOption(key: string, value: string) {
@@ -904,7 +921,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer
@@ -914,7 +933,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer={false}
@@ -1161,7 +1182,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer
@@ -1171,7 +1194,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer={false}

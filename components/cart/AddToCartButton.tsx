@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/app/providers/cart-provider";
+import { defaultMetaCurrency, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { toastAddedToCart } from "@/lib/cart-toast";
 import { ADD_TO_CART_BUTTON_MS, delayMs } from "@/lib/cart-add-feedback";
@@ -57,6 +58,14 @@ export function AddToCartButton({
         try {
           await delayMs(ADD_TO_CART_BUTTON_MS);
           addVariant(product.defaultVariantId!, product.id, q);
+          trackMetaPixel("AddToCart", {
+            content_ids: [product.defaultVariantId],
+            content_type: "product",
+            content_name: product.name,
+            currency: defaultMetaCurrency(),
+            value: toPkrValue(product.price * q),
+            num_items: q,
+          });
           toastAddedToCart({
             description: q > 1 ? `${product.name} · ${q} added` : product.name,
             quantity: q,

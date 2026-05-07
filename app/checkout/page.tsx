@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { toast } from "sonner";
 import {
   CHECKOUT_PENDING_CART_CLEAR_KEY,
+  CHECKOUT_PENDING_PURCHASE_EVENT_KEY,
   CHECKOUT_THANK_YOU_META_KEY,
 } from "@/app/lib/checkout-thank-you";
 // Alternate layout: import `GUEST_MINIMAL_CHECKOUT` from `@/app/lib/checkout-templates` and assign below.
@@ -31,6 +32,7 @@ import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-setti
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { voucherErrorMessage } from "@/app/lib/voucher-user-messages";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
+import { toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import type { SavedAddress } from "@/app/lib/saved-addresses";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
@@ -203,6 +205,7 @@ export default function CheckoutPage() {
   const [savingAddress, setSavingAddress] = useState(false);
   const [saveAddressErrors, setSaveAddressErrors] = useState<Partial<Record<string, string>>>({});
   const saveIntentAfterSignInRef = useRef(false);
+  const sentInitiateCheckoutRef = useRef<Set<string>>(new Set());
   /** Always points at latest validator so `persistCurrentAddress` never hits TDZ if hooks are reordered. */
   const validateSaveAddressFieldsRef = useRef<() => boolean>(() => false);
 
@@ -294,6 +297,20 @@ export default function CheckoutPage() {
     () => resolvedLines.map(({ line }) => `${line.variantId}:${line.quantity}`).join("|"),
     [resolvedLines],
   );
+
+  useEffect(() => {
+    if (!ready || cartResolving || resolvedLines.length === 0) return;
+    const dedupeKey = `${cartFingerprint}|${Math.round(grandTotal * 100)}`;
+    if (sentInitiateCheckoutRef.current.has(dedupeKey)) return;
+    sentInitiateCheckoutRef.current.add(dedupeKey);
+    trackMetaPixel("InitiateCheckout", {
+      content_ids: resolvedLines.map(({ line }) => line.variantId),
+      content_type: "product",
+      num_items: resolvedLines.reduce((sum, { line }) => sum + line.quantity, 0),
+      currency: STORE_CURRENCY_CODE,
+      value: toPkrValue(grandTotal),
+    });
+  }, [ready, cartResolving, resolvedLines, cartFingerprint, grandTotal]);
 
   useEffect(() => {
     setDiscountPreviewCents(null);
@@ -794,6 +811,20 @@ export default function CheckoutPage() {
       }
       try {
         sessionStorage.setItem(CHECKOUT_PENDING_CART_CLEAR_KEY, "1");
+      } catch {
+        /* private mode / quota */
+      }
+      try {
+        sessionStorage.setItem(
+          CHECKOUT_PENDING_PURCHASE_EVENT_KEY,
+          JSON.stringify({
+            orderNumber: data.order_number,
+            totalCents: data.total_cents,
+            currency: STORE_CURRENCY_CODE,
+            contentIds: resolvedLines.map(({ line }) => line.variantId),
+            numItems: resolvedLines.reduce((sum, { line }) => sum + line.quantity, 0),
+          }),
+        );
       } catch {
         /* private mode / quota */
       }
