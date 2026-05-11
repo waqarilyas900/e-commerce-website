@@ -525,12 +525,20 @@ function CustomerReviewsInner({
         toast.error("Could not resolve your profile. Try again.");
         return;
       }
+      const publicReviewerName =
+        profile.displayName &&
+        profile.displayName !== user.email?.trim() &&
+        profile.displayName !== "Your account"
+          ? profile.displayName
+          : null;
 
       const { data: inserted, error: insErr } = await supabase
         .from("reviews")
         .insert({
           product_id: productId,
           user_id: profile.id,
+          attributed_display_name: publicReviewerName,
+          attributed_display_email: null,
           rating: form.rating,
           title: form.title.trim(),
           body: form.content.trim(),
