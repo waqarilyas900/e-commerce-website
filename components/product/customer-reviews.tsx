@@ -116,6 +116,109 @@ function newAttachmentId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+type AuthUserForReviewProfile = {
+  id: string;
+  email?: string | null;
+  user_metadata?: unknown;
+};
+
+function readMetaString(meta: Record<string, unknown>, key: string): string {
+  const value = meta[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function authUserReviewName(user: AuthUserForReviewProfile): {
+  first: string;
+  last: string;
+  displayName: string;
+} {
+  const meta =
+    user.user_metadata && typeof user.user_metadata === "object"
+      ? (user.user_metadata as Record<string, unknown>)
+      : {};
+  let first = readMetaString(meta, "first_name") || readMetaString(meta, "given_name");
+  let last = readMetaString(meta, "last_name") || readMetaString(meta, "family_name");
+
+  if (!first && !last) {
+    const full = readMetaString(meta, "full_name") || readMetaString(meta, "name");
+    if (full) {
+      const [head, ...tail] = full.split(/\s+/).filter(Boolean);
+      first = head ?? "";
+      last = tail.join(" ");
+    }
+  }
+
+  const displayName = [first, last].filter(Boolean).join(" ").trim();
+  return { first, last, displayName };
+}
+
+async function ensureReviewUserProfile(
+  supabase: ReturnType<typeof createClient>,
+  user: AuthUserForReviewProfile,
+): Promise<{ id: string | null; displayName: string; changed: boolean; error?: string }> {
+  const fromAuth = authUserReviewName(user);
+  const fallbackLabel = fromAuth.displayName || user.email?.trim() || "Your account";
+  const { data: row, error: lookupError } = await supabase
+    .from("users")
+    .select("id, first_name, last_name")
+    .eq("auth_id", user.id)
+    .maybeSingle();
+
+  if (lookupError) {
+    return { id: null, displayName: fallbackLabel, changed: false, error: lookupError.message };
+  }
+
+  if (!row?.id) {
+    const { error: upsertErr } = await supabase.from("users").upsert(
+      {
+        auth_id: user.id,
+        first_name: fromAuth.first,
+        last_name: fromAuth.last,
+        phone: "",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "auth_id" },
+    );
+    if (upsertErr) {
+      return { id: null, displayName: fallbackLabel, changed: false, error: upsertErr.message };
+    }
+    const { data: created, error: refetchErr } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_id", user.id)
+      .maybeSingle();
+    return {
+      id: created?.id ?? null,
+      displayName: fallbackLabel,
+      changed: Boolean(fromAuth.displayName),
+      error: refetchErr?.message,
+    };
+  }
+
+  const currentFirst = typeof row.first_name === "string" ? row.first_name.trim() : "";
+  const currentLast = typeof row.last_name === "string" ? row.last_name.trim() : "";
+  const nextFirst = currentFirst || fromAuth.first;
+  const nextLast = currentLast || fromAuth.last;
+  const changed = nextFirst !== currentFirst || nextLast !== currentLast;
+
+  if (changed) {
+    const { error: updateErr } = await supabase
+      .from("users")
+      .update({
+        first_name: nextFirst,
+        last_name: nextLast,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", row.id);
+    if (updateErr) {
+      return { id: row.id, displayName: fallbackLabel, changed: false, error: updateErr.message };
+    }
+  }
+
+  const displayName = [nextFirst, nextLast].filter(Boolean).join(" ").trim() || fallbackLabel;
+  return { id: row.id, displayName, changed };
+}
+
 function CustomerReviewsInner({
   productId,
   rating,
@@ -142,10 +245,31 @@ function CustomerReviewsInner({
   /** Local picks with blob previews before submit (revoked on remove / modal close). */
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const shouldRefreshOnCloseRef = useRef(false);
+  const syncedSignedInProfileRef = useRef(false);
 
   useEffect(() => {
     setReviews(initialReviews);
   }, [initialReviews]);
+
+  useEffect(() => {
+    if (syncedSignedInProfileRef.current) return;
+    syncedSignedInProfileRef.current = true;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const synced = await ensureReviewUserProfile(supabase, user);
+      if (!cancelled && synced.changed) {
+        router.refresh();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const approvedOnly = useMemo(
     () => reviews.filter((r) => r.status === "approved"),
@@ -183,14 +307,8 @@ function CustomerReviewsInner({
         setPostingHint("");
         return;
       }
-      const { data: urow } = await supabase
-        .from("users")
-        .select("first_name, last_name")
-        .eq("auth_id", user.id)
-        .maybeSingle();
-      const name = [urow?.first_name, urow?.last_name].filter(Boolean).join(" ").trim();
-      const email = user.email ?? "";
-      setPostingHint(name || email || "Your account");
+      const profile = await ensureReviewUserProfile(supabase, user);
+      setPostingHint(profile.displayName);
     })();
   }, []);
 
@@ -397,36 +515,13 @@ function CustomerReviewsInner({
         return;
       }
 
-      let { data: urow } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_id", user.id)
-        .maybeSingle();
-
-      if (!urow?.id) {
-        const { error: upsertErr } = await supabase.from("users").upsert(
-          {
-            auth_id: user.id,
-            first_name: "",
-            last_name: "",
-            phone: "",
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "auth_id" },
-        );
-        if (upsertErr) {
-          toast.error(upsertErr.message);
-          return;
-        }
-        const { data: again } = await supabase
-          .from("users")
-          .select("id")
-          .eq("auth_id", user.id)
-          .maybeSingle();
-        urow = again;
+      const profile = await ensureReviewUserProfile(supabase, user);
+      if (profile.error) {
+        toast.error(profile.error);
+        return;
       }
 
-      if (!urow?.id) {
+      if (!profile.id) {
         toast.error("Could not resolve your profile. Try again.");
         return;
       }
@@ -435,7 +530,7 @@ function CustomerReviewsInner({
         .from("reviews")
         .insert({
           product_id: productId,
-          user_id: urow.id,
+          user_id: profile.id,
           rating: form.rating,
           title: form.title.trim(),
           body: form.content.trim(),
