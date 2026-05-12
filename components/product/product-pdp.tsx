@@ -1116,18 +1116,6 @@ export function ProductPdp({
             </p>
           )}
 
-          {whatsAppHref ? (
-            <a
-              href={whatsAppHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Ask about ${product.name} on WhatsApp`}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#1fb85a] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
-            >
-              <WhatsAppIcon className="h-6 w-6" />
-            </a>
-          ) : null}
-
           {safeDescriptionHtml ? (
             <div
               className="max-w-full overflow-x-auto text-neutral-600 [&_a]:text-neutral-900 [&_a]:underline [&_img]:h-auto [&_img]:max-w-full [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
@@ -1136,6 +1124,20 @@ export function ProductPdp({
           ) : null}
         </div>
       </section>
+
+      {whatsAppHref ? (
+        <a
+          href={whatsAppHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Ask about ${product.name} on WhatsApp`}
+          className={`fixed right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#1fb85a] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:right-6 sm:h-14 sm:w-14 lg:bottom-6 ${
+            showMobileStickyBar ? "bottom-24" : "bottom-5 sm:bottom-6"
+          }`}
+        >
+          <WhatsAppIcon className="h-7 w-7" />
+        </a>
+      ) : null}
 
       <AnimatePresence>
         {isZoomOpen && main?.kind === "image" ? (
