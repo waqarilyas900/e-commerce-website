@@ -164,11 +164,11 @@ export async function POST(req: Request) {
     ...(eventSourceUrl ? { event_source_url: eventSourceUrl } : {}),
     user_data: buildUserData(body.user_data, req),
     custom_data: cleanCustomData(body.custom_data),
+    // TODO: Remove this Events Manager test code after CAPI testing succeeds so live events flow normally.
+    test_event_code: "TEST18418",
   };
 
   const payload: Record<string, unknown> = { data: [event] };
-  const testEventCode = cleanString(body.test_event_code);
-  if (testEventCode) payload.test_event_code = testEventCode;
 
   const graphUrl = new URL(
     `https://graph.facebook.com/${metaGraphVersion()}/${encodeURIComponent(pixelId)}/events`,
