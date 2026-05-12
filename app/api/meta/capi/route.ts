@@ -84,9 +84,48 @@ function cleanCustomData(value: unknown): Record<string, JsonValue> {
   return value as Record<string, JsonValue>;
 }
 
+function readCookie(req: Request, name: string): string {
+  const raw = req.headers.get("cookie") ?? "";
+  if (!raw) return "";
+  const encodedName = encodeURIComponent(name);
+  for (const part of raw.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (!key || key !== encodedName) continue;
+    const value = rest.join("=");
+    if (!value) return "";
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return "";
+}
+
+function fbcFromEventSourceUrl(
+  eventSourceUrl: string,
+  eventTimeSeconds: number,
+): string {
+  if (!eventSourceUrl) return "";
+  try {
+    const url = new URL(eventSourceUrl);
+    const fbclid = url.searchParams.get("fbclid")?.trim();
+    if (!fbclid) return "";
+    const creationTimeMs =
+      Number.isFinite(eventTimeSeconds) && eventTimeSeconds > 0
+        ? eventTimeSeconds * 1000
+        : Date.now();
+    return `fb.1.${Math.floor(creationTimeMs)}.${fbclid}`;
+  } catch {
+    return "";
+  }
+}
+
 function buildUserData(
   bodyUserData: MetaUserDataInput | undefined,
   req: Request,
+  eventSourceUrl: string,
+  eventTimeSeconds: number,
 ): Record<string, unknown> {
   const userData: Record<string, unknown> = {};
   const input = bodyUserData ?? {};
@@ -97,10 +136,13 @@ function buildUserData(
   const phones = hashUserValues(input.phone ?? input.ph, normalizePhone);
   if (phones.length > 0) userData.ph = phones;
 
-  const fbp = cleanString(input.fbp);
+  const fbp = readCookie(req, "_fbp") || cleanString(input.fbp);
   if (fbp) userData.fbp = fbp;
 
-  const fbc = cleanString(input.fbc);
+  const fbc =
+    readCookie(req, "_fbc") ||
+    cleanString(input.fbc) ||
+    fbcFromEventSourceUrl(eventSourceUrl, eventTimeSeconds);
   if (fbc) userData.fbc = fbc;
 
   const ip = getRequestIp(req);
@@ -165,7 +207,7 @@ export async function POST(req: Request) {
     event_id: eventId,
     action_source: "website",
     ...(eventSourceUrl ? { event_source_url: eventSourceUrl } : {}),
-    user_data: buildUserData(body.user_data, req),
+    user_data: buildUserData(body.user_data, req, eventSourceUrl, eventTime),
     custom_data: cleanCustomData(body.custom_data),
   };
 
