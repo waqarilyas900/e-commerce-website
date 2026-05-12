@@ -33,6 +33,12 @@ type MetaTrackOptions = {
   sendToServer?: boolean;
 };
 
+type CapiRequestDraft = {
+  body: string;
+  userData: Record<string, string>;
+  eventSourceUrl?: string;
+};
+
 function metaDataLayerEventName(eventName: string): string {
   const snake = eventName
     .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
@@ -43,15 +49,11 @@ function metaDataLayerEventName(eventName: string): string {
 }
 
 export function generateMetaEventId(eventName = "event"): string {
-  const safeName = eventName
-    .replace(/[^a-zA-Z0-9_-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase() || "event";
-  const random =
-    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return `${safeName}-${random}`;
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const safeName = eventName.replace(/[^a-zA-Z0-9_-]+/g, "-").toLowerCase() || "event";
+  return `${safeName}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 function readCookie(name: string): string {
@@ -66,7 +68,29 @@ function readCookie(name: string): string {
   return "";
 }
 
-function browserUserData(options: MetaTrackOptions): Record<string, string> {
+function writeCookie(name: string, value: string, maxAgeSeconds: number): void {
+  if (typeof document === "undefined") return;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
+    value,
+  )}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax${secure}`;
+}
+
+function fbcFromCurrentUrl(eventTimeSeconds: number): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const fbclid = new URL(window.location.href).searchParams.get("fbclid")?.trim();
+    if (!fbclid) return "";
+    return `fb.1.${Math.floor(eventTimeSeconds * 1000)}.${fbclid}`;
+  } catch {
+    return "";
+  }
+}
+
+function browserUserData(
+  options: MetaTrackOptions,
+  eventTimeSeconds: number,
+): Record<string, string> {
   const userData: Record<string, string> = {};
   const email = options.userData?.email?.trim();
   if (email) userData.email = email;
@@ -89,7 +113,10 @@ function browserUserData(options: MetaTrackOptions): Record<string, string> {
   if (externalId) userData.external_id = externalId;
   const fbp = readCookie("_fbp");
   if (fbp) userData.fbp = fbp;
-  const fbc = readCookie("_fbc");
+
+  const urlFbc = fbcFromCurrentUrl(eventTimeSeconds);
+  if (urlFbc) writeCookie("_fbc", urlFbc, 90 * 24 * 60 * 60);
+  const fbc = urlFbc || readCookie("_fbc");
   if (fbc) userData.fbc = fbc;
   return userData;
 }
@@ -112,6 +139,24 @@ async function metaCapiAuthHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
+function logMetaDedupe(
+  phase: string,
+  eventName: string,
+  eventId: string,
+  extra?: Record<string, unknown>,
+): void {
+  try {
+    console.info("[meta-dedupe]", {
+      phase,
+      eventName,
+      eventId,
+      ...extra,
+    });
+  } catch {
+    // Logging must never affect checkout or tracking.
+  }
+}
+
 function pushMetaDataLayerEvent(
   eventName: string,
   eventId: string,
@@ -129,6 +174,9 @@ function pushMetaDataLayerEvent(
     fb_event_id: eventId,
     ...params,
   });
+  logMetaDedupe("browser:dataLayer", eventName, eventId, {
+    dataLayerEvent: options.gtmEventName || metaDataLayerEventName(eventName),
+  });
 }
 
 function capiRequestBody(
@@ -136,29 +184,52 @@ function capiRequestBody(
   eventId: string,
   params: MetaTrackParams,
   options: MetaTrackOptions,
-): string {
-  return JSON.stringify({
-    event_name: eventName,
-    event_id: eventId,
-    event_source_url:
-      options.eventSourceUrl ||
-      (typeof window !== "undefined" ? window.location.href : undefined),
-    custom_data: params,
-    user_data: browserUserData(options),
-  });
+): CapiRequestDraft {
+  const eventTime = Math.floor(Date.now() / 1000);
+  const eventSourceUrl =
+    options.eventSourceUrl ||
+    (typeof window !== "undefined" ? window.location.href : undefined);
+  const userData = browserUserData(options, eventTime);
+  return {
+    body: JSON.stringify({
+      event_name: eventName,
+      event_id: eventId,
+      event_time: eventTime,
+      event_source_url: eventSourceUrl,
+      custom_data: params,
+      user_data: userData,
+    }),
+    userData,
+    eventSourceUrl,
+  };
 }
 
-async function postMetaCapiEvent(body: string): Promise<void> {
+async function postMetaCapiEvent(
+  eventName: string,
+  eventId: string,
+  draft: CapiRequestDraft,
+): Promise<void> {
   const headers = await metaCapiAuthHeaders();
-  await fetch("/api/meta/capi", {
+  logMetaDedupe("server:request", eventName, eventId, {
+    hasFbp: Boolean(draft.userData.fbp),
+    hasFbc: Boolean(draft.userData.fbc),
+    hasEmail: Boolean(draft.userData.email || draft.userData.em),
+    hasPhone: Boolean(draft.userData.phone || draft.userData.ph),
+    hasFbclidInUrl: Boolean(draft.eventSourceUrl?.includes("fbclid=")),
+  });
+  const res = await fetch("/api/meta/capi", {
     method: "POST",
     credentials: "same-origin",
     headers: {
       ...headers,
       "Content-Type": "application/json",
     },
-    body,
-    keepalive: body.length < 60_000,
+    body: draft.body,
+    keepalive: draft.body.length < 60_000,
+  });
+  logMetaDedupe("server:response", eventName, eventId, {
+    ok: res.ok,
+    status: res.status,
   });
 }
 
@@ -169,9 +240,11 @@ function sendMetaCapiEvent(
   options: MetaTrackOptions,
 ): void {
   if (options.sendToServer === false) return;
-  const body = capiRequestBody(eventName, eventId, params, options);
-  void postMetaCapiEvent(body).catch(() => {
-    // Never block UX for analytics issues.
+  const draft = capiRequestBody(eventName, eventId, params, options);
+  void postMetaCapiEvent(eventName, eventId, draft).catch((error) => {
+    logMetaDedupe("server:error", eventName, eventId, {
+      error: error instanceof Error ? error.message : String(error),
+    });
   });
 }
 
@@ -191,9 +264,11 @@ export function trackMetaPixel(
   try {
     if (Object.keys(payload).length > 0) {
       fbq("track", eventName, payload, { eventID: eventId });
+      logMetaDedupe("browser:fbq", eventName, eventId);
       return eventId;
     }
     fbq("track", eventName, {}, { eventID: eventId });
+    logMetaDedupe("browser:fbq", eventName, eventId);
   } catch {
     // Never block UX for analytics issues.
   }

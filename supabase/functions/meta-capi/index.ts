@@ -312,10 +312,8 @@ async function buildUserData(
   const fbp = readCookie(req, "_fbp") || asString(body.fbp);
   if (fbp) userData.fbp = fbp;
 
-  const fbc =
-    readCookie(req, "_fbc") ||
-    asString(body.fbc) ||
-    fbcFromUrl(eventSourceUrl, eventTime);
+  const urlFbc = fbcFromUrl(eventSourceUrl, eventTime);
+  const fbc = urlFbc || readCookie(req, "_fbc") || asString(body.fbc);
   if (fbc) userData.fbc = fbc;
 
   const ip = requestIp(req);
@@ -392,6 +390,16 @@ Deno.serve(async (req) => {
     ],
     test_event_code: TEST_EVENT_CODE,
   };
+
+  console.info("[meta-capi-edge] sending graph event", {
+    eventName,
+    eventId,
+    hasFbp: Boolean(userData.fbp),
+    hasFbc: Boolean(userData.fbc),
+    hasFbclidInUrl: Boolean(fbcFromUrl(eventSourceUrl, eventTime)),
+    hasEmail: Boolean(userData.em),
+    hasPhone: Boolean(userData.ph),
+  });
 
   const graphUrl = new URL(
     `https://graph.facebook.com/${GRAPH_VERSION}/${encodeURIComponent(pixelId)}/events`,

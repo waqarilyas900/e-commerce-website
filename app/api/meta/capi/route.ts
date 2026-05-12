@@ -162,10 +162,8 @@ function buildUserData(
   const fbp = readCookie(req, "_fbp") || cleanString(input.fbp);
   if (fbp) userData.fbp = fbp;
 
-  const fbc =
-    readCookie(req, "_fbc") ||
-    cleanString(input.fbc) ||
-    fbcFromEventSourceUrl(eventSourceUrl, eventTimeSeconds);
+  const fbcFromUrl = fbcFromEventSourceUrl(eventSourceUrl, eventTimeSeconds);
+  const fbc = fbcFromUrl || readCookie(req, "_fbc") || cleanString(input.fbc);
   if (fbc) userData.fbc = fbc;
 
   const ip = getRequestIp(req);
@@ -226,9 +224,24 @@ async function forwardToMetaEdge(
 ): Promise<Response | null> {
   const edgeUrl = metaCapiEdgeUrl();
   if (!edgeUrl) return null;
+  const bodyUserData = body.user_data ?? {};
+  const eventSourceUrl =
+    cleanString(body.event_source_url) || cleanString(req.headers.get("referer"));
+  const fbcFromUrl = fbcFromEventSourceUrl(eventSourceUrl, Math.floor(Date.now() / 1000));
 
   let response: Response;
   try {
+    console.info("[meta-capi] forwarding edge event", {
+      eventName,
+      eventId,
+      hasFbp: Boolean(readCookie(req, "_fbp") || cleanString(bodyUserData.fbp)),
+      hasFbc: Boolean(
+        fbcFromUrl || readCookie(req, "_fbc") || cleanString(bodyUserData.fbc),
+      ),
+      hasFbclidInUrl: Boolean(fbcFromUrl),
+      hasEmail: Boolean(bodyUserData.email || bodyUserData.em),
+      hasPhone: Boolean(bodyUserData.phone || bodyUserData.ph),
+    });
     response = await fetch(edgeUrl, {
       method: "POST",
       headers: edgeForwardHeaders(req, ip),
@@ -311,13 +324,15 @@ export async function POST(req: Request) {
   const eventSourceUrl =
     cleanString(body.event_source_url) || cleanString(req.headers.get("referer"));
 
+  const userData = buildUserData(body.user_data, req, eventSourceUrl, eventTime);
+
   const event = {
     event_name: eventName,
     event_time: eventTime,
     event_id: eventId,
     action_source: "website",
     ...(eventSourceUrl ? { event_source_url: eventSourceUrl } : {}),
-    user_data: buildUserData(body.user_data, req, eventSourceUrl, eventTime),
+    user_data: userData,
     custom_data: cleanCustomData(body.custom_data),
   };
 
@@ -333,6 +348,14 @@ export async function POST(req: Request) {
 
   let response: Response;
   try {
+    console.info("[meta-capi] sending graph event", {
+      eventName,
+      eventId,
+      hasFbp: Boolean(userData.fbp),
+      hasFbc: Boolean(userData.fbc),
+      hasEmail: Boolean(userData.em),
+      hasPhone: Boolean(userData.ph),
+    });
     response = await fetch(graphUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
