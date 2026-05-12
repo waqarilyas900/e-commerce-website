@@ -804,6 +804,12 @@ export default function CheckoutPage() {
           JSON.stringify({
             email: formValues.email?.trim(),
             phone: formValues.phone?.trim(),
+            firstName: formValues.first_name?.trim(),
+            lastName: formValues.last_name?.trim(),
+            city: formValues.shipping_city?.trim(),
+            state: formValues.shipping_province?.trim(),
+            zip: formValues.shipping_postal_code?.trim(),
+            country: SHIPPING_COUNTRY_CODE,
             signedIn,
           }),
         );

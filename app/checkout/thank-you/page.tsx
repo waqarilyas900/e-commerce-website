@@ -45,6 +45,12 @@ function CheckoutThankYouInner() {
   const [meta, setMeta] = useState<{
     email?: string;
     phone?: string;
+    firstName?: string;
+    lastName?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
     signedIn: boolean;
   } | null>(null);
 
@@ -78,6 +84,12 @@ function CheckoutThankYouInner() {
     type PendingMeta = {
       email?: string;
       phone?: string;
+      firstName?: string;
+      lastName?: string;
+      city?: string;
+      state?: string;
+      zip?: string;
+      country?: string;
       signedIn?: boolean;
     };
     let pending: PendingPurchase | null = null;
@@ -112,6 +124,12 @@ function CheckoutThankYouInner() {
       userData: {
         ...(pendingMeta?.email ? { email: pendingMeta.email } : {}),
         ...(pendingMeta?.phone ? { phone: pendingMeta.phone } : {}),
+        ...(pendingMeta?.firstName ? { first_name: pendingMeta.firstName } : {}),
+        ...(pendingMeta?.lastName ? { last_name: pendingMeta.lastName } : {}),
+        ...(pendingMeta?.city ? { city: pendingMeta.city } : {}),
+        ...(pendingMeta?.state ? { state: pendingMeta.state } : {}),
+        ...(pendingMeta?.zip ? { zip: pendingMeta.zip } : {}),
+        ...(pendingMeta?.country ? { country: pendingMeta.country } : {}),
       },
     });
   }, [paramsValid, order, totalCents]);
@@ -123,11 +141,21 @@ function CheckoutThankYouInner() {
     }
     let cancelled = false;
     (async () => {
-      let fromStorage: { email?: string; phone?: string; signedIn: boolean } = { signedIn: false };
+      let fromStorage: {
+        email?: string;
+        phone?: string;
+        firstName?: string;
+        lastName?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+        country?: string;
+        signedIn: boolean;
+      } = { signedIn: false };
       try {
         const raw = sessionStorage.getItem(CHECKOUT_THANK_YOU_META_KEY);
         if (raw) {
-          fromStorage = JSON.parse(raw) as { email?: string; phone?: string; signedIn: boolean };
+          fromStorage = JSON.parse(raw) as typeof fromStorage;
           sessionStorage.removeItem(CHECKOUT_THANK_YOU_META_KEY);
         }
       } catch {
@@ -145,6 +173,12 @@ function CheckoutThankYouInner() {
       setMeta({
         email,
         phone: fromStorage.phone?.trim() || undefined,
+        firstName: fromStorage.firstName?.trim() || undefined,
+        lastName: fromStorage.lastName?.trim() || undefined,
+        city: fromStorage.city?.trim() || undefined,
+        state: fromStorage.state?.trim() || undefined,
+        zip: fromStorage.zip?.trim() || undefined,
+        country: fromStorage.country?.trim() || undefined,
         signedIn,
       });
     })();

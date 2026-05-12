@@ -15,6 +15,12 @@ export type MetaTrackParams = Record<string, unknown>;
 export type MetaUserData = {
   email?: string;
   phone?: string;
+  first_name?: string;
+  last_name?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
   external_id?: string;
   externalId?: string;
 };
@@ -66,6 +72,18 @@ function browserUserData(options: MetaTrackOptions): Record<string, string> {
   if (email) userData.email = email;
   const phone = options.userData?.phone?.trim();
   if (phone) userData.phone = phone;
+  const firstName = options.userData?.first_name?.trim();
+  if (firstName) userData.first_name = firstName;
+  const lastName = options.userData?.last_name?.trim();
+  if (lastName) userData.last_name = lastName;
+  const city = options.userData?.city?.trim();
+  if (city) userData.city = city;
+  const state = options.userData?.state?.trim();
+  if (state) userData.state = state;
+  const zip = options.userData?.zip?.trim();
+  if (zip) userData.zip = zip;
+  const country = options.userData?.country?.trim();
+  if (country) userData.country = country;
   const externalId =
     options.userData?.external_id?.trim() || options.userData?.externalId?.trim();
   if (externalId) userData.external_id = externalId;
@@ -74,14 +92,6 @@ function browserUserData(options: MetaTrackOptions): Record<string, string> {
   const fbc = readCookie("_fbc");
   if (fbc) userData.fbc = fbc;
   return userData;
-}
-
-function metaCapiEdgeUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_META_CAPI_EDGE_URL?.trim();
-  if (explicit) return explicit;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  if (!supabaseUrl) return "";
-  return `${supabaseUrl.replace(/\/$/, "")}/functions/v1/meta-capi`;
 }
 
 async function metaCapiAuthHeaders(): Promise<Record<string, string>> {
@@ -148,11 +158,11 @@ function capiRequestBody(
   });
 }
 
-async function postMetaCapiEvent(url: string, body: string): Promise<boolean> {
+async function postMetaCapiEvent(body: string): Promise<void> {
   const headers = await metaCapiAuthHeaders();
-  const res = await fetch(url, {
+  await fetch("/api/meta/capi", {
     method: "POST",
-    credentials: "omit",
+    credentials: "same-origin",
     headers: {
       ...headers,
       "Content-Type": "application/json",
@@ -160,7 +170,6 @@ async function postMetaCapiEvent(url: string, body: string): Promise<boolean> {
     body,
     keepalive: body.length < 60_000,
   });
-  return res.ok;
 }
 
 function sendMetaCapiEvent(
@@ -171,19 +180,9 @@ function sendMetaCapiEvent(
 ): void {
   if (options.sendToServer === false) return;
   const body = capiRequestBody(eventName, eventId, params, options);
-  void (async () => {
-    const edgeUrl = metaCapiEdgeUrl();
-    if (edgeUrl && (await postMetaCapiEvent(edgeUrl, body).catch(() => false))) {
-      return;
-    }
-    await fetch("/api/meta/capi", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body,
-      keepalive: body.length < 60_000,
-    }).catch(() => undefined);
-  })();
+  void postMetaCapiEvent(body).catch(() => {
+    // Never block UX for analytics issues.
+  });
 }
 
 export function trackMetaPixel(

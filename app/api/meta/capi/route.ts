@@ -34,6 +34,14 @@ const HEX_SHA256_RE = /^[a-f0-9]{64}$/i;
 // TODO: Remove this Events Manager test code after CAPI testing succeeds so live events flow normally.
 const META_TEST_EVENT_CODE = "TEST18418";
 
+function metaCapiEdgeUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_META_CAPI_EDGE_URL?.trim();
+  if (explicit) return explicit;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!supabaseUrl) return "";
+  return `${supabaseUrl.replace(/\/$/, "")}/functions/v1/meta-capi`;
+}
+
 function metaGraphVersion(): string {
   const raw =
     process.env.META_GRAPH_API_VERSION?.trim() ||
@@ -175,6 +183,86 @@ function eventNameToStatusCode(eventName: string, eventId: string): number | nul
   return null;
 }
 
+function edgeForwardHeaders(req: Request, ip: string): Headers {
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json");
+
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  if (anonKey) {
+    headers.set("apikey", anonKey);
+    headers.set("Authorization", req.headers.get("authorization") || `Bearer ${anonKey}`);
+  } else {
+    const auth = req.headers.get("authorization");
+    if (auth) headers.set("Authorization", auth);
+  }
+
+  const cookie = req.headers.get("cookie");
+  if (cookie) headers.set("cookie", cookie);
+
+  const userAgent = req.headers.get("user-agent");
+  if (userAgent) headers.set("user-agent", userAgent);
+
+  const forwardedFor = req.headers.get("x-forwarded-for") || ip;
+  if (forwardedFor && forwardedFor !== "unknown") {
+    headers.set("x-forwarded-for", forwardedFor);
+    headers.set("x-real-ip", ip);
+  }
+
+  const referer = req.headers.get("referer");
+  if (referer) headers.set("referer", referer);
+
+  const origin = req.headers.get("origin");
+  if (origin) headers.set("origin", origin);
+
+  return headers;
+}
+
+async function forwardToMetaEdge(
+  req: Request,
+  body: CapiRequestBody,
+  ip: string,
+  eventName: string,
+  eventId: string,
+): Promise<Response | null> {
+  const edgeUrl = metaCapiEdgeUrl();
+  if (!edgeUrl) return null;
+
+  let response: Response;
+  try {
+    response = await fetch(edgeUrl, {
+      method: "POST",
+      headers: edgeForwardHeaders(req, ip),
+      body: JSON.stringify({ ...body, event_id: eventId }),
+      cache: "no-store",
+    });
+  } catch (error) {
+    console.error("[meta-capi] edge forward failed", {
+      eventName,
+      eventId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+
+  const result = (await response.json().catch(() => null)) as unknown;
+  if (!response.ok) {
+    console.error("[meta-capi] edge rejected event", {
+      eventName,
+      eventId,
+      status: response.status,
+      edge: result,
+    });
+    return null;
+  }
+
+  console.info("[meta-capi] edge accepted event", {
+    eventName,
+    eventId,
+    status: response.status,
+  });
+  return NextResponse.json({ ok: true, edge: result });
+}
+
 export async function POST(req: Request) {
   const ip = getRequestIp(req);
   const limited = rateLimit(`meta-capi:${ip}`, 120, 60 * 1000);
@@ -210,6 +298,9 @@ export async function POST(req: Request) {
       { status: validationStatus },
     );
   }
+
+  const edgeResponse = await forwardToMetaEdge(req, body, ip, eventName, eventId);
+  if (edgeResponse) return edgeResponse;
 
   const rawEventTime = Number(body.event_time);
   const eventTime =
