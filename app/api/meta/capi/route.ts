@@ -29,6 +29,8 @@ type CapiRequestBody = {
 
 const DEFAULT_GRAPH_VERSION = "v21.0";
 const HEX_SHA256_RE = /^[a-f0-9]{64}$/i;
+// TODO: Remove this Events Manager test code after CAPI testing succeeds so live events flow normally.
+const META_TEST_EVENT_CODE = "TEST18418";
 
 function metaGraphVersion(): string {
   const raw = process.env.FB_GRAPH_API_VERSION?.trim() || DEFAULT_GRAPH_VERSION;
@@ -131,6 +133,7 @@ export async function POST(req: Request) {
   const pixelId = process.env.FB_PIXEL_ID?.trim();
   const accessToken = process.env.FB_ACCESS_TOKEN?.trim();
   if (!pixelId || !accessToken) {
+    console.error("[meta-capi] missing FB_PIXEL_ID or FB_ACCESS_TOKEN");
     return NextResponse.json(
       { ok: false, error: "Meta CAPI is not configured." },
       { status: 503 },
@@ -164,11 +167,12 @@ export async function POST(req: Request) {
     ...(eventSourceUrl ? { event_source_url: eventSourceUrl } : {}),
     user_data: buildUserData(body.user_data, req),
     custom_data: cleanCustomData(body.custom_data),
-    // TODO: Remove this Events Manager test code after CAPI testing succeeds so live events flow normally.
-    test_event_code: "TEST18418",
   };
 
-  const payload: Record<string, unknown> = { data: [event] };
+  const payload: Record<string, unknown> = {
+    data: [event],
+    test_event_code: META_TEST_EVENT_CODE,
+  };
 
   const graphUrl = new URL(
     `https://graph.facebook.com/${metaGraphVersion()}/${encodeURIComponent(pixelId)}/events`,
@@ -183,7 +187,12 @@ export async function POST(req: Request) {
       body: JSON.stringify(payload),
       cache: "no-store",
     });
-  } catch {
+  } catch (error) {
+    console.error("[meta-capi] graph fetch failed", {
+      eventName,
+      eventId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { ok: false, error: "Could not reach Meta Graph API." },
       { status: 502 },
@@ -192,11 +201,23 @@ export async function POST(req: Request) {
 
   const result = (await response.json().catch(() => null)) as unknown;
   if (!response.ok) {
+    console.error("[meta-capi] graph rejected event", {
+      eventName,
+      eventId,
+      status: response.status,
+      meta: result,
+    });
     return NextResponse.json(
       { ok: false, error: "Meta Graph API rejected the event.", meta: result },
       { status: 502 },
     );
   }
+
+  console.info("[meta-capi] graph accepted event", {
+    eventName,
+    eventId,
+    status: response.status,
+  });
 
   return NextResponse.json({ ok: true, meta: result });
 }
