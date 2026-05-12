@@ -44,6 +44,7 @@ function CheckoutThankYouInner() {
 
   const [meta, setMeta] = useState<{
     email?: string;
+    phone?: string;
     signedIn: boolean;
   } | null>(null);
 
@@ -74,12 +75,22 @@ function CheckoutThankYouInner() {
       contentIds?: string[];
       numItems?: number;
     };
+    type PendingMeta = {
+      email?: string;
+      phone?: string;
+      signedIn?: boolean;
+    };
     let pending: PendingPurchase | null = null;
+    let pendingMeta: PendingMeta | null = null;
     try {
       const raw = sessionStorage.getItem(CHECKOUT_PENDING_PURCHASE_EVENT_KEY);
       if (raw) {
         pending = JSON.parse(raw) as PendingPurchase;
         sessionStorage.removeItem(CHECKOUT_PENDING_PURCHASE_EVENT_KEY);
+      }
+      const rawMeta = sessionStorage.getItem(CHECKOUT_THANK_YOU_META_KEY);
+      if (rawMeta) {
+        pendingMeta = JSON.parse(rawMeta) as PendingMeta;
       }
     } catch {
       // Ignore storage failures and fall back to query params.
@@ -97,6 +108,11 @@ function CheckoutThankYouInner() {
       value: toPkrValue(totalCents / 100),
       ...(order ? { order_id: order } : {}),
       ...(numItems != null ? { num_items: numItems } : {}),
+    }, {
+      userData: {
+        ...(pendingMeta?.email ? { email: pendingMeta.email } : {}),
+        ...(pendingMeta?.phone ? { phone: pendingMeta.phone } : {}),
+      },
     });
   }, [paramsValid, order, totalCents]);
 
@@ -107,11 +123,11 @@ function CheckoutThankYouInner() {
     }
     let cancelled = false;
     (async () => {
-      let fromStorage: { email?: string; signedIn: boolean } = { signedIn: false };
+      let fromStorage: { email?: string; phone?: string; signedIn: boolean } = { signedIn: false };
       try {
         const raw = sessionStorage.getItem(CHECKOUT_THANK_YOU_META_KEY);
         if (raw) {
-          fromStorage = JSON.parse(raw) as { email?: string; signedIn: boolean };
+          fromStorage = JSON.parse(raw) as { email?: string; phone?: string; signedIn: boolean };
           sessionStorage.removeItem(CHECKOUT_THANK_YOU_META_KEY);
         }
       } catch {
@@ -128,6 +144,7 @@ function CheckoutThankYouInner() {
         fromStorage.email?.trim() || user?.email?.trim() || undefined;
       setMeta({
         email,
+        phone: fromStorage.phone?.trim() || undefined,
         signedIn,
       });
     })();

@@ -803,6 +803,7 @@ export default function CheckoutPage() {
           CHECKOUT_THANK_YOU_META_KEY,
           JSON.stringify({
             email: formValues.email?.trim(),
+            phone: formValues.phone?.trim(),
             signedIn,
           }),
         );
