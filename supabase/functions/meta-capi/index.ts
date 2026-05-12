@@ -357,7 +357,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, error: "event_name is required." }, 400, corsOrigin);
   }
 
-  const eventId = asString(body.event_id) || `server-${crypto.randomUUID()}`;
+  const eventId = asString(body.event_id);
+  if (!eventId) {
+    return jsonResponse({ ok: false, error: "event_id is required for deduplication." }, 400, corsOrigin);
+  }
   const rawTime = Number(body.event_time);
   const eventTime =
     Number.isFinite(rawTime) && rawTime > 0

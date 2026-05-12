@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -290,7 +290,7 @@ export async function POST(req: Request) {
   }
 
   const eventName = cleanString(body.event_name);
-  const eventId = cleanString(body.event_id) || `server-${randomUUID()}`;
+  const eventId = cleanString(body.event_id);
   const validationStatus = eventNameToStatusCode(eventName, eventId);
   if (validationStatus) {
     return NextResponse.json(

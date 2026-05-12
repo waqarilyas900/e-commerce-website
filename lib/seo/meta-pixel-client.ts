@@ -112,19 +112,6 @@ async function metaCapiAuthHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
-function hasGtmLoader(): boolean {
-  if (typeof window === "undefined") return false;
-  if (window.google_tag_manager) return true;
-  return Boolean(
-    window.dataLayer?.some(
-      (item) =>
-        item &&
-        typeof item === "object" &&
-        Object.prototype.hasOwnProperty.call(item, "gtm.start"),
-    ),
-  );
-}
-
 function pushMetaDataLayerEvent(
   eventName: string,
   eventId: string,
@@ -137,6 +124,9 @@ function pushMetaDataLayerEvent(
     meta_event_name: eventName,
     event_id: eventId,
     eventID: eventId,
+    eventId,
+    meta_event_id: eventId,
+    fb_event_id: eventId,
     ...params,
   });
 }
@@ -199,7 +189,6 @@ export function trackMetaPixel(
   const fbq = window.fbq;
   if (typeof fbq !== "function") return eventId;
   try {
-    if (hasGtmLoader()) return eventId;
     if (Object.keys(payload).length > 0) {
       fbq("track", eventName, payload, { eventID: eventId });
       return eventId;
