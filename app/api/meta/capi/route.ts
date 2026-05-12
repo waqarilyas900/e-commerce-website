@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -13,6 +13,8 @@ type MetaUserDataInput = {
   phone?: unknown;
   em?: unknown;
   ph?: unknown;
+  external_id?: unknown;
+  externalId?: unknown;
   fbp?: unknown;
   fbc?: unknown;
 };
@@ -33,7 +35,10 @@ const HEX_SHA256_RE = /^[a-f0-9]{64}$/i;
 const META_TEST_EVENT_CODE = "TEST18418";
 
 function metaGraphVersion(): string {
-  const raw = process.env.FB_GRAPH_API_VERSION?.trim() || DEFAULT_GRAPH_VERSION;
+  const raw =
+    process.env.META_GRAPH_API_VERSION?.trim() ||
+    process.env.FB_GRAPH_API_VERSION?.trim() ||
+    DEFAULT_GRAPH_VERSION;
   return raw.startsWith("v") ? raw : `v${raw}`;
 }
 
@@ -47,6 +52,10 @@ function normalizeEmail(value: string): string {
 
 function normalizePhone(value: string): string {
   return value.replace(/\D+/g, "");
+}
+
+function normalizeExternalId(value: string): string {
+  return value.trim();
 }
 
 function asStrings(value: unknown): string[] {
@@ -136,6 +145,12 @@ function buildUserData(
   const phones = hashUserValues(input.phone ?? input.ph, normalizePhone);
   if (phones.length > 0) userData.ph = phones;
 
+  const externalIds = hashUserValues(
+    input.external_id ?? input.externalId,
+    normalizeExternalId,
+  );
+  if (externalIds.length > 0) userData.external_id = externalIds[0];
+
   const fbp = readCookie(req, "_fbp") || cleanString(input.fbp);
   if (fbp) userData.fbp = fbp;
 
@@ -172,10 +187,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const pixelId = process.env.FB_PIXEL_ID?.trim();
-  const accessToken = process.env.FB_ACCESS_TOKEN?.trim();
+  const pixelId =
+    process.env.META_PIXEL_ID?.trim() || process.env.FB_PIXEL_ID?.trim();
+  const accessToken =
+    process.env.META_ACCESS_TOKEN?.trim() || process.env.FB_ACCESS_TOKEN?.trim();
   if (!pixelId || !accessToken) {
-    console.error("[meta-capi] missing FB_PIXEL_ID or FB_ACCESS_TOKEN");
+    console.error(
+      "[meta-capi] missing META_PIXEL_ID or META_ACCESS_TOKEN",
+    );
     return NextResponse.json(
       { ok: false, error: "Meta CAPI is not configured." },
       { status: 503 },
@@ -183,7 +202,7 @@ export async function POST(req: Request) {
   }
 
   const eventName = cleanString(body.event_name);
-  const eventId = cleanString(body.event_id);
+  const eventId = cleanString(body.event_id) || `server-${randomUUID()}`;
   const validationStatus = eventNameToStatusCode(eventName, eventId);
   if (validationStatus) {
     return NextResponse.json(

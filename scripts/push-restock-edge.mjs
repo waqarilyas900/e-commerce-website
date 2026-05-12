@@ -179,6 +179,12 @@ async function main() {
     trimEnv("EDGE_DEV_SITE_ORIGIN") || "http://localhost:3000";
   const resendDefaultFrom =
     trimEnv("RESEND_DEFAULT_FROM") || "Store <onboarding@resend.dev>";
+  const metaPixelId =
+    trimEnv("META_PIXEL_ID") || trimEnv("FB_PIXEL_ID") || "2830556603968775";
+  const metaAccessToken =
+    trimEnv("META_ACCESS_TOKEN") || trimEnv("FB_ACCESS_TOKEN");
+  const metaGraphVersion =
+    trimEnv("META_GRAPH_API_VERSION") || trimEnv("FB_GRAPH_API_VERSION");
 
   console.log("Applying database migrations (includes pg_cron schedule)…");
   runSupabase(["db", "push", "--yes"]);
@@ -195,6 +201,9 @@ async function main() {
     envLine("NEXT_PUBLIC_SITE_URL", nextPublicSite),
     envLine("EDGE_PUBLIC_SITE_URL", edgePublicSite),
     envLine("EDGE_DEV_SITE_ORIGIN", edgeDevOrigin),
+    envLine("META_PIXEL_ID", metaPixelId),
+    envLine("META_ACCESS_TOKEN", metaAccessToken),
+    envLine("META_GRAPH_API_VERSION", metaGraphVersion),
     "",
   ].join("\n");
   writeFileSync(secretFile, lines, "utf8");

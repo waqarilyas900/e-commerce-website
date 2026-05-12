@@ -1,6 +1,7 @@
 "use client";
 
 import { STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
+import { createClient } from "@/lib/supabase/client";
 
 declare global {
   interface Window {
@@ -14,6 +15,8 @@ export type MetaTrackParams = Record<string, unknown>;
 export type MetaUserData = {
   email?: string;
   phone?: string;
+  external_id?: string;
+  externalId?: string;
 };
 
 type MetaTrackOptions = {
@@ -63,11 +66,40 @@ function browserUserData(options: MetaTrackOptions): Record<string, string> {
   if (email) userData.email = email;
   const phone = options.userData?.phone?.trim();
   if (phone) userData.phone = phone;
+  const externalId =
+    options.userData?.external_id?.trim() || options.userData?.externalId?.trim();
+  if (externalId) userData.external_id = externalId;
   const fbp = readCookie("_fbp");
   if (fbp) userData.fbp = fbp;
   const fbc = readCookie("_fbc");
   if (fbc) userData.fbc = fbc;
   return userData;
+}
+
+function metaCapiEdgeUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_META_CAPI_EDGE_URL?.trim();
+  if (explicit) return explicit;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!supabaseUrl) return "";
+  return `${supabaseUrl.replace(/\/$/, "")}/functions/v1/meta-capi`;
+}
+
+async function metaCapiAuthHeaders(): Promise<Record<string, string>> {
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";
+  const headers: Record<string, string> = {};
+  if (anonKey) {
+    headers.apikey = anonKey;
+    headers.Authorization = `Bearer ${anonKey}`;
+  }
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token?.trim();
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  } catch {
+    // Anonymous events still use the public anon key when configured.
+  }
+  return headers;
 }
 
 function hasGtmLoader(): boolean {
@@ -99,14 +131,13 @@ function pushMetaDataLayerEvent(
   });
 }
 
-function sendMetaCapiEvent(
+function capiRequestBody(
   eventName: string,
   eventId: string,
   params: MetaTrackParams,
   options: MetaTrackOptions,
-): void {
-  if (options.sendToServer === false) return;
-  const body = JSON.stringify({
+): string {
+  return JSON.stringify({
     event_name: eventName,
     event_id: eventId,
     event_source_url:
@@ -115,15 +146,44 @@ function sendMetaCapiEvent(
     custom_data: params,
     user_data: browserUserData(options),
   });
-  void fetch("/api/meta/capi", {
+}
+
+async function postMetaCapiEvent(url: string, body: string): Promise<boolean> {
+  const headers = await metaCapiAuthHeaders();
+  const res = await fetch(url, {
     method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
+    credentials: "omit",
+    headers: {
+      ...headers,
+      "Content-Type": "application/json",
+    },
     body,
     keepalive: body.length < 60_000,
-  }).catch(() => {
-    // Never block UX for analytics issues.
   });
+  return res.ok;
+}
+
+function sendMetaCapiEvent(
+  eventName: string,
+  eventId: string,
+  params: MetaTrackParams,
+  options: MetaTrackOptions,
+): void {
+  if (options.sendToServer === false) return;
+  const body = capiRequestBody(eventName, eventId, params, options);
+  void (async () => {
+    const edgeUrl = metaCapiEdgeUrl();
+    if (edgeUrl && (await postMetaCapiEvent(edgeUrl, body).catch(() => false))) {
+      return;
+    }
+    await fetch("/api/meta/capi", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body,
+      keepalive: body.length < 60_000,
+    }).catch(() => undefined);
+  })();
 }
 
 export function trackMetaPixel(
