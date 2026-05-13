@@ -19,7 +19,7 @@ Scope: outflint storefront (www.outflint.pk)
 - [ ] Verify AdSense assets:
   - `google-adsense-account` meta tag present.
   - `adsbygoogle.js` loaded.
-  - `/ads.txt` returns expected publisher line.
+  - `/ads.txt` returns `200`, `Content-Type: text/plain`, and the Google `DIRECT` line (see `app/ads.txt/route.ts` + `lib/seo/google-adsense.ts`; excluded from `proxy.ts` matcher so crawlers always get the file body).
 - [ ] In GSC: submit sitemap and request re-indexing for priority pages.
 
 ## 2) Priority URLs to Validate
