@@ -219,13 +219,6 @@ export function CheckoutTemplateFields({
                     autoComplete={field.autoComplete}
                     placeholder={resolvedPlaceholder}
                   />
-                  {field.id === "email" ? (
-                    <Checkbox
-                      className="mt-3 text-xs text-neutral-700"
-                      label="Email me with news and offers"
-                      defaultChecked={false}
-                    />
-                  ) : null}
                   {saveAddressErrors[field.id] ? (
                     <p className="mt-2 text-xs text-red-600" role="alert">
                       {saveAddressErrors[field.id]}
