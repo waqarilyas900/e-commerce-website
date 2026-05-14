@@ -32,7 +32,7 @@ import type {
 import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
-import { toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
+import { metaContentsSingleItem, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import { getPublicSiteUrl } from "@/lib/site-url";
 
 function sellableQty(v: DbProductVariantRow): number {
@@ -371,6 +371,11 @@ export function ProductPdp({
     viewedVariantKeysRef.current.add(dedupeKey);
     trackMetaPixel("ViewContent", {
       content_ids: [variantForTracking.id],
+      contents: metaContentsSingleItem({
+        id: variantForTracking.id,
+        quantity: 1,
+        item_price: variantForTracking.price,
+      }),
       content_type: "product",
       content_name: product.name,
       currency: STORE_CURRENCY_CODE,

@@ -1,17 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { SearchResultsSkeleton } from "@/components/search/search-results-skeleton";
 import type { Product } from "@/app/lib/catalog/types";
+import { trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 
 type Props = {
   initialQuery: string;
   initialProducts: Product[];
 };
+
+function searchContentIdsFromProducts(list: Product[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const p of list.slice(0, 10)) {
+    const id = p.defaultVariantId?.trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
 
 export function SearchPageInteractive({ initialQuery, initialProducts }: Props) {
   const router = useRouter();
@@ -20,6 +33,25 @@ export function SearchPageInteractive({ initialQuery, initialProducts }: Props) 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const searchTrackedQueries = useRef<Set<string>>(new Set());
+
+  function fireSearchEvent(query: string, resultProducts: Product[]) {
+    const q = query.trim();
+    if (!q || searchTrackedQueries.current.has(q)) return;
+    searchTrackedQueries.current.add(q);
+    const contentIds = searchContentIdsFromProducts(resultProducts);
+    trackMetaPixel("Search", {
+      search_string: q,
+      content_type: "product",
+      ...(contentIds.length > 0 ? { content_ids: contentIds } : {}),
+    });
+  }
+
+  useEffect(() => {
+    const q = initialQuery.trim();
+    if (!q) return;
+    fireSearchEvent(q, initialProducts);
+  }, [initialQuery, initialProducts]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,9 +76,11 @@ export function SearchPageInteractive({ initialQuery, initialProducts }: Props) 
       if (!res.ok) {
         throw new Error(data.error ?? "Search failed.");
       }
-      setProducts(data.products ?? []);
+      const nextProducts = data.products ?? [];
+      setProducts(nextProducts);
       setActiveQuery(trimmed);
       setLoading(false);
+      fireSearchEvent(trimmed, nextProducts);
       router.replace(`/search?q=${encodeURIComponent(trimmed)}`, { scroll: false });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed.");

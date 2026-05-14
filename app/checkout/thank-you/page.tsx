@@ -11,7 +11,12 @@ import {
 } from "@/app/lib/checkout-thank-you";
 import { useCart } from "@/app/providers/cart-provider";
 import { createClient } from "@/lib/supabase/client";
-import { defaultMetaCurrency, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
+import {
+  defaultMetaCurrency,
+  type MetaContentLine,
+  toPkrValue,
+  trackMetaPixel,
+} from "@/lib/seo/meta-pixel-client";
 
 function ThankYouFallback() {
   return (
@@ -79,6 +84,7 @@ function CheckoutThankYouInner() {
       totalCents?: number;
       currency?: string;
       contentIds?: string[];
+      contents?: MetaContentLine[];
       numItems?: number;
     };
     type PendingMeta = {
@@ -109,12 +115,26 @@ function CheckoutThankYouInner() {
     }
     const contentIds =
       pending?.contentIds?.filter((id) => typeof id === "string" && id.trim() !== "") ?? [];
+    const contentsFromPending =
+      Array.isArray(pending?.contents) && pending.contents.length > 0
+        ? pending.contents.filter(
+            (c): c is MetaContentLine =>
+              c != null &&
+              typeof c === "object" &&
+              typeof (c as MetaContentLine).id === "string" &&
+              (c as MetaContentLine).id.trim() !== "" &&
+              typeof (c as MetaContentLine).quantity === "number" &&
+              Number.isFinite((c as MetaContentLine).quantity) &&
+              (c as MetaContentLine).quantity > 0,
+          )
+        : undefined;
     const numItems =
       typeof pending?.numItems === "number" && Number.isFinite(pending.numItems) && pending.numItems > 0
         ? Math.round(pending.numItems)
         : undefined;
     trackMetaPixel("Purchase", {
       content_ids: contentIds,
+      ...(contentsFromPending && contentsFromPending.length > 0 ? { contents: contentsFromPending } : {}),
       content_type: "product",
       currency: pending?.currency?.trim() || defaultMetaCurrency(),
       value: toPkrValue(totalCents / 100),

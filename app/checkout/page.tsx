@@ -32,7 +32,7 @@ import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-setti
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { voucherErrorMessage } from "@/app/lib/voucher-user-messages";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
-import { toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
+import { metaContentsFromCartLines, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import type { SavedAddress } from "@/app/lib/saved-addresses";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
@@ -305,6 +305,7 @@ export default function CheckoutPage() {
     sentInitiateCheckoutRef.current.add(dedupeKey);
     trackMetaPixel("InitiateCheckout", {
       content_ids: resolvedLines.map(({ line }) => line.variantId),
+      contents: metaContentsFromCartLines(resolvedLines),
       content_type: "product",
       num_items: resolvedLines.reduce((sum, { line }) => sum + line.quantity, 0),
       currency: STORE_CURRENCY_CODE,
@@ -829,6 +830,7 @@ export default function CheckoutPage() {
             totalCents: data.total_cents,
             currency: STORE_CURRENCY_CODE,
             contentIds: resolvedLines.map(({ line }) => line.variantId),
+            contents: metaContentsFromCartLines(resolvedLines),
             numItems: resolvedLines.reduce((sum, { line }) => sum + line.quantity, 0),
           }),
         );

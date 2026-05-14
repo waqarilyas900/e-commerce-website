@@ -121,13 +121,19 @@ function browserUserData(
   return userData;
 }
 
-async function metaCapiAuthHeaders(): Promise<Record<string, string>> {
+/** Immediate anon headers — avoids delaying CAPI while `getSession()` resolves (reduces “pixel without CAPI” gaps). */
+function metaCapiAuthHeadersSync(): Record<string, string> {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";
   const headers: Record<string, string> = {};
   if (anonKey) {
     headers.apikey = anonKey;
     headers.Authorization = `Bearer ${anonKey}`;
   }
+  return headers;
+}
+
+async function metaCapiAuthHeadersWithSession(): Promise<Record<string, string>> {
+  const headers = metaCapiAuthHeadersSync();
   try {
     const supabase = createClient();
     const { data } = await supabase.auth.getSession();
@@ -137,6 +143,25 @@ async function metaCapiAuthHeaders(): Promise<Record<string, string>> {
     // Anonymous events still use the public anon key when configured.
   }
   return headers;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * Prefer full session headers, but do not block CAPI longer than `budgetMs` —
+ * improves Meta “Pixel events covered by Conversions API” when auth is slow.
+ */
+async function resolveMetaCapiAuthHeaders(budgetMs = 85): Promise<Record<string, string>> {
+  const sync = metaCapiAuthHeadersSync();
+  if (!sync.Authorization) return sync;
+  return Promise.race([
+    metaCapiAuthHeadersWithSession(),
+    delay(budgetMs).then(() => sync),
+  ]);
 }
 
 function logMetaDedupe(
@@ -204,20 +229,13 @@ function capiRequestBody(
   };
 }
 
-async function postMetaCapiEvent(
+async function postMetaCapiEventOnce(
   eventName: string,
   eventId: string,
   draft: CapiRequestDraft,
-): Promise<void> {
-  const headers = await metaCapiAuthHeaders();
-  logMetaDedupe("server:request", eventName, eventId, {
-    hasFbp: Boolean(draft.userData.fbp),
-    hasFbc: Boolean(draft.userData.fbc),
-    hasEmail: Boolean(draft.userData.email || draft.userData.em),
-    hasPhone: Boolean(draft.userData.phone || draft.userData.ph),
-    hasFbclidInUrl: Boolean(draft.eventSourceUrl?.includes("fbclid=")),
-  });
-  const res = await fetch("/api/meta/capi", {
+  headers: Record<string, string>,
+): Promise<Response> {
+  return fetch("/api/meta/capi", {
     method: "POST",
     credentials: "same-origin",
     headers: {
@@ -227,6 +245,34 @@ async function postMetaCapiEvent(
     body: draft.body,
     keepalive: draft.body.length < 60_000,
   });
+}
+
+async function postMetaCapiEvent(
+  eventName: string,
+  eventId: string,
+  draft: CapiRequestDraft,
+): Promise<void> {
+  const headers = await resolveMetaCapiAuthHeaders();
+  logMetaDedupe("server:request", eventName, eventId, {
+    hasFbp: Boolean(draft.userData.fbp),
+    hasFbc: Boolean(draft.userData.fbc),
+    hasEmail: Boolean(draft.userData.email || draft.userData.em),
+    hasPhone: Boolean(draft.userData.phone || draft.userData.ph),
+    hasFbclidInUrl: Boolean(draft.eventSourceUrl?.includes("fbclid=")),
+  });
+  let res: Response;
+  try {
+    res = await postMetaCapiEventOnce(eventName, eventId, draft, headers);
+  } catch {
+    await delay(450);
+    const retryHeaders = await metaCapiAuthHeadersWithSession();
+    res = await postMetaCapiEventOnce(eventName, eventId, draft, retryHeaders);
+  }
+  if (!res.ok && (res.status >= 500 || res.status === 429)) {
+    await delay(450);
+    const retryHeaders = await metaCapiAuthHeadersWithSession();
+    res = await postMetaCapiEventOnce(eventName, eventId, draft, retryHeaders);
+  }
   logMetaDedupe("server:response", eventName, eventId, {
     ok: res.ok,
     status: res.status,
@@ -279,6 +325,36 @@ export function toPkrValue(value: unknown): number {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.round(n * 100) / 100);
+}
+
+/** Meta ecommerce `contents[]` line (variant id + quantity + unit price). */
+export type MetaContentLine = {
+  id: string;
+  quantity: number;
+  item_price?: number;
+};
+
+export function metaContentsSingleItem(args: {
+  id: string;
+  quantity?: number;
+  item_price?: number;
+}): MetaContentLine[] {
+  const qty = Math.max(1, Math.floor(Number(args.quantity) || 1));
+  const line: MetaContentLine = { id: args.id.trim(), quantity: qty };
+  if (args.item_price != null && Number.isFinite(Number(args.item_price))) {
+    line.item_price = toPkrValue(args.item_price);
+  }
+  return [line];
+}
+
+export function metaContentsFromCartLines(
+  lines: Array<{ line: { variantId: string; quantity: number }; unitPrice: number }>,
+): MetaContentLine[] {
+  return lines.map(({ line, unitPrice }) => ({
+    id: line.variantId.trim(),
+    quantity: Math.max(1, Math.floor(line.quantity)),
+    item_price: toPkrValue(unitPrice),
+  }));
 }
 
 export function defaultMetaCurrency(): string {
