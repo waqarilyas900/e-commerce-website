@@ -164,3 +164,70 @@ export function absoluteUrl(pathOrUrl: string): string {
   const origin = getPublicSiteUrl();
   return t.startsWith("/") ? `${origin}${t}` : `${origin}/${t}`;
 }
+
+function isLocalSeoHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  return (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "0.0.0.0" ||
+    h === "[::1]" ||
+    h === "::1" ||
+    h.endsWith(".localhost") ||
+    h.endsWith(".local")
+  );
+}
+
+/**
+ * Normalizes `seo_meta.canonical_url` overrides so `<link rel="canonical">` and
+ * `og:url` always use the storefront public origin (`NEXT_PUBLIC_SITE_URL`).
+ *
+ * Prevents Search Console "Duplicate without user-selected canonical" when the DB
+ * stores `http://`, apex host, protocol-relative, or root-relative URLs while
+ * the live site canonical is `https://www.…`.
+ */
+export function resolveSeoCanonicalOverride(
+  overrideRaw: string | null | undefined,
+  computedAbsolute: string,
+): string {
+  const computed = (computedAbsolute ?? "").trim();
+  const raw = (overrideRaw ?? "").trim();
+  if (!raw) return computed;
+
+  let base: URL;
+  try {
+    const site = getPublicSiteUrl().replace(/\/$/, "");
+    base = new URL(`${site}/`);
+  } catch {
+    return computed;
+  }
+
+  let parsed: URL;
+  try {
+    if (/^https?:\/\//i.test(raw)) {
+      parsed = new URL(raw);
+    } else if (raw.startsWith("//")) {
+      parsed = new URL(`https:${raw}`);
+    } else {
+      const p = raw.startsWith("/") ? raw : `/${raw}`;
+      parsed = new URL(p, base);
+    }
+  } catch {
+    return computed;
+  }
+
+  const rebased = new URL(`${parsed.pathname}${parsed.search}`, base);
+  if (
+    process.env.NODE_ENV === "production" &&
+    rebased.protocol === "http:" &&
+    !isLocalSeoHost(rebased.hostname)
+  ) {
+    rebased.protocol = "https:";
+  }
+
+  let href = rebased.href;
+  if (rebased.pathname !== "/" && href.endsWith("/")) {
+    href = href.replace(/\/+$/, "");
+  }
+  return href;
+}

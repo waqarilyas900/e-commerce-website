@@ -17,6 +17,7 @@ import {
   loadProductSeoExtras,
   loadSeoOverrideForSubject,
   loadSiteIdentity,
+  resolveSeoCanonicalOverride,
   stripHtml,
   type ProductOpenGraphExtras,
 } from "@/lib/seo";
@@ -174,7 +175,10 @@ export default async function ProductPage({ params }: Props) {
     detail.collectionSlug.trim() !== "" &&
     detail.collectionSlug.toLowerCase() !== "uncategorized";
 
-  const canonical = canonicalUrlFor(`/products/${slug}`);
+  const canonical = resolveSeoCanonicalOverride(
+    seoOverride?.canonicalUrl,
+    canonicalUrlFor(`/products/${slug}`),
+  );
   const productLd = productJsonLd({
     product: detail.product,
     variants: detail.variants,
@@ -200,7 +204,7 @@ export default async function ProductPage({ params }: Props) {
           },
         ]
       : []),
-    { name: detail.product.name, url: `/products/${slug}` },
+    { name: detail.product.name, url: canonical },
   ]);
 
   return (
