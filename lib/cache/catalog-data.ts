@@ -33,6 +33,8 @@ import {
 // ---------- Tags ----------
 
 export const CATALOG_CACHE_TAGS = {
+  /** Bust when storefront review aggregates / trust strip should refresh (not every product grid). */
+  storeReviewAggregate: "catalog:store-review-aggregate",
   /** Bust this when ANY product is added / updated / deleted (cards/grids). */
   products: "catalog:products",
   /** Bust this when collection rows change (slugs, names, hero, type). */
@@ -49,6 +51,7 @@ export const CATALOG_CACHE_TAGS = {
 
 /** Universal busts for "rebuild the whole catalog cache" (`all: true` in revalidate). */
 export const ALL_CATALOG_BROAD_TAGS: readonly string[] = [
+  CATALOG_CACHE_TAGS.storeReviewAggregate,
   CATALOG_CACHE_TAGS.products,
   CATALOG_CACHE_TAGS.collections,
   CATALOG_CACHE_TAGS.homeSections,
