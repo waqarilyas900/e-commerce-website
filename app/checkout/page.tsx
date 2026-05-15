@@ -46,31 +46,6 @@ function readNames(meta: Record<string, unknown>) {
   return { first, last };
 }
 
-function mapStateToProvince(state: string | undefined): string {
-  if (!state) return "";
-  const s = state.toLowerCase();
-  if (s.includes("punjab")) return "Punjab";
-  if (s.includes("sindh")) return "Sindh";
-  if (s.includes("khyber") || s.includes("kpk")) return "Khyber Pakhtunkhwa";
-  if (s.includes("baloch")) return "Balochistan";
-  if (s.includes("islamabad")) return "Islamabad Capital Territory";
-  if (s.includes("gilgit")) return "Gilgit-Baltistan";
-  if (s.includes("kashmir") || s.includes("ajk")) return "Azad Jammu and Kashmir";
-  return "";
-}
-
-type NominatimAddress = {
-  house_number?: string;
-  road?: string;
-  suburb?: string;
-  neighbourhood?: string;
-  city?: string;
-  town?: string;
-  village?: string;
-  postcode?: string;
-  state?: string;
-};
-
 function normalizeText(value: string | undefined): string {
   return (value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 }
@@ -193,8 +168,6 @@ export default function CheckoutPage() {
 
   const [userLoaded, setUserLoaded] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
-  const [locLoading, setLocLoading] = useState(false);
-  const [locError, setLocError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
   const [savedAddressDeleteId, setSavedAddressDeleteId] = useState<string | null>(null);
@@ -379,24 +352,6 @@ export default function CheckoutPage() {
       setApplyingVoucher(false);
     }
   }, [clearDiscountNotice, discountCode, resolvedLines, setDiscountIssue, signedIn, subtotal]);
-
-  const applyGeocode = useCallback((addr: NominatimAddress) => {
-    const parts = [
-      addr.house_number,
-      addr.road,
-      addr.suburb || addr.neighbourhood,
-    ].filter(Boolean);
-    const street = parts.length ? parts.join(", ") : "";
-    const c = addr.city || addr.town || addr.village;
-    const mapped = mapStateToProvince(addr.state);
-    setFormValues((prev) => ({
-      ...prev,
-      ...(street ? { shipping_street: street } : {}),
-      ...(c ? { shipping_city: c } : {}),
-      ...(addr.postcode ? { shipping_postal_code: addr.postcode } : {}),
-      ...(mapped ? { shipping_province: mapped } : {}),
-    }));
-  }, []);
 
   const fetchSavedAddresses = useCallback(async () => {
     if (!signedIn) {
@@ -701,41 +656,6 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  function requestBrowserLocation() {
-    setLocError(null);
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setLocError("Location is not supported in this browser.");
-      return;
-    }
-    setLocLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          const res = await fetch(
-            `/api/geocode/reverse?lat=${encodeURIComponent(String(latitude))}&lon=${encodeURIComponent(String(longitude))}`,
-          );
-          const data = (await res.json()) as { address?: NominatimAddress; error?: string };
-          if (!res.ok) {
-            setLocError(data.error ?? "Location lookup failed. Try again or enter your address manually.");
-            return;
-          }
-          if (data.address) applyGeocode(data.address);
-          else setLocError("Could not read address from your location.");
-        } catch {
-          setLocError("Could not resolve address. Try again or enter manually.");
-        } finally {
-          setLocLoading(false);
-        }
-      },
-      () => {
-        setLocLoading(false);
-        setLocError("Location permission denied or unavailable.");
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-    );
-  }
-
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!formValues.phone?.trim()) {
@@ -985,9 +905,6 @@ export default function CheckoutPage() {
                 inputClassName={inputClass}
                 rootClassName="mt-0 space-y-4"
                 phoneError={formError}
-                locError={locError}
-                locLoading={locLoading}
-                onUseLocation={requestBrowserLocation}
                 signedIn={signedIn}
                 onRequestSignIn={() => setSignInModalOpen(true)}
                 saveForNextTime={saveForNextTime}
