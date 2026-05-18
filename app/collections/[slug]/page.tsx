@@ -22,6 +22,7 @@ import {
   canonicalUrlFor,
   loadSeoOverrideForSubject,
   loadSiteIdentity,
+  resolveSeoCanonicalOverride,
 } from "@/lib/seo";
 import {
   JsonLd,
@@ -137,11 +138,15 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     baseline = await getCachedProductsByCollectionSlug(slug);
   }
 
-  if (!collection) {
+  if (!collection || !dbCol) {
     notFound();
   }
 
-  const navLinks = await getNavCollectionLinks();
+  const [navLinks, identity] = await Promise.all([
+    getNavCollectionLinks(),
+    loadSiteIdentity(),
+  ]);
+  const seoOverride = await loadSeoOverrideForSubject("collection", dbCol.id, identity.locale);
   const featuredIndex = buildFeaturedIndex(baseline);
   const maxCeil = maxPriceCeiling(baseline);
 
@@ -153,7 +158,10 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
   );
   list = sortCollectionProducts(list, parsed.sort, featuredIndex);
 
-  const canonical = canonicalUrlFor(`/collections/${slug}`, sp);
+  const canonical = resolveSeoCanonicalOverride(
+    seoOverride?.canonicalUrl,
+    canonicalUrlFor(`/collections/${slug}`, sp),
+  );
   const collectionLd = collectionJsonLd({
     url: canonical,
     name: collection.name,

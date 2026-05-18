@@ -14,6 +14,8 @@ export function computeDeliveryPkr(
   settings: DeliverySettingsPaisa,
 ): number {
   const subPaisa = Math.round(subtotalPkr * 100);
+  /** Only per-product free-delivery lines — no standard-fee basis (matches `place_order`). */
+  if (subPaisa <= 0) return 0;
   const rawStd = Number(settings.standard_delivery_paisa);
   const standardPaisa = Number.isFinite(rawStd)
     ? Math.max(0, Math.round(rawStd))
@@ -32,6 +34,7 @@ export function nextFreeDeliveryGapPkr(
   thresholdsPaisa: number[],
 ): number | null {
   const subPaisa = Math.round(subtotalPkr * 100);
+  if (subPaisa <= 0) return null;
   const sorted = [...thresholdsPaisa]
     .filter((t) => Number.isFinite(t) && t > 0)
     .sort((a, b) => a - b);

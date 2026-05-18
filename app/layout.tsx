@@ -29,10 +29,8 @@ import {
   metaPixelInlineScript,
   tiktokPixelInlineScript,
 } from "@/lib/seo/pixel-snippets";
+import { GOOGLE_ADSENSE_CLIENT_ID } from "@/lib/seo/google-adsense";
 import "./globals.css";
-
-/** Google AdSense client (hardcoded — verification + auto ads script). */
-const ADSENSE_CLIENT_ID = "ca-pub-9696696438221700";
 
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
 export const dynamic = "force-dynamic";
@@ -206,7 +204,14 @@ export default async function RootLayout({
   const metaPixelId = analytics.metaPixelId;
   const tiktokPixelId = analytics.tiktokPixelId;
   const analyticsAllowed = !analytics.consentRequired;
-  /** Avoid double-firing: GTM should own GA + pixels when present. */
+  /**
+   * GA4 (gtag) loads whenever a Measurement ID is configured, even if GTM is
+   * also present, so GA4 setup / streams receive hits. If the same G- ID is
+   * also fired from GTM, remove one side to avoid double page_view counts.
+   */
+  const loadDirectGoogleAnalytics =
+    analyticsAllowed && analytics.googleAnalyticsId.trim().length > 0;
+  /** Avoid double-firing pixels: when GTM is present it should own Meta/TikTok. */
   const standaloneMarketingTags = analyticsAllowed && !gtmId;
   const storageOrigin = getStorageOrigin();
   const themeColor = parseThemeColor(announcementBar.backgroundColor, "#1c1d1d");
@@ -221,10 +226,10 @@ export default async function RootLayout({
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content={themeColor} />
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
-        <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID} />
+        <meta name="google-adsense-account" content={GOOGLE_ADSENSE_CLIENT_ID} />
         <Script
           id="adsense-loader"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT_ID)}`}
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(GOOGLE_ADSENSE_CLIENT_ID)}`}
           strategy="afterInteractive"
           crossOrigin="anonymous"
         />
@@ -264,7 +269,7 @@ export default async function RootLayout({
             strategy="beforeInteractive"
           >{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode&&f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}</Script>
         ) : null}
-        {standaloneMarketingTags && analyticsId ? (
+        {loadDirectGoogleAnalytics ? (
           <>
             <Script
               id="ga-loader"

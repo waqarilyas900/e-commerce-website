@@ -9,6 +9,7 @@ import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useId, useRef, useState } from "react";
+import { trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 
 type PendingFile = { file: File; previewUrl: string };
 
@@ -131,6 +132,13 @@ export function ContactForm({ onSentChange }: ContactFormProps) {
         setError(data.error ?? "Could not send. Try again or email us directly.");
         return;
       }
+      trackMetaPixel(
+        "Contact",
+        {},
+        {
+          userData: email ? { email } : {},
+        },
+      );
       revokePreviews(pending);
       setPending([]);
       setSent(true);

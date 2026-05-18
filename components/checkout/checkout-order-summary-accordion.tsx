@@ -169,8 +169,8 @@ function CheckoutOrderSummaryBody({
             <span className="text-right">
               <span className="tabular-nums font-semibold text-emerald-700">
                 {shippingWaiverCutoffPkr != null && shippingWaiverCutoffPkr > 0
-                  ? `Waived (${formatPkr(shippingWaiverCutoffPkr)}+)`
-                  : "Waived"}
+                  ? `Free shipping (${formatPkr(shippingWaiverCutoffPkr)}+)`
+                  : "Free shipping"}
               </span>
               <span className="block text-[11px] text-neutral-500">Not added to total</span>
             </span>

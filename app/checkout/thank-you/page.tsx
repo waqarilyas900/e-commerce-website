@@ -6,10 +6,17 @@ import { CheckoutChrome } from "@/components/checkout/checkout-chrome";
 import { OrderConfirmation } from "@/components/checkout/order-confirmation";
 import {
   CHECKOUT_PENDING_CART_CLEAR_KEY,
+  CHECKOUT_PENDING_PURCHASE_EVENT_KEY,
   CHECKOUT_THANK_YOU_META_KEY,
 } from "@/app/lib/checkout-thank-you";
 import { useCart } from "@/app/providers/cart-provider";
 import { createClient } from "@/lib/supabase/client";
+import {
+  defaultMetaCurrency,
+  type MetaContentLine,
+  toPkrValue,
+  trackMetaPixel,
+} from "@/lib/seo/meta-pixel-client";
 
 function ThankYouFallback() {
   return (
@@ -29,6 +36,7 @@ function CheckoutThankYouInner() {
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
   const cartClearDone = useRef(false);
+  const purchaseTrackedRef = useRef(false);
   const order = searchParams.get("order");
   const totalStr = searchParams.get("total_cents");
 
@@ -41,6 +49,13 @@ function CheckoutThankYouInner() {
 
   const [meta, setMeta] = useState<{
     email?: string;
+    phone?: string;
+    firstName?: string;
+    lastName?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
     signedIn: boolean;
   } | null>(null);
 
@@ -62,17 +77,105 @@ function CheckoutThankYouInner() {
   }, [paramsValid, clearCart]);
 
   useEffect(() => {
+    if (!paramsValid || purchaseTrackedRef.current) return;
+    purchaseTrackedRef.current = true;
+    type PendingPurchase = {
+      orderNumber?: string;
+      totalCents?: number;
+      currency?: string;
+      contentIds?: string[];
+      contents?: MetaContentLine[];
+      numItems?: number;
+    };
+    type PendingMeta = {
+      email?: string;
+      phone?: string;
+      firstName?: string;
+      lastName?: string;
+      city?: string;
+      state?: string;
+      zip?: string;
+      country?: string;
+      signedIn?: boolean;
+    };
+    let pending: PendingPurchase | null = null;
+    let pendingMeta: PendingMeta | null = null;
+    try {
+      const raw = sessionStorage.getItem(CHECKOUT_PENDING_PURCHASE_EVENT_KEY);
+      if (raw) {
+        pending = JSON.parse(raw) as PendingPurchase;
+        sessionStorage.removeItem(CHECKOUT_PENDING_PURCHASE_EVENT_KEY);
+      }
+      const rawMeta = sessionStorage.getItem(CHECKOUT_THANK_YOU_META_KEY);
+      if (rawMeta) {
+        pendingMeta = JSON.parse(rawMeta) as PendingMeta;
+      }
+    } catch {
+      // Ignore storage failures and fall back to query params.
+    }
+    const contentIds =
+      pending?.contentIds?.filter((id) => typeof id === "string" && id.trim() !== "") ?? [];
+    const contentsFromPending =
+      Array.isArray(pending?.contents) && pending.contents.length > 0
+        ? pending.contents.filter(
+            (c): c is MetaContentLine =>
+              c != null &&
+              typeof c === "object" &&
+              typeof (c as MetaContentLine).id === "string" &&
+              (c as MetaContentLine).id.trim() !== "" &&
+              typeof (c as MetaContentLine).quantity === "number" &&
+              Number.isFinite((c as MetaContentLine).quantity) &&
+              (c as MetaContentLine).quantity > 0,
+          )
+        : undefined;
+    const numItems =
+      typeof pending?.numItems === "number" && Number.isFinite(pending.numItems) && pending.numItems > 0
+        ? Math.round(pending.numItems)
+        : undefined;
+    trackMetaPixel("Purchase", {
+      content_ids: contentIds,
+      ...(contentsFromPending && contentsFromPending.length > 0 ? { contents: contentsFromPending } : {}),
+      content_type: "product",
+      currency: pending?.currency?.trim() || defaultMetaCurrency(),
+      value: toPkrValue(totalCents / 100),
+      ...(order ? { order_id: order } : {}),
+      ...(numItems != null ? { num_items: numItems } : {}),
+    }, {
+      userData: {
+        ...(pendingMeta?.email ? { email: pendingMeta.email } : {}),
+        ...(pendingMeta?.phone ? { phone: pendingMeta.phone } : {}),
+        ...(pendingMeta?.firstName ? { first_name: pendingMeta.firstName } : {}),
+        ...(pendingMeta?.lastName ? { last_name: pendingMeta.lastName } : {}),
+        ...(pendingMeta?.city ? { city: pendingMeta.city } : {}),
+        ...(pendingMeta?.state ? { state: pendingMeta.state } : {}),
+        ...(pendingMeta?.zip ? { zip: pendingMeta.zip } : {}),
+        ...(pendingMeta?.country ? { country: pendingMeta.country } : {}),
+      },
+    });
+  }, [paramsValid, order, totalCents]);
+
+  useEffect(() => {
     if (!paramsValid) {
       router.replace("/");
       return;
     }
     let cancelled = false;
     (async () => {
-      let fromStorage: { email?: string; signedIn: boolean } = { signedIn: false };
+      let fromStorage: {
+        email?: string;
+        phone?: string;
+        firstName?: string;
+        lastName?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+        country?: string;
+        signedIn: boolean;
+      } = { signedIn: false };
       try {
         const raw = sessionStorage.getItem(CHECKOUT_THANK_YOU_META_KEY);
         if (raw) {
-          fromStorage = JSON.parse(raw) as { email?: string; signedIn: boolean };
+          fromStorage = JSON.parse(raw) as typeof fromStorage;
           sessionStorage.removeItem(CHECKOUT_THANK_YOU_META_KEY);
         }
       } catch {
@@ -89,6 +192,13 @@ function CheckoutThankYouInner() {
         fromStorage.email?.trim() || user?.email?.trim() || undefined;
       setMeta({
         email,
+        phone: fromStorage.phone?.trim() || undefined,
+        firstName: fromStorage.firstName?.trim() || undefined,
+        lastName: fromStorage.lastName?.trim() || undefined,
+        city: fromStorage.city?.trim() || undefined,
+        state: fromStorage.state?.trim() || undefined,
+        zip: fromStorage.zip?.trim() || undefined,
+        country: fromStorage.country?.trim() || undefined,
         signedIn,
       });
     })();

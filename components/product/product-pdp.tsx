@@ -29,8 +29,11 @@ import type {
   DbProductRow,
   DbProductVariantRow,
 } from "@/app/lib/db/types";
-import { formatPkr } from "@/app/lib/format-currency";
+import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { useCart } from "@/app/providers/cart-provider";
+import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { metaContentsSingleItem, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
+import { getPublicSiteUrl } from "@/lib/site-url";
 
 function sellableQty(v: DbProductVariantRow): number {
   return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
@@ -80,6 +83,26 @@ function firstImage(images: unknown): string {
     return images[0];
   }
   return "";
+}
+
+function normalizeWhatsAppNumber(input: string): string {
+  let digits = input.replace(/\D/g, "");
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("0")) digits = `92${digits.slice(1)}`;
+  return digits;
+}
+
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12.04 2a9.91 9.91 0 0 0-8.52 15.02L2.25 22l5.1-1.22A9.91 9.91 0 1 0 12.04 2Zm0 1.75a8.16 8.16 0 1 1-4.15 15.18l-.32-.19-3.02.72.75-2.91-.21-.34A8.16 8.16 0 0 1 12.04 3.75Zm-3.37 3.8c-.18 0-.47.07-.72.34-.25.28-.95.93-.95 2.26 0 1.34.98 2.63 1.11 2.82.14.18 1.89 3.02 4.66 4.11 2.3.91 2.77.73 3.27.68.5-.04 1.62-.66 1.85-1.3.23-.64.23-1.19.16-1.3-.07-.12-.25-.19-.53-.33-.27-.14-1.62-.8-1.87-.89-.25-.09-.43-.14-.61.14-.18.27-.7.89-.86 1.07-.16.18-.32.2-.59.07-.27-.14-1.15-.42-2.2-1.35-.81-.72-1.36-1.62-1.52-1.89-.16-.28-.02-.42.12-.56.13-.13.28-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.13-.61-1.47-.84-2.01-.22-.52-.44-.45-.61-.46h-.52Z" />
+    </svg>
+  );
 }
 
 /** Dedupe concurrent identical bulk wishlist GETs (e.g. React Strict Mode double mount). Key must include auth epoch so sign-in/out never reuse another session’s response. */
@@ -199,6 +222,7 @@ export function ProductPdp({
     collectionLabel.trim() !== "" &&
     collectionLabel.toLowerCase() !== "uncategorized";
   const { isOpen: cartDrawerOpen } = useCart();
+  const { footer } = useStoreBrand();
 
   const variantKeys = useMemo(
     () =>
@@ -222,6 +246,7 @@ export function ProductPdp({
   );
 
   const [authTick, setAuthTick] = useState(0);
+  const viewedVariantKeysRef = useRef<Set<string>>(new Set());
   /** Baseline + last seen auth user id — avoids extra bulk refetch when Supabase emits duplicate SIGNED_IN for the same session. */
   const lastAuthUserIdRef = useRef<string | null | undefined>(undefined);
   const [wishlistVariantIds, setWishlistVariantIds] = useState<Set<string>>(
@@ -337,6 +362,26 @@ export function ProductPdp({
   const [quantity, setQuantity] = useState(1);
 
   const maxQty = matchedVariant ? sellableQty(matchedVariant) : 0;
+
+  useEffect(() => {
+    const variantForTracking = matchedVariant ?? priceVariant;
+    if (!variantForTracking) return;
+    const dedupeKey = `${product.id}:${variantForTracking.id}`;
+    if (viewedVariantKeysRef.current.has(dedupeKey)) return;
+    viewedVariantKeysRef.current.add(dedupeKey);
+    trackMetaPixel("ViewContent", {
+      content_ids: [variantForTracking.id],
+      contents: metaContentsSingleItem({
+        id: variantForTracking.id,
+        quantity: 1,
+        item_price: variantForTracking.price,
+      }),
+      content_type: "product",
+      content_name: product.name,
+      currency: STORE_CURRENCY_CODE,
+      value: toPkrValue(variantForTracking.price),
+    });
+  }, [matchedVariant, priceVariant, product.id, product.name]);
 
   /** User picks each dimension freely; we never auto-switch size/color to force a valid SKU. */
   function setOption(key: string, value: string) {
@@ -508,6 +553,42 @@ export function ProductPdp({
     matchedVariant && maxQty > 0
       ? "border-emerald-200/90 bg-emerald-50 text-emerald-950 shadow-sm"
       : "border-neutral-800/80 bg-neutral-950/95 text-white shadow-lg backdrop-blur-sm";
+
+  const productUrl = useMemo(
+    () => `${getPublicSiteUrl()}/products/${productSlug}`,
+    [productSlug],
+  );
+
+  const whatsAppHref = useMemo(() => {
+    const phone = normalizeWhatsAppNumber(footer.phone);
+    if (!phone) return "";
+
+    const optionLines = dimensions.flatMap((dim) => {
+      const value = (selection[dim.key] ?? "").trim();
+      return value ? [`${dim.label}: ${value}`] : [];
+    });
+    const variantForMessage = matchedVariant ?? priceVariant;
+    const lines = [
+      "Hi, I want to ask about this product:",
+      `Product: ${product.name}`,
+      ...optionLines,
+      variantForMessage?.sku ? `SKU: ${variantForMessage.sku}` : "",
+      variantForMessage ? `Price: ${formatPkr(Number(variantForMessage.price))}` : "",
+      `Quantity: ${quantity}`,
+      `Link: ${productUrl}`,
+    ].filter(Boolean);
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
+  }, [
+    dimensions,
+    footer.phone,
+    matchedVariant,
+    priceVariant,
+    product.name,
+    productUrl,
+    quantity,
+    selection,
+  ]);
 
   return (
     <>
@@ -904,7 +985,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer
@@ -914,7 +997,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer={false}
@@ -1045,6 +1130,20 @@ export function ProductPdp({
         </div>
       </section>
 
+      {whatsAppHref ? (
+        <a
+          href={whatsAppHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Ask about ${product.name} on WhatsApp`}
+          className={`fixed right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#1fb85a] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:right-6 sm:h-14 sm:w-14 lg:bottom-6 ${
+            showMobileStickyBar ? "bottom-24" : "bottom-5 sm:bottom-6"
+          }`}
+        >
+          <WhatsAppIcon className="h-7 w-7" />
+        </a>
+      ) : null}
+
       <AnimatePresence>
         {isZoomOpen && main?.kind === "image" ? (
           <motion.div
@@ -1161,7 +1260,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer
@@ -1171,7 +1272,9 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
+                        contentId={matchedVariant.id}
                         quantity={quantity}
+                        unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
                         disabled={maxQty < 1}
                         openDrawer={false}

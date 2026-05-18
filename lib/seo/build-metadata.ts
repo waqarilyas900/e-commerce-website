@@ -9,7 +9,12 @@
  */
 
 import type { Metadata } from "next";
-import { absoluteUrl, canonicalUrlFor, hasIndexBlockingParams } from "./canonical";
+import {
+  absoluteUrl,
+  canonicalUrlFor,
+  hasIndexBlockingParams,
+  resolveSeoCanonicalOverride,
+} from "./canonical";
 import {
   clampSeoDescription,
   clampSeoTitle,
@@ -267,8 +272,8 @@ export function buildPageMetadata(input: BuildMetadataInput): Metadata {
   const descFinal = clampSeoDescription(descSource) || undefined;
 
   const images = pickOgImages(input);
-  const canonical =
-    override?.canonicalUrl?.trim() || canonicalUrlFor(input.pathname, input.searchParams);
+  const computedCanonical = canonicalUrlFor(input.pathname, input.searchParams);
+  const canonical = resolveSeoCanonicalOverride(override?.canonicalUrl, computedCanonical);
 
   const noindex =
     Boolean(defaults.forceNoindex) ||

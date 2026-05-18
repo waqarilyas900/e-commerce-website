@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/app/providers/cart-provider";
+import {
+  defaultMetaCurrency,
+  metaContentsSingleItem,
+  toPkrValue,
+  trackMetaPixel,
+} from "@/lib/seo/meta-pixel-client";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { toastAddedToCart } from "@/lib/cart-toast";
 import { ADD_TO_CART_BUTTON_MS, delayMs } from "@/lib/cart-add-feedback";
@@ -21,6 +27,10 @@ type Props = {
   itemName?: string;
   /** After adding to cart, navigate here (e.g. `/checkout`) instead of opening the cart drawer. */
   redirectHref?: string;
+  /** Optional unit price for Meta AddToCart value. */
+  unitPricePkr?: number;
+  /** Optional content identifier override (falls back to `variantId`). */
+  contentId?: string;
 };
 
 export function AddToCartVariantButton({
@@ -34,6 +44,8 @@ export function AddToCartVariantButton({
   maxQuantity = 99,
   itemName,
   redirectHref,
+  unitPricePkr,
+  contentId,
 }: Props) {
   const router = useRouter();
   const { addVariant, openCart, waitForCartResolution } = useCart();
@@ -51,6 +63,21 @@ export function AddToCartVariantButton({
         try {
           await delayMs(ADD_TO_CART_BUTTON_MS);
           addVariant(variantId, productId, q);
+          const cid = contentId || variantId;
+          const trackedValue = toPkrValue((unitPricePkr ?? 0) * q);
+          trackMetaPixel("AddToCart", {
+            content_ids: [cid],
+            contents: metaContentsSingleItem({
+              id: cid,
+              quantity: q,
+              ...(unitPricePkr != null && Number.isFinite(unitPricePkr) ? { item_price: unitPricePkr } : {}),
+            }),
+            content_type: "product",
+            ...(itemName ? { content_name: itemName } : {}),
+            currency: defaultMetaCurrency(),
+            value: trackedValue,
+            num_items: q,
+          });
           toastAddedToCart({
             description:
               itemName != null

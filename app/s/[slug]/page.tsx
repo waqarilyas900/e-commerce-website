@@ -22,6 +22,7 @@ import {
   canonicalUrlFor,
   loadSeoOverrideForSubject,
   loadSiteIdentity,
+  resolveSeoCanonicalOverride,
 } from "@/lib/seo";
 import {
   JsonLd,
@@ -112,7 +113,11 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
     baseline = await getCachedProductsForHomeSectionTags(section.tagIds, section.slug);
   }
 
-  const navLinks = await getNavCollectionLinks();
+  const [navLinks, identity] = await Promise.all([
+    getNavCollectionLinks(),
+    loadSiteIdentity(),
+  ]);
+  const seoOverride = await loadSeoOverrideForSubject("home_section", section.id, identity.locale);
   const featuredIndex = buildFeaturedIndex(baseline);
   const maxCeil = maxPriceCeiling(baseline);
 
@@ -124,7 +129,10 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
   );
   list = sortCollectionProducts(list, parsed.sort, featuredIndex);
 
-  const canonical = canonicalUrlFor(`/s/${slug}`, sp);
+  const canonical = resolveSeoCanonicalOverride(
+    seoOverride?.canonicalUrl,
+    canonicalUrlFor(`/s/${slug}`, sp),
+  );
   const collectionLd = collectionJsonLd({
     url: canonical,
     name: section.name,

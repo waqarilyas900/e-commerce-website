@@ -176,11 +176,17 @@ export function Header() {
   }, []);
 
   const headerContent = (isStickyHeader: boolean) => (
-    <div className="header-wrapper mx-auto grid min-h-[64px] max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 shell-x sm:min-h-[72px] md:min-h-[83px]">
-      <div className="flex h-full min-h-0 min-w-0 items-center gap-3 justify-self-start">
+    /**
+     * Centered logo + symmetric side rails (not a 3-col grid).
+     * Reserves a horizontal “corridor” on lg+ where the **horizontal** nav is shown
+     * so labels never paint over the mark. Below lg, tablet widths use the hamburger drawer.
+     * Matches `OutflintLogoMark` max width (~10rem) + gutters — see `outflint-wordmark.tsx`.
+     */
+    <div className="header-wrapper relative mx-auto flex min-h-[64px] max-w-7xl items-center shell-x sm:min-h-[72px] md:min-h-[83px]">
+      <div className="flex min-h-0 min-w-0 flex-1 items-center gap-3 lg:pr-24 xl:pr-32">
         <button
           type="button"
-          className="flex items-center gap-2 text-neutral-800 md:hidden"
+          className="flex shrink-0 items-center gap-2 text-neutral-800 lg:hidden"
           aria-label="Site navigation"
           aria-expanded={isMobileNavOpen}
           onClick={() => setIsMobileNavOpen((o) => !o)}
@@ -188,7 +194,7 @@ export function Header() {
           <span className="text-xl leading-none">☰</span>
         </button>
         <nav
-          className="hidden items-center gap-4 md:flex lg:gap-5"
+          className="relative z-10 hidden min-h-0 min-w-0 flex-nowrap items-center gap-3 lg:flex xl:gap-4"
           aria-label="Primary"
         >
           <ShopCollectionsMenu />
@@ -196,7 +202,7 @@ export function Header() {
             <Link
               key={item.id}
               href={item.href}
-              className={`${primaryNavLinkClass} inline-flex items-center gap-1 rounded-md px-0.5 py-1 hover:text-neutral-950`}
+              className={`${primaryNavLinkClass} inline-flex shrink-0 items-center gap-1 rounded-md px-0.5 py-1 hover:text-neutral-950`}
             >
               {item.slug === "sale" ? (
                 <SaleBoltIcon className="h-[15px] w-[15px] shrink-0" aria-hidden />
@@ -206,14 +212,16 @@ export function Header() {
           ))}
         </nav>
       </div>
+
       <Link
         href="/"
-        className="flex h-full min-h-0 min-w-0 max-w-[min(100%,240px)] items-center justify-center justify-self-center self-center sm:max-w-none"
+        className="absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
         aria-label={`${storeName} home`}
       >
         <OutflintLogoMark priority />
       </Link>
-      <div className="flex min-h-0 items-center justify-end gap-0.5 text-neutral-800 sm:gap-2 lg:gap-3">
+
+      <div className="relative z-10 flex min-h-0 min-w-0 flex-1 items-center justify-end gap-0.5 text-neutral-800 sm:gap-2 lg:pl-24 lg:gap-3 xl:pl-32">
         <HeaderAccount />
         <HeaderSearchPopover
           open={searchOpen}

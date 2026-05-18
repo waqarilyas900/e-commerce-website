@@ -15,9 +15,6 @@ type Props = {
   /** Root stack spacing (default matches checkout: mt-8 between sections). */
   rootClassName?: string;
   phoneError?: string | null;
-  locError?: string | null;
-  locLoading?: boolean;
-  onUseLocation?: () => void;
   signedIn?: boolean;
   onRequestSignIn?: () => void;
   saveForNextTime?: boolean;
@@ -39,9 +36,6 @@ export function CheckoutTemplateFields({
   inputClassName,
   rootClassName = "mt-8 space-y-8",
   phoneError,
-  locError,
-  locLoading,
-  onUseLocation,
   signedIn = false,
   onRequestSignIn,
   saveForNextTime = false,
@@ -149,35 +143,17 @@ export function CheckoutTemplateFields({
               }
 
               if (field.type === "textarea") {
-                const showLoc = field.meta?.locationButton && onUseLocation;
                 return (
                   <div key={field.id} className={span}>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-                      <textarea
-                        id={`co-${field.id}`}
-                        required={field.required}
-                        value={v}
-                        onChange={(e) => onChange(field.id, e.target.value)}
-                        className={`min-h-[100px] flex-1 resize-y rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/15`}
-                        autoComplete={field.autoComplete}
-                        placeholder={resolvedPlaceholder}
-                      />
-                      {showLoc ? (
-                        <button
-                          type="button"
-                          onClick={onUseLocation}
-                          disabled={locLoading}
-                          className="w-full shrink-0 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50 disabled:opacity-60 sm:w-auto sm:max-w-[160px] sm:self-start"
-                        >
-                          {locLoading ? "Locating…" : "Use my location"}
-                        </button>
-                      ) : null}
-                    </div>
-                    {field.meta?.locationButton && locError ? (
-                      <p className="mt-2 text-xs text-red-600" role="alert">
-                        {locError}
-                      </p>
-                    ) : null}
+                    <textarea
+                      id={`co-${field.id}`}
+                      required={field.required}
+                      value={v}
+                      onChange={(e) => onChange(field.id, e.target.value)}
+                      className={`min-h-[100px] w-full resize-y rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/15`}
+                      autoComplete={field.autoComplete}
+                      placeholder={resolvedPlaceholder}
+                    />
                     {saveAddressErrors[field.id] ? (
                       <p className="mt-2 text-xs text-red-600" role="alert">
                         {saveAddressErrors[field.id]}
@@ -219,13 +195,6 @@ export function CheckoutTemplateFields({
                     autoComplete={field.autoComplete}
                     placeholder={resolvedPlaceholder}
                   />
-                  {field.id === "email" ? (
-                    <Checkbox
-                      className="mt-3 text-xs text-neutral-700"
-                      label="Email me with news and offers"
-                      defaultChecked={false}
-                    />
-                  ) : null}
                   {saveAddressErrors[field.id] ? (
                     <p className="mt-2 text-xs text-red-600" role="alert">
                       {saveAddressErrors[field.id]}

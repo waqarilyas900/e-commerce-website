@@ -45,7 +45,9 @@ test.describe("Storefront smoke (Shopify-style paths)", () => {
 
   test("policies index loads", async ({ page }) => {
     await page.goto("/policies");
-    await expect(page.getByRole("heading", { name: /store policies/i })).toBeVisible({
+    await expect(
+      page.locator("#MainContent").getByRole("heading", { level: 1, name: /policies/i }),
+    ).toBeVisible({
       timeout: 30_000,
     });
   });

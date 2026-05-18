@@ -10,6 +10,11 @@ type Props = {
   subtotalPkr: number;
   settings: StoreDeliverySettingsState | null;
   loading: boolean;
+  /**
+   * When false, `subtotalPkr` may be 0 while cart lines are still resolving — do not hide the bar
+   * or treat as “only free-delivery products”.
+   */
+  shippingBasisKnown?: boolean;
 };
 
 function TruckIcon({ className }: { className?: string }) {
@@ -61,7 +66,12 @@ function labelShiftPx(posPct: number): number {
  * Tiered free-delivery progress — aligned with store_settings + checkout rules.
  * Renders nothing if no thresholds configured.
  */
-export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Props) {
+export function CartFreeDeliveryProgress({
+  subtotalPkr,
+  settings,
+  loading,
+  shippingBasisKnown = true,
+}: Props) {
   const standardPaisa = settings?.standardPaisa ?? FALLBACK_STANDARD_DELIVERY_PAISA;
 
   const thresholdsPaisa = useMemo(() => {
@@ -103,6 +113,17 @@ export function CartFreeDeliveryProgress({ subtotalPkr, settings, loading }: Pro
   }
 
   if (!hasTiers) {
+    return null;
+  }
+
+  if (!shippingBasisKnown) {
+    return (
+      <div className="mb-4 h-1 w-full animate-pulse rounded-full bg-neutral-200" aria-hidden />
+    );
+  }
+
+  /** All cart lines are per-product free delivery — tier bar / “unlocked” copy does not apply. */
+  if (subPaisa <= 0) {
     return null;
   }
 

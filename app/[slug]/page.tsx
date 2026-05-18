@@ -9,6 +9,7 @@ import {
   canonicalUrlFor,
   loadSeoOverrideForSubject,
   loadSiteIdentity,
+  resolveSeoCanonicalOverride,
   stripHtml,
 } from "@/lib/seo";
 import {
@@ -72,11 +73,19 @@ export default async function FooterItemPage({ params }: Props) {
     notFound();
   }
 
-  const canonical = canonicalUrlFor(`/${slug}`);
+  const override = await loadSeoOverrideForSubject(
+    "policy_page",
+    policy.id,
+    identity.locale,
+  );
+  const canonical = resolveSeoCanonicalOverride(
+    override?.canonicalUrl,
+    canonicalUrlFor(`/${slug}`),
+  );
   const crumbsUrlBase = canonicalUrlFor("/");
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
-    { name: policy.title, url: `/${slug}` },
+    { name: policy.title, url: canonical },
   ]);
   const articleLd = webPageJsonLd({
     url: canonical,

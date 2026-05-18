@@ -53,7 +53,6 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
           autoComplete: "street-address",
           required: true,
           colSpan: 2,
-          meta: { locationButton: true },
         },
         {
           id: "shipping_city",
