@@ -5,6 +5,8 @@ import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
+// Storefront-only: no admin JWT required; see customer-reviews.tsx after insert.
+
 /**
  * Best-effort bust for homepage trust strip + product card aggregates after a
  * new storefront review (client-side Supabase insert cannot call admin JWT revalidate).
