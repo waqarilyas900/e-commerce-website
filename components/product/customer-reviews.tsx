@@ -562,6 +562,7 @@ function CustomerReviewsInner({
       }
 
       const reviewId = inserted.id as string;
+      void fetch("/api/revalidate-review-surface", { method: "POST", keepalive: true }).catch(() => {});
 
       if (validatedFiles.length > 0) {
         const { data: sessionData } = await supabase.auth.getSession();

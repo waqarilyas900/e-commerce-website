@@ -103,6 +103,8 @@ type Payload = {
   homeSectionSlug?: string;
   all?: boolean;
   tag?: string;
+  /** Additional tags (same as `tag` but allows busting multiple caches in one request). */
+  tags?: string[];
 };
 
 function dedupePaths(paths: string[]): string[] {
@@ -231,6 +233,11 @@ export async function POST(req: Request) {
 
   if (body.tag?.trim()) {
     tagsToRevalidate.add(body.tag.trim());
+  }
+  if (Array.isArray(body.tags)) {
+    for (const t of body.tags) {
+      if (typeof t === "string" && t.trim()) tagsToRevalidate.add(t.trim());
+    }
   }
 
   const revalidatedTags: string[] = [];
