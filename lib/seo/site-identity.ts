@@ -17,8 +17,10 @@
  */
 
 import { getCachedSiteIdentity } from "@/lib/cache/layout-data";
+import { applyEnvToSiteIdentity } from "@/lib/site-brand-env";
 import type { SiteIdentity } from "./types";
 
 export async function loadSiteIdentity(): Promise<SiteIdentity> {
-  return getCachedSiteIdentity();
+  const identity = await getCachedSiteIdentity();
+  return applyEnvToSiteIdentity(identity);
 }

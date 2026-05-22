@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { type ReactNode } from "react";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
-import { OutflintLogoMark } from "@/components/outflint-wordmark";
+import { SiteLogoMark } from "@/components/site-logo";
 
 type Props = {
   children: ReactNode;
@@ -31,7 +31,7 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
               className="flex min-w-0 items-center"
               aria-label={`${storeName} home`}
             >
-              <OutflintLogoMark size="large" />
+              <SiteLogoMark size="large" />
             </Link>
             <div
               className="shrink-0 items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-900 sm:flex sm:text-sm"

@@ -10,6 +10,13 @@ import {
   getCachedSiteIdentity,
   getCachedStoreBrand,
 } from "@/lib/cache/layout-data";
+import {
+  applyEnvToSiteIdentity,
+  applyEnvToStoreBrand,
+  getEnvLogoUrl,
+  resolveOrganizationLogoUrl,
+  resolveSiteName,
+} from "@/lib/site-brand-env";
 import { getPublicSiteUrl } from "@/lib/site-url";
 import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
@@ -119,20 +126,21 @@ function parseThemeColor(input: string | null | undefined, fallback: string): st
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [brand, identity] = await Promise.all([
+  const [brand, identityRaw] = await Promise.all([
     getCachedStoreBrand(),
     getCachedSiteIdentity(),
   ]);
-  const siteName =
-    identity.siteTitle.trim() ||
-    brand.siteTitle.trim() ||
-    identity.storeName.trim() ||
-    brand.storeName.trim() ||
-    "Store";
+  const identity = applyEnvToSiteIdentity(identityRaw);
+  const siteName = resolveSiteName(
+    identity.siteTitle,
+    brand.siteTitle,
+    identity.storeName,
+    brand.storeName,
+  );
   const description =
     identity.siteDescription.trim() || brand.siteDescription.trim() || undefined;
   const siteBase = getPublicSiteUrl();
-  const rawIcon = getEnvFaviconUrl() || brand.faviconUrl.trim();
+  const rawIcon = getEnvFaviconUrl() || getEnvLogoUrl() || brand.faviconUrl.trim();
   const icon = rawIcon ? absolutizeFavicon(rawIcon, siteBase) : undefined;
   const mime = icon ? faviconMimeType(icon) : undefined;
 
@@ -173,7 +181,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [baseBrand, announcementBar, collectionLinks, headerNavMenuItems, identity, analytics] =
+  const [baseBrand, announcementBar, collectionLinks, headerNavMenuItems, identityRaw, analytics] =
     await Promise.all([
       getCachedStoreBrand(),
       getCachedAnnouncementBar(),
@@ -182,16 +190,20 @@ export default async function RootLayout({
       getCachedSiteIdentity(),
       getCachedAnalyticsConfig(),
     ]);
-  const storeBrand = { ...baseBrand, announcementBar };
+  const identity = applyEnvToSiteIdentity(identityRaw);
+  const storeBrand = applyEnvToStoreBrand({ ...baseBrand, announcementBar });
   const envFavicon = getEnvFaviconUrl();
-  const faviconRaw = envFavicon || baseBrand.faviconUrl.trim();
+  const faviconRaw = envFavicon || getEnvLogoUrl() || baseBrand.faviconUrl.trim();
   const faviconHref = faviconRaw ? absolutizeFavicon(faviconRaw, getPublicSiteUrl()) : "";
   const faviconType = faviconHref ? faviconMimeType(faviconHref) : undefined;
   const orgLd = organizationJsonLd({
     ...identity,
     storeName: identity.storeName || baseBrand.storeName,
     siteTitle: identity.siteTitle || baseBrand.siteTitle,
-    organizationLogoUrl: identity.organizationLogoUrl || baseBrand.faviconUrl,
+    organizationLogoUrl: resolveOrganizationLogoUrl(
+      identity.organizationLogoUrl,
+      baseBrand.faviconUrl,
+    ),
   });
   const siteLd = websiteJsonLd({
     ...identity,

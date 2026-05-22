@@ -26,7 +26,7 @@ import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session"
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
-import { OutflintLogoMark } from "@/components/outflint-wordmark";
+import { SiteLogoMark } from "@/components/site-logo";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
 import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-settings";
 import { hasCatalogDb } from "@/app/lib/db/env";
@@ -822,7 +822,7 @@ export default function CheckoutPage() {
                   className="flex min-w-0 items-center"
                   aria-label={`${storeName} home`}
                 >
-                  <OutflintLogoMark size="large" />
+                  <SiteLogoMark size="large" />
                 </Link>
                 <button
                   type="button"

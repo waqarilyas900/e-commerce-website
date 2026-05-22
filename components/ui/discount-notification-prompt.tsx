@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { OutflintLogoMark } from "@/components/outflint-wordmark";
+import { SiteLogoMark } from "@/components/site-logo";
 
 const DISMISS_KEY = "discount-notification-prompt-dismissed-v1";
 const ALLOWED_KEY = "discount-notification-prompt-allowed-v1";
@@ -54,7 +54,7 @@ export function DiscountNotificationPrompt() {
     <div className="fixed left-1/2 top-4 z-120 w-[min(92vw,460px)] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-4 shadow-[0_10px_28px_rgba(0,0,0,0.24)]">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 shrink-0">
-          <OutflintLogoMark size="large" />
+          <SiteLogoMark size="large" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold uppercase tracking-tight text-neutral-900">

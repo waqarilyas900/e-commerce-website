@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
+import { getEnvLogoUrl } from "@/lib/site-brand-env";
 import { getPublicSiteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ function absolutizeFavicon(href: string, base: string): string {
 export async function GET() {
   const envIcon = process.env.NEXT_PUBLIC_FAVICON_URL?.trim() ?? "";
   const brand = await loadStoreBrandFromDatabase();
-  const raw = envIcon || brand.faviconUrl.trim();
+  const raw = envIcon || getEnvLogoUrl() || brand.faviconUrl.trim();
   if (!raw) {
     return new NextResponse(null, { status: 404 });
   }

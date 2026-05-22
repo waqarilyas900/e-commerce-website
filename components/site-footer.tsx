@@ -10,7 +10,7 @@ import {
   getPublicFacebookUrl,
   getPublicInstagramUrl,
 } from "@/lib/env/public-social";
-import { OutflintLogoFull } from "@/components/outflint-wordmark";
+import { SiteLogoFull } from "@/components/site-logo";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -296,7 +296,7 @@ export function Footer() {
           <div className="flex w-full items-center justify-between gap-6 border-t border-white/12 pt-10 lg:hidden">
             <div className="min-w-0">
               <p className="sr-only">{storeName}</p>
-              <OutflintLogoFull />
+              <SiteLogoFull />
             </div>
             <SocialLinks className="flex shrink-0 items-center gap-2.5 sm:gap-3" />
           </div>
@@ -331,7 +331,7 @@ export function Footer() {
                 </div>
               </div>
               <div className="flex min-w-0 flex-col items-start gap-6 border-l border-white/10 pl-10 xl:pl-14">
-                <OutflintLogoFull className="shrink-0" />
+                <SiteLogoFull className="shrink-0" />
                 <SocialLinks className="flex flex-wrap items-center gap-3" />
               </div>
             </div>

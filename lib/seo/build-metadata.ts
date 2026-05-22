@@ -22,6 +22,7 @@ import {
   suffixTitle,
 } from "./text";
 import type { SeoImage, SeoOverride, SiteIdentity } from "./types";
+import { resolveSiteName } from "@/lib/site-brand-env";
 import { getPublicSiteUrl } from "@/lib/site-url";
 
 /**
@@ -257,7 +258,7 @@ function buildOtherMeta(
 
 export function buildPageMetadata(input: BuildMetadataInput): Metadata {
   const { identity, defaults, override } = input;
-  const site = identity.siteTitle.trim() || identity.storeName.trim() || "Store";
+  const site = resolveSiteName(identity.siteTitle, identity.storeName);
   const overrideTitle = override?.title.trim();
   const overrideDescription = override?.description.trim();
 

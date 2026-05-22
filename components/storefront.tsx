@@ -21,7 +21,7 @@ import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
-import { OutflintLogoMark } from "@/components/outflint-wordmark";
+import { SiteLogoMark } from "@/components/site-logo";
 import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import type { Product } from "@/app/lib/catalog/types";
@@ -180,7 +180,7 @@ export function Header() {
      * Centered logo + symmetric side rails (not a 3-col grid).
      * Reserves a horizontal “corridor” on lg+ where the **horizontal** nav is shown
      * so labels never paint over the mark. Below lg, tablet widths use the hamburger drawer.
-     * Matches `OutflintLogoMark` max width (~10rem) + gutters — see `outflint-wordmark.tsx`.
+     * Matches `SiteLogoMark` max width (~10rem) + gutters — see `components/site-logo.tsx`.
      */
     <div className="header-wrapper relative mx-auto flex min-h-[64px] max-w-7xl items-center shell-x sm:min-h-[72px] md:min-h-[83px]">
       <div className="flex min-h-0 min-w-0 flex-1 items-center gap-3 lg:pr-24 xl:pr-32">
@@ -218,7 +218,7 @@ export function Header() {
         className="absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
         aria-label={`${storeName} home`}
       >
-        <OutflintLogoMark priority />
+        <SiteLogoMark priority />
       </Link>
 
       <div className="relative z-10 flex min-h-0 min-w-0 flex-1 items-center justify-end gap-0.5 text-neutral-800 sm:gap-2 lg:pl-24 lg:gap-3 xl:pl-32">
