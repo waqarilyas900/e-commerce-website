@@ -16,7 +16,7 @@ declare global {
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
             itp_support?: boolean;
-            /** @deprecated Ignored by GIS; browser controls FedCM for One Tap. */
+            /** @deprecated Ignored by GIS; browser control FedCM for One Tap. */
             use_fedcm_for_prompt?: boolean;
           }) => void;
           prompt: (
