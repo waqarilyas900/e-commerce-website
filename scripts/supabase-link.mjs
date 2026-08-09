@@ -1,5 +1,5 @@
 /**
- * Runs: supabase link --project-ref pbuuafxmkebfytoabtqk
+ * Runs: supabase link --project-ref <from .env>
  * Optional: set SUPABASE_DB_PASSWORD in .env to pass -p non-interactively.
  */
 import { spawnSync } from "node:child_process";
@@ -10,8 +10,13 @@ import { config } from "dotenv";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 config({ path: path.join(root, ".env") });
 
-const PROJECT_REF = "pbuuafxmkebfytoabtqk";
-const pw = process.env.SUPABASE_DB_PASSWORD;
+const PROJECT_REF =
+  process.env.SUPABASE_PROJECT_REF?.trim() ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
+    /^https:\/\/([a-z0-9]+)\.supabase\.co\/?$/i,
+  )?.[1] ||
+  "onmnnxcdwcuegsbvjoqa";
+const pw = process.env.SUPABASE_DB_PASSWORD?.replace(/^["']|["']$/g, "");
 
 const args = ["supabase", "link", "--project-ref", PROJECT_REF];
 if (pw) {
