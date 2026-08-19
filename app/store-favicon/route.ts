@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
-import { getEnvLogoUrl } from "@/lib/site-brand-env";
+import { resolveFaviconUrl } from "@/lib/site-brand-env";
 import { getPublicSiteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
@@ -17,12 +17,11 @@ function absolutizeFavicon(href: string, base: string): string {
 
 /**
  * Served internally via rewrite from `/favicon.ico` so browsers and tools that
- * request the legacy path get the admin-configured asset instead of Next's default.
+ * request the legacy path get the configured brand asset instead of Next's default.
  */
 export async function GET() {
-  const envIcon = process.env.NEXT_PUBLIC_FAVICON_URL?.trim() ?? "";
   const brand = await loadStoreBrandFromDatabase();
-  const raw = envIcon || getEnvLogoUrl() || brand.faviconUrl.trim();
+  const raw = resolveFaviconUrl(brand.faviconUrl);
   if (!raw) {
     return new NextResponse(null, { status: 404 });
   }

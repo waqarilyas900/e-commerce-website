@@ -7,7 +7,7 @@
  * **Production HTTPS:** In `NODE_ENV === "production"`, if the resolved origin
  * uses `http://` and the hostname is not a local dev host, it is rewritten to
  * `https://`. That way sitemaps, Open Graph, and canonicals never advertise
- * insecure URLs when env is mis-set to `http://outflint.pk` while Cloudflare
+ * insecure URLs when env is mis-set to `http://simplecartstore.com` while Cloudflare
  * still serves the shop over TLS (a common source of Search Console / PSI
  * “HTTPS” / page experience noise).
  */

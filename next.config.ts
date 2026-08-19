@@ -121,8 +121,8 @@ const nextConfig: NextConfig = {
       // Canonical host: force apex to `www` with a permanent redirect.
       {
         source: "/:path*",
-        has: [{ type: "host", value: "outflint.pk" }],
-        destination: "https://www.outflint.pk/:path*",
+        has: [{ type: "host", value: "simplecartstore.com" }],
+        destination: "https://www.simplecartstore.com/:path*",
         permanent: true,
       },
       // Retired landing pages — keep permanent redirects so search engines

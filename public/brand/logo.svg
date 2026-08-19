@@ -1,0 +1,20 @@
+<svg viewBox="0 0 640 160" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="160" fill="#FAFAFA"/>
+  <!-- cart mark -->
+  <g transform="translate(20, 20)">
+    <g fill="none" stroke="#0A0A0A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 24 34 L 40 34 L 50 98"/>
+      <path d="M 50 50 L 126 50 L 114 98 L 59 98 Z"/>
+      <path d="M 70 50 L 73 98 M 104 50 L 101 98"/>
+    </g>
+    <circle cx="66" cy="120" r="9" fill="#0A0A0A"/>
+    <circle cx="106" cy="120" r="9" fill="#0A0A0A"/>
+  </g>
+
+  <!-- divider -->
+  <line x1="176" y1="30" x2="176" y2="130" stroke="#0A0A0A" stroke-width="2" opacity="0.25"/>
+
+  <!-- wordmark -->
+  <text x="196" y="98" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="52" fill="#0A0A0A" letter-spacing="-1.5">Simple<tspan font-weight="400">Cart</tspan></text>
+  <text x="198" y="122" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="15" fill="#0A0A0A" letter-spacing="6">STORE</text>
+</svg>

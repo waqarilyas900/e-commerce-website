@@ -36,6 +36,7 @@ export async function sendOrderConfirmationEmail(
 
   const html = `<!DOCTYPE html>
 <html><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#171717;max-width:560px">
+  <p style="font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:#737373;margin:0 0 8px">SimpleCartStore</p>
   <h1 style="font-size:20px">Order confirmed</h1>
   <p>Hi ${escapeHtml(input.customerName)},</p>
   <p>Thanks for your order <strong>${escapeHtml(input.orderNumber)}</strong>.</p>
@@ -55,7 +56,7 @@ export async function sendOrderConfirmationEmail(
   const { error } = await resend.emails.send({
     from,
     to: input.to,
-    subject: `Order confirmed — ${input.orderNumber}`,
+    subject: `SimpleCartStore — Order confirmed (${input.orderNumber})`,
     html,
   });
 

@@ -1,13 +1,14 @@
 import Image from "next/image";
 import {
   isRemoteAssetUrl,
+  resolveFooterLogoUrl,
   resolveLogoUrl,
   resolveSiteName,
 } from "@/lib/site-brand-env";
 
 /**
- * Site logo components — sourced from `NEXT_PUBLIC_LOGO_URL` / `NEXT_PUBLIC_SITE_NAME`.
- * Update those variables in `.env.local` to change the logo everywhere (header, footer, checkout).
+ * Site logo components — header uses `NEXT_PUBLIC_LOGO_URL` (dark mark);
+ * footer uses `NEXT_PUBLIC_FOOTER_LOGO_URL` (light mark on dark backgrounds).
  */
 
 const LOGO_WIDTH = 150;
@@ -92,9 +93,9 @@ type FullProps = {
   className?: string;
 };
 
-/** Footer / marketing — full-width logo with wordmark proportions. */
+/** Footer / marketing — light logo on dark footer backgrounds. */
 export function SiteLogoFull({ className = "" }: FullProps) {
-  const src = resolveLogoUrl();
+  const src = resolveFooterLogoUrl();
   const alt = resolveSiteName();
 
   return (

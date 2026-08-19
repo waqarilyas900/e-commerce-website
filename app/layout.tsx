@@ -13,7 +13,7 @@ import {
 import {
   applyEnvToSiteIdentity,
   applyEnvToStoreBrand,
-  getEnvLogoUrl,
+  resolveFaviconUrl,
   resolveOrganizationLogoUrl,
   resolveSiteName,
 } from "@/lib/site-brand-env";
@@ -91,9 +91,6 @@ function absolutizeFavicon(href: string, base: string): string {
   return `${origin}/${t}`;
 }
 
-function getEnvFaviconUrl(): string {
-  return process.env.NEXT_PUBLIC_FAVICON_URL?.trim() ?? "";
-}
 
 /**
  * The Supabase Storage host that serves user-uploaded media. Surfacing it as a
@@ -140,7 +137,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description =
     identity.siteDescription.trim() || brand.siteDescription.trim() || undefined;
   const siteBase = getPublicSiteUrl();
-  const rawIcon = getEnvFaviconUrl() || getEnvLogoUrl() || brand.faviconUrl.trim();
+  const rawIcon = resolveFaviconUrl(brand.faviconUrl);
   const icon = rawIcon ? absolutizeFavicon(rawIcon, siteBase) : undefined;
   const mime = icon ? faviconMimeType(icon) : undefined;
 
@@ -192,8 +189,7 @@ export default async function RootLayout({
     ]);
   const identity = applyEnvToSiteIdentity(identityRaw);
   const storeBrand = applyEnvToStoreBrand({ ...baseBrand, announcementBar });
-  const envFavicon = getEnvFaviconUrl();
-  const faviconRaw = envFavicon || getEnvLogoUrl() || baseBrand.faviconUrl.trim();
+  const faviconRaw = resolveFaviconUrl(baseBrand.faviconUrl);
   const faviconHref = faviconRaw ? absolutizeFavicon(faviconRaw, getPublicSiteUrl()) : "";
   const faviconType = faviconHref ? faviconMimeType(faviconHref) : undefined;
   const orgLd = organizationJsonLd({

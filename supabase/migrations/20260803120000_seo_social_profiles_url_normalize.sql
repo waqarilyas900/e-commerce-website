@@ -4,7 +4,7 @@
 --   1. Add a BEFORE INSERT/UPDATE trigger that auto-normalizes the URL —
 --      trims whitespace, prepends https:// when the scheme is missing for any
 --      non-`facebook_app` row, and passes numeric Facebook App IDs through
---      untouched. This means a paste like "facebook.com/outflint" no longer
+--      untouched. This means a paste like "facebook.com/simplecartstore" no longer
 --      trips the format check.
 --   2. Loosen the `seo_social_url_format` check to also allow empty strings,
 --      so the admin "Add profile" button (which can momentarily insert a

@@ -1,5 +1,5 @@
 /**
- * Seeds the default Outflint demo collection + 5 products (tailoring /
+ * Seeds the default SimpleCartStore demo collection + 5 products (tailoring /
  * stitching accessories) with varied variant strategies:
  * - Presser foot kit: single option "Style" (no size/color FKs)
  * - Thread snips: color-only variants with color_id (Black / White)

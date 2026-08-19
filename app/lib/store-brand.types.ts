@@ -1,5 +1,5 @@
 export type StoreVerticalId =
-  /** Outflint-style tailoring / stitching demo catalog (default seed). */
+  /** SimpleCartStore-style tailoring / stitching demo catalog (default seed). */
   | "tailoring"
   | "clothing"
   | "jewellery"
