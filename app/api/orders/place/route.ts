@@ -180,31 +180,29 @@ export async function POST(req: Request) {
       }
     }
 
-    void (async () => {
-      try {
-        const lines = await buildOrderLineSummaries(rpcPayload.items);
-        const shippingSummary = [
-          rpcPayload.shipping_street,
-          `${rpcPayload.shipping_city}, ${rpcPayload.shipping_postal_code}`,
-          rpcPayload.shipping_province,
-        ].join("\n");
-        const customerName =
-          `${rpcPayload.first_name} ${rpcPayload.last_name}`.trim() || "Customer";
-        const sendResult = await sendOrderConfirmationEmail({
-          to: rpcPayload.email.trim(),
-          orderNumber: result.order_number,
-          totalLabel: formatPkr(result.total_cents / 100),
-          customerName,
-          lines,
-          shippingSummary,
-        });
-        if (!sendResult.sent) {
-          console.warn("[orders/place] confirmation email:", sendResult.error);
-        }
-      } catch (e) {
-        console.warn("[orders/place] confirmation email failed", e);
+    try {
+      const lines = await buildOrderLineSummaries(rpcPayload.items);
+      const shippingSummary = [
+        rpcPayload.shipping_street,
+        `${rpcPayload.shipping_city}, ${rpcPayload.shipping_postal_code}`,
+        rpcPayload.shipping_province,
+      ].join("\n");
+      const customerName =
+        `${rpcPayload.first_name} ${rpcPayload.last_name}`.trim() || "Customer";
+      const sendResult = await sendOrderConfirmationEmail({
+        to: rpcPayload.email.trim(),
+        orderNumber: result.order_number,
+        totalLabel: formatPkr(result.total_cents / 100),
+        customerName,
+        lines,
+        shippingSummary,
+      });
+      if (!sendResult.sent) {
+        console.error("[orders/place] confirmation email:", sendResult.error);
       }
-    })();
+    } catch (e) {
+      console.error("[orders/place] confirmation email failed", e);
+    }
 
     return NextResponse.json(result);
   }
