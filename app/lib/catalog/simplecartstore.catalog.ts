@@ -6,7 +6,7 @@ import type { StoreCatalog } from "./types";
  */
 const COLLECTION_SLUG = "stitching-accessories";
 
-export const outflintDemoCatalog: StoreCatalog = {
+export const simpleCartStoreDemoCatalog: StoreCatalog = {
   brand: {
     siteTitle: "SimpleCartStore",
     siteDescription:
@@ -75,20 +75,20 @@ export const outflintDemoCatalog: StoreCatalog = {
       title: "Featured tailoring parts",
       viewAllHref: `/collections/${COLLECTION_SLUG}`,
       productSlugs: [
-        "outflint-universal-presser-foot-kit",
-        "outflint-thread-snips",
-        "outflint-hand-needle-assortment",
-        "outflint-machine-oil-bottle",
+        "scs-universal-presser-foot-kit",
+        "scs-thread-snips",
+        "scs-hand-needle-assortment",
+        "scs-machine-oil-bottle",
       ],
     },
     {
       title: "Tools & guides",
       viewAllHref: `/collections/${COLLECTION_SLUG}`,
       productSlugs: [
-        "outflint-hand-needle-assortment",
-        "outflint-machine-oil-bottle",
-        "outflint-adjustable-edge-guide",
-        "outflint-universal-presser-foot-kit",
+        "scs-hand-needle-assortment",
+        "scs-machine-oil-bottle",
+        "scs-adjustable-edge-guide",
+        "scs-universal-presser-foot-kit",
       ],
     },
   ],
@@ -105,8 +105,8 @@ export const outflintDemoCatalog: StoreCatalog = {
   bundles: [],
   products: [
     {
-      id: "prod-outflint-universal-presser-foot-kit",
-      slug: "outflint-universal-presser-foot-kit",
+      id: "prod-scs-universal-presser-foot-kit",
+      slug: "scs-universal-presser-foot-kit",
       name: "Universal presser foot kit",
       shortDescription: "Choose standard shank or industrial high-shank — same reliable feed.",
       description:
@@ -121,8 +121,8 @@ export const outflintDemoCatalog: StoreCatalog = {
       tags: ["presser-foot", "industrial", "tailoring"],
     },
     {
-      id: "prod-outflint-thread-snips",
-      slug: "outflint-thread-snips",
+      id: "prod-scs-thread-snips",
+      slug: "scs-thread-snips",
       name: "Thread snips (spring)",
       shortDescription: "Sharp blades, spring action — Black or White handles.",
       description:
@@ -137,8 +137,8 @@ export const outflintDemoCatalog: StoreCatalog = {
       tags: ["snips", "notions", "tailoring"],
     },
     {
-      id: "prod-outflint-hand-needle-assortment",
-      slug: "outflint-hand-needle-assortment",
+      id: "prod-scs-hand-needle-assortment",
+      slug: "scs-hand-needle-assortment",
       name: "Hand needle assortment",
       shortDescription: "10-piece starter or 50-piece workshop pack — promo on the small pack.",
       description:
@@ -154,8 +154,8 @@ export const outflintDemoCatalog: StoreCatalog = {
       tags: ["needles", "hand-sewing", "sale"],
     },
     {
-      id: "prod-outflint-machine-oil-bottle",
-      slug: "outflint-machine-oil-bottle",
+      id: "prod-scs-machine-oil-bottle",
+      slug: "scs-machine-oil-bottle",
       name: "Sewing machine oil",
       shortDescription: "Non-gumming oil — 100 ml or 250 ml bottle.",
       description:
@@ -171,8 +171,8 @@ export const outflintDemoCatalog: StoreCatalog = {
       tags: ["oil", "maintenance", "machine"],
     },
     {
-      id: "prod-outflint-adjustable-edge-guide",
-      slug: "outflint-adjustable-edge-guide",
+      id: "prod-scs-adjustable-edge-guide",
+      slug: "scs-adjustable-edge-guide",
       name: "Adjustable edge guide foot",
       shortDescription: "Narrow or wide guide × Black or White body.",
       description:

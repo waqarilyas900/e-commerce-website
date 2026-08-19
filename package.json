@@ -20,8 +20,8 @@
     "supabase:deploy": "node scripts/deploy-supabase-env.mjs",
     "seed:admin": "node scripts/seed-admin.mjs",
     "seed:catalog": "tsx scripts/seed-catalog.ts",
-    "seed:demo": "tsx scripts/seed-outflint-demo.ts",
-    "seed:tailoring": "tsx scripts/seed-outflint-demo.ts",
+    "seed:demo": "tsx scripts/seed-simplecartstore-demo.ts",
+    "seed:tailoring": "tsx scripts/seed-simplecartstore-demo.ts",
     "cron:restock": "node scripts/run-restock-cron.mjs",
     "cron:restock:deploy": "node scripts/push-restock-edge.mjs"
   },

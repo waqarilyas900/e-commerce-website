@@ -17,7 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { outflintDemoCatalog } from "../app/lib/catalog/outflint.catalog";
+import { simpleCartStoreDemoCatalog } from "../app/lib/catalog/simplecartstore.catalog";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..");
@@ -46,9 +46,9 @@ type VariantSeed = {
 };
 
 const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
-  "outflint-universal-presser-foot-kit": [
+  "scs-universal-presser-foot-kit": [
     {
-      sku: "outflint-foot-std",
+      sku: "scs-foot-std",
       option_values: { Style: "Standard shank" },
       sizeLabel: null,
       colorName: null,
@@ -57,7 +57,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 60,
     },
     {
-      sku: "outflint-foot-hi",
+      sku: "scs-foot-hi",
       option_values: { Style: "Industrial high-shank" },
       sizeLabel: null,
       colorName: null,
@@ -66,9 +66,9 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 45,
     },
   ],
-  "outflint-thread-snips": [
+  "scs-thread-snips": [
     {
-      sku: "outflint-snips-blk",
+      sku: "scs-snips-blk",
       option_values: { Color: "Black" },
       sizeLabel: null,
       colorName: "Black",
@@ -77,7 +77,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 55,
     },
     {
-      sku: "outflint-snips-wht",
+      sku: "scs-snips-wht",
       option_values: { Color: "White" },
       sizeLabel: null,
       colorName: "White",
@@ -86,9 +86,9 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 50,
     },
   ],
-  "outflint-hand-needle-assortment": [
+  "scs-hand-needle-assortment": [
     {
-      sku: "outflint-needle-10",
+      sku: "scs-needle-10",
       option_values: { size: "10-piece pack" },
       sizeLabel: null,
       colorName: null,
@@ -97,7 +97,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 22,
     },
     {
-      sku: "outflint-needle-50",
+      sku: "scs-needle-50",
       option_values: { size: "50-piece pack" },
       sizeLabel: null,
       colorName: null,
@@ -106,9 +106,9 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 12,
     },
   ],
-  "outflint-machine-oil-bottle": [
+  "scs-machine-oil-bottle": [
     {
-      sku: "outflint-oil-100",
+      sku: "scs-oil-100",
       option_values: { Size: "100 ml" },
       sizeLabel: null,
       colorName: null,
@@ -117,7 +117,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 80,
     },
     {
-      sku: "outflint-oil-250",
+      sku: "scs-oil-250",
       option_values: { Size: "250 ml" },
       sizeLabel: null,
       colorName: null,
@@ -126,9 +126,9 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 40,
     },
   ],
-  "outflint-adjustable-edge-guide": [
+  "scs-adjustable-edge-guide": [
     {
-      sku: "outflint-guide-narrow-blk",
+      sku: "scs-guide-narrow-blk",
       option_values: { Guide: "Narrow", Color: "Black" },
       sizeLabel: null,
       colorName: "Black",
@@ -137,7 +137,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 30,
     },
     {
-      sku: "outflint-guide-narrow-wht",
+      sku: "scs-guide-narrow-wht",
       option_values: { Guide: "Narrow", Color: "White" },
       sizeLabel: null,
       colorName: "White",
@@ -146,7 +146,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 28,
     },
     {
-      sku: "outflint-guide-wide-blk",
+      sku: "scs-guide-wide-blk",
       option_values: { Guide: "Wide", Color: "Black" },
       sizeLabel: null,
       colorName: "Black",
@@ -155,7 +155,7 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
       quantity_on_hand: 24,
     },
     {
-      sku: "outflint-guide-wide-wht",
+      sku: "scs-guide-wide-wht",
       option_values: { Guide: "Wide", Color: "White" },
       sizeLabel: null,
       colorName: "White",
@@ -168,14 +168,14 @@ const VARIANTS_BY_SLUG: Record<string, VariantSeed[]> = {
 
 const LOG = "[seed-demo]";
 
-export async function seedOutflintDemoCatalog(): Promise<void> {
+export async function seedSimpleCartStoreDemoCatalog(): Promise<void> {
   if (!url) fail("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL.");
   if (!serviceKey)
     fail(
       "Missing SUPABASE_SERVICE_ROLE_KEY (Dashboard → Settings → API → service_role).",
     );
 
-  const catalog = outflintDemoCatalog;
+  const catalog = simpleCartStoreDemoCatalog;
   const supabase = createClient(url, serviceKey);
 
   const { data: sizeRows, error: sizeErr } = await supabase
@@ -353,7 +353,7 @@ function isRunDirectly(): boolean {
 }
 
 if (isRunDirectly()) {
-  seedOutflintDemoCatalog().catch((e) => {
+  seedSimpleCartStoreDemoCatalog().catch((e) => {
     console.error(e);
     process.exit(1);
   });

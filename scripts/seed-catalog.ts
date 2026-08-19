@@ -15,7 +15,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getCatalog } from "../app/lib/catalog/index";
 import type { StoreVerticalId } from "../app/lib/store-brand.types";
-import { seedOutflintDemoCatalog } from "./seed-outflint-demo";
+import { seedSimpleCartStoreDemoCatalog } from "./seed-simplecartstore-demo";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..");
@@ -54,7 +54,7 @@ async function main() {
 
   const vertical = verticalFromEnv();
   if (vertical === "tailoring") {
-    await seedOutflintDemoCatalog();
+    await seedSimpleCartStoreDemoCatalog();
     return;
   }
 
