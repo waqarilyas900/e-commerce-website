@@ -21,10 +21,10 @@ import {
   type NominatimAddress,
 } from "@/app/lib/nominatim-address";
 
+import { namePartsFromUserMetadata } from "@/lib/auth/user-display-name";
+
 function readNames(meta: Record<string, unknown>) {
-  const first =
-    typeof meta.first_name === "string" ? meta.first_name.trim() : "";
-  const last = typeof meta.last_name === "string" ? meta.last_name.trim() : "";
+  const { first, last } = namePartsFromUserMetadata(meta);
   return { first, last };
 }
 

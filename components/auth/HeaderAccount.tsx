@@ -10,33 +10,26 @@ import {
   markPasswordRecoveryFlow,
   shouldUsePasswordRecoveryHeader,
 } from "@/lib/auth/password-recovery-session";
+import {
+  avatarInitialsFromUser,
+  avatarPhotoUrlFromUser,
+  displayNameFromUser,
+  type UserNameProfile,
+} from "@/lib/auth/user-display-name";
 import { createClient } from "@/lib/supabase/client";
 
-function displayName(user: User) {
-  const m = user.user_metadata as Record<string, string | undefined>;
-  const first = m?.first_name?.trim();
-  const last = m?.last_name?.trim();
-  const combined = [first, last].filter(Boolean).join(" ").trim();
-  if (combined) return combined;
-  return user.email ?? "";
-}
-
-/** Two-letter avatar label from metadata or email. */
-function avatarInitials(user: User): string {
-  const m = user.user_metadata as Record<string, string | undefined>;
-  const f = m?.first_name?.trim();
-  const l = m?.last_name?.trim();
-  if (f && l) return `${f[0] ?? ""}${l[0] ?? ""}`.toUpperCase();
-  if (f) return f.slice(0, 2).toUpperCase();
-  const e = user.email?.trim();
-  if (e) return e.slice(0, 2).toUpperCase();
-  return "?";
-}
-
-function avatarPhotoUrl(user: User): string | null {
-  const m = user.user_metadata as Record<string, unknown>;
-  const url = m?.avatar_url ?? m?.picture;
-  return typeof url === "string" && url.length > 0 ? url : null;
+async function loadUserNameProfile(authId: string): Promise<UserNameProfile | null> {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("users")
+      .select("first_name, last_name")
+      .eq("auth_id", authId)
+      .maybeSingle();
+    return data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 const menuLinkClass =
@@ -47,6 +40,7 @@ export function HeaderAccount() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [nameProfile, setNameProfile] = useState<UserNameProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -58,9 +52,14 @@ export function HeaderAccount() {
     try {
       const supabase = createClient();
 
-      supabase.auth.getSession().then(({ data: { session: s } }) => {
+      supabase.auth.getSession().then(async ({ data: { session: s } }) => {
         setSession(s ?? null);
         setUser(s?.user ?? null);
+        if (s?.user) {
+          setNameProfile(await loadUserNameProfile(s.user.id));
+        } else {
+          setNameProfile(null);
+        }
         setLoading(false);
       });
 
@@ -69,6 +68,11 @@ export function HeaderAccount() {
       } = supabase.auth.onAuthStateChange((event, nextSession) => {
         setSession(nextSession ?? null);
         setUser(nextSession?.user ?? null);
+        if (nextSession?.user) {
+          void loadUserNameProfile(nextSession.user.id).then(setNameProfile);
+        } else {
+          setNameProfile(null);
+        }
         if (event === "PASSWORD_RECOVERY" && nextSession) {
           markPasswordRecoveryFlow();
         }
@@ -175,9 +179,9 @@ export function HeaderAccount() {
   }
 
   if (user) {
-    const photo = avatarPhotoUrl(user);
-    const initials = avatarInitials(user);
-    const name = displayName(user);
+    const photo = avatarPhotoUrlFromUser(user);
+    const initials = avatarInitialsFromUser(user, nameProfile);
+    const name = displayNameFromUser(user, nameProfile);
 
     return (
       <div className="flex min-w-0 max-w-full items-center justify-end">
