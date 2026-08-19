@@ -1,11 +1,11 @@
-import { escapeHtml } from "@/lib/email/html";
+import {
+  buildOrderConfirmationEmailHtml,
+  buildOrderConfirmationEmailText,
+  type OrderLineSummary,
+} from "@/lib/email/templates/order-confirmation-email";
 import { getResend, getResendFrom } from "@/lib/email/resend-client";
 
-export type OrderLineSummary = {
-  name: string;
-  quantity: number;
-  lineTotalLabel: string;
-};
+export type { OrderLineSummary };
 
 export type SendOrderConfirmationInput = {
   to: string;
@@ -16,6 +16,20 @@ export type SendOrderConfirmationInput = {
   shippingSummary: string;
 };
 
+const STORE_NAME = "SimpleCartStore";
+
+function formatPlacedAtLabel(date = new Date()): string {
+  return date.toLocaleString("en-PK", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Asia/Karachi",
+  });
+}
+
 export async function sendOrderConfirmationEmail(
   input: SendOrderConfirmationInput,
 ): Promise<{ sent: boolean; error?: string }> {
@@ -25,39 +39,22 @@ export async function sendOrderConfirmationEmail(
     return { sent: false, error: "Email not configured (RESEND_API_KEY / RESEND_FROM)" };
   }
 
-  const linesHtml = input.lines
-    .map(
-      (l) =>
-        `<tr><td style="padding:8px 0;border-bottom:1px solid #eee">${escapeHtml(l.name)}</td>` +
-        `<td style="padding:8px 0;border-bottom:1px solid #eee;text-align:center">${l.quantity}</td>` +
-        `<td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right">${escapeHtml(l.lineTotalLabel)}</td></tr>`,
-    )
-    .join("");
-
-  const html = `<!DOCTYPE html>
-<html><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#171717;max-width:560px">
-  <p style="font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:#737373;margin:0 0 8px">SimpleCartStore</p>
-  <h1 style="font-size:20px">Order confirmed</h1>
-  <p>Hi ${escapeHtml(input.customerName)},</p>
-  <p>Thanks for your order <strong>${escapeHtml(input.orderNumber)}</strong>.</p>
-  <p style="font-size:18px;font-weight:600">Total: ${escapeHtml(input.totalLabel)}</p>
-  <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:16px">
-    <thead><tr>
-      <th align="left" style="padding:8px 0;border-bottom:2px solid #ddd">Item</th>
-      <th style="padding:8px 0;border-bottom:2px solid #ddd">Qty</th>
-      <th align="right" style="padding:8px 0;border-bottom:2px solid #ddd">Line</th>
-    </tr></thead>
-    <tbody>${linesHtml}</tbody>
-  </table>
-  <p style="margin-top:20px;font-size:14px"><strong>Ship to</strong><br/>${escapeHtml(input.shippingSummary).replace(/\n/g, "<br/>")}</p>
-  <p style="margin-top:24px;font-size:12px;color:#737373">If you did not place this order, contact support.</p>
-</body></html>`;
+  const templateParams = {
+    storeName: STORE_NAME,
+    orderNumber: input.orderNumber,
+    totalLabel: input.totalLabel,
+    customerName: input.customerName,
+    lines: input.lines,
+    shippingSummary: input.shippingSummary,
+    placedAtLabel: formatPlacedAtLabel(),
+  };
 
   const { error } = await resend.emails.send({
     from,
     to: input.to,
-    subject: `SimpleCartStore — Order confirmed (${input.orderNumber})`,
-    html,
+    subject: `${STORE_NAME} — Order confirmed (${input.orderNumber})`,
+    html: buildOrderConfirmationEmailHtml(templateParams),
+    text: buildOrderConfirmationEmailText(templateParams),
   });
 
   if (error) {
