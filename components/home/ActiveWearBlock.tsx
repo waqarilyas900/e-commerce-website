@@ -54,7 +54,7 @@ export function ActiveWearBlock() {
                       <img
                         src={src}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-contain object-center p-4 sm:p-6"
+                        className="absolute inset-0 h-full w-full object-cover object-center"
                         loading="lazy"
                         decoding="async"
                       />
@@ -63,7 +63,7 @@ export function ActiveWearBlock() {
                         src={src}
                         alt=""
                         fill
-                        className="object-contain object-center p-4 sm:p-6"
+                        className="object-cover object-center"
                         sizes="(max-width: 768px) 100vw, 50vw"
                         loading="lazy"
                       />
