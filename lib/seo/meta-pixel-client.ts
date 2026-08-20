@@ -2,6 +2,7 @@
 
 import { STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { createClient } from "@/lib/supabase/client";
+import { trackGa4Ecommerce } from "@/lib/seo/ga4-ecommerce";
 
 declare global {
   interface Window {
@@ -302,6 +303,8 @@ export function trackMetaPixel(
   const eventId = options.eventId || generateMetaEventId(eventName);
   if (typeof window === "undefined") return eventId;
   const payload = params ?? {};
+  // Always emit GA4 ecommerce (Google Ads / GA4) even when Meta Pixel ID is empty.
+  trackGa4Ecommerce(eventName, payload);
   pushMetaDataLayerEvent(eventName, eventId, payload, options);
   sendMetaCapiEvent(eventName, eventId, payload, options);
 
