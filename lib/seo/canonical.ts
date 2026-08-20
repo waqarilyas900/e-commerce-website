@@ -2,11 +2,11 @@
  * Canonicalization rules for storefront URLs.
  *
  * Goals:
- *   1. Bare paths are the canonical surface — no trailing slash, no UTM, no `?sort=`.
+ *   1. Bare paths are the canonical surface — no trailing slash, no UTM, no facets.
  *   2. A small set of "content-changing" params per route stays in the canonical
- *      (e.g. `q` on `/search`, future: a curated `color` filter).
- *   3. Listing pages (`/collections/*`, `/s/*`) allow sort/stock/price params on
- *      the canonical so filtered views are indexable without UTMs/gclid noise.
+ *      (e.g. `q` on `/search`).
+ *   3. Listing facet params (`sort`/`stock`/`min`/`max`) are stripped from the
+ *      canonical and trigger `noindex`, matching `robots.txt` disallow rules.
  */
 
 import { getPublicSiteUrl } from "@/lib/site-url";
@@ -34,8 +34,8 @@ const NEVER_KEEP = new Set([
 
 /**
  * Query keys used by `parseCollectionSearchParams` on `/collections/[slug]` and
- * `/s/[slug]` (home section rails). Preserved on canonical; pages stay indexable
- * when only these are present (UTMs etc. still trigger noindex via `NEVER_KEEP`).
+ * `/s/[slug]`. Never kept on the canonical; presence triggers `noindex` so
+ * robots meta stays aligned with `robots.txt` `/*?*sort=` (etc.) disallows.
  */
 export const COLLECTION_LISTING_PARAM_KEYS = ["sort", "stock", "min", "max"] as const;
 
@@ -45,14 +45,6 @@ export const COLLECTION_LISTING_PARAM_KEYS = ["sort", "stock", "min", "max"] as 
  */
 const ROUTE_ALLOWED_PARAMS: Array<{ test: (p: string) => boolean; allow: string[] }> = [
   { test: (p) => p === "/search" || p.startsWith("/search/"), allow: ["q"] },
-  {
-    test: (p) => p.startsWith("/collections/"),
-    allow: [...COLLECTION_LISTING_PARAM_KEYS],
-  },
-  {
-    test: (p) => p.startsWith("/s/"),
-    allow: [...COLLECTION_LISTING_PARAM_KEYS],
-  },
 ];
 
 function pathnameOf(input: string): string {
@@ -84,7 +76,7 @@ function allowedParamsFor(pathname: string): Set<string> {
 }
 
 /**
- * Build the canonical pathname (no origin) for a request. Strips UTMs, sort,
+ * Build the canonical pathname (no origin) for a request. Strips UTMs, facets,
  * pagination, and any param not in the per-route allow-list.
  */
 export function canonicalPathFor(

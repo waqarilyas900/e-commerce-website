@@ -10,9 +10,15 @@ import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
 import {
   buildPageMetadata,
+  canonicalUrlFor,
   loadSeoOverrideForRoute,
   loadSiteIdentity,
+  resolveSeoCanonicalOverride,
+  seoHeadingFromMetaTitle,
 } from "@/lib/seo";
+import { JsonLd, breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { absoluteUrl } from "@/lib/seo/canonical";
+import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -35,26 +41,61 @@ export default async function CollectionsPage() {
     notFound();
   }
 
-  const [collections, allProducts] = await Promise.all([
+  const [collections, allProducts, identity] = await Promise.all([
     getCachedListCollections(),
     getCachedAllActiveProductsForCards(),
+    loadSiteIdentity(),
   ]);
+  const override = await loadSeoOverrideForRoute("/collections", identity.locale);
+  const heading = seoHeadingFromMetaTitle(override?.title, "Shop All Collections");
+  const intro =
+    override?.description?.trim() ||
+    "Browse drinkware, kitchen tools, beauty gadgets, appliances and more — curated home essentials for Pakistan.";
+  const canonical = resolveSeoCanonicalOverride(
+    override?.canonicalUrl,
+    canonicalUrlFor("/collections"),
+  );
+  const breadcrumbId = `${canonical}#breadcrumb`;
+  const crumbs = breadcrumbJsonLd([
+    { name: "Home", url: "/" },
+    { name: "Collections", url: canonical },
+  ]);
+  (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
+  const hubLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${canonical}#collections-hub`,
+    url: canonical,
+    name: heading,
+    description: intro,
+    breadcrumb: { "@id": breadcrumbId },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: collections.length,
+      itemListElement: collections.map((c, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: absoluteUrl(`/collections/${c.slug}`),
+        name: c.name,
+      })),
+    },
+  };
 
   return (
     <>
+      <JsonLd id="ld-collections-hub" data={hubLd} />
+      <JsonLd id="ld-breadcrumb" data={crumbs} />
       <TopStrip />
       <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
       >
+        <PageBreadcrumbs items={[{ name: "Home", href: "/" }, { name: "Collections" }]} />
         <ScrollReveal>
           <section>
-            <h1 className="text-3xl font-semibold tracking-tight">Shop by category</h1>
-            <p className="mt-2 max-w-2xl text-sm text-neutral-600 sm:text-base">
-              Browse drinkware, kitchen tools, beauty gadgets, appliances and more —
-              curated home essentials for Pakistan.
-            </p>
+            <h1 className="text-3xl font-semibold tracking-tight">{heading}</h1>
+            <p className="mt-2 max-w-2xl text-sm text-neutral-600 sm:text-base">{intro}</p>
             {collections.length > 0 ? (
               <ul className="mt-5 grid list-none grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3">
                 {collections.map((c) => (

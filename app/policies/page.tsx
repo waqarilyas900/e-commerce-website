@@ -2,7 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import { dbListPolicySummaries } from "@/app/lib/policy-pages-db";
-import { loadStoreBrandFromDatabase } from "@/app/lib/store-brand-db";
+import {
+  buildPageMetadata,
+  canonicalUrlFor,
+  loadSeoOverrideForRoute,
+  loadSiteIdentity,
+  resolveSeoCanonicalOverride,
+} from "@/lib/seo";
+import { JsonLd, breadcrumbJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
+import { absoluteUrl } from "@/lib/seo/canonical";
 
 function metaDescriptionFromPolicies(
   siteDescription: string,
@@ -16,36 +24,76 @@ function metaDescriptionFromPolicies(
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [policyPages, brand] = await Promise.all([
+  const [policyPages, identity] = await Promise.all([
     dbListPolicySummaries(),
-    loadStoreBrandFromDatabase(),
+    loadSiteIdentity(),
   ]);
-  const site = brand.siteTitle.trim() || brand.storeName.trim() || "Store";
+  const override = await loadSeoOverrideForRoute("/policies", identity.locale);
   const titles = policyPages.map((p) => p.title.trim()).filter(Boolean);
-  const description = metaDescriptionFromPolicies(brand.siteDescription, titles);
-  return {
-    title: `Policies | ${site}`,
-    description,
-    openGraph: { title: `Policies | ${site}`, description },
-  };
+  return buildPageMetadata({
+    pathname: "/policies",
+    identity,
+    override,
+    defaults: {
+      title: "Policies",
+      description: metaDescriptionFromPolicies(identity.siteDescription, titles),
+    },
+  });
 }
 
 export default async function PoliciesPage() {
-  const [policyPages, brand] = await Promise.all([
+  const [policyPages, identity] = await Promise.all([
     dbListPolicySummaries(),
-    loadStoreBrandFromDatabase(),
+    loadSiteIdentity(),
   ]);
-
-  const storeLabel = brand.storeName.trim() || brand.siteTitle.trim() || "";
+  const override = await loadSeoOverrideForRoute("/policies", identity.locale);
+  const storeLabel = identity.storeName.trim() || identity.siteTitle.trim() || "";
   const pageHeading = storeLabel ? `Policies — ${storeLabel}` : "Policies";
+  const titles = policyPages.map((p) => p.title.trim()).filter(Boolean);
   const intro =
-    brand.siteDescription.trim() ||
-    (policyPages.length > 0
-      ? titlesToIntro(policyPages.map((p) => p.title))
-      : "");
+    identity.siteDescription.trim() ||
+    (policyPages.length > 0 ? titlesToIntro(titles) : "");
+  const canonical = resolveSeoCanonicalOverride(
+    override?.canonicalUrl,
+    canonicalUrlFor("/policies"),
+  );
+  const breadcrumbId = `${canonical}#breadcrumb`;
+  const crumbs = breadcrumbJsonLd([
+    { name: "Home", url: "/" },
+    { name: "Policies", url: canonical },
+  ]);
+  (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
+
+  const pageLd = webPageJsonLd({
+    url: canonical,
+    name: pageHeading,
+    description: intro || metaDescriptionFromPolicies(identity.siteDescription, titles),
+    identity,
+    breadcrumbId,
+  });
+
+  const listLd =
+    policyPages.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "@id": `${canonical}#policy-list`,
+          name: "Store policies",
+          numberOfItems: policyPages.length,
+          itemListElement: policyPages.map((p, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: p.title,
+            url: absoluteUrl(`/${p.slug}`),
+          })),
+        }
+      : null;
 
   return (
     <>
+      <JsonLd id="ld-policies" data={pageLd} />
+      {listLd ? <JsonLd id="ld-policies-list" data={listLd} /> : null}
+      <JsonLd id="ld-policies-breadcrumb" data={crumbs} />
       <TopStrip />
       <Header />
       <main

@@ -85,6 +85,7 @@ export default async function FooterItemPage({ params }: Props) {
   const crumbsUrlBase = canonicalUrlFor("/");
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
+    { name: "Policies", url: "/policies" },
     { name: policy.title, url: canonical },
   ]);
   const articleLd = webPageJsonLd({
@@ -122,6 +123,12 @@ export default async function FooterItemPage({ params }: Props) {
               aria-label={`${identity.storeName || identity.siteTitle || "Home"} — ${crumbsUrlBase}`}
             >
               Home
+            </Link>
+            <span className="px-0.5 text-neutral-300" aria-hidden>
+              /
+            </span>
+            <Link href="/policies" className="transition hover:text-neutral-900">
+              Policies
             </Link>
             <span className="px-0.5 text-neutral-300" aria-hidden>
               /

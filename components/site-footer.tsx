@@ -18,6 +18,19 @@ const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const CONTACT_US_HREF = "/contact";
 const CONTACT_US_LABEL = "Contact us";
 
+/** Stable shop links for footer SEO internal linking. */
+const FOOTER_SHOP_LINKS: { href: string; label: string }[] = [
+  { href: "/collections", label: "All collections" },
+  { href: "/collections/drinkware", label: "Water bottles & tumblers" },
+  { href: "/collections/kitchen", label: "Kitchen tools" },
+  { href: "/collections/appliances", label: "Home appliances" },
+  { href: "/collections/beauty", label: "Beauty tools" },
+  { href: "/collections/lighting", label: "Lamps & lights" },
+  { href: "/collections/pest-control", label: "Pest control" },
+  { href: "/collections/wellness", label: "Wellness" },
+  { href: "/collections/home", label: "Home essentials" },
+];
+
 function normalizeFooterPath(href: string): string {
   let path = href.split("#")[0]?.split("?")[0]?.trim() ?? "";
   if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
@@ -250,10 +263,21 @@ export function Footer() {
   const policyRows = footer.policyFooterLinks;
   const reservedPaths = customerCareReservedPaths(policyRows);
 
-  const footerExploreLinks = buildFooterExploreLinks(
-    headerNavItems.map((n) => ({ href: n.href, label: n.label })),
-    reservedPaths,
-  );
+  const footerExploreLinks = (() => {
+    const fromNav = buildFooterExploreLinks(
+      headerNavItems.map((n) => ({ href: n.href, label: n.label })),
+      reservedPaths,
+    );
+    const seen = new Set<string>();
+    const out: { href: string; label: string }[] = [];
+    for (const item of [...FOOTER_SHOP_LINKS, ...fromNav]) {
+      const path = normalizeFooterPath(item.href);
+      if (!path || reservedPaths.has(path) || seen.has(path)) continue;
+      seen.add(path);
+      out.push({ href: path, label: item.label });
+    }
+    return out;
+  })();
   const hasExploreLinks = footerExploreLinks.length > 0;
 
   const toggle = (id: AccordionId) => {

@@ -2,7 +2,7 @@
  * Public site brand from environment variables.
  *
  * To change the logo or store name site-wide, update `.env`:
- *   NEXT_PUBLIC_SITE_NAME=SimpleCartStore
+ *   NEXT_PUBLIC_SITE_NAME=SimpleCart Store
  *   NEXT_PUBLIC_LOGO_URL=/brand/logo-dark.webp
  *   NEXT_PUBLIC_FOOTER_LOGO_URL=/brand/logo-light.webp
  *   NEXT_PUBLIC_FAVICON_URL=/brand/favicon.ico
@@ -15,7 +15,7 @@ import type { SiteIdentity } from "@/lib/seo/types";
 import type { StoreBrandConfig } from "@/app/lib/store-brand.types";
 
 /** Shown when `NEXT_PUBLIC_SITE_NAME` is unset and no DB name is available. */
-export const FALLBACK_SITE_NAME = "SimpleCartStore";
+export const FALLBACK_SITE_NAME = "SimpleCart Store";
 
 /** Header logo (dark mark on light backgrounds). */
 export const FALLBACK_LOGO_URL = "/brand/logo-dark.webp";

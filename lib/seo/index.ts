@@ -8,4 +8,5 @@ export * from "./site-identity";
 export * from "./seo-meta-db";
 export * from "./product-seo-extras";
 export * from "./analytics-config";
+export * from "./display-title";
 export * from "./jsonld";

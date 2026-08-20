@@ -539,6 +539,14 @@ async function _loadSiteIdentity(): Promise<SiteIdentity> {
         sameAs.push(url);
       }
     }
+    // Keep Organization sameAs in sync with public footer social env URLs.
+    for (const envUrl of [
+      process.env.NEXT_PUBLIC_FACEBOOK_URL,
+      process.env.NEXT_PUBLIC_INSTAGRAM_URL,
+    ]) {
+      const u = (envUrl ?? "").trim();
+      if (/^https?:\/\//i.test(u) && !sameAs.includes(u)) sameAs.push(u);
+    }
 
     return {
       storeName: brand.storeName,

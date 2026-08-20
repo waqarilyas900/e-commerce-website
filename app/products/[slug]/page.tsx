@@ -25,9 +25,14 @@ import {
 import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 import {
   JsonLd,
+  applyJsonLdOverrides,
   breadcrumbJsonLd,
+  faqPageJsonLd,
   productJsonLd,
+  storeFaqItems,
 } from "@/lib/seo/jsonld";
+import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
+import { StoreFaqSection } from "@/components/seo/store-faq";
 
 /**
  * Compute Facebook product OG extension fields from a `ProductDetail`:
@@ -193,7 +198,7 @@ export default async function ProductPage({ params }: Props) {
     seoOverride,
     shoppingExtras: seoExtras,
     optionDefinitions: detail.optionDefinitions,
-    category: detail.collectionSlug,
+    category: detail.collectionName || detail.collectionSlug,
   });
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
@@ -207,17 +212,39 @@ export default async function ProductPage({ params }: Props) {
       : []),
     { name: detail.product.name, url: canonical },
   ]);
+  (crumbs as { "@id"?: string })["@id"] = `${canonical}#breadcrumb`;
+  const productLdFinal = applyJsonLdOverrides(
+    { ...productLd, breadcrumb: { "@id": `${canonical}#breadcrumb` } },
+    seoOverride?.jsonLdOverrides,
+  );
+  const faqItems = storeFaqItems(detail.product.name);
+  const faqLd = faqPageJsonLd({ url: canonical, items: faqItems });
 
   return (
     <>
-      <JsonLd id="ld-product" data={productLd} />
+      <JsonLd id="ld-product" data={productLdFinal} />
       <JsonLd id="ld-breadcrumb" data={crumbs} />
+      {faqLd ? <JsonLd id="ld-faq" data={faqLd} /> : null}
       <TopStrip />
       <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
       >
+        <PageBreadcrumbs
+          items={[
+            { name: "Home", href: "/" },
+            ...(hasRealCollection
+              ? [
+                  {
+                    name: detail.collectionName || detail.collectionSlug,
+                    href: `/collections/${detail.collectionSlug}`,
+                  },
+                ]
+              : []),
+            { name: detail.product.name },
+          ]}
+        />
         <ProductPdp
           key={detail.product.id}
           product={detail.product}
@@ -236,6 +263,7 @@ export default async function ProductPage({ params }: Props) {
           colorById={detail.colorById}
           safeDescriptionHtml={sanitizeRichHtml(detail.product.description)}
         />
+        <StoreFaqSection items={faqItems} />
         <Suspense fallback={<RelatedProductsFallback />}>
           {/* Streamed in after the buy box renders. The query joins
               product_collections → product_variants → inventory and runs ~150-300ms

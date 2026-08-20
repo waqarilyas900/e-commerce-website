@@ -23,13 +23,19 @@ import {
   loadSeoOverrideForSubject,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
+  seoHeadingFromMetaTitle,
 } from "@/lib/seo";
 import {
   JsonLd,
+  applyJsonLdOverrides,
   breadcrumbJsonLd,
   collectionJsonLd,
+  faqPageJsonLd,
+  storeFaqItems,
 } from "@/lib/seo/jsonld";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
+import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
+import { StoreFaqSection } from "@/components/seo/store-faq";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -147,6 +153,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     loadSiteIdentity(),
   ]);
   const seoOverride = await loadSeoOverrideForSubject("collection", dbCol.id, identity.locale);
+  const displayName = seoHeadingFromMetaTitle(seoOverride?.title, collection.name);
   const featuredIndex = buildFeaturedIndex(baseline);
   const maxCeil = maxPriceCeiling(baseline);
 
@@ -162,32 +169,48 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     seoOverride?.canonicalUrl,
     canonicalUrlFor(`/collections/${slug}`, sp),
   );
-  const collectionLd = collectionJsonLd({
-    url: canonical,
-    name: collection.name,
-    description: collection.description,
-    products: baseline,
-  });
+  const breadcrumbId = `${canonical}#breadcrumb`;
+  const collectionLd = applyJsonLdOverrides(
+    collectionJsonLd({
+      url: canonical,
+      name: displayName,
+      description: seoOverride?.description || collection.description,
+      products: list,
+      breadcrumbId,
+    }),
+    seoOverride?.jsonLdOverrides,
+  );
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
     { name: "Collections", url: "/collections" },
-    { name: collection.name, url: canonical },
+    { name: displayName, url: canonical },
   ]);
+  (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
+  const faqItems = storeFaqItems();
+  const faqLd = faqPageJsonLd({ url: canonical, items: faqItems });
 
   return (
     <>
       <JsonLd id="ld-collection" data={collectionLd} />
       <JsonLd id="ld-breadcrumb" data={crumbs} />
+      {faqLd ? <JsonLd id="ld-faq" data={faqLd} /> : null}
       <TopStrip />
       <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
+        <PageBreadcrumbs
+          items={[
+            { name: "Home", href: "/" },
+            { name: "Collections", href: "/collections" },
+            { name: displayName },
+          ]}
+        />
         <header className="mb-8 text-center sm:mb-10">
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
-            {collection.name}
+            {displayName}
           </h1>
-          {collection.description?.trim() ? (
+          {(seoOverride?.description || collection.description)?.trim() ? (
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
-              {collection.description.trim()}
+              {(seoOverride?.description || collection.description).trim()}
             </p>
           ) : null}
         </header>
@@ -203,6 +226,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
             />
           </Suspense>
         </section>
+        <StoreFaqSection items={faqItems} />
       </main>
       <Footer />
     </>

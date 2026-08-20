@@ -18,9 +18,13 @@ import { getHomeRailSections } from "@/app/lib/home-rails";
 import { getCachedStoreReviewAggregate } from "@/lib/cache/store-review-aggregate";
 import {
   buildPageMetadata,
+  canonicalUrlFor,
   loadSeoOverrideForRoute,
   loadSiteIdentity,
+  resolveSeoCanonicalOverride,
+  seoHeadingFromMetaTitle,
 } from "@/lib/seo";
+import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,12 +44,37 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const homeMarketing = await getHomeMarketingData();
-  const storeReviews = await getCachedStoreReviewAggregate();
+  const [homeMarketing, storeReviews, identity] = await Promise.all([
+    getHomeMarketingData(),
+    getCachedStoreReviewAggregate(),
+    loadSiteIdentity(),
+  ]);
   const firstHeroImage = homeMarketing.slides[0]?.image ?? "";
+  const override = await loadSeoOverrideForRoute("/", identity.locale);
+  const canonical = resolveSeoCanonicalOverride(
+    override?.canonicalUrl,
+    canonicalUrlFor("/"),
+  );
+  const homeName =
+    override?.title?.trim() ||
+    identity.siteTitle ||
+    identity.storeName ||
+    "Store";
+  const homeDescription =
+    override?.description?.trim() ||
+    identity.siteDescription ||
+    `Shop home, kitchen and beauty essentials from ${identity.storeName || identity.siteTitle || "our shop"} with delivery across Pakistan.`;
+  const homeLd = webPageJsonLd({
+    url: canonical,
+    name: homeName,
+    description: homeDescription,
+    identity,
+    primaryImageUrl: firstHeroImage || identity.defaultOgImageUrl || null,
+  });
 
   return (
     <>
+      <JsonLd id="ld-home" data={homeLd} />
       {/**
        * Preload the LCP hero image so the browser fetches it during HTML parsing
        * instead of waiting for React/Next/Image to mount. Trims ~200-400 ms off
@@ -66,6 +95,19 @@ export default async function Home() {
         {homeMarketing.slides.length > 0 ? (
           <HeroSlideshow slides={homeMarketing.slides} />
         ) : null}
+        <section className="border-b border-[#e8e8e1] bg-white">
+          <div className="mx-auto max-w-7xl shell-x py-4 text-center sm:py-5">
+            <h1 className="text-xl font-semibold tracking-tight text-neutral-950 sm:text-2xl md:text-3xl">
+              {seoHeadingFromMetaTitle(
+                homeName,
+                "Home Essentials Online in Pakistan",
+              )}
+            </h1>
+            <p className="mx-auto mt-1.5 max-w-2xl text-sm text-neutral-600 sm:text-[15px]">
+              {homeDescription}
+            </p>
+          </div>
+        </section>
         {homeMarketing.missionParagraph ? (
           <MissionStrip missionHtml={homeMarketing.missionParagraph} />
         ) : null}

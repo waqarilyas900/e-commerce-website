@@ -61,6 +61,15 @@ export function organizationJsonLd(identity: SiteIdentity): Record<string, unkno
     };
   }
 
+  // Top-level NAP fields help local/Knowledge Graph enrichment; ContactPoint
+  // remains for customer-service intent.
+  if (identity.organizationPhone) {
+    node.telephone = identity.organizationPhone;
+  }
+  if (identity.organizationEmail) {
+    node.email = identity.organizationEmail;
+  }
+
   if (hasContact) {
     node.contactPoint = [
       {
@@ -69,6 +78,7 @@ export function organizationJsonLd(identity: SiteIdentity): Record<string, unkno
         telephone: identity.organizationPhone || undefined,
         email: identity.organizationEmail || undefined,
         areaServed: identity.address.country || "PK",
+        availableLanguage: ["en", "ur"],
       },
     ];
   }

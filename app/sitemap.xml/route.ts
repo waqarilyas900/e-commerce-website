@@ -231,11 +231,14 @@ export async function GET(): Promise<NextResponse> {
       continue;
     }
     const url = `${base}/collections/${encodeURIComponent(slug)}`;
+    const safeImage = safeImageUrl(c.hero_image, base);
+    if (!safeImage && c.hero_image) skippedImages += 1;
     byUrl.set(url, {
       url,
       lastModified: collectionTs.get(slug) ?? lastModified,
       changeFrequency: "daily",
       priority: 0.8,
+      imageLoc: safeImage ?? undefined,
     });
   }
 

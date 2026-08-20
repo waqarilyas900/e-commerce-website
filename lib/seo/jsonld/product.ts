@@ -11,10 +11,8 @@
  *   - `gtin`/`mpn`/`brand` are emitted when populated — they unlock Shopping
  *     enrichment.
  *   - `sku` MUST be unique on the page, so we use the product's id.
- *   - When merchant return / shipping policy IDs exist on `product_shopping_attributes`,
- *     we attach `hasMerchantReturnPolicy` and `shippingDetails` so the listing is
- *     eligible for the "Free returns" / "Free shipping" Merchant badges (a strong
- *     CTR boost in Google Shopping SERPs).
+ *   - Merchant return / shipping Offer extensions are omitted until typed
+ *     policy fields exist — opaque UUID links alone must not invent SLAs.
  */
 
 import type {
@@ -168,65 +166,18 @@ function priceValidUntilFromNow(): string {
 }
 
 /**
- * Build `hasMerchantReturnPolicy` + `shippingDetails` nodes from
- * `product_shopping_attributes`. We emit reasonable defaults that match Google
- * Shopping rich-result requirements; admins can later override with real
- * policies once they author them.
+ * Merchant return / shipping structured data.
  *
- * Only emitted when the admin has linked at least one of the policies — we
- * never fabricate a return policy a merchant hasn't actually opted into.
+ * Opaque `return_policy_id` / `shipping_policy_id` UUIDs are not enough to assert
+ * return windows, free shipping, or delivery SLAs. Emitting fabricated values
+ * risks Merchant Center / rich-result penalties — omit until typed policy fields
+ * exist in the admin schema.
  */
 function buildMerchantPolicyNodes(
-  input: ProductJsonLdInput,
-  currency: string,
+  _input: ProductJsonLdInput,
+  _currency: string,
 ): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  const country = input.identity.address.country || "PK";
-  const extras = input.shoppingExtras;
-  if (!extras) return out;
-
-  if (extras.returnPolicyId) {
-    out.hasMerchantReturnPolicy = {
-      "@type": "MerchantReturnPolicy",
-      applicableCountry: country,
-      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-      merchantReturnDays: 14,
-      returnMethod: "https://schema.org/ReturnByMail",
-      returnFees: "https://schema.org/FreeReturn",
-    };
-  }
-
-  if (extras.shippingPolicyId) {
-    out.shippingDetails = {
-      "@type": "OfferShippingDetails",
-      shippingRate: {
-        "@type": "MonetaryAmount",
-        value: "0.00",
-        currency,
-      },
-      shippingDestination: {
-        "@type": "DefinedRegion",
-        addressCountry: country,
-      },
-      deliveryTime: {
-        "@type": "ShippingDeliveryTime",
-        handlingTime: {
-          "@type": "QuantitativeValue",
-          minValue: 0,
-          maxValue: 1,
-          unitCode: "DAY",
-        },
-        transitTime: {
-          "@type": "QuantitativeValue",
-          minValue: 1,
-          maxValue: 5,
-          unitCode: "DAY",
-        },
-      },
-    };
-  }
-
-  return out;
+  return {};
 }
 
 /** "en_US" → "en-US" for schema.org `inLanguage`. */
@@ -299,7 +250,8 @@ export function productJsonLd(input: ProductJsonLdInput): Record<string, unknown
     "@context": "https://schema.org",
     "@type": "Product",
     "@id": `${url}#product`,
-    name: ovTitle || product.name,
+    // Prefer catalog name for Product rich results; keep keyword titles in <title>/OG only.
+    name: product.name?.trim() || ovTitle || "Product",
     description: description || undefined,
     image: images.length ? images : undefined,
     sku: product.id,

@@ -26,6 +26,7 @@ import {
 } from "@/lib/seo";
 import {
   JsonLd,
+  applyJsonLdOverrides,
   breadcrumbJsonLd,
   collectionJsonLd,
 } from "@/lib/seo/jsonld";
@@ -133,15 +134,21 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
     seoOverride?.canonicalUrl,
     canonicalUrlFor(`/s/${slug}`, sp),
   );
-  const collectionLd = collectionJsonLd({
-    url: canonical,
-    name: section.name,
-    products: baseline,
-  });
+  const breadcrumbId = `${canonical}#breadcrumb`;
+  const collectionLd = applyJsonLdOverrides(
+    collectionJsonLd({
+      url: canonical,
+      name: section.name,
+      products: list,
+      breadcrumbId,
+    }),
+    seoOverride?.jsonLdOverrides,
+  );
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
     { name: section.name, url: canonical },
   ]);
+  (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
 
   return (
     <>
