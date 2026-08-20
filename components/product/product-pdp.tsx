@@ -682,14 +682,25 @@ export function ProductPdp({
                 <button
                   key={`${item.url}-${i}`}
                   type="button"
+                  onMouseEnter={() => {
+                    if (i === activeMedia) return;
+                    setSlideDir(i > activeMedia ? 1 : -1);
+                    setActiveMedia(i);
+                  }}
+                  onFocus={() => {
+                    if (i === activeMedia) return;
+                    setSlideDir(i > activeMedia ? 1 : -1);
+                    setActiveMedia(i);
+                  }}
                   onClick={() => {
+                    if (i === activeMedia) return;
                     setSlideDir(i > activeMedia ? 1 : -1);
                     setActiveMedia(i);
                   }}
                   className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
                     activeMedia === i
                       ? "border-neutral-950"
-                      : "border-transparent"
+                      : "border-transparent hover:border-neutral-300"
                   }`}
                 >
                   {item.kind === "video" ? (
