@@ -54,10 +54,15 @@ const COLLECTIONS: CollectionDef[] = [
     tag: "kitchen",
     tagLabel: "Kitchen",
     sort: 1,
-    match: (s, n) =>
-      /utensil|cutlery|chopper|grinder|injector|marinade|lighter|cooking|baking|seasoning|meat|food processor|egg beater|mixer/.test(
-        `${s} ${n}`.toLowerCase(),
-      ),
+    match: (s, n) => {
+      const t = `${s} ${n}`.toLowerCase();
+      // Keep electric appliances out of Kitchen tools (they belong in Appliances).
+      if (/stove|kettle|humidifier|blower|halogen|room.?heater/.test(t)) return false;
+      if (/heater/.test(t) && !/wax/.test(t)) return false;
+      return /utensil|cutlery|chopper|grinder|injector|marinade|lighter|baking|seasoning|meat|food processor|egg beater|mixer|kitchen/.test(
+        t,
+      );
+    },
   },
   {
     slug: "appliances",
@@ -318,14 +323,25 @@ async function main() {
     .update({ is_active: false })
     .eq("is_active", true);
 
-  // Homepage rails: 4 products each, view-all → collection URL
+  // Homepage rails: unique products across rails (no repeated cards/images)
+  const usedOnHome = new Set<string>();
   const rails = COLLECTIONS.filter((c) => (byCollection.get(c.slug) ?? []).length > 0).map(
     (c) => {
       const products = byCollection.get(c.slug) ?? [];
+      const exclusive = products.filter((p) => classifyAll(p).length === 1);
+      const shared = products.filter((p) => classifyAll(p).length > 1);
+      const ordered = [...exclusive, ...shared];
+      const productSlugs: string[] = [];
+      for (const p of ordered) {
+        if (usedOnHome.has(p.slug)) continue;
+        usedOnHome.add(p.slug);
+        productSlugs.push(p.slug);
+        if (productSlugs.length >= 8) break;
+      }
       return {
         title: c.name,
         viewAllHref: `/collections/${c.slug}`,
-        productSlugs: products.slice(0, 8).map((p) => p.slug),
+        productSlugs,
       };
     },
   );

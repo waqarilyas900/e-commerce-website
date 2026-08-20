@@ -44,35 +44,32 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
 
 /**
  * Resolve rail products from curated slugs, then backfill from the linked collection
- * when slugs are stale (renamed/draft) so Beauty/Lighting etc. still show ≥4 items.
+ * when slugs are stale. Skips products already shown on an earlier homepage rail
+ * so Kitchen / Appliances (etc.) never repeat the same card image.
  */
 async function resolveRailProducts(
   rail: HomeCategoryRail,
+  usedProductIds: Set<string>,
 ): Promise<{ items: Product[]; productSlugs: string[] }> {
   const curated = await getCachedProductsBySlugs(rail.productSlugs);
-  if (curated.length >= MIN_RAIL_PRODUCTS) {
-    return {
-      items: curated.slice(0, MAX_RAIL_PRODUCTS),
-      productSlugs: curated.slice(0, MAX_RAIL_PRODUCTS).map((p) => p.slug),
-    };
-  }
+  const merged: Product[] = [];
+  const take = (list: Product[]) => {
+    for (const p of list) {
+      if (usedProductIds.has(p.id)) continue;
+      usedProductIds.add(p.id);
+      merged.push(p);
+      if (merged.length >= MAX_RAIL_PRODUCTS) return;
+    }
+  };
 
-  const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
-  if (!collectionSlug || collectionSlug === "sale") {
-    return {
-      items: curated.slice(0, MAX_RAIL_PRODUCTS),
-      productSlugs: curated.slice(0, MAX_RAIL_PRODUCTS).map((p) => p.slug),
-    };
-  }
+  take(curated);
 
-  const fromCollection = await getCachedProductsByCollectionSlug(collectionSlug);
-  const seen = new Set(curated.map((p) => p.id));
-  const merged = [...curated];
-  for (const p of fromCollection) {
-    if (seen.has(p.id)) continue;
-    seen.add(p.id);
-    merged.push(p);
-    if (merged.length >= MAX_RAIL_PRODUCTS) break;
+  if (merged.length < MIN_RAIL_PRODUCTS) {
+    const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
+    if (collectionSlug && collectionSlug !== "sale") {
+      const fromCollection = await getCachedProductsByCollectionSlug(collectionSlug);
+      take(fromCollection);
+    }
   }
 
   return {
@@ -89,17 +86,23 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
   const configuredSections = await getCachedActiveHomePageSectionsWithTags();
   const sectionsWithTags = configuredSections.filter((s) => s.tagIds.length > 0);
   if (sectionsWithTags.length > 0) {
-    return Promise.all(
-      sectionsWithTags.map(async (s) => {
-        const items = await getCachedProductsForHomeSectionTags(s.tagIds, s.slug);
-        const rail: HomeCategoryRail = {
-          title: s.name,
-          viewAllHref: `/s/${s.slug}`,
-          productSlugs: items.map((p) => p.slug),
-        };
-        return { ...rail, items, totalProductCount: items.length };
-      }),
-    );
+    const usedProductIds = new Set<string>();
+    const out: HomeRailSection[] = [];
+    for (const s of sectionsWithTags) {
+      const raw = await getCachedProductsForHomeSectionTags(s.tagIds, s.slug);
+      const items = raw.filter((p) => {
+        if (usedProductIds.has(p.id)) return false;
+        usedProductIds.add(p.id);
+        return true;
+      });
+      const rail: HomeCategoryRail = {
+        title: s.name,
+        viewAllHref: `/s/${s.slug}`,
+        productSlugs: items.map((p) => p.slug),
+      };
+      out.push({ ...rail, items, totalProductCount: raw.length });
+    }
+    return out;
   }
 
   const rails = await dbGetHomeRailsConfig();
@@ -107,13 +110,14 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
     return [];
   }
 
-  return Promise.all(
-    rails.map(async (rail) => {
-      const totalProductCount = await getTotalProductsForViewAllHref(rail.viewAllHref);
-      const { items, productSlugs } = await resolveRailProducts(rail);
-      return { ...rail, productSlugs, items, totalProductCount };
-    }),
-  );
+  const usedProductIds = new Set<string>();
+  const out: HomeRailSection[] = [];
+  for (const rail of rails) {
+    const totalProductCount = await getTotalProductsForViewAllHref(rail.viewAllHref);
+    const { items, productSlugs } = await resolveRailProducts(rail, usedProductIds);
+    out.push({ ...rail, productSlugs, items, totalProductCount });
+  }
+  return out;
 }
 
 /** Dedupes within a single request if home data is needed more than once. */
