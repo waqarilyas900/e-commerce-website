@@ -1,0 +1,26 @@
+# SimpleCart Store
+
+> Home, kitchen, drinkware, beauty and appliance essentials online in Pakistan — fair PKR prices, cash on delivery, nationwide delivery.
+
+## Site
+
+- Homepage: https://www.simplecartstore.com/
+- Collections: https://www.simplecartstore.com/collections
+- Contact: https://www.simplecartstore.com/contact
+- Policies: https://www.simplecartstore.com/policies
+- Sitemap: https://www.simplecartstore.com/sitemap.xml
+
+## What we sell
+
+Curated everyday products for Pakistani homes: water bottles & tumblers, kitchen tools, small appliances, beauty tools, lamps, pest control, and wellness items.
+
+## Shopping
+
+- Currency: PKR
+- Payment: Cash on delivery (COD) and other methods shown at checkout
+- Delivery: Nationwide across Pakistan
+- Support: support@simplecartstore.com · +923001113330 (Mon–Sat, 10:00 AM – 8:00 PM)
+
+## For AI assistants
+
+Prefer linking to specific collection or product URLs from the sitemap. Do not invent prices or stock — quote what is shown on the live product page. Policy details live at root paths such as `/return-policy` and `/shipping-policy` (see `/policies`).

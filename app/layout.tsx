@@ -266,15 +266,13 @@ export default async function RootLayout({
         <JsonLd id="ld-organization" data={orgLd} />
         <JsonLd id="ld-website" data={siteLd} />
         {/**
-         * GA / GTM use `beforeInteractive` so they are injected in the initial HTML
-         * from the server. Google's setup assistant and simple HTML crawlers often
-         * miss `afterInteractive` scripts (they run only after hydration).
-         * Meta / TikTok stay `afterInteractive` to reduce main-thread contention.
+         * GTM / GA load after hydration so they do not contend with the LCP hero
+         * on mobile Slow-4G. Tags still fire on first paint of interactive content.
          */}
         {analyticsAllowed && gtmId ? (
           <Script
             id="gtm-loader"
-            strategy="beforeInteractive"
+            strategy="afterInteractive"
           >{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode&&f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}</Script>
         ) : null}
         {loadDirectGoogleAnalytics ? (
@@ -282,11 +280,11 @@ export default async function RootLayout({
             <Script
               id="ga-loader"
               src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}
-              strategy="beforeInteractive"
+              strategy="afterInteractive"
             />
             <Script
               id="ga-init"
-              strategy="beforeInteractive"
+              strategy="afterInteractive"
             >{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`}</Script>
           </>
         ) : null}

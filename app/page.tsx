@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getImageProps } from "next/image";
 import {
   Footer,
   Header,
@@ -8,7 +9,11 @@ import {
   WhyShop,
 } from "@/components/storefront";
 import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
-import { HeroSlideshow } from "@/components/home/HeroSlideshow";
+import {
+  HERO_IMAGE_QUALITY,
+  HERO_IMAGE_SIZES,
+  HeroSlideshow,
+} from "@/components/home/HeroSlideshow";
 import { HomeCollectionsStrip } from "@/components/home/HomeCollectionsStrip";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
@@ -72,20 +77,46 @@ export default async function Home() {
     primaryImageUrl: firstHeroImage || identity.defaultOgImageUrl || null,
   });
 
+  /**
+   * Preload the same optimized candidate `next/image` will paint — never the raw
+   * CDN original (a 1.8MB PNG preload was starving mobile LCP).
+   */
+  let heroPreload: { imageSrcSet?: string; imageSizes?: string; href?: string } | null =
+    null;
+  if (firstHeroImage) {
+    try {
+      const { props } = getImageProps({
+        src: firstHeroImage,
+        alt: "",
+        width: 1400,
+        height: 583,
+        sizes: HERO_IMAGE_SIZES,
+        quality: HERO_IMAGE_QUALITY,
+      });
+      heroPreload = {
+        imageSrcSet: props.srcSet,
+        imageSizes: props.sizes,
+        href: props.src,
+      };
+    } catch {
+      heroPreload = null;
+    }
+  }
+
   return (
     <>
       <JsonLd id="ld-home" data={homeLd} />
-      {/**
-       * Preload the LCP hero image so the browser fetches it during HTML parsing
-       * instead of waiting for React/Next/Image to mount. Trims ~200-400 ms off
-       * mobile LCP. Only the first slide is the LCP candidate; the rest stay lazy.
-       */}
-      {firstHeroImage ? (
+      {heroPreload ? (
         <link
           rel="preload"
           as="image"
-          href={firstHeroImage}
+          href={heroPreload.href}
           fetchPriority="high"
+          // imageSrcSet / imageSizes are valid HTMLLinkElement attrs for responsive preloads
+          {...{
+            imageSrcSet: heroPreload.imageSrcSet,
+            imageSizes: heroPreload.imageSizes,
+          }}
         />
       ) : null}
       <SkipToContent />

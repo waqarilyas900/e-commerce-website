@@ -217,7 +217,7 @@ export function Header() {
         className="relative z-10 flex shrink-0 items-center justify-center justify-self-center px-1"
         aria-label={`${storeName} home`}
       >
-        <SiteLogoMark priority />
+        <SiteLogoMark />
       </Link>
 
       <div className="relative z-10 flex min-h-0 min-w-0 items-center justify-end gap-0 text-neutral-800 sm:gap-1.5 lg:gap-3">

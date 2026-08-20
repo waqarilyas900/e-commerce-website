@@ -641,7 +641,7 @@ export const getCachedAnnouncementBar = unstable_cache(
 
 export const getCachedHomeHeroAndMission = unstable_cache(
   _loadHomeHeroAndMission,
-  ["layout-home-hero-mission"],
+  ["layout-home-hero-mission-v2"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.storeBrand, LAYOUT_CACHE_TAGS.announcementBar],

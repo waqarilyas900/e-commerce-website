@@ -161,7 +161,8 @@ function ExploreLinksList({
   );
 }
 
-const policyLinkClass = "transition-colors hover:text-white hover:underline";
+const policyLinkClass =
+  "underline decoration-white/35 underline-offset-4 transition-colors hover:text-white hover:decoration-white";
 
 function PolicyNavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const external = href.startsWith("http://") || href.startsWith("https://");
