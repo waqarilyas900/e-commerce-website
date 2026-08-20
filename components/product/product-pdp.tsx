@@ -598,7 +598,7 @@ export function ProductPdp({
     <>
       <section className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 *:min-w-0">
         <div className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-neutral-100 sm:aspect-[4/5] lg:aspect-square">
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-neutral-100">
             {showImageOosBadge ? (
               <div
                 className="absolute right-3 top-3 z-10 max-w-[min(calc(100%-1.5rem),16rem)] rounded-lg border border-white/15 bg-neutral-950/95 px-3 py-2 text-center shadow-lg backdrop-blur-sm"
@@ -633,13 +633,13 @@ export function ProductPdp({
                   dragMomentum={false}
                   onDragEnd={(_, info) => handleGalleryDragEnd(info)}
                   style={{ touchAction: "pan-y" }}
-                  className="absolute inset-0 flex items-center justify-center"
+                  className="absolute inset-0 flex items-center justify-center p-2 sm:p-3"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={main.url}
                     alt={main.alt || product.name}
-                    className="h-full w-full object-contain object-center"
+                    className="max-h-full max-w-full h-auto w-auto object-contain"
                     loading="eager"
                     decoding="async"
                     fetchPriority="high"
