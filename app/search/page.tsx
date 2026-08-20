@@ -32,7 +32,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       title,
       description:
         identity.siteDescription ||
-        `Search tailoring supplies, threads, dressmaking tools, and stitching accessories at ${identity.storeName || identity.siteTitle || "our shop"}.`,
+        `Search tumblers, bottles, kitchen tools, beauty gadgets and home essentials at ${identity.storeName || identity.siteTitle || "our shop"}.`,
       forceNoindex: true,
     },
   });

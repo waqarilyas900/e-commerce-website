@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "All Products",
       description:
         identity.siteDescription ||
-        `Browse tailoring supplies, sewing notions, and dressmaking accessories across the full catalog at ${identity.storeName || identity.siteTitle || "our shop"}.`,
+        `Browse drinkware, kitchen tools, beauty gadgets and home essentials across the full catalog at ${identity.storeName || identity.siteTitle || "our shop"}.`,
     },
   });
 }

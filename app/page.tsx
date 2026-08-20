@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: identity.siteTitle || identity.storeName || "Store",
       description:
         identity.siteDescription ||
-        `Tailoring supplies, dressmaking notions, and stitching accessories from ${identity.storeName || identity.siteTitle || "our shop"}.`,
+        `Shop home, kitchen and beauty essentials from ${identity.storeName || identity.siteTitle || "our shop"} with delivery across Pakistan.`,
     },
   });
 }

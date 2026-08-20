@@ -73,7 +73,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     override,
     defaults: {
       title: section.name,
-      description: `${section.name} — curated tailoring supplies, dressmaking notions, and stitching accessories from ${identity.storeName || identity.siteTitle || "our shop"}.`,
+      description: `${section.name} — curated home, kitchen and beauty essentials from ${identity.storeName || identity.siteTitle || "our shop"}.`,
     },
   });
 }
