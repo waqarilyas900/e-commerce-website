@@ -615,7 +615,7 @@ async function _loadAnalytics(): Promise<AnalyticsConfig> {
 
 export const getCachedStoreBrand = unstable_cache(
   _loadStoreBrand,
-  ["layout-store-brand-v3"],
+  ["layout-store-brand-v4"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.storeBrand],
@@ -660,7 +660,7 @@ export const getCachedHeaderNavMenu = unstable_cache(
 
 export const getCachedSiteIdentity = unstable_cache(
   _loadSiteIdentity,
-  ["layout-site-identity"],
+  ["layout-site-identity-v2"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.siteIdentity, LAYOUT_CACHE_TAGS.storeBrand],
