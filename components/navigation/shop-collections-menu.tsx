@@ -2,35 +2,59 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
 import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
 
 /** Shared style for primary header nav labels (Shop + dynamic header menu items). */
 export const primaryNavLinkClass =
-  "whitespace-nowrap text-sm font-normal text-neutral-950 transition-colors hover:text-black";
+  "whitespace-nowrap text-sm font-medium text-neutral-800 transition-colors duration-200 hover:text-neutral-950";
 
-const collectionMenuItemClass =
-  "block px-4 py-2.5 text-sm font-normal text-neutral-900 transition-colors hover:bg-neutral-50";
+const menuEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 function Chevron({ open }: { open: boolean }) {
   return (
-    <svg
+    <motion.svg
       xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.25"
-      className={`shrink-0 text-neutral-950 transition-transform ${open ? "rotate-180" : ""}`}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0 text-neutral-700"
+      animate={{ rotate: open ? 180 : 0 }}
+      transition={{ duration: 0.28, ease: menuEase }}
       aria-hidden
     >
       <path d="M6 9l6 6 6-6" />
+    </motion.svg>
+  );
+}
+
+function ArrowRight() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+      aria-hidden
+    >
+      <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
   );
 }
 
-/** “Shop” label → `/collections`; chevron alone toggles the per-collection menu (no duplicate “All collections” in the menu). */
+/** “Shop” label → `/collections`; chevron alone toggles the per-collection menu. */
 export function ShopCollectionsMenu() {
   const links = useNavCollections();
   const [open, setOpen] = useState(false);
@@ -54,7 +78,7 @@ export function ShopCollectionsMenu() {
     closeTimerRef.current = setTimeout(() => {
       setOpen(false);
       closeTimerRef.current = null;
-    }, 220);
+    }, 180);
   }
 
   useEffect(() => {
@@ -87,17 +111,29 @@ export function ShopCollectionsMenu() {
       <div className="flex items-center gap-0.5">
         <Link
           href="/collections"
-          className={`${primaryNavLinkClass} rounded-md px-0.5 py-1`}
+          className={`${primaryNavLinkClass} relative rounded-md px-1 py-1 ${
+            open ? "text-neutral-950" : ""
+          }`}
           onClick={() => {
             clearCloseTimer();
             setOpen(false);
           }}
         >
           Shop
+          <span
+            aria-hidden
+            className={`absolute inset-x-1 -bottom-0.5 h-px origin-left bg-neutral-950 transition-transform duration-300 ease-out ${
+              open ? "scale-x-100" : "scale-x-0"
+            }`}
+          />
         </Link>
         <button
           type="button"
-          className="inline-flex cursor-pointer items-center rounded-md p-1.5 text-neutral-950 hover:bg-neutral-100 focus-visible:outline focus-visible:ring-2 focus-visible:ring-neutral-900/20"
+          className={`inline-flex cursor-pointer items-center rounded-full p-1.5 transition-colors duration-200 focus-visible:outline focus-visible:ring-2 focus-visible:ring-neutral-900/20 ${
+            open
+              ? "bg-neutral-100 text-neutral-950"
+              : "text-neutral-800 hover:bg-neutral-100 hover:text-neutral-950"
+          }`}
           aria-expanded={open}
           aria-haspopup="true"
           aria-controls={menuId}
@@ -108,33 +144,84 @@ export function ShopCollectionsMenu() {
           <Chevron open={open} />
         </button>
       </div>
-      {open ? (
-        <div
-          id={menuId}
-          className="absolute left-0 top-full z-50 mt-0.5 min-w-[240px] max-h-[min(70dvh,420px)] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1.5 shadow-xl"
-          role="menu"
-        >
-          {links.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-neutral-500">No collections yet.</p>
-          ) : (
-            links.map((l) => (
-              <HoverPrefetchLink
-                key={l.slug}
-                href={`/collections/${l.slug}`}
-                className={collectionMenuItemClass}
-                role="menuitem"
-                onClick={() => {
-                  clearCloseTimer();
-                  setOpen(false);
-                }}
-              >
-                {l.name}
-              </HoverPrefetchLink>
-            ))
-          )}
-        </div>
-      ) : null}
+
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            id={menuId}
+            role="menu"
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: menuEase }}
+            className="absolute left-0 top-full z-50 pt-2"
+          >
+            {/* Hover bridge so the cursor can move into the panel without closing */}
+            <div className="min-w-[272px] overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-[0_20px_50px_-24px_rgba(0,0,0,0.35),0_8px_20px_-12px_rgba(0,0,0,0.12)] ring-1 ring-black/5">
+              <div className="border-b border-neutral-100 bg-neutral-50/80 px-4 py-2.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                  Collections
+                </p>
+              </div>
+
+              <div className="max-h-[min(70dvh,380px)] overflow-y-auto overscroll-contain py-1.5">
+                {links.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-neutral-500">No collections yet.</p>
+                ) : (
+                  links.map((l, i) => (
+                    <motion.div
+                      key={l.slug}
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.2,
+                        delay: Math.min(i * 0.02, 0.12),
+                        ease: menuEase,
+                      }}
+                    >
+                      <HoverPrefetchLink
+                        href={`/collections/${l.slug}`}
+                        role="menuitem"
+                        className="group relative mx-1.5 flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-800 transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-950 hover:pl-3.5 focus-visible:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/15"
+                        onClick={() => {
+                          clearCloseTimer();
+                          setOpen(false);
+                        }}
+                      >
+                        <span
+                          aria-hidden
+                          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-neutral-950 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+                        />
+                        <span className="min-w-0 truncate">{l.name}</span>
+                        <span className="translate-x-0 text-neutral-400 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-neutral-700 group-hover:opacity-100 group-focus-visible:opacity-100">
+                          <ArrowRight />
+                        </span>
+                      </HoverPrefetchLink>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+
+              <div className="border-t border-neutral-100 bg-neutral-50/60 p-1.5">
+                <Link
+                  href="/collections"
+                  role="menuitem"
+                  className="group flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-neutral-950 transition-colors duration-200 hover:bg-white"
+                  onClick={() => {
+                    clearCloseTimer();
+                    setOpen(false);
+                  }}
+                >
+                  View all collections
+                  <span className="text-neutral-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-neutral-900">
+                    <ArrowRight />
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
-
