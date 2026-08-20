@@ -318,9 +318,13 @@ async function main() {
     },
   );
 
+  const kitchenHero =
+    (await supabase.from("collections").select("hero_image").eq("slug", "kitchen").maybeSingle())
+      .data?.hero_image ?? "";
   const drinkwareHero =
     (await supabase.from("collections").select("hero_image").eq("slug", "drinkware").maybeSingle())
       .data?.hero_image ?? "";
+  const featuredImage = kitchenHero || drinkwareHero || "";
 
   const { error: settingsErr } = await supabase
     .from("home_page_settings")
@@ -331,9 +335,9 @@ async function main() {
         title: "Home essentials, sorted",
         description:
           "Browse drinkware, kitchen tools, beauty gadgets and appliances — curated for everyday use in Pakistan.",
-        imageUrl: drinkwareHero || "",
-        primaryLabel: "Shop drinkware",
-        primaryHref: "/collections/drinkware",
+        imageUrl: featuredImage,
+        primaryLabel: kitchenHero ? "Shop kitchen" : "Shop drinkware",
+        primaryHref: kitchenHero ? "/collections/kitchen" : "/collections/drinkware",
         secondaryLabel: "All collections",
         secondaryHref: "/collections",
       },
