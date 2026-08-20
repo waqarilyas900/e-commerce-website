@@ -181,10 +181,15 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
       <TopStrip />
       <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
-        <header className="mb-10 text-center">
+        <header className="mb-8 text-center sm:mb-10">
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
             {collection.name}
           </h1>
+          {collection.description?.trim() ? (
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+              {collection.description.trim()}
+            </p>
+          ) : null}
         </header>
 
         <section>

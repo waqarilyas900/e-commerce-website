@@ -34,6 +34,7 @@ import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { metaContentsSingleItem, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import { getPublicSiteUrl } from "@/lib/site-url";
+import Link from "next/link";
 
 function sellableQty(v: DbProductVariantRow): number {
   return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
@@ -195,6 +196,8 @@ type Props = {
   /** From `product_option_definitions`; labels and picker style per dimension. */
   optionDefinitions: VariantOptionSchemaEntry[];
   collectionLabel: string;
+  /** When set, collection label links to the collection page (internal SEO). */
+  collectionHref?: string;
   variants: DbProductVariantRow[];
   /** When set (e.g. from DB), drives gallery + video; otherwise uses `product.images` */
   assets?: DbProductAssetRow[];
@@ -212,6 +215,7 @@ export function ProductPdp({
   productSlug,
   optionDefinitions,
   collectionLabel,
+  collectionHref = "",
   variants,
   assets,
   colorById = {},
@@ -647,7 +651,7 @@ export function ProductPdp({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={main.url}
-                      alt={product.name}
+                      alt={main.alt || product.name}
                       className="mx-auto block h-auto w-full max-h-[min(92vh,900px)] max-w-full bg-transparent align-top"
                       loading="eager"
                       decoding="async"
@@ -710,7 +714,7 @@ export function ProductPdp({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.url}
-                      alt=""
+                      alt={item.alt || `${product.name} thumbnail ${i + 1}`}
                       loading="lazy"
                       decoding="async"
                       className="h-full w-full object-cover"
@@ -724,7 +728,16 @@ export function ProductPdp({
         <div className="min-w-0 space-y-4">
           {showCollectionLabel ? (
             <p className="text-sm capitalize tracking-wide text-neutral-500">
-              {collectionLabel}
+              {collectionHref ? (
+                <Link
+                  href={collectionHref}
+                  className="hover:text-neutral-800 hover:underline underline-offset-4"
+                >
+                  {collectionLabel}
+                </Link>
+              ) : (
+                collectionLabel
+              )}
             </p>
           ) : null}
           <h1 className="text-3xl font-semibold tracking-tight">

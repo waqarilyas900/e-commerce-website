@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductPdp } from "@/components/product/product-pdp";
 import { CustomerReviews } from "@/components/product/customer-reviews";
@@ -199,7 +200,7 @@ export default async function ProductPage({ params }: Props) {
     ...(hasRealCollection
       ? [
           {
-            name: detail.collectionSlug,
+            name: detail.collectionName || detail.collectionSlug,
             url: `/collections/${detail.collectionSlug}`,
           },
         ]
@@ -222,7 +223,14 @@ export default async function ProductPage({ params }: Props) {
           product={detail.product}
           productSlug={slug}
           optionDefinitions={detail.optionDefinitions}
-          collectionLabel={hasRealCollection ? detail.collectionSlug : ""}
+          collectionLabel={
+            hasRealCollection
+              ? detail.collectionName || detail.collectionSlug
+              : ""
+          }
+          collectionHref={
+            hasRealCollection ? `/collections/${detail.collectionSlug}` : ""
+          }
           variants={detail.variants}
           assets={detail.assets}
           colorById={detail.colorById}
@@ -235,6 +243,7 @@ export default async function ProductPage({ params }: Props) {
               with the PDP before this section paints. */}
           <RelatedProductsSection
             collectionSlug={detail.collectionSlug}
+            collectionName={detail.collectionName || detail.collectionSlug}
             currentSlug={slug}
           />
         </Suspense>
@@ -255,17 +264,34 @@ export default async function ProductPage({ params }: Props) {
 
 async function RelatedProductsSection({
   collectionSlug,
+  collectionName,
   currentSlug,
 }: {
   collectionSlug: string;
+  collectionName: string;
   currentSlug: string;
 }) {
+  if (!collectionSlug || collectionSlug.toLowerCase() === "uncategorized") {
+    return null;
+  }
   const relatedDb = await getCachedProductsByCollectionSlug(collectionSlug);
-  const related = relatedDb.filter((item) => item.slug !== currentSlug).slice(0, 4);
+  const related = relatedDb.filter((item) => item.slug !== currentSlug).slice(0, 8);
   if (related.length === 0) return null;
+  const viewAllHref = `/collections/${collectionSlug}`;
+  const heading = collectionName?.trim() || "Related products";
   return (
     <section className="mt-8 sm:mt-10">
-      <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          More from {heading}
+        </h2>
+        <Link
+          href={viewAllHref}
+          className="text-sm font-medium text-neutral-700 underline-offset-4 hover:underline"
+        >
+          View all {heading}
+        </Link>
+      </div>
       <div className="mt-3 sm:mt-4 md:hidden">
         <ul
           className="-mx-2 flex list-none items-stretch gap-1 overflow-x-auto scroll-px-2 scroll-smooth px-2 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-1.5 sm:px-0 sm:scroll-px-0"

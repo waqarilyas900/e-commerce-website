@@ -479,6 +479,8 @@ export type ProductDetail = {
   /** From `product_option_definitions`; drives PDP picker labels and layout. */
   optionDefinitions: VariantOptionSchemaEntry[];
   collectionSlug: string;
+  /** Human collection name for breadcrumbs / PDP label (empty if uncategorized). */
+  collectionName: string;
   variants: DbProductVariantRow[];
   assets: DbProductAssetRow[];
   colorById: Record<string, ProductDetailColorMeta>;
@@ -504,6 +506,7 @@ export async function dbGetProductDetailBySlug(
   const row = p as DbProductRow;
 
   let collectionSlug = "uncategorized";
+  let collectionName = "";
   const { data: pcl } = await supabase
     .from("product_collections")
     .select("collection_id")
@@ -512,11 +515,18 @@ export async function dbGetProductDetailBySlug(
   if (pcIds.length) {
     const { data: cdata } = await supabase
       .from("collections")
-      .select("slug, sort_order")
+      .select("slug, name, sort_order")
       .in("id", pcIds);
-    const sorted = [...(cdata ?? [])] as { slug: string; sort_order: number }[];
+    const sorted = [...(cdata ?? [])] as {
+      slug: string;
+      name: string;
+      sort_order: number;
+    }[];
     sorted.sort((a, b) => a.sort_order - b.sort_order);
-    if (sorted[0]?.slug) collectionSlug = sorted[0].slug;
+    if (sorted[0]?.slug) {
+      collectionSlug = sorted[0].slug;
+      collectionName = (sorted[0].name || "").trim() || sorted[0].slug;
+    }
   }
 
   const { data: rawVariants, error: vErr } = await supabase
@@ -593,6 +603,7 @@ export async function dbGetProductDetailBySlug(
         | null,
     ),
     collectionSlug,
+    collectionName,
     variants: merged,
     assets: (assetRows ?? []) as DbProductAssetRow[],
     colorById,
