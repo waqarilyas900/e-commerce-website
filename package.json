@@ -22,6 +22,7 @@
     "seed:catalog": "tsx scripts/seed-catalog.ts",
     "seed:demo": "tsx scripts/seed-simplecartstore-demo.ts",
     "seed:tailoring": "tsx scripts/seed-simplecartstore-demo.ts",
+    "seo:polish": "tsx scripts/seo-polish-simplecartstore.ts",
     "cron:restock": "node scripts/run-restock-cron.mjs",
     "cron:restock:deploy": "node scripts/push-restock-edge.mjs"
   },
