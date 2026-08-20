@@ -598,11 +598,7 @@ export function ProductPdp({
     <>
       <section className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 *:min-w-0">
         <div className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div
-            className={`relative overflow-hidden rounded-2xl bg-neutral-100 ${
-              main?.kind === "video" || !main ? "min-h-[520px]" : ""
-            }`}
-          >
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-neutral-100 sm:aspect-[4/5] lg:aspect-square">
             {showImageOosBadge ? (
               <div
                 className="absolute right-3 top-3 z-10 max-w-[min(calc(100%-1.5rem),16rem)] rounded-lg border border-white/15 bg-neutral-950/95 px-3 py-2 text-center shadow-lg backdrop-blur-sm"
@@ -619,50 +615,40 @@ export function ProductPdp({
                 src={main.url}
                 controls
                 playsInline
-                className="h-full min-h-[520px] w-full object-contain"
+                className="absolute inset-0 h-full w-full object-contain"
               />
             ) : main ? (
-              <div className="relative w-full">
-                {/* Invisible sizer: wrapper inherits natural image height so absolute slides do not collapse to 0. Old + new slide together for the carousel feel. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={main.url}
-                  alt=""
-                  aria-hidden
-                  className="invisible block h-auto w-full max-h-[min(92vh,900px)]"
-                />
-                <AnimatePresence initial={false} custom={slideDir}>
-                  <motion.div
-                    key={`pdp-main-${activeMedia}`}
-                    custom={slideDir}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                    drag={gallery.length > 1 ? "x" : false}
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.14}
-                    dragMomentum={false}
-                    onDragEnd={(_, info) => handleGalleryDragEnd(info)}
-                    style={{ touchAction: "pan-y" }}
-                    className="absolute inset-0"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={main.url}
-                      alt={main.alt || product.name}
-                      className="mx-auto block h-auto w-full max-h-[min(92vh,900px)] max-w-full bg-transparent align-top"
-                      loading="eager"
-                      decoding="async"
-                      fetchPriority="high"
-                      draggable={false}
-                    />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+              <AnimatePresence initial={false} custom={slideDir}>
+                <motion.div
+                  key={`pdp-main-${activeMedia}`}
+                  custom={slideDir}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                  drag={gallery.length > 1 ? "x" : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.14}
+                  dragMomentum={false}
+                  onDragEnd={(_, info) => handleGalleryDragEnd(info)}
+                  style={{ touchAction: "pan-y" }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={main.url}
+                    alt={main.alt || product.name}
+                    className="h-full w-full object-contain object-center"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    draggable={false}
+                  />
+                </motion.div>
+              </AnimatePresence>
             ) : (
-              <div className="flex min-h-[520px] items-center justify-center text-sm text-neutral-400">
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-neutral-400">
                 No media
               </div>
             )}
