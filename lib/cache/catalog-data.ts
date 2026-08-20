@@ -19,15 +19,16 @@
 
 import { unstable_cache } from "next/cache";
 import {
-  dbGetActiveHomePageSectionWithTagsBySlug,
-  dbGetCollectionBySlug,
+  dbFindUniqueActiveProductSlugByPrefix,
   dbGetProductDetailBySlug,
-  dbGetProductsBySlugs,
   dbListActiveHomePageSectionsWithTags,
   dbListAllActiveProductsForCards,
   dbListCollections,
   dbListProductsByCollectionSlug,
   dbListProductsForHomeSectionTags,
+  dbGetActiveHomePageSectionWithTagsBySlug,
+  dbGetCollectionBySlug,
+  dbGetProductsBySlugs,
 } from "@/app/lib/db/catalog";
 
 // ---------- Tags ----------
@@ -76,12 +77,17 @@ const HOME_SECTIONS_TTL = 60 * 5;
 export function getCachedProductDetailBySlug(slug: string) {
   return unstable_cache(
     async () => dbGetProductDetailBySlug(slug),
-    ["catalog:product-detail", slug],
+    ["catalog:product-detail-v2", slug],
     {
       revalidate: PRODUCT_DETAIL_TTL,
       tags: [CATALOG_CACHE_TAGS.product(slug), CATALOG_CACHE_TAGS.products],
     },
   )();
+}
+
+/** Uncached prefix lookup — used only on exact-slug misses (rare). */
+export async function findUniqueActiveProductSlugByPrefix(prefix: string) {
+  return dbFindUniqueActiveProductSlugByPrefix(prefix);
 }
 
 export function getCachedCollectionBySlug(slug: string) {

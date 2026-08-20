@@ -498,10 +498,13 @@ export async function dbGetProductDetailBySlug(
     .eq("status", "active")
     .maybeSingle();
 
-  if (pErr || !p) {
-    if (pErr) logDbCatalogIssue("getProductDetail", pErr.message);
-    return null;
+  if (pErr) {
+    // Throw (do not return null): unstable_cache must not store transient DB
+    // failures as a 10-minute "product missing" miss.
+    logDbCatalogIssue("getProductDetail", pErr.message);
+    throw new Error(`getProductDetail: ${pErr.message}`);
   }
+  if (!p) return null;
 
   const row = p as DbProductRow;
 
@@ -536,7 +539,7 @@ export async function dbGetProductDetailBySlug(
 
   if (vErr) {
     logDbCatalogIssue("productVariants", vErr.message);
-    return null;
+    throw new Error(`productVariants: ${vErr.message}`);
   }
 
   const merged = await mergeInventoryForVariants(
@@ -608,6 +611,30 @@ export async function dbGetProductDetailBySlug(
     assets: (assetRows ?? []) as DbProductAssetRow[],
     colorById,
   };
+}
+
+/**
+ * When an exact slug miss happens (truncated share links, old imports), recover a
+ * unique active product whose slug starts with the requested prefix.
+ */
+export async function dbFindUniqueActiveProductSlugByPrefix(
+  prefix: string,
+): Promise<string | null> {
+  const p = prefix.trim();
+  if (!p || p.length < 12 || !hasCatalogDb()) return null;
+  const supabase = catalogClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("slug")
+    .eq("status", "active")
+    .like("slug", `${p}%`)
+    .limit(3);
+  if (error) {
+    logDbCatalogIssue("findProductSlugByPrefix", error.message);
+    return null;
+  }
+  const slugs = [...new Set((data ?? []).map((r: { slug: string }) => r.slug).filter(Boolean))];
+  return slugs.length === 1 ? slugs[0] : null;
 }
 
 export async function dbSearchProducts(q: string): Promise<Product[]> {

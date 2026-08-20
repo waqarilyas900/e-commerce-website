@@ -1,13 +1,14 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ProductPdp } from "@/components/product/product-pdp";
 import { CustomerReviews } from "@/components/product/customer-reviews";
 import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { dbListProductReviewsForPdp } from "@/app/lib/db/catalog";
 import {
+  findUniqueActiveProductSlugByPrefix,
   getCachedProductDetailBySlug,
   getCachedProductsByCollectionSlug,
 } from "@/lib/cache/catalog-data";
@@ -158,14 +159,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug ?? "").trim();
 
-  if (!hasCatalogDb()) {
+  if (!hasCatalogDb() || !slug) {
     notFound();
   }
 
-  const detail = await getCachedProductDetailBySlug(slug);
-  if (!detail || detail.variants.length === 0) {
+  let detail = await getCachedProductDetailBySlug(slug);
+  if (!detail) {
+    const recovered = await findUniqueActiveProductSlugByPrefix(slug);
+    if (recovered && recovered !== slug) {
+      permanentRedirect(`/products/${recovered}`);
+    }
+    notFound();
+  }
+  if (detail.variants.length === 0) {
     notFound();
   }
 
