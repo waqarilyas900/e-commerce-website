@@ -23,8 +23,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 /* Main header always visible; second sticky header appears after hero scroll. */
@@ -64,9 +64,12 @@ html {
 body {
   background: var(--colorBody);
   color: var(--colorTextBody);
-  font-family: var(--font-jost), var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
   font-size: var(--typeBaseSize);
+  font-weight: 400;
   line-height: var(--typeBaseLineHeight);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Title case: first letter of each word (Hello World). Override with `uppercase` or `normal-case` on the element when needed. */
@@ -78,11 +81,38 @@ body {
   h5,
   h6 {
     text-transform: capitalize;
+    font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    font-weight: 700;
+  }
+
+  h2,
+  h3 {
+    font-weight: 600;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-weight: 600;
   }
 
   button,
   input[type="submit"] {
     text-transform: capitalize;
+    font-weight: 600;
+  }
+
+  label {
+    font-weight: 500;
+  }
+
+  strong,
+  b {
+    font-weight: 600;
   }
 
   button:not(:disabled),

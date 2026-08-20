@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Jost } from "next/font/google";
+import { Geist_Mono, Montserrat } from "next/font/google";
 import Script from "next/script";
 import NextTopLoader from "nextjs-toploader";
 import {
@@ -42,18 +42,14 @@ import "./globals.css";
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
 export const dynamic = "force-dynamic";
 
-/** Radstore.pk uses Jost for body copy */
-const jost = Jost({
-  variable: "--font-jost",
+/**
+ * Storefront typeface — Montserrat across UI.
+ * 400 body · 500 nav/labels · 600 buttons/prices · 700 headings
+ */
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-  adjustFontFallback: true,
-});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   adjustFontFallback: true,
 });
@@ -228,7 +224,7 @@ export default async function RootLayout({
     <html
       lang={htmlLang}
       dir="ltr"
-      className={`js ${jost.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`js ${montserrat.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <meta name="color-scheme" content="light" />
@@ -302,7 +298,7 @@ export default async function RootLayout({
         ) : null}
       </head>
       <body
-        className={`${jost.className} template-index loaded min-h-full bg-white text-[#1c1d1d]`}
+        className={`${montserrat.className} template-index loaded min-h-full bg-white text-[#1c1d1d] font-normal antialiased`}
         data-transitions="true"
         data-type_header_capitalize="false"
         data-type_base_accent_transform="true"

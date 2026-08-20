@@ -18,7 +18,7 @@ const ACCENT = "#0a0a0a";
 const ACCENT_SOFT = "#18181b";
 
 const FONT =
-  "system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
+  "Montserrat,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
 export type OrderConfirmationEmailParams = {
   storeName: string;
