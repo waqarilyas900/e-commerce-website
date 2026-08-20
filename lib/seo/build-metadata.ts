@@ -297,7 +297,9 @@ export function buildPageMetadata(input: BuildMetadataInput): Metadata {
     : undefined;
 
   const meta: Metadata = {
-    title: titleFinal,
+    // Absolute so root `title.template` (`%s | site`) does not double-suffix —
+    // we already apply `suffixTitle` above.
+    title: { absolute: titleFinal },
     description: descFinal,
     keywords: keywords.length ? keywords : undefined,
     alternates: { canonical },
