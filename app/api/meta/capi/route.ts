@@ -31,8 +31,15 @@ type CapiRequestBody = {
 
 const DEFAULT_GRAPH_VERSION = "v21.0";
 const HEX_SHA256_RE = /^[a-f0-9]{64}$/i;
-// TODO: Remove this Events Manager test code after CAPI testing succeeds so live events flow normally.
-const META_TEST_EVENT_CODE = "TEST18418";
+
+/** Optional Events Manager test code — only when explicitly set (never hardcode for production). */
+function metaTestEventCode(): string {
+  return (
+    process.env.META_TEST_EVENT_CODE?.trim() ||
+    process.env.FB_TEST_EVENT_CODE?.trim() ||
+    ""
+  );
+}
 
 function metaCapiEdgeUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_META_CAPI_EDGE_URL?.trim();
@@ -338,8 +345,12 @@ export async function POST(req: Request) {
 
   const payload: Record<string, unknown> = {
     data: [event],
-    test_event_code: META_TEST_EVENT_CODE,
   };
+  const testEventCode =
+    cleanString(body.test_event_code) || metaTestEventCode();
+  if (testEventCode) {
+    payload.test_event_code = testEventCode;
+  }
 
   const graphUrl = new URL(
     `https://graph.facebook.com/${metaGraphVersion()}/${encodeURIComponent(pixelId)}/events`,

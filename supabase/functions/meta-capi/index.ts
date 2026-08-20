@@ -61,11 +61,18 @@ type EnrichedUser = {
   country?: string;
 };
 
-const PIXEL_ID_FALLBACK = "2830556603968775";
+const PIXEL_ID_FALLBACK = "";
 const GRAPH_VERSION = "v19.0";
-// TODO: Remove this Events Manager test code after CAPI testing succeeds so live events flow normally.
-const TEST_EVENT_CODE = "TEST18418";
 const HEX_SHA256_RE = /^[a-f0-9]{64}$/i;
+
+/** Optional Events Manager test code — only when META_TEST_EVENT_CODE is set. */
+function testEventCodeFromEnv(): string {
+  return (
+    Deno.env.get("META_TEST_EVENT_CODE")?.trim() ||
+    Deno.env.get("FB_TEST_EVENT_CODE")?.trim() ||
+    ""
+  );
+}
 
 function jsonResponse(body: unknown, status = 200, corsOrigin = "*"): Response {
   return new Response(JSON.stringify(body), {
@@ -334,8 +341,8 @@ Deno.serve(async (req) => {
 
   const metaAccessToken = Deno.env.get("META_ACCESS_TOKEN")?.trim();
   const pixelId = Deno.env.get("META_PIXEL_ID")?.trim() || PIXEL_ID_FALLBACK;
-  if (!metaAccessToken) {
-    console.error("[meta-capi-edge] missing META_ACCESS_TOKEN");
+  if (!metaAccessToken || !pixelId) {
+    console.error("[meta-capi-edge] missing META_ACCESS_TOKEN or META_PIXEL_ID");
     return jsonResponse(
       { ok: false, error: "Meta CAPI is not configured." },
       503,
@@ -376,7 +383,7 @@ Deno.serve(async (req) => {
     eventTime,
   );
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     data: [
       {
         event_name: eventName,
@@ -388,8 +395,12 @@ Deno.serve(async (req) => {
         custom_data: customData(body.custom_data),
       },
     ],
-    test_event_code: TEST_EVENT_CODE,
   };
+  const testCode =
+    asString(body.test_event_code) || testEventCodeFromEnv();
+  if (testCode) {
+    payload.test_event_code = testCode;
+  }
 
   console.info("[meta-capi-edge] sending graph event", {
     eventName,
