@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
 /** Homepage featured band — content from `home_page_settings.featured_block` (admin / SQL). */
 export function ActiveWearBlock() {
@@ -17,6 +18,8 @@ export function ActiveWearBlock() {
   if (!hasImage && !hasCopy) {
     return null;
   }
+
+  const imageSrc = optimizeSupplierImageUrl(featured.imageUrl.trim(), 720);
 
   return (
     <section
@@ -38,7 +41,7 @@ export function ActiveWearBlock() {
               >
                 <div className="relative h-full min-h-[280px] w-full overflow-hidden bg-neutral-100 md:min-h-[400px]">
                   {(() => {
-                    const src = featured.imageUrl.trim();
+                    const src = imageSrc;
                     let external = false;
                     try {
                       const host = new URL(src).hostname.toLowerCase();
@@ -57,6 +60,8 @@ export function ActiveWearBlock() {
                         className="absolute inset-0 h-full w-full object-cover object-center"
                         loading="lazy"
                         decoding="async"
+                        width={720}
+                        height={720}
                       />
                     ) : (
                       <Image
@@ -66,6 +71,7 @@ export function ActiveWearBlock() {
                         className="object-cover object-center"
                         sizes="(max-width: 768px) 100vw, 50vw"
                         loading="lazy"
+                        quality={65}
                       />
                     );
                   })()}

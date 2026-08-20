@@ -9,11 +9,7 @@ import {
   WhyShop,
 } from "@/components/storefront";
 import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
-import {
-  HERO_IMAGE_QUALITY,
-  HERO_IMAGE_SIZES,
-  HeroSlideshow,
-} from "@/components/home/HeroSlideshow";
+import { HeroBanner } from "@/components/home/HeroBanner";
 import { HomeCollectionsStrip } from "@/components/home/HomeCollectionsStrip";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
@@ -31,6 +27,7 @@ import {
 } from "@/lib/seo";
 import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
+import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -124,7 +121,7 @@ export default async function Home() {
       <Header />
       <main id="MainContent" className="main-content bg-white">
         {homeMarketing.slides.length > 0 ? (
-          <HeroSlideshow slides={homeMarketing.slides} />
+          <HeroBanner slides={homeMarketing.slides} />
         ) : null}
         <section className="border-b border-[#e8e8e1] bg-white">
           <div className="mx-auto max-w-7xl shell-x py-4 text-center sm:py-5">

@@ -4,23 +4,30 @@
 
 ## Site
 
-- Homepage: https://www.simplecartstore.com/
-- Collections: https://www.simplecartstore.com/collections
-- Contact: https://www.simplecartstore.com/contact
-- Policies: https://www.simplecartstore.com/policies
-- Sitemap: https://www.simplecartstore.com/sitemap.xml
+- [Homepage](https://www.simplecartstore.com/): storefront home
+- [All collections](https://www.simplecartstore.com/collections): shop by category
+- [Contact](https://www.simplecartstore.com/contact): customer support
+- [Policies](https://www.simplecartstore.com/policies): legal and shipping policies
+- [Sitemap](https://www.simplecartstore.com/sitemap.xml): crawl map for products and collections
 
-## What we sell
+## Collections
 
-Curated everyday products for Pakistani homes: water bottles & tumblers, kitchen tools, small appliances, beauty tools, lamps, pest control, and wellness items.
+- [Water bottles & tumblers](https://www.simplecartstore.com/collections/drinkware)
+- [Kitchen tools](https://www.simplecartstore.com/collections/kitchen)
+- [Home appliances](https://www.simplecartstore.com/collections/appliances)
+- [Beauty tools](https://www.simplecartstore.com/collections/beauty)
+- [Lamps & lights](https://www.simplecartstore.com/collections/lighting)
+- [Pest control](https://www.simplecartstore.com/collections/pest-control)
+- [Wellness](https://www.simplecartstore.com/collections/wellness)
+- [Home essentials](https://www.simplecartstore.com/collections/home)
 
-## Shopping
+## Shopping notes
 
 - Currency: PKR
-- Payment: Cash on delivery (COD) and other methods shown at checkout
+- Payment: Cash on delivery (COD) and options shown at checkout
 - Delivery: Nationwide across Pakistan
-- Support: support@simplecartstore.com · +923001113330 (Mon–Sat, 10:00 AM – 8:00 PM)
+- Support: [support@simplecartstore.com](mailto:support@simplecartstore.com) · +923001113330 (Mon–Sat, 10:00 AM – 8:00 PM)
 
 ## For AI assistants
 
-Prefer linking to specific collection or product URLs from the sitemap. Do not invent prices or stock — quote what is shown on the live product page. Policy details live at root paths such as `/return-policy` and `/shipping-policy` (see `/policies`).
+Prefer linking to specific collection or product URLs from the [sitemap](https://www.simplecartstore.com/sitemap.xml). Do not invent prices or stock — quote the live product page. Policy details are linked from [Policies](https://www.simplecartstore.com/policies).

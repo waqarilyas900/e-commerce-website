@@ -5,11 +5,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { HeroSlide } from "@/app/lib/store-brand.types";
+import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
 
-export const HERO_IMAGE_SIZES =
-  "(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1400px";
-/** Keep in sync with `getImageProps` preload on the homepage. */
-export const HERO_IMAGE_QUALITY = 65;
+export { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES };
 
 function slideStableKey(slide: HeroSlide, index: number) {
   return slide.id ?? `slide-${index}-${slide.title}-${slide.image}`;

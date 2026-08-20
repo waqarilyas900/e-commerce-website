@@ -6,6 +6,7 @@ import {
 } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
 export type HomeCollectionTile = {
   slug: string;
@@ -15,7 +16,7 @@ export type HomeCollectionTile = {
   count: number;
 };
 
-/** Supplier CDNs (Daraz etc.) are not in next/image allowlist — use native img. */
+/** Supplier CDNs (Daraz etc.) use native img with sized lazcdn URLs. */
 function useNativeImg(src: string): boolean {
   if (!src) return false;
   if (src.startsWith("/") || src.startsWith("data:") || src.startsWith("blob:")) {
@@ -51,7 +52,7 @@ async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
       slug,
       name,
       href: `/collections/${slug}`,
-      imageUrl: hero || fallback,
+      imageUrl: optimizeSupplierImageUrl(hero || fallback, 400),
       count: products.length,
     });
   }
@@ -109,6 +110,8 @@ export async function HomeCollectionsStrip() {
                           className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
                           loading="lazy"
                           decoding="async"
+                          width={400}
+                          height={300}
                         />
                       ) : (
                         <Image

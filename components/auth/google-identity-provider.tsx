@@ -101,19 +101,26 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
     const origin = window.location.origin;
     const hostname = window.location.hostname;
 
+    /** Auth pages need GSI ASAP; storefront delays to protect LCP/FCP. */
+    const arm = (ms: number) => {
+      const id = window.setTimeout(() => setLoadGsiScript(true), ms);
+      return () => window.clearTimeout(id);
+    };
+
     if (allowed?.length) {
-      queueMicrotask(() => setLoadGsiScript(allowed.includes(origin)));
-      if (process.env.NODE_ENV === "development" && !allowed.includes(origin)) {
-        console.info(
-          `[Google One Tap] Skipped: origin ${origin} is not in NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS.`,
-        );
+      if (!allowed.includes(origin)) {
+        if (process.env.NODE_ENV === "development") {
+          console.info(
+            `[Google One Tap] Skipped: origin ${origin} is not in NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS.`,
+          );
+        }
+        return;
       }
-      return;
+      return arm(skipPromptRoute ? 0 : 4500);
     }
 
     if (process.env.NODE_ENV !== "development") {
-      queueMicrotask(() => setLoadGsiScript(true));
-      return;
+      return arm(skipPromptRoute ? 0 : 4500);
     }
 
     const allowAllDev =
@@ -121,15 +128,13 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
       process.env.NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS === "1";
 
     if (allowAllDev || isLocalDevHostname(hostname)) {
-      queueMicrotask(() => setLoadGsiScript(true));
-      return;
+      return arm(0);
     }
 
-    queueMicrotask(() => setLoadGsiScript(false));
     console.info(
       `[Google One Tap] Skipped on ${origin}: add this exact origin to Google Cloud → OAuth client → Authorized JavaScript origins, or use http://localhost:3000, or set NEXT_PUBLIC_GOOGLE_ONE_TAP_DEV_ALL_ORIGINS=true / NEXT_PUBLIC_GOOGLE_ONE_TAP_ALLOWED_ORIGINS=…`,
     );
-  }, []);
+  }, [skipPromptRoute]);
 
   useEffect(() => {
     if (!signedIn) initOnce.current = false;

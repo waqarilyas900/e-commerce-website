@@ -24,6 +24,7 @@ import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
 import { SiteLogoMark } from "@/components/site-logo";
 import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import type { Product } from "@/app/lib/catalog/types";
 import { formatPkr } from "@/app/lib/format-currency";
 import { isEffectivelyEmptyHtml } from "@/app/lib/html-content";
@@ -428,10 +429,12 @@ export function ProductCard({
             useNativeProductImg ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={product.image}
+                src={optimizeSupplierImageUrl(product.image, rail ? 400 : 400)}
                 alt={product.name}
                 loading="lazy"
                 decoding="async"
+                width={400}
+                height={500}
                 style={productImgFitStyle}
                 className={`absolute inset-0 h-full w-full ${productImgClassName}`}
               />
