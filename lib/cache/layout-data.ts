@@ -669,7 +669,7 @@ export const getCachedSiteIdentity = unstable_cache(
 
 export const getCachedAnalyticsConfig = unstable_cache(
   _loadAnalytics,
-  ["layout-analytics"],
+  ["layout-analytics-v2"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.analytics],
