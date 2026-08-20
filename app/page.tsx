@@ -9,6 +9,7 @@ import {
 } from "@/components/storefront";
 import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
 import { HeroSlideshow } from "@/components/home/HeroSlideshow";
+import { HomeCollectionsStrip } from "@/components/home/HomeCollectionsStrip";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
 import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
@@ -69,6 +70,9 @@ export default async function Home() {
           <MissionStrip missionHtml={homeMarketing.missionParagraph} />
         ) : null}
         <ActiveWearBlock />
+        <Suspense fallback={<HomeCollectionsFallback />}>
+          <HomeCollectionsStrip />
+        </Suspense>
         <Suspense fallback={<HomeRailsFallback />}>
           <HomeRails />
         </Suspense>
@@ -93,6 +97,27 @@ async function HomeRails() {
       totalProductCount={rail.totalProductCount}
     />
   ));
+}
+
+function HomeCollectionsFallback() {
+  return (
+    <section className="border-b border-[#e8e8e1] bg-white">
+      <div className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
+        <div className="mb-6 h-8 w-48 animate-pulse rounded bg-neutral-200" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50"
+            >
+              <div className="aspect-[4/3] animate-pulse bg-neutral-200" />
+              <div className="h-11 animate-pulse bg-neutral-100" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function HomeRailsFallback() {

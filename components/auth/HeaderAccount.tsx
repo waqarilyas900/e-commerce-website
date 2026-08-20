@@ -194,11 +194,11 @@ export function HeaderAccount() {
             aria-controls={menuId}
             aria-label="Account menu"
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:gap-2 sm:pr-2"
+            className="flex min-w-0 max-w-full cursor-pointer items-center gap-1 rounded-full py-0.5 pl-0.5 pr-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:gap-2 sm:pr-2"
           >
             {photo ? (
               <span
-                className={`relative block h-9 w-9 shrink-0 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 ring-2 transition hover:ring-neutral-300 ${menuOpen ? "ring-neutral-400" : "ring-transparent"}`}
+                className={`relative block h-8 w-8 shrink-0 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 ring-2 transition hover:ring-neutral-300 sm:h-9 sm:w-9 ${menuOpen ? "ring-neutral-400" : "ring-transparent"}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- OAuth avatar URLs (e.g. Google) vary by host */}
                 <img
@@ -211,7 +211,7 @@ export function HeaderAccount() {
               </span>
             ) : (
               <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-900 text-[11px] font-semibold normal-case tracking-wide text-white ring-2 transition hover:ring-neutral-400 ${menuOpen ? "ring-neutral-500" : "ring-transparent"}`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-900 text-[10px] font-semibold normal-case tracking-wide text-white ring-2 transition hover:ring-neutral-400 sm:h-9 sm:w-9 sm:text-[11px] ${menuOpen ? "ring-neutral-500" : "ring-transparent"}`}
               >
                 {initials}
               </span>
@@ -230,7 +230,7 @@ export function HeaderAccount() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`h-4 w-4 shrink-0 text-neutral-600 transition-transform ${menuOpen ? "rotate-180" : ""}`}
+              className={`hidden h-4 w-4 shrink-0 text-neutral-600 transition-transform sm:block ${menuOpen ? "rotate-180" : ""}`}
               aria-hidden
             >
               <path d="m6 9 6 6 6-6" />

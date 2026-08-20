@@ -88,6 +88,11 @@ const commonProductImageHosts: {
   // Joom supplier CDN — e.g. `img.joomcdn.net/<hash>_original.jpeg`.
   { protocol: "https", hostname: "img.joomcdn.net", pathname: "/**" },
   { protocol: "https", hostname: "*.joomcdn.net", pathname: "/**" },
+  // Daraz / Lazada PK product media (catalog imports + collection heroes).
+  { protocol: "https", hostname: "static-01.daraz.pk", pathname: "/**" },
+  { protocol: "https", hostname: "*.daraz.pk", pathname: "/**" },
+  { protocol: "https", hostname: "img.drz.lazcdn.com", pathname: "/**" },
+  { protocol: "https", hostname: "*.lazcdn.com", pathname: "/**" },
 ];
 
 // Note: the ProductCard on storefront grids falls back to plain `<img>` for

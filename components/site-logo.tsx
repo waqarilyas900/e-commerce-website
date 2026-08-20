@@ -16,9 +16,9 @@ const LOGO_HEIGHT = 50;
 
 const markSizeClass = {
   default:
-    "h-9 w-[8.25rem] sm:h-10 sm:w-[9.25rem] md:h-11 md:w-[10rem]",
+    "h-8 w-[6.5rem] sm:h-10 sm:w-[9.25rem] md:h-11 md:w-[10rem]",
   large: "h-11 w-[9.75rem] sm:h-12 sm:w-[10.75rem]",
-  compact: "h-8 w-[7rem] sm:h-9 sm:w-[7.75rem]",
+  compact: "h-7 w-[6rem] sm:h-9 sm:w-[7.75rem]",
 } as const;
 
 export type SiteLogoMarkSize = keyof typeof markSizeClass;

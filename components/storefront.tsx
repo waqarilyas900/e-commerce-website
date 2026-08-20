@@ -177,13 +177,12 @@ export function Header() {
 
   const headerContent = (isStickyHeader: boolean) => (
     /**
-     * Centered logo + symmetric side rails (not a 3-col grid).
-     * Reserves a horizontal “corridor” on lg+ where the **horizontal** nav is shown
-     * so labels never paint over the mark. Below lg, tablet widths use the hamburger drawer.
-     * Matches `SiteLogoMark` max width (~10rem) + gutters — see `components/site-logo.tsx`.
+     * True 3-column grid: logo stays in the middle track so it never paints over
+     * the account avatar / search / cart on narrow phones (absolute centering used to).
+     * Side rails share leftover width equally; below lg the left rail is hamburger only.
      */
-    <div className="header-wrapper relative mx-auto flex min-h-[64px] max-w-7xl items-center shell-x sm:min-h-[72px] md:min-h-[83px]">
-      <div className="flex min-h-0 min-w-0 flex-1 items-center gap-3 lg:pr-24 xl:pr-32">
+    <div className="header-wrapper relative mx-auto grid min-h-[64px] max-w-7xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 shell-x sm:min-h-[72px] sm:gap-x-4 md:min-h-[83px]">
+      <div className="flex min-h-0 min-w-0 items-center justify-start gap-3">
         <button
           type="button"
           className="flex shrink-0 items-center gap-2 text-neutral-800 lg:hidden"
@@ -215,13 +214,13 @@ export function Header() {
 
       <Link
         href="/"
-        className="absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+        className="relative z-10 flex shrink-0 items-center justify-center justify-self-center px-1"
         aria-label={`${storeName} home`}
       >
         <SiteLogoMark priority />
       </Link>
 
-      <div className="relative z-10 flex min-h-0 min-w-0 flex-1 items-center justify-end gap-0.5 text-neutral-800 sm:gap-2 lg:pl-24 lg:gap-3 xl:pl-32">
+      <div className="relative z-10 flex min-h-0 min-w-0 items-center justify-end gap-0 text-neutral-800 sm:gap-1.5 lg:gap-3">
         <HeaderAccount />
         <HeaderSearchPopover
           open={searchOpen}
@@ -238,7 +237,7 @@ export function Header() {
         <button
           type="button"
           onClick={() => openCart()}
-          className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
+          className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-2 text-neutral-800 transition-colors hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 sm:px-2.5 lg:gap-2"
           aria-label={`Cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}
         >
           <svg

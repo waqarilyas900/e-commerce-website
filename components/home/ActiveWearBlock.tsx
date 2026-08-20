@@ -37,14 +37,38 @@ export function ActiveWearBlock() {
                 data-aos="collection-callout"
               >
                 <div className="relative h-full min-h-[280px] w-full overflow-hidden bg-neutral-100 md:min-h-[400px]">
-                  <Image
-                    src={featured.imageUrl}
-                    alt=""
-                    fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    loading="lazy"
-                  />
+                  {(() => {
+                    const src = featured.imageUrl.trim();
+                    let external = false;
+                    try {
+                      const host = new URL(src).hostname.toLowerCase();
+                      external =
+                        !host.endsWith(".supabase.co") &&
+                        host !== "images.unsplash.com" &&
+                        !src.startsWith("/");
+                    } catch {
+                      external = false;
+                    }
+                    return external ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- Daraz / supplier CDNs
+                      <img
+                        src={src}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover object-center"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <Image
+                        src={src}
+                        alt=""
+                        fill
+                        className="object-cover object-center"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        loading="lazy"
+                      />
+                    );
+                  })()}
                 </div>
               </div>
             </div>
