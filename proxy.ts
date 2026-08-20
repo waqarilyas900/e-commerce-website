@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { getPublicSiteUrl } from "@/lib/site-url";
+import { lookupUrlRedirect } from "@/lib/seo/url-redirects";
 
 /** Do not add a root `middleware.ts` next to this file — Next.js 16+ allows only `proxy.ts`. */
 
@@ -45,6 +46,24 @@ export async function proxy(request: NextRequest) {
       if (canonicalHost) target.hostname = canonicalHost;
       target.port = "";
       return NextResponse.redirect(target, 301);
+    }
+  }
+
+  const pathname = request.nextUrl.pathname;
+  if (
+    pathname.startsWith("/products/") ||
+    pathname.startsWith("/collections/") ||
+    pathname.startsWith("/s/")
+  ) {
+    const hit = await lookupUrlRedirect(pathname);
+    if (hit) {
+      if (hit.statusCode === 410) {
+        return new NextResponse("Gone", { status: 410 });
+      }
+      const target = hit.toPath.startsWith("http")
+        ? hit.toPath
+        : new URL(hit.toPath, request.nextUrl.origin).toString();
+      return NextResponse.redirect(target, hit.statusCode);
     }
   }
 
