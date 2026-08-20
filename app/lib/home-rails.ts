@@ -22,6 +22,11 @@ function parseCollectionSlugFromHref(href: string): string | null {
   return m?.[1] ?? null;
 }
 
+/** Prefer at least this many cards so homepage rails don't look empty after slug renames. */
+const MIN_RAIL_PRODUCTS = 4;
+/** Cap curated + fill so we don't over-fetch; UI still previews 4. */
+const MAX_RAIL_PRODUCTS = 8;
+
 async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<number> {
   const slug = parseCollectionSlugFromHref(viewAllHref);
   if (!slug) return 0;
@@ -35,6 +40,45 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
   if (!hasCatalogDb()) return 0;
   const list = await getCachedProductsByCollectionSlug(slug);
   return list.length;
+}
+
+/**
+ * Resolve rail products from curated slugs, then backfill from the linked collection
+ * when slugs are stale (renamed/draft) so Beauty/Lighting etc. still show ≥4 items.
+ */
+async function resolveRailProducts(
+  rail: HomeCategoryRail,
+): Promise<{ items: Product[]; productSlugs: string[] }> {
+  const curated = await getCachedProductsBySlugs(rail.productSlugs);
+  if (curated.length >= MIN_RAIL_PRODUCTS) {
+    return {
+      items: curated.slice(0, MAX_RAIL_PRODUCTS),
+      productSlugs: curated.slice(0, MAX_RAIL_PRODUCTS).map((p) => p.slug),
+    };
+  }
+
+  const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
+  if (!collectionSlug || collectionSlug === "sale") {
+    return {
+      items: curated.slice(0, MAX_RAIL_PRODUCTS),
+      productSlugs: curated.slice(0, MAX_RAIL_PRODUCTS).map((p) => p.slug),
+    };
+  }
+
+  const fromCollection = await getCachedProductsByCollectionSlug(collectionSlug);
+  const seen = new Set(curated.map((p) => p.id));
+  const merged = [...curated];
+  for (const p of fromCollection) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    merged.push(p);
+    if (merged.length >= MAX_RAIL_PRODUCTS) break;
+  }
+
+  return {
+    items: merged,
+    productSlugs: merged.map((p) => p.slug),
+  };
 }
 
 async function loadHomeRails(): Promise<HomeRailSection[]> {
@@ -66,8 +110,8 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
   return Promise.all(
     rails.map(async (rail) => {
       const totalProductCount = await getTotalProductsForViewAllHref(rail.viewAllHref);
-      const fromDb = await getCachedProductsBySlugs(rail.productSlugs);
-      return { ...rail, items: fromDb, totalProductCount };
+      const { items, productSlugs } = await resolveRailProducts(rail);
+      return { ...rail, productSlugs, items, totalProductCount };
     }),
   );
 }

@@ -81,7 +81,7 @@ const COLLECTIONS: CollectionDef[] = [
     tagLabel: "Beauty",
     sort: 3,
     match: (s, n) =>
-      /hair|blackhead|makeup|mirror|toothbrush|trimmer|wax|beauty|shaver|acne|straightener|dryer/.test(
+      /hair|blackhead|makeup|mirror|toothbrush|trimmer|wax|beauty|shaver|acne|straightener|dryer|lint|fuzz/.test(
         `${s} ${n}`.toLowerCase(),
       ),
   },
@@ -92,9 +92,17 @@ const COLLECTIONS: CollectionDef[] = [
     tag: "lighting",
     tagLabel: "Lighting",
     sort: 4,
-    match: (s, n) =>
-      /lamp|light|solar|night|crystal|rgb/.test(`${s} ${n}`.toLowerCase()) &&
-      !/mosquito|killer/.test(`${s} ${n}`.toLowerCase()),
+    match: (s, n) => {
+      const t = `${s} ${n}`.toLowerCase();
+      if (
+        /mosquito|killer|lighter|blackhead|trimmer|toothbrush|bottle|flask|thermos|tumbler|sipper|wax|hair|straightener|dryer/.test(
+          t,
+        )
+      ) {
+        return false;
+      }
+      return /lamp|night.?light|work.?light|table.?lamp|crystal|solar|\brgb\b|\bled\b/.test(t);
+    },
   },
   {
     slug: "pest-control",
@@ -138,12 +146,11 @@ function clamp(s: string, max: number): string {
   return `${(sp > max * 0.55 ? slice.slice(0, sp) : slice).trim()}…`;
 }
 
-function classify(p: ProductRow): CollectionDef {
-  for (const c of COLLECTIONS) {
-    if (c.slug === "home") continue;
-    if (c.match(p.slug, p.name)) return c;
-  }
-  return COLLECTIONS.find((c) => c.slug === "home")!;
+/** All matching niches (products can sit in 2–3 collections); fall back to Home. */
+function classifyAll(p: ProductRow): CollectionDef[] {
+  const matches = COLLECTIONS.filter((c) => c.slug !== "home" && c.match(p.slug, p.name));
+  if (matches.length > 0) return matches;
+  return [COLLECTIONS.find((c) => c.slug === "home")!];
 }
 
 async function main() {
@@ -232,13 +239,14 @@ async function main() {
   }
   console.log(`[organize] Collections: ${collectionIdBySlug.size}`);
 
-  // Hero images from first product image per group
+  // Hero images from first product image per group (multi-collection allowed)
   const byCollection = new Map<string, ProductRow[]>();
   for (const p of rows) {
-    const c = classify(p);
-    const list = byCollection.get(c.slug) ?? [];
-    list.push(p);
-    byCollection.set(c.slug, list);
+    for (const c of classifyAll(p)) {
+      const list = byCollection.get(c.slug) ?? [];
+      list.push(p);
+      byCollection.set(c.slug, list);
+    }
   }
 
   for (const [slug, products] of byCollection) {
@@ -269,12 +277,16 @@ async function main() {
   const productTagsText = new Map<string, string[]>();
 
   for (const p of rows) {
-    const c = classify(p);
-    const cid = collectionIdBySlug.get(c.slug)!;
-    const tid = tagIdByName.get(c.tag)!;
-    pcRows.push({ product_id: p.id, collection_id: cid });
-    ptRows.push({ product_id: p.id, tag_id: tid });
-    productTagsText.set(p.id, [c.tag]);
+    const cols = classifyAll(p);
+    const tagNames: string[] = [];
+    for (const c of cols) {
+      const cid = collectionIdBySlug.get(c.slug)!;
+      const tid = tagIdByName.get(c.tag)!;
+      pcRows.push({ product_id: p.id, collection_id: cid });
+      ptRows.push({ product_id: p.id, tag_id: tid });
+      tagNames.push(c.tag);
+    }
+    productTagsText.set(p.id, tagNames);
   }
 
   // chunk inserts
