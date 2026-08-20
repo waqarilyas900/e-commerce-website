@@ -15,7 +15,6 @@ import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..");
@@ -295,11 +294,10 @@ function keywordsFor(shortName: string, slug: string): string[] {
 }
 
 function seoTitle(shortName: string): string {
-  const withPk = `${shortName} in Pakistan | ${BRAND_SHORT}`;
-  if (withPk.length <= 70) return withPk;
-  const buy = `${shortName} – Buy Online PK`;
-  if (buy.length <= 70) return buy;
-  return clamp(shortName, 70);
+  // Page part only — storefront `suffixTitle` appends `| SimpleCartStore`.
+  const withPk = `${shortName} in Pakistan`;
+  if (withPk.length <= 55) return withPk;
+  return clamp(shortName, 55).replace(/…$/, "").trim();
 }
 
 function seoDescription(shortName: string, hint: string): string {
@@ -321,9 +319,13 @@ async function main() {
   if (!serviceKey) fail("Missing SUPABASE_SERVICE_ROLE_KEY");
 
   const supabase = createClient(url, serviceKey);
-  const rows = JSON.parse(
-    readFileSync(resolve(__dirname, "_products-rows.json"), "utf8"),
-  ) as ProductRow[];
+  const { data: productRows, error: listErr } = await supabase
+    .from("products")
+    .select("id, slug, name")
+    .eq("status", "active")
+    .order("name");
+  if (listErr) fail(listErr.message);
+  const rows = (productRows ?? []) as ProductRow[];
 
   console.log(`[seo-polish] Products: ${rows.length}`);
 
@@ -434,7 +436,7 @@ async function main() {
       })
       .eq("id", col.id);
 
-    const colTitle = "Water Bottles & Drinkware in Pakistan | SimpleCart";
+    const colTitle = "Water Bottles & Drinkware in Pakistan";
     const colDesc = clamp(
       "Shop stainless steel water bottles, thermos flasks, glass tumblers and sippers online in Pakistan. Hot & cold drinkware with COD from SimpleCart Store.",
       160,
@@ -488,7 +490,7 @@ async function main() {
   }[] = [
     {
       key: "/",
-      title: "Home Essentials Online Pakistan | SimpleCart Store",
+      title: "Home Essentials Online Pakistan",
       description: clamp(
         "Buy water bottles, kitchen tools, beauty gadgets and home essentials online in Pakistan. Quality picks, fair prices, COD and nationwide delivery.",
         160,
@@ -505,7 +507,7 @@ async function main() {
     },
     {
       key: "/collections",
-      title: "Shop Home & Kitchen Products | SimpleCart Store",
+      title: "Shop Home & Kitchen Products",
       description: clamp(
         "Browse drinkware, kitchen tools, beauty gadgets, heaters and home essentials at SimpleCart Store. Curated catalog with delivery across Pakistan.",
         160,
@@ -520,7 +522,7 @@ async function main() {
     },
     {
       key: "/contact",
-      title: "Contact SimpleCart Store | Customer Support Pakistan",
+      title: "Contact & Customer Support",
       description: clamp(
         "Need help with orders, delivery or products? Contact SimpleCart Store support for fast assistance across Pakistan.",
         160,
@@ -534,7 +536,7 @@ async function main() {
     },
     {
       key: "/search",
-      title: "Search Home & Kitchen Products | SimpleCart Store",
+      title: "Search Home & Kitchen Products",
       description: clamp(
         "Search water bottles, tumblers, kitchen tools, beauty gadgets and home essentials at SimpleCart Store.",
         160,
@@ -543,7 +545,7 @@ async function main() {
     },
     {
       key: "/collections/sale",
-      title: "Sale on Home Essentials | SimpleCart Store Pakistan",
+      title: "Sale on Home Essentials",
       description: clamp(
         "Save on water bottles, kitchen tools and beauty gadgets. Shop sale deals at SimpleCart Store with delivery across Pakistan.",
         160,
@@ -552,7 +554,7 @@ async function main() {
     },
     {
       key: "/bundles",
-      title: "Product Bundles & Combos | SimpleCart Store",
+      title: "Product Bundles & Combos",
       description: clamp(
         "Shop curated home and kitchen bundles at SimpleCart Store — convenient combos with nationwide delivery in Pakistan.",
         160,

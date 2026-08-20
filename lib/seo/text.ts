@@ -42,22 +42,30 @@ export function suffixTitle(part: string, site: string): string {
   const cleanSite = (site ?? "").trim();
   if (!cleanPart) return clampSeoTitle(cleanSite);
   if (!cleanSite) return clampSeoTitle(cleanPart);
-  // Don't render "Acme | Acme" on home / brand pages.
   if (cleanPart.toLowerCase() === cleanSite.toLowerCase()) {
     return clampSeoTitle(cleanPart);
   }
-  // Don't double-suffix when the page already ends with "<separator> <site>".
+
+  // Drop leftover brand suffixes from seo_meta so we never double-brand titles.
+  const pagePart = cleanPart
+    .replace(/\s*[|·–—\-]\s*simple\s*cart(?:\s*store)?\s*$/i, "")
+    .trim();
+  const base = pagePart || cleanPart;
+
+  if (base.toLowerCase() === cleanSite.toLowerCase()) {
+    return clampSeoTitle(base);
+  }
   const suffixRe = new RegExp(
     `[\\s|·–—\\-]+${cleanSite.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}$`,
     "i",
   );
-  if (suffixRe.test(cleanPart)) return clampSeoTitle(cleanPart);
-  const full = `${cleanPart} | ${cleanSite}`;
+  if (suffixRe.test(base)) return clampSeoTitle(base);
+
+  const full = `${base} | ${cleanSite}`;
   if (full.length <= SEO_TITLE_MAX) return full;
-  // Try to keep the site suffix; trim the part instead.
-  const room = SEO_TITLE_MAX - cleanSite.length - 3; // 3 = " | "
+  const room = SEO_TITLE_MAX - cleanSite.length - 3;
   if (room > 12) {
-    return `${clampText(cleanPart, room)} | ${cleanSite}`;
+    return `${clampText(base, room)} | ${cleanSite}`;
   }
-  return clampSeoTitle(cleanPart);
+  return clampSeoTitle(base);
 }
