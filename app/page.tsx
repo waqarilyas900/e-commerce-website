@@ -148,9 +148,6 @@ export default async function Home() {
         </Suspense>
         <WhyShop />
         <TrustRatingStrip aggregate={storeReviews} />
-        <div className="mx-auto max-w-7xl shell-x pb-10 sm:pb-12">
-          <StoreFaqSection items={homeFaqItems} />
-        </div>
       </main>
       <Footer />
     </>
