@@ -22,6 +22,7 @@ import {
 import { uploadReviewMediaForReviewRow } from "@/lib/supabase/storage-config";
 import { SignInModal } from "@/components/auth/sign-in-modal";
 import { ModalShell } from "@/components/ui/modal-shell";
+import { STAR_EMPTY_COLOR, STAR_FILLED_CLASS, StarRating } from "@/components/ui/star-rating";
 
 const OPEN_REVIEW_SESSION_KEY = "openReviewAfterAuth";
 const OPEN_REVIEW_QUERY = "openReview";
@@ -36,22 +37,8 @@ type Props = {
   ratingBreakdown?: number[] | null;
 };
 
-function Stars({
-  value,
-  size = "text-lg",
-  className = "text-amber-400",
-}: {
-  value: number;
-  size?: string;
-  className?: string;
-}) {
-  const rounded = Math.max(0, Math.min(5, Math.round(value)));
-  return (
-    <span className={`${size} leading-none ${className}`} aria-label={`${rounded} out of 5 stars`}>
-      {"★".repeat(rounded)}
-      <span className="text-neutral-300">{"★".repeat(5 - rounded)}</span>
-    </span>
-  );
+function Stars({ value }: { value: number }) {
+  return <StarRating value={value} labeled />;
 }
 
 function RatingPicker({
@@ -64,7 +51,7 @@ function RatingPicker({
   labelId: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-1" role="radiogroup" aria-labelledby={labelId}>
+    <div className="flex flex-wrap gap-0.5" role="radiogroup" aria-labelledby={labelId}>
       {[1, 2, 3, 4, 5].map((n) => {
         const active = value >= n;
         return (
@@ -73,12 +60,17 @@ function RatingPicker({
             type="button"
             role="radio"
             aria-checked={value === n}
-            className={`cursor-pointer rounded px-0.5 text-2xl leading-none transition ${
-              active ? "text-amber-400" : "text-neutral-300 hover:text-amber-200"
+            className={`cursor-pointer rounded p-0.5 leading-none transition ${
+              active ? STAR_FILLED_CLASS : "text-neutral-300 hover:text-amber-300"
             }`}
             onClick={() => onChange(n)}
           >
-            ★
+            <svg width={22} height={22} viewBox="0 0 24 24" className="shrink-0" fill="currentColor" aria-hidden>
+              <path
+                fill={active ? "currentColor" : STAR_EMPTY_COLOR}
+                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+              />
+            </svg>
           </button>
         );
       })}
@@ -710,7 +702,7 @@ function CustomerReviewsInner({
           <div className="mt-4 border-b border-neutral-200 pb-4">
             <div className="grid gap-4 md:grid-cols-[200px_minmax(0,1fr)]">
               <div>
-                <Stars value={displayRating} size="text-xl" />
+                <Stars value={displayRating} />
                 <p className="mt-1 text-sm text-neutral-600">Based on {reviewsCount} reviews</p>
               </div>
               <div className="space-y-1.5">
@@ -719,7 +711,7 @@ function CustomerReviewsInner({
                     <span className="w-10 text-neutral-600">{star}★</span>
                     <div className="h-2 overflow-hidden rounded bg-neutral-200">
                       <div
-                        className="h-full bg-amber-400"
+                        className="h-full bg-amber-500"
                         style={{ width: `${(dist[i] / maxDist) * 100}%` }}
                       />
                     </div>
@@ -764,7 +756,7 @@ function CustomerReviewsInner({
                       <p className="mt-1 text-sm font-medium text-neutral-500">{dateLabel}</p>
                     ) : null}
                     <div className="mt-2">
-                      <Stars value={r.rating} size="text-sm" />
+                      <Stars value={r.rating} />
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-neutral-700">{r.body}</p>
                     {r.media.length > 0 ? (

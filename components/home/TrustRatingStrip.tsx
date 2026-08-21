@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { StoreReviewAggregate } from "@/lib/cache/store-review-aggregate";
+import { StarRating } from "@/components/ui/star-rating";
 
 /** Body text matches storefront system (`text-neutral-900` elsewhere in grids/PDP). */
 const bodyText = "text-neutral-900";
@@ -7,49 +8,6 @@ const bodyText = "text-neutral-900";
 type Props = {
   aggregate: StoreReviewAggregate;
 };
-
-function TrustStars({ value }: { value: number }) {
-  const v = Math.max(0, Math.min(5, Number(value) || 0));
-  const starPath =
-    "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-
-  return (
-    <span
-      className={`inline-flex items-center gap-px ${bodyText}`}
-      aria-hidden
-    >
-      {[1, 2, 3, 4, 5].map((i) => {
-        const filled = v >= i;
-        const half = !filled && v >= i - 0.5;
-        const gradId = `trust-star-half-${i}`;
-        return (
-          <svg
-            key={i}
-            width={17}
-            height={17}
-            viewBox="0 0 24 24"
-            className="shrink-0"
-            fill="currentColor"
-          >
-            {half ? (
-              <>
-                <defs>
-                  <linearGradient id={gradId} x1="0" x2="100%" y1="0" y2="0">
-                    <stop offset="50%" stopColor="currentColor" />
-                    <stop offset="50%" stopColor="#cbd5e1" />
-                  </linearGradient>
-                </defs>
-                <path fill={`url(#${gradId})`} d={starPath} />
-              </>
-            ) : (
-              <path fill={filled ? "currentColor" : "#cbd5e1"} d={starPath} />
-            )}
-          </svg>
-        );
-      })}
-    </span>
-  );
-}
 
 function VerifiedBadge({ className }: { className?: string }) {
   return (
@@ -101,7 +59,7 @@ export function TrustRatingStrip({ aggregate }: Props) {
             <span className="text-2xl font-semibold leading-none tracking-tight sm:text-[1.65rem]">
               {ratingLabel}
             </span>
-            <TrustStars value={averageRating} />
+            <StarRating value={averageRating} />
             <span className="select-none text-neutral-300" aria-hidden>
               |
             </span>

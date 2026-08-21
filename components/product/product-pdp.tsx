@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -18,6 +17,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { clientOptionFingerprint } from "@/lib/wishlist-fingerprint";
 import { AppSelect } from "@/components/ui/app-select";
+import { StarRating } from "@/components/ui/star-rating";
 import {
   collectOptionKeysFromVariants,
   resolveDimensionsForPdp,
@@ -142,51 +142,6 @@ function buildGallery(
   const img = firstImage(fallbackImages);
   if (img) return [{ kind: "image", url: img, alt: "" }];
   return [];
-}
-
-/** Read-only stars — avoids `react-rating-stars-component`, which often breaks React 19 hydration on mobile and nukes everything below it in the tree. */
-function ReadOnlyStarRating({ value }: { value: number }) {
-  const uid = useId().replace(/:/g, "");
-  const v = Math.max(0, Math.min(5, Number(value) || 0));
-  return (
-    <span className="inline-flex items-center gap-px text-amber-500" aria-hidden>
-      {[1, 2, 3, 4, 5].map((i) => {
-        const filled = v >= i;
-        const half = !filled && v >= i - 0.5;
-        const gradId = `pdp-star-half-${uid}-${i}`;
-        return (
-          <svg
-            key={i}
-            width={22}
-            height={22}
-            viewBox="0 0 24 24"
-            className="shrink-0"
-            fill="currentColor"
-          >
-            {half ? (
-              <>
-                <defs>
-                  <linearGradient id={gradId} x1="0" x2="100%" y1="0" y2="0">
-                    <stop offset="50%" stopColor="currentColor" />
-                    <stop offset="50%" stopColor="#d4d4d8" />
-                  </linearGradient>
-                </defs>
-                <path
-                  fill={`url(#${gradId})`}
-                  d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                />
-              </>
-            ) : (
-              <path
-                fill={filled ? "currentColor" : "#d4d4d8"}
-                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-              />
-            )}
-          </svg>
-        );
-      })}
-    </span>
-  );
 }
 
 type Props = {
@@ -751,7 +706,7 @@ export function ProductPdp({
             role="img"
             aria-label={`Rated ${(product.rating ?? 0).toFixed(1)} out of 5 stars`}
           >
-            <ReadOnlyStarRating value={Number(product.rating ?? 0)} />
+            <StarRating value={Number(product.rating ?? 0)} />
             <span>
               {(product.rating ?? 0).toFixed(1)}/5 ({product.reviews_count ?? 0}{" "}
               reviews)

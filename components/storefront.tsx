@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
+import { StarRating } from "@/components/ui/star-rating";
 import {
   useCallback,
   useEffect,
@@ -336,17 +337,9 @@ function productImageUseNativeImg(src: string): boolean {
 }
 
 function ProductCardStarRow({ rating }: { rating: number }) {
-  const filled = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)));
   return (
-    <div
-      className="mt-0.5 flex gap-px text-[13px] leading-none sm:text-sm"
-      aria-label={`${rating.toFixed(1)} out of 5 stars`}
-    >
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={i <= filled ? "text-amber-400" : "text-neutral-200"} aria-hidden>
-          ★
-        </span>
-      ))}
+    <div className="mt-0.5">
+      <StarRating value={rating} labeled />
     </div>
   );
 }
