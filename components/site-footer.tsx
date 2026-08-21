@@ -14,9 +14,11 @@ import { SiteLogoFull } from "@/components/site-logo";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-/** Always shown first in Customer care; not editable from admin. */
+/** Always shown in Customer care; not editable from admin. Footer-only (not header). */
 const CONTACT_US_HREF = "/contact";
 const CONTACT_US_LABEL = "Contact us";
+const ABOUT_US_HREF = "/about";
+const ABOUT_US_LABEL = "About us";
 
 /** Stable shop links for footer SEO internal linking. */
 const FOOTER_SHOP_LINKS: { href: string; label: string }[] = [
@@ -38,7 +40,10 @@ function normalizeFooterPath(href: string): string {
 }
 
 function customerCareReservedPaths(policyRows: { href: string }[]): Set<string> {
-  const s = new Set<string>([normalizeFooterPath(CONTACT_US_HREF)]);
+  const s = new Set<string>([
+    normalizeFooterPath(CONTACT_US_HREF),
+    normalizeFooterPath(ABOUT_US_HREF),
+  ]);
   for (const p of policyRows) {
     const h = p.href?.trim() ?? "";
     if (h.startsWith("/") && !h.startsWith("//")) {
@@ -188,11 +193,20 @@ function PolicyLinksList({ policyRows }: { policyRows: { label: string; href: st
           {CONTACT_US_LABEL}
         </Link>
       </li>
-      {policyRows.map((item) => (
-        <li key={item.href + item.label}>
-          <PolicyNavLink href={item.href}>{item.label}</PolicyNavLink>
-        </li>
-      ))}
+      <li key="__about-us">
+        <Link href={ABOUT_US_HREF} className={policyLinkClass}>
+          {ABOUT_US_LABEL}
+        </Link>
+      </li>
+      {policyRows.map((item) => {
+        const path = normalizeFooterPath(item.href);
+        if (path === ABOUT_US_HREF || path === CONTACT_US_HREF) return null;
+        return (
+          <li key={item.href + item.label}>
+            <PolicyNavLink href={item.href}>{item.label}</PolicyNavLink>
+          </li>
+        );
+      })}
     </ul>
   );
 }

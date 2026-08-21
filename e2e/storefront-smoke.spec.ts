@@ -43,6 +43,13 @@ test.describe("Storefront smoke (Shopify-style paths)", () => {
     ).toBeVisible({ timeout: 30_000 });
   });
 
+  test("about page loads", async ({ page }) => {
+    await page.goto("/about");
+    await expect(
+      page.locator("#MainContent").getByRole("heading", { level: 1, name: "About Us" }),
+    ).toBeVisible({ timeout: 30_000 });
+  });
+
   test("policies index loads", async ({ page }) => {
     await page.goto("/policies");
     await expect(

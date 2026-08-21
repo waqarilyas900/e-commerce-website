@@ -206,6 +206,7 @@ function mapFooterItemsFromPolicyPages(
     if (!slug || !SLUG_RE.test(slug) || !title) continue;
     const href = `/${slug}`;
     if (normalizeInternalNavPath(href) === normalizeInternalNavPath("/contact")) continue;
+    if (normalizeInternalNavPath(href) === normalizeInternalNavPath("/about")) continue;
     if (seen.has(href)) continue;
     seen.add(href);
     out.push({ label: title, href });
