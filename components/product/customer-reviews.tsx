@@ -32,6 +32,8 @@ type Props = {
   rating: number;
   reviewsCount: number;
   initialReviews: ProductReviewPdpRow[];
+  /** Optional 5★→1★ counts (e.g. synced from marketplace). When set, histogram uses this. */
+  ratingBreakdown?: number[] | null;
 };
 
 function Stars({
@@ -100,6 +102,21 @@ function emptyReviewForm() {
     title: "",
     content: "",
   };
+}
+
+const REVIEWS_PER_PAGE = 6;
+
+/** Prefer YYYY-MM-DD title; else format created_at. Hide legacy `daraz:` titles. */
+function reviewDateLabel(r: ProductReviewPdpRow): string {
+  const title = (r.title || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(title)) return title;
+  if (title && !title.startsWith("daraz:")) return title;
+  const d = new Date(r.created_at);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 type PendingAttachment = {
@@ -224,6 +241,7 @@ function CustomerReviewsInner({
   rating,
   reviewsCount,
   initialReviews,
+  ratingBreakdown = null,
 }: Props) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
@@ -232,6 +250,7 @@ function CustomerReviewsInner({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [reviews, setReviews] = useState<ProductReviewPdpRow[]>(initialReviews);
+  const [reviewPage, setReviewPage] = useState(1);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
   const [form, setForm] = useState(emptyReviewForm);
@@ -276,9 +295,38 @@ function CustomerReviewsInner({
     [reviews],
   );
 
+  const sortedApproved = useMemo(() => {
+    return [...approvedOnly].sort((a, b) => {
+      const aImg = a.media?.length ? 1 : 0;
+      const bImg = b.media?.length ? 1 : 0;
+      if (bImg !== aImg) return bImg - aImg;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [approvedOnly]);
+
+  const reviewPageCount = Math.max(1, Math.ceil(sortedApproved.length / REVIEWS_PER_PAGE));
+  const safeReviewPage = Math.min(reviewPage, reviewPageCount);
+  const pagedReviews = useMemo(() => {
+    const start = (safeReviewPage - 1) * REVIEWS_PER_PAGE;
+    return sortedApproved.slice(start, start + REVIEWS_PER_PAGE);
+  }, [sortedApproved, safeReviewPage]);
+
+  useEffect(() => {
+    setReviewPage(1);
+  }, [productId, initialReviews]);
+
   const displayRating = Number.isFinite(rating) ? rating : 0;
   const hasReviewsAggregate = reviewsCount > 0;
-  const dist = useMemo(() => starHistogram(approvedOnly), [approvedOnly]);
+  const dist = useMemo(() => {
+    if (
+      Array.isArray(ratingBreakdown) &&
+      ratingBreakdown.length === 5 &&
+      ratingBreakdown.every((n) => Number.isFinite(Number(n)))
+    ) {
+      return ratingBreakdown.map((n) => Math.max(0, Math.round(Number(n))));
+    }
+    return starHistogram(approvedOnly);
+  }, [ratingBreakdown, approvedOnly]);
   const maxDist = Math.max(1, ...dist);
 
   const nextPathWithReviewFlag = useMemo(() => {
@@ -687,64 +735,98 @@ function CustomerReviewsInner({
           </p>
         )}
 
-        {reviews.length > 0 ? (
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {reviews.map((r) => (
-              <article key={r.id} className="border border-neutral-200 bg-neutral-50 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold text-neutral-900">{r.reviewer_name}</p>
-                  {r.status === "pending" ? (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-950">
-                      Pending moderation
-                    </span>
-                  ) : null}
-                  {r.status === "rejected" ? (
-                    <span className="rounded bg-neutral-200 px-2 py-0.5 text-[11px] font-medium text-neutral-700">
-                      Not published
-                    </span>
-                  ) : null}
-                  {r.show_verified_buyer ? (
-                    <span className="inline-flex bg-neutral-900 px-2 py-0.5 text-[11px] font-semibold text-white">
-                      Verified buyer
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-sm font-medium text-neutral-900">{r.title}</p>
-                <div className="mt-2">
-                  <Stars value={r.rating} size="text-sm" />
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-700">{r.body}</p>
-                {r.media.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {r.media.map((m, idx) =>
-                      m.kind === "image" ? (
-                        <div
-                          key={`${r.id}-m-${idx}`}
-                          className="h-24 w-24 overflow-hidden rounded-md border border-neutral-200 bg-white"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element -- Supabase Storage public URLs */}
-                          <img
-                            src={m.url}
-                            alt=""
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                      ) : (
-                        <video
-                          key={`${r.id}-m-${idx}`}
-                          src={m.url}
-                          className="h-28 max-w-full rounded-md border border-neutral-200"
-                          controls
-                          playsInline
-                        />
-                      ),
-                    )}
-                  </div>
-                ) : null}
-              </article>
-            ))}
-          </div>
+        {sortedApproved.length > 0 ? (
+          <>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {pagedReviews.map((r) => {
+                const dateLabel = reviewDateLabel(r);
+                return (
+                  <article key={r.id} className="border border-neutral-200 bg-neutral-50 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-neutral-900">{r.reviewer_name}</p>
+                      {r.status === "pending" ? (
+                        <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-950">
+                          Pending moderation
+                        </span>
+                      ) : null}
+                      {r.status === "rejected" ? (
+                        <span className="rounded bg-neutral-200 px-2 py-0.5 text-[11px] font-medium text-neutral-700">
+                          Not published
+                        </span>
+                      ) : null}
+                      {r.show_verified_buyer ? (
+                        <span className="inline-flex bg-neutral-900 px-2 py-0.5 text-[11px] font-semibold text-white">
+                          Verified buyer
+                        </span>
+                      ) : null}
+                    </div>
+                    {dateLabel ? (
+                      <p className="mt-1 text-sm font-medium text-neutral-500">{dateLabel}</p>
+                    ) : null}
+                    <div className="mt-2">
+                      <Stars value={r.rating} size="text-sm" />
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-neutral-700">{r.body}</p>
+                    {r.media.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {r.media.map((m, idx) =>
+                          m.kind === "image" ? (
+                            <div
+                              key={`${r.id}-m-${idx}`}
+                              className="h-24 w-24 overflow-hidden rounded-md border border-neutral-200 bg-white"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element -- Supabase Storage public URLs */}
+                              <img
+                                src={m.url}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            </div>
+                          ) : (
+                            <video
+                              key={`${r.id}-m-${idx}`}
+                              src={m.url}
+                              className="h-28 max-w-full rounded-md border border-neutral-200"
+                              controls
+                              playsInline
+                            />
+                          ),
+                        )}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+
+            {reviewPageCount > 1 ? (
+              <nav
+                className="mt-6 flex flex-wrap items-center justify-center gap-2"
+                aria-label="Review pages"
+              >
+                <button
+                  type="button"
+                  disabled={safeReviewPage <= 1}
+                  onClick={() => setReviewPage((p) => Math.max(1, p - 1))}
+                  className="cursor-pointer rounded-sm border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <span className="px-2 text-sm text-neutral-600">
+                  Page {safeReviewPage} of {reviewPageCount}
+                </span>
+                <button
+                  type="button"
+                  disabled={safeReviewPage >= reviewPageCount}
+                  onClick={() => setReviewPage((p) => Math.min(reviewPageCount, p + 1))}
+                  className="cursor-pointer rounded-sm border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </nav>
+            ) : null}
+          </>
         ) : null}
       </section>
 

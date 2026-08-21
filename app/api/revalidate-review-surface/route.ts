@@ -11,6 +11,7 @@ export const runtime = "nodejs";
  * Best-effort bust for homepage trust strip + product card aggregates after a
  * new storefront review (client-side Supabase insert cannot call admin JWT revalidate).
  * Rate-limited; no secrets in the browser.
+ * Optional JSON body: `{ "productSlug": "…" }` to also bust that PDP path/tag.
  */
 export async function POST(req: Request) {
   const ip = getRequestIp(req);
@@ -19,8 +20,13 @@ export async function POST(req: Request) {
     return rateLimitResponse(limited.retryAfterMs);
   }
 
+  let productSlug = "";
   try {
-    await req.text();
+    const text = await req.text();
+    if (text.trim()) {
+      const body = JSON.parse(text) as { productSlug?: string };
+      productSlug = typeof body.productSlug === "string" ? body.productSlug.trim() : "";
+    }
   } catch {
     /* ignore body */
   }
@@ -29,6 +35,10 @@ export async function POST(req: Request) {
     revalidateTag(CATALOG_CACHE_TAGS.storeReviewAggregate, "max");
     revalidateTag(CATALOG_CACHE_TAGS.products, "max");
     revalidatePath("/");
+    if (productSlug) {
+      revalidateTag(CATALOG_CACHE_TAGS.product(productSlug), "max");
+      revalidatePath(`/products/${productSlug}`);
+    }
   } catch {
     /* never 500 — cache APIs can throw in edge cases */
   }

@@ -289,6 +289,7 @@ export default async function ProductPage({ params }: Props) {
             productId={detail.product.id}
             rating={Number(detail.product.rating ?? 0)}
             reviewsCount={Number(detail.product.reviews_count ?? 0)}
+            productTags={detail.product.tags}
           />
         </Suspense>
       </main>
@@ -384,18 +385,34 @@ async function ProductReviewsSection({
   productId,
   rating,
   reviewsCount,
+  productTags,
 }: {
   productId: string;
   rating: number;
   reviewsCount: number;
+  productTags?: string[] | null;
 }) {
   const initialReviews = await dbListProductReviewsForPdp(productId);
+  const breakdownTag = (productTags ?? []).find((t) =>
+    String(t).startsWith("rating_breakdown:"),
+  );
+  let ratingBreakdown: number[] | null = null;
+  if (breakdownTag) {
+    const parts = String(breakdownTag)
+      .slice("rating_breakdown:".length)
+      .split(",")
+      .map((x) => Number(x.trim()));
+    if (parts.length === 5 && parts.every((n) => Number.isFinite(n))) {
+      ratingBreakdown = parts;
+    }
+  }
   return (
     <CustomerReviews
       productId={productId}
       rating={rating}
       reviewsCount={reviewsCount}
       initialReviews={initialReviews}
+      ratingBreakdown={ratingBreakdown}
     />
   );
 }
