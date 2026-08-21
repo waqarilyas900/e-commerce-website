@@ -35,6 +35,7 @@ import {
   getCachedProductDetailBySlug,
   getCachedProductsByCollectionSlug,
 } from "@/lib/cache/catalog-data";
+import { dbGetProductReviewAggregates } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
 
 /**
@@ -184,6 +185,20 @@ export default async function ProductPage({ params }: Props) {
   }
   if (detail.variants.length === 0) {
     notFound();
+  }
+
+  // Keep star aggregates fresh after review imports without waiting on PDP cache TTL.
+  const aggregates = await dbGetProductReviewAggregates(detail.product.id);
+  if (aggregates) {
+    detail = {
+      ...detail,
+      product: {
+        ...detail.product,
+        rating: aggregates.rating,
+        reviews_count: aggregates.reviews_count,
+        tags: aggregates.tags ?? detail.product.tags,
+      },
+    };
   }
 
   // Critical-path data (above-the-fold buy box + structured data) — block on

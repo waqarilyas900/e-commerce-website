@@ -224,6 +224,35 @@ async function primaryDisplaySlugByProductId(
 const PRODUCT_SELECT =
   "id, slug, name, short_description, description, status, images, tags, rating, reviews_count, stock_total, free_delivery, created_at";
 
+/**
+ * Uncached rating / review-count / tags for a product.
+ * Used on the PDP so Daraz (or admin) aggregate updates show immediately even
+ * when the heavier product-detail cache still holds an older snapshot.
+ */
+export async function dbGetProductReviewAggregates(productId: string): Promise<{
+  rating: number | null;
+  reviews_count: number | null;
+  tags: string[] | null;
+} | null> {
+  if (!hasCatalogDb() || !productId) return null;
+  try {
+    const supabase = catalogClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("rating, reviews_count, tags")
+      .eq("id", productId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return {
+      rating: (data as { rating: number | null }).rating ?? null,
+      reviews_count: (data as { reviews_count: number | null }).reviews_count ?? null,
+      tags: (data as { tags: string[] | null }).tags ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** All active products with variant-derived prices (for /collections grid, sale filter). */
 export async function dbListAllActiveProductsForCards(): Promise<Product[]> {
   if (!hasCatalogDb()) return [];
