@@ -187,7 +187,11 @@ export function Header() {
       <div className="flex min-h-0 min-w-0 items-center justify-start gap-3">
         <button
           type="button"
-          className="flex shrink-0 items-center gap-2 text-neutral-800 lg:hidden"
+          className={`flex shrink-0 items-center gap-2 rounded-md px-1.5 py-1 transition-colors lg:hidden ${
+            isMobileNavOpen
+              ? "bg-neutral-100 text-neutral-950"
+              : "text-neutral-800 hover:bg-neutral-50"
+          }`}
           aria-label="Site navigation"
           aria-expanded={isMobileNavOpen}
           onClick={() => setIsMobileNavOpen((o) => !o)}

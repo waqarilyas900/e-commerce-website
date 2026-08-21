@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
@@ -54,13 +55,21 @@ function ArrowRight() {
   );
 }
 
+function isShopPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname === "/collections" || pathname.startsWith("/collections/");
+}
+
 /** “Shop” label → `/collections`; chevron alone toggles the per-collection menu. */
 export function ShopCollectionsMenu() {
   const links = useNavCollections();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
+  const routeActive = isShopPath(pathname);
+  const active = open || routeActive;
 
   function clearCloseTimer() {
     if (!closeTimerRef.current) return;
@@ -108,11 +117,16 @@ export function ShopCollectionsMenu() {
       onMouseEnter={openMenu}
       onMouseLeave={scheduleClose}
     >
-      <div className="flex items-center gap-0.5">
+      <div
+        className={`flex items-center gap-0.5 rounded-md transition-colors duration-200 ${
+          active ? "bg-neutral-100" : ""
+        }`}
+      >
         <Link
           href="/collections"
-          className={`${primaryNavLinkClass} relative rounded-md px-1 py-1 ${
-            open ? "text-neutral-950" : ""
+          aria-current={routeActive ? "page" : undefined}
+          className={`${primaryNavLinkClass} relative rounded-md px-1.5 py-1 ${
+            active ? "font-semibold text-neutral-950" : ""
           }`}
           onClick={() => {
             clearCloseTimer();
@@ -122,16 +136,16 @@ export function ShopCollectionsMenu() {
           Shop
           <span
             aria-hidden
-            className={`absolute inset-x-1 -bottom-0.5 h-px origin-left bg-neutral-950 transition-transform duration-300 ease-out ${
-              open ? "scale-x-100" : "scale-x-0"
+            className={`absolute inset-x-1.5 -bottom-0.5 h-0.5 origin-left rounded-full bg-neutral-950 transition-transform duration-300 ease-out ${
+              active ? "scale-x-100" : "scale-x-0"
             }`}
           />
         </Link>
         <button
           type="button"
           className={`inline-flex cursor-pointer items-center rounded-full p-1.5 transition-colors duration-200 focus-visible:outline focus-visible:ring-2 focus-visible:ring-neutral-900/20 ${
-            open
-              ? "bg-neutral-100 text-neutral-950"
+            active
+              ? "bg-neutral-200/80 text-neutral-950"
               : "text-neutral-800 hover:bg-neutral-100 hover:text-neutral-950"
           }`}
           aria-expanded={open}
@@ -168,37 +182,55 @@ export function ShopCollectionsMenu() {
                 {links.length === 0 ? (
                   <p className="px-4 py-3 text-sm text-neutral-500">No collections yet.</p>
                 ) : (
-                  links.map((l, i) => (
-                    <motion.div
-                      key={l.slug}
-                      initial={{ opacity: 0, x: -4 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{
-                        duration: 0.2,
-                        delay: Math.min(i * 0.02, 0.12),
-                        ease: menuEase,
-                      }}
-                    >
-                      <HoverPrefetchLink
-                        href={`/collections/${l.slug}`}
-                        role="menuitem"
-                        className="group relative mx-1.5 flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-800 transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-950 hover:pl-3.5 focus-visible:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/15"
-                        onClick={() => {
-                          clearCloseTimer();
-                          setOpen(false);
+                  links.map((l, i) => {
+                    const itemActive = pathname === `/collections/${l.slug}`;
+                    return (
+                      <motion.div
+                        key={l.slug}
+                        initial={{ opacity: 0, x: -4 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          duration: 0.2,
+                          delay: Math.min(i * 0.02, 0.12),
+                          ease: menuEase,
                         }}
                       >
-                        <span
-                          aria-hidden
-                          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-neutral-950 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
-                        />
-                        <span className="min-w-0 truncate">{l.name}</span>
-                        <span className="translate-x-0 text-neutral-400 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-neutral-700 group-hover:opacity-100 group-focus-visible:opacity-100">
-                          <ArrowRight />
-                        </span>
-                      </HoverPrefetchLink>
-                    </motion.div>
-                  ))
+                        <HoverPrefetchLink
+                          href={`/collections/${l.slug}`}
+                          role="menuitem"
+                          aria-current={itemActive ? "page" : undefined}
+                          className={`group relative mx-1.5 flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/15 ${
+                            itemActive
+                              ? "bg-neutral-100 pl-3.5 font-semibold text-neutral-950"
+                              : "text-neutral-800 hover:bg-neutral-100 hover:pl-3.5 hover:text-neutral-950 focus-visible:bg-neutral-100"
+                          }`}
+                          onClick={() => {
+                            clearCloseTimer();
+                            setOpen(false);
+                          }}
+                        >
+                          <span
+                            aria-hidden
+                            className={`absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-neutral-950 transition-opacity duration-200 ${
+                              itemActive
+                                ? "opacity-100"
+                                : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+                            }`}
+                          />
+                          <span className="min-w-0 truncate">{l.name}</span>
+                          <span
+                            className={`translate-x-0 transition-all duration-200 ${
+                              itemActive
+                                ? "translate-x-0.5 text-neutral-700 opacity-100"
+                                : "text-neutral-400 opacity-0 group-hover:translate-x-0.5 group-hover:text-neutral-700 group-hover:opacity-100 group-focus-visible:opacity-100"
+                            }`}
+                          >
+                            <ArrowRight />
+                          </span>
+                        </HoverPrefetchLink>
+                      </motion.div>
+                    );
+                  })
                 )}
               </div>
 
@@ -206,7 +238,12 @@ export function ShopCollectionsMenu() {
                 <Link
                   href="/collections"
                   role="menuitem"
-                  className="group flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-neutral-950 transition-colors duration-200 hover:bg-white"
+                  aria-current={pathname === "/collections" ? "page" : undefined}
+                  className={`group flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors duration-200 ${
+                    pathname === "/collections"
+                      ? "bg-white text-neutral-950 ring-1 ring-neutral-200"
+                      : "text-neutral-950 hover:bg-white"
+                  }`}
                   onClick={() => {
                     clearCloseTimer();
                     setOpen(false);

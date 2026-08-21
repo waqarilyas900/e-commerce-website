@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
@@ -111,8 +112,12 @@ export function MobileNavDrawer({ open, onClose }: Props) {
   const links = useNavCollections();
   const headerNavItems = useHeaderNavMenuItems();
   const { storeName } = useStoreBrand();
+  const pathname = usePathname();
   const [shopOpen, setShopOpen] = useState(true);
   const [authUser, setAuthUser] = useState<User | null>(null);
+  const routeActive =
+    pathname === "/collections" || Boolean(pathname?.startsWith("/collections/"));
+  const shopSelected = shopOpen || routeActive;
 
   useScrollLock(open);
 
@@ -190,19 +195,34 @@ export function MobileNavDrawer({ open, onClose }: Props) {
               </button>
             </div>
 
-            <div className="border-b border-neutral-200">
+            <div
+              className={`border-b border-neutral-200 ${
+                shopSelected ? "bg-neutral-50" : ""
+              }`}
+            >
               <button
                 type="button"
-                className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-neutral-50"
+                className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors ${
+                  shopSelected
+                    ? "bg-neutral-100 ring-1 ring-inset ring-neutral-200"
+                    : "hover:bg-neutral-50"
+                }`}
                 aria-expanded={shopOpen}
+                aria-current={routeActive ? "true" : undefined}
                 onClick={() => setShopOpen((o) => !o)}
               >
                 <span className="min-w-0">
-                  <span className="block text-[15px] font-semibold tracking-tight text-neutral-950">
+                  <span
+                    className={`block text-[15px] tracking-tight ${
+                      shopSelected
+                        ? "font-bold text-neutral-950"
+                        : "font-semibold text-neutral-950"
+                    }`}
+                  >
                     Shop
                   </span>
                   <span className="mt-0.5 block text-xs text-neutral-500">
-                    Browse collections
+                    {shopSelected ? "Selected · Browse collections" : "Browse collections"}
                   </span>
                 </span>
                 <ChevronDown open={shopOpen} />
@@ -226,11 +246,21 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                     >
                       <Link
                         href="/collections"
-                        className="mb-1.5 flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-sm font-medium text-neutral-950 shadow-sm ring-1 ring-neutral-200/80 transition hover:ring-neutral-300"
+                        aria-current={pathname === "/collections" ? "page" : undefined}
+                        className={`mb-1.5 flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-medium shadow-sm ring-1 transition ${
+                          pathname === "/collections"
+                            ? "bg-neutral-950 text-white ring-neutral-950"
+                            : "bg-white text-neutral-950 ring-neutral-200/80 hover:ring-neutral-300"
+                        }`}
                         onClick={onClose}
                       >
                         All collections
-                        <span className="text-neutral-400" aria-hidden>
+                        <span
+                          className={
+                            pathname === "/collections" ? "text-white/70" : "text-neutral-400"
+                          }
+                          aria-hidden
+                        >
                           →
                         </span>
                       </Link>
@@ -240,17 +270,25 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                         </p>
                       ) : (
                         <ul className="mt-1 list-none space-y-0.5 pl-0">
-                          {links.map((l) => (
-                            <li key={l.slug}>
-                              <Link
-                                href={`/collections/${l.slug}`}
-                                className="block rounded-lg px-3.5 py-2.5 text-sm font-normal text-neutral-800 transition hover:bg-white hover:text-neutral-950"
-                                onClick={onClose}
-                              >
-                                {l.name}
-                              </Link>
-                            </li>
-                          ))}
+                          {links.map((l) => {
+                            const itemActive = pathname === `/collections/${l.slug}`;
+                            return (
+                              <li key={l.slug}>
+                                <Link
+                                  href={`/collections/${l.slug}`}
+                                  aria-current={itemActive ? "page" : undefined}
+                                  className={`block rounded-lg px-3.5 py-2.5 text-sm transition ${
+                                    itemActive
+                                      ? "bg-white font-semibold text-neutral-950 shadow-sm ring-1 ring-neutral-200"
+                                      : "font-normal text-neutral-800 hover:bg-white hover:text-neutral-950"
+                                  }`}
+                                  onClick={onClose}
+                                >
+                                  {l.name}
+                                </Link>
+                              </li>
+                            );
+                          })}
                         </ul>
                       )}
                     </motion.div>

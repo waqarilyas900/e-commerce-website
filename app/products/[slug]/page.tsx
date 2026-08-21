@@ -272,7 +272,14 @@ export default async function ProductPage({ params }: Props) {
           colorById={detail.colorById}
           safeDescriptionHtml={sanitizeRichHtml(detail.product.description)}
         />
-        <StoreFaqSection items={faqItems} />
+        <Suspense fallback={<ReviewsFallback />}>
+          <ProductReviewsSection
+            productId={detail.product.id}
+            rating={Number(detail.product.rating ?? 0)}
+            reviewsCount={Number(detail.product.reviews_count ?? 0)}
+            productTags={detail.product.tags}
+          />
+        </Suspense>
         <Suspense fallback={<RelatedProductsFallback />}>
           {/* Streamed in after the buy box renders. The query joins
               product_collections → product_variants → inventory and runs ~150-300ms
@@ -284,14 +291,7 @@ export default async function ProductPage({ params }: Props) {
             currentSlug={slug}
           />
         </Suspense>
-        <Suspense fallback={<ReviewsFallback />}>
-          <ProductReviewsSection
-            productId={detail.product.id}
-            rating={Number(detail.product.rating ?? 0)}
-            reviewsCount={Number(detail.product.reviews_count ?? 0)}
-            productTags={detail.product.tags}
-          />
-        </Suspense>
+        <StoreFaqSection items={faqItems} />
       </main>
       <Footer />
     </>
