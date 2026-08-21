@@ -77,9 +77,9 @@ const HOME_SECTIONS_TTL = 60 * 5;
 export function getCachedProductDetailBySlug(slug: string) {
   return unstable_cache(
     async () => dbGetProductDetailBySlug(slug),
-    ["catalog:product-detail-v4", slug],
+    ["catalog:product-detail-v5", slug],
     {
-      revalidate: 60,
+      revalidate: PRODUCT_DETAIL_TTL,
       tags: [CATALOG_CACHE_TAGS.product(slug), CATALOG_CACHE_TAGS.products],
     },
   )();
