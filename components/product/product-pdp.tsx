@@ -907,8 +907,8 @@ export function ProductPdp({
 
               {matchedVariant ? (
                 maxQty > 0 ? (
-                  <div className="flex flex-wrap items-end gap-4">
-                    <div>
+                  <div className="flex flex-nowrap items-end gap-2 sm:gap-3">
+                    <div className="shrink-0">
                       <span className="mb-1 block text-xs font-medium capitalize tracking-wide text-neutral-500">
                         Quantity
                       </span>
@@ -919,7 +919,7 @@ export function ProductPdp({
                       >
                         <button
                           type="button"
-                          className={`${quantity <= 1 ? "cursor-not-allowed" : "cursor-pointer"} px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40`}
+                          className={`${quantity <= 1 ? "cursor-not-allowed" : "cursor-pointer"} px-2.5 py-2.5 text-sm font-semibold text-neutral-800 disabled:opacity-40 sm:px-3`}
                           aria-label="Decrease quantity"
                           disabled={quantity <= 1}
                           onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -927,7 +927,7 @@ export function ProductPdp({
                           −
                         </button>
                         <span
-                          className="flex min-w-11 items-center justify-center border-x border-neutral-200 px-2 py-2 text-center text-sm font-medium tabular-nums text-neutral-900"
+                          className="flex min-w-9 items-center justify-center border-x border-neutral-200 px-1.5 py-2.5 text-center text-sm font-medium tabular-nums text-neutral-900 sm:min-w-11 sm:px-2"
                           aria-live="polite"
                           aria-atomic="true"
                         >
@@ -935,7 +935,7 @@ export function ProductPdp({
                         </span>
                         <button
                           type="button"
-                          className={`${quantity >= maxQty ? "cursor-not-allowed" : "cursor-pointer"} px-3 py-2 text-sm font-semibold text-neutral-800 disabled:opacity-40`}
+                          className={`${quantity >= maxQty ? "cursor-not-allowed" : "cursor-pointer"} px-2.5 py-2.5 text-sm font-semibold text-neutral-800 disabled:opacity-40 sm:px-3`}
                           aria-label="Increase quantity"
                           disabled={quantity >= maxQty}
                           onClick={() =>
@@ -946,7 +946,7 @@ export function ProductPdp({
                         </button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 sm:gap-2.5">
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
@@ -957,7 +957,7 @@ export function ProductPdp({
                         disabled={maxQty < 1}
                         openDrawer
                         itemName={product.name}
-                        className="rounded-full px-6 py-3 text-sm disabled:opacity-50"
+                        className="min-w-0 flex-1 rounded-full px-3 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm disabled:opacity-50"
                       />
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
@@ -971,7 +971,7 @@ export function ProductPdp({
                         redirectHref="/checkout"
                         label="Buy now"
                         itemName={product.name}
-                        className="rounded-full px-6 py-3 text-sm disabled:opacity-50"
+                        className="min-w-0 flex-1 rounded-full px-3 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -1218,9 +1218,9 @@ export function ProductPdp({
                 paddingTop: "0.375rem",
               }}
             >
-              <div className="mx-auto flex max-w-lg items-center justify-between gap-2 px-2.5 sm:gap-3 sm:px-4">
+              <div className="mx-auto flex max-w-lg items-center gap-2 px-2.5 sm:gap-3 sm:px-4">
                 <div
-                  className="h-14 w-14 shrink-0 overflow-hidden rounded-none border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:h-16 sm:w-16"
+                  className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:h-14 sm:w-14"
                   style={
                     thumbUrl
                       ? { backgroundImage: `url(${thumbUrl})` }
@@ -1228,7 +1228,37 @@ export function ProductPdp({
                   }
                   aria-hidden
                 />
-                <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[11px] font-medium leading-tight text-neutral-900 sm:text-xs">
+                    {product.name}
+                  </p>
+                  {priceVariant ? (
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                      {matchedVariant &&
+                      priceVariant.compare_at_price != null &&
+                      priceVariant.compare_at_price > priceVariant.price ? (
+                        <>
+                          <span className="text-[10px] tabular-nums text-neutral-500 line-through sm:text-[11px]">
+                            {formatPkr(Number(priceVariant.compare_at_price))}
+                          </span>
+                          <span className="text-xs font-semibold tabular-nums text-neutral-950 sm:text-sm">
+                            {formatPkr(Number(priceVariant.price))}
+                          </span>
+                          {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
+                            <span className="inline-flex items-center rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white sm:text-[10px]">
+                              {purchaseDiscountPct}% OFF
+                            </span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <span className="text-xs font-semibold tabular-nums text-neutral-950 sm:text-sm">
+                          {formatPkr(Number(priceVariant.price))}
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
                   {matchedVariant && maxQty > 0 ? (
                     <>
                       <AddToCartVariantButton

@@ -111,13 +111,13 @@ export function MobileNavDrawer({ open, onClose }: Props) {
   const links = useNavCollections();
   const headerNavItems = useHeaderNavMenuItems();
   const { storeName } = useStoreBrand();
-  const [shopOpen, setShopOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(true);
   const [authUser, setAuthUser] = useState<User | null>(null);
 
   useScrollLock(open);
 
   useEffect(() => {
-    if (!open) queueMicrotask(() => setShopOpen(false));
+    if (open) queueMicrotask(() => setShopOpen(true));
   }, [open]);
 
   useEffect(() => {
@@ -193,11 +193,18 @@ export function MobileNavDrawer({ open, onClose }: Props) {
             <div className="border-b border-neutral-200">
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-4 py-5 text-left text-sm font-normal text-neutral-950 hover:bg-neutral-50"
+                className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-neutral-50"
                 aria-expanded={shopOpen}
                 onClick={() => setShopOpen((o) => !o)}
               >
-                <span>Shop</span>
+                <span className="min-w-0">
+                  <span className="block text-[15px] font-semibold tracking-tight text-neutral-950">
+                    Shop
+                  </span>
+                  <span className="mt-0.5 block text-xs text-neutral-500">
+                    Browse collections
+                  </span>
+                </span>
                 <ChevronDown open={shopOpen} />
               </button>
               <AnimatePresence initial={false}>
@@ -208,31 +215,36 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.36, ease: accordionEase }}
-                    className="overflow-hidden border-t border-neutral-100"
+                    className="overflow-hidden"
                   >
                     <motion.div
                       initial={{ y: -6 }}
                       animate={{ y: 0 }}
                       exit={{ y: -4 }}
                       transition={{ duration: 0.28, ease: accordionEase }}
-                      className="bg-neutral-50/90 px-4 py-2"
+                      className="border-t border-neutral-100 bg-neutral-50/80 px-3 pb-3 pt-2"
                     >
                       <Link
                         href="/collections"
-                        className="block py-3 text-sm font-normal text-neutral-900"
+                        className="mb-1.5 flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-sm font-medium text-neutral-950 shadow-sm ring-1 ring-neutral-200/80 transition hover:ring-neutral-300"
                         onClick={onClose}
                       >
                         All collections
+                        <span className="text-neutral-400" aria-hidden>
+                          →
+                        </span>
                       </Link>
                       {links.length === 0 ? (
-                        <p className="py-2 text-sm text-neutral-500">No collections yet.</p>
+                        <p className="px-1 py-3 text-sm text-neutral-500">
+                          No collections yet.
+                        </p>
                       ) : (
-                        <ul className="list-none space-y-0 pb-2 pl-0">
+                        <ul className="mt-1 list-none space-y-0.5 pl-0">
                           {links.map((l) => (
                             <li key={l.slug}>
                               <Link
                                 href={`/collections/${l.slug}`}
-                                className="block wrap-break-word py-3 text-sm font-normal text-neutral-800"
+                                className="block rounded-lg px-3.5 py-2.5 text-sm font-normal text-neutral-800 transition hover:bg-white hover:text-neutral-950"
                                 onClick={onClose}
                               >
                                 {l.name}
