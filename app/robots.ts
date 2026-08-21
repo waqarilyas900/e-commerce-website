@@ -32,7 +32,12 @@ export default function robots(): MetadataRoute.Robots {
           "/*?*fbclid=",
         ],
       },
-      // Social crawlers should be able to fetch Open Graph tags reliably.
+      // Merchant Center + social crawlers — allow product feed explicitly.
+      {
+        userAgent: ["Googlebot", "Googlebot-Image", "Storebot-Google", "AdsBot-Google"],
+        allow: ["/", "/feeds/"],
+        disallow: ["/account", "/auth/", "/api/", "/checkout", "/cart"],
+      },
       {
         userAgent: ["facebookexternalhit", "Facebot", "Twitterbot", "LinkedInBot", "Slackbot"],
         allow: "/",
