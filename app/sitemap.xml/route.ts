@@ -160,6 +160,14 @@ export async function GET(): Promise<NextResponse> {
     { url: `${base}/collections`, lastModified, changeFrequency: "daily", priority: 0.95 },
     { url: `${base}/contact`, lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/about`, lastModified, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${base}/how-to-buy`, lastModified, changeFrequency: "monthly", priority: 0.5 },
+    {
+      url: `${base}/purchase-protection`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    { url: `${base}/terms`, lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/policies`, lastModified, changeFrequency: "monthly", priority: 0.45 },
   ];
 

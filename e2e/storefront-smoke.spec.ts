@@ -50,6 +50,31 @@ test.describe("Storefront smoke (Shopify-style paths)", () => {
     ).toBeVisible({ timeout: 30_000 });
   });
 
+  test("how to buy page loads", async ({ page }) => {
+    await page.goto("/how-to-buy");
+    await expect(
+      page.locator("#MainContent").getByRole("heading", { level: 1, name: "How to Buy" }),
+    ).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("purchase protection page loads", async ({ page }) => {
+    await page.goto("/purchase-protection");
+    await expect(
+      page
+        .locator("#MainContent")
+        .getByRole("heading", { level: 1, name: "Purchase Protection" }),
+    ).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("terms page loads", async ({ page }) => {
+    await page.goto("/terms");
+    await expect(
+      page
+        .locator("#MainContent")
+        .getByRole("heading", { level: 1, name: "Terms & Conditions" }),
+    ).toBeVisible({ timeout: 30_000 });
+  });
+
   test("policies index loads", async ({ page }) => {
     await page.goto("/policies");
     await expect(

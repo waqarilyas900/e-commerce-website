@@ -61,7 +61,8 @@ export type StoreBrandConfig = {
     customerCareSectionTitle: string;
     /**
      * Admin-defined labels, order, and destinations (resolved `href` per row).
-     * The storefront always prepends "Contact us" → `/contact` and "About us" → `/about`.
+     * The storefront always prepends Contact us, About us, How to Buy,
+     * Purchase Protection, and Terms & Conditions (footer-only hardcoded links).
      */
     policyFooterLinks: { label: string; href: string }[];
   };

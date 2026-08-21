@@ -19,6 +19,20 @@ const CONTACT_US_HREF = "/contact";
 const CONTACT_US_LABEL = "Contact us";
 const ABOUT_US_HREF = "/about";
 const ABOUT_US_LABEL = "About us";
+const HOW_TO_BUY_HREF = "/how-to-buy";
+const HOW_TO_BUY_LABEL = "How to Buy";
+const PURCHASE_PROTECTION_HREF = "/purchase-protection";
+const PURCHASE_PROTECTION_LABEL = "Purchase Protection";
+const TERMS_HREF = "/terms";
+const TERMS_LABEL = "Terms & Conditions";
+
+const HARDCODED_CUSTOMER_CARE_PATHS = [
+  CONTACT_US_HREF,
+  ABOUT_US_HREF,
+  HOW_TO_BUY_HREF,
+  PURCHASE_PROTECTION_HREF,
+  TERMS_HREF,
+] as const;
 
 /** Stable shop links for footer SEO internal linking. */
 const FOOTER_SHOP_LINKS: { href: string; label: string }[] = [
@@ -40,10 +54,9 @@ function normalizeFooterPath(href: string): string {
 }
 
 function customerCareReservedPaths(policyRows: { href: string }[]): Set<string> {
-  const s = new Set<string>([
-    normalizeFooterPath(CONTACT_US_HREF),
-    normalizeFooterPath(ABOUT_US_HREF),
-  ]);
+  const s = new Set<string>(
+    HARDCODED_CUSTOMER_CARE_PATHS.map((p) => normalizeFooterPath(p)),
+  );
   for (const p of policyRows) {
     const h = p.href?.trim() ?? "";
     if (h.startsWith("/") && !h.startsWith("//")) {
@@ -186,21 +199,32 @@ function PolicyNavLink({ href, children }: { href: string; children: React.React
 }
 
 function PolicyLinksList({ policyRows }: { policyRows: { label: string; href: string }[] }) {
+  const hardcoded = [
+    { key: "__contact-us", href: CONTACT_US_HREF, label: CONTACT_US_LABEL },
+    { key: "__about-us", href: ABOUT_US_HREF, label: ABOUT_US_LABEL },
+    { key: "__how-to-buy", href: HOW_TO_BUY_HREF, label: HOW_TO_BUY_LABEL },
+    {
+      key: "__purchase-protection",
+      href: PURCHASE_PROTECTION_HREF,
+      label: PURCHASE_PROTECTION_LABEL,
+    },
+    { key: "__terms", href: TERMS_HREF, label: TERMS_LABEL },
+  ];
+  const reserved = new Set(
+    HARDCODED_CUSTOMER_CARE_PATHS.map((p) => normalizeFooterPath(p)),
+  );
   return (
     <ul className="list-none space-y-3 pl-0 text-[15px] leading-snug text-white/88">
-      <li key="__contact-us">
-        <Link href={CONTACT_US_HREF} className={policyLinkClass}>
-          {CONTACT_US_LABEL}
-        </Link>
-      </li>
-      <li key="__about-us">
-        <Link href={ABOUT_US_HREF} className={policyLinkClass}>
-          {ABOUT_US_LABEL}
-        </Link>
-      </li>
+      {hardcoded.map((item) => (
+        <li key={item.key}>
+          <Link href={item.href} className={policyLinkClass}>
+            {item.label}
+          </Link>
+        </li>
+      ))}
       {policyRows.map((item) => {
         const path = normalizeFooterPath(item.href);
-        if (path === ABOUT_US_HREF || path === CONTACT_US_HREF) return null;
+        if (reserved.has(path)) return null;
         return (
           <li key={item.href + item.label}>
             <PolicyNavLink href={item.href}>{item.label}</PolicyNavLink>

@@ -205,8 +205,16 @@ function mapFooterItemsFromPolicyPages(
     const title = String(r.title ?? "").trim();
     if (!slug || !SLUG_RE.test(slug) || !title) continue;
     const href = `/${slug}`;
-    if (normalizeInternalNavPath(href) === normalizeInternalNavPath("/contact")) continue;
-    if (normalizeInternalNavPath(href) === normalizeInternalNavPath("/about")) continue;
+    const path = normalizeInternalNavPath(href);
+    if (
+      path === normalizeInternalNavPath("/contact") ||
+      path === normalizeInternalNavPath("/about") ||
+      path === normalizeInternalNavPath("/how-to-buy") ||
+      path === normalizeInternalNavPath("/purchase-protection") ||
+      path === normalizeInternalNavPath("/terms")
+    ) {
+      continue;
+    }
     if (seen.has(href)) continue;
     seen.add(href);
     out.push({ label: title, href });
