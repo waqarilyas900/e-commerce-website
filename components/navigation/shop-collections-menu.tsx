@@ -55,9 +55,9 @@ function ArrowRight() {
   );
 }
 
-function isShopPath(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === "/collections" || pathname.startsWith("/collections/");
+/** Hub only — child `/collections/[slug]` must not light up Shop / chevron. */
+function isShopHubPath(pathname: string | null): boolean {
+  return pathname === "/collections";
 }
 
 /** “Shop” label → `/collections`; chevron alone toggles the per-collection menu. */
@@ -68,8 +68,14 @@ export function ShopCollectionsMenu() {
   const ref = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
-  const routeActive = isShopPath(pathname);
-  const active = open || routeActive;
+  const hubActive = isShopHubPath(pathname);
+  const childCollectionActive = Boolean(
+    pathname?.startsWith("/collections/") && pathname !== "/collections",
+  );
+  /** Shop label selected only on hub — never when a dropdown child is the current page. */
+  const shopLabelActive = hubActive;
+  /** Chevron “pressed” look only while open, and never as a route-selected stand-in for a child. */
+  const chevronActive = open && !childCollectionActive;
 
   function clearCloseTimer() {
     if (!closeTimerRef.current) return;
@@ -119,14 +125,14 @@ export function ShopCollectionsMenu() {
     >
       <div
         className={`flex items-center gap-0.5 rounded-md transition-colors duration-200 ${
-          active ? "bg-neutral-100" : ""
+          shopLabelActive || chevronActive ? "bg-neutral-100" : ""
         }`}
       >
         <Link
           href="/collections"
-          aria-current={routeActive ? "page" : undefined}
+          aria-current={hubActive ? "page" : undefined}
           className={`${primaryNavLinkClass} relative rounded-md px-1.5 py-1 ${
-            active ? "font-semibold text-neutral-950" : ""
+            shopLabelActive ? "font-semibold text-neutral-950" : ""
           }`}
           onClick={() => {
             clearCloseTimer();
@@ -137,14 +143,14 @@ export function ShopCollectionsMenu() {
           <span
             aria-hidden
             className={`absolute inset-x-1.5 -bottom-0.5 h-0.5 origin-left rounded-full bg-neutral-950 transition-transform duration-300 ease-out ${
-              active ? "scale-x-100" : "scale-x-0"
+              shopLabelActive ? "scale-x-100" : "scale-x-0"
             }`}
           />
         </Link>
         <button
           type="button"
           className={`inline-flex cursor-pointer items-center rounded-full p-1.5 transition-colors duration-200 focus-visible:outline focus-visible:ring-2 focus-visible:ring-neutral-900/20 ${
-            active
+            chevronActive || hubActive
               ? "bg-neutral-200/80 text-neutral-950"
               : "text-neutral-800 hover:bg-neutral-100 hover:text-neutral-950"
           }`}

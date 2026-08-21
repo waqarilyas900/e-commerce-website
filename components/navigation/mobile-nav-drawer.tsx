@@ -115,9 +115,9 @@ export function MobileNavDrawer({ open, onClose }: Props) {
   const pathname = usePathname();
   const [shopOpen, setShopOpen] = useState(true);
   const [authUser, setAuthUser] = useState<User | null>(null);
-  const routeActive =
-    pathname === "/collections" || Boolean(pathname?.startsWith("/collections/"));
-  const shopSelected = shopOpen || routeActive;
+  const hubActive = pathname === "/collections";
+  /** Shop row selected only on hub — child collection pages select the child link instead. */
+  const shopParentSelected = hubActive;
 
   useScrollLock(open);
 
@@ -197,24 +197,24 @@ export function MobileNavDrawer({ open, onClose }: Props) {
 
             <div
               className={`border-b border-neutral-200 ${
-                shopSelected ? "bg-neutral-50" : ""
+                shopParentSelected ? "bg-neutral-50" : ""
               }`}
             >
               <button
                 type="button"
                 className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors ${
-                  shopSelected
+                  shopParentSelected
                     ? "bg-neutral-100 ring-1 ring-inset ring-neutral-200"
                     : "hover:bg-neutral-50"
                 }`}
                 aria-expanded={shopOpen}
-                aria-current={routeActive ? "true" : undefined}
+                aria-current={hubActive ? "true" : undefined}
                 onClick={() => setShopOpen((o) => !o)}
               >
                 <span className="min-w-0">
                   <span
                     className={`block text-[15px] tracking-tight ${
-                      shopSelected
+                      shopParentSelected
                         ? "font-bold text-neutral-950"
                         : "font-semibold text-neutral-950"
                     }`}
@@ -222,7 +222,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                     Shop
                   </span>
                   <span className="mt-0.5 block text-xs text-neutral-500">
-                    {shopSelected ? "Selected · Browse collections" : "Browse collections"}
+                    {shopParentSelected ? "Selected · Browse collections" : "Browse collections"}
                   </span>
                 </span>
                 <ChevronDown open={shopOpen} />
