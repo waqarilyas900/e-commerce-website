@@ -70,6 +70,11 @@ export function organizationJsonLd(identity: SiteIdentity): Record<string, unkno
     node.email = identity.organizationEmail;
   }
 
+  node.areaServed = {
+    "@type": "Country",
+    name: identity.address.country || "PK",
+  };
+
   if (hasContact) {
     node.contactPoint = [
       {

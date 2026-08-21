@@ -320,7 +320,7 @@ export function buildPageMetadata(input: BuildMetadataInput): Metadata {
       siteName: site,
       title: titleFinal,
       description: descFinal,
-      locale: identity.locale || "en_US",
+      locale: identity.locale || "en_PK",
       images: images.length ? images : undefined,
     },
     twitter: {

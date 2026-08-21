@@ -29,10 +29,25 @@ export function faqPageJsonLd(args: {
   };
 }
 
-/** Shared storefront FAQs (COD / delivery / returns) — product name optional. */
-export function storeFaqItems(productName?: string): FaqItem[] {
-  const name = (productName ?? "").trim();
-  return [
+export type StoreFaqExtras = {
+  /** Product display name for product-specific Q&A. */
+  productName?: string;
+  /** Material from shopping attributes (e.g. Stainless Steel). */
+  material?: string | null;
+};
+
+/** Shared storefront FAQs (COD / delivery / returns) — product extras optional. */
+export function storeFaqItems(
+  productNameOrExtras?: string | StoreFaqExtras,
+): FaqItem[] {
+  const extras: StoreFaqExtras =
+    typeof productNameOrExtras === "string"
+      ? { productName: productNameOrExtras }
+      : productNameOrExtras ?? {};
+  const name = (extras.productName ?? "").trim();
+  const material = (extras.material ?? "").trim();
+
+  const items: FaqItem[] = [
     {
       question: "Do you offer cash on delivery (COD) in Pakistan?",
       answer:
@@ -48,19 +63,25 @@ export function storeFaqItems(productName?: string): FaqItem[] {
       answer:
         "If something is wrong with your order, contact us within 7 days of delivery via the Contact page. Damaged or incorrect items are reviewed for return or replacement under our Return Policy.",
     },
-    ...(name
-      ? [
-          {
-            question: `Is the ${name} available for nationwide delivery?`,
-            answer: `Yes. You can order ${name} online from SimpleCart Store with delivery available across Pakistan, including cash on delivery at checkout.`,
-          },
-        ]
-      : [
-          {
-            question: "How can I contact SimpleCart Store?",
-            answer:
-              "Reach us by email at support@simplecartstore.com or WhatsApp/call at +923009761427 (Mon–Sat, 10:00 AM – 8:00 PM). You can also use the Contact page on our website.",
-          },
-        ]),
   ];
+
+  if (name && material) {
+    items.push({
+      question: `What is the ${name} made of?`,
+      answer: `The ${name} is listed as ${material}. Check the product details on this page for the full specification before you order from SimpleCart Store.`,
+    });
+  } else if (name) {
+    items.push({
+      question: `Is the ${name} available for nationwide delivery?`,
+      answer: `Yes. You can order ${name} online from SimpleCart Store with delivery available across Pakistan, including cash on delivery at checkout.`,
+    });
+  } else {
+    items.push({
+      question: "How can I contact SimpleCart Store?",
+      answer:
+        "Reach us by email at support@simplecartstore.com or WhatsApp/call at +923009761427 (Mon–Sat, 10:00 AM – 8:00 PM). You can also use the Contact page on our website.",
+    });
+  }
+
+  return items;
 }

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import {
   getCachedCollectionBySlug,
+  getCachedListCollections,
   getCachedProductsByCollectionSlug,
 } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
@@ -36,6 +37,7 @@ import {
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
 import { StoreFaqSection } from "@/components/seo/store-faq";
+import { RelatedCollections } from "@/components/seo/related-collections";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -148,9 +150,10 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     notFound();
   }
 
-  const [navLinks, identity] = await Promise.all([
+  const [navLinks, identity, allCollections] = await Promise.all([
     getNavCollectionLinks(),
     loadSiteIdentity(),
+    getCachedListCollections(),
   ]);
   const seoOverride = await loadSeoOverrideForSubject("collection", dbCol.id, identity.locale);
   const displayName = seoHeadingFromMetaTitle(seoOverride?.title, collection.name);
@@ -165,6 +168,21 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
   );
   list = sortCollectionProducts(list, parsed.sort, featuredIndex);
 
+  const relatedCollections = (
+    await Promise.all(
+      allCollections
+        .filter((c) => c.slug !== slug && c.slug !== "sale")
+        .slice(0, 6)
+        .map(async (c) => {
+          const seo = await loadSeoOverrideForSubject("collection", c.id, identity.locale);
+          return {
+            slug: c.slug,
+            name: seoHeadingFromMetaTitle(seo?.title, c.name),
+          };
+        }),
+    )
+  ).slice(0, 5);
+
   const canonical = resolveSeoCanonicalOverride(
     seoOverride?.canonicalUrl,
     canonicalUrlFor(`/collections/${slug}`, sp),
@@ -176,6 +194,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
       name: displayName,
       description: seoOverride?.description || collection.description,
       products: list,
+      totalItemCount: baseline.length,
       breadcrumbId,
     }),
     seoOverride?.jsonLdOverrides,
@@ -226,6 +245,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
             />
           </Suspense>
         </section>
+        <RelatedCollections items={relatedCollections} />
         <StoreFaqSection items={faqItems} />
       </main>
       <Footer />

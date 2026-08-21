@@ -23,6 +23,7 @@ import {
   loadSeoOverrideForSubject,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
+  seoHeadingFromMetaTitle,
 } from "@/lib/seo";
 import {
   JsonLd,
@@ -119,6 +120,10 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
     loadSiteIdentity(),
   ]);
   const seoOverride = await loadSeoOverrideForSubject("home_section", section.id, identity.locale);
+  const displayName = seoHeadingFromMetaTitle(seoOverride?.title, section.name);
+  const intro =
+    seoOverride?.description?.trim() ||
+    `${section.name} — curated home, kitchen and beauty essentials from SimpleCart Store with COD across Pakistan.`;
   const featuredIndex = buildFeaturedIndex(baseline);
   const maxCeil = maxPriceCeiling(baseline);
 
@@ -138,15 +143,17 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
   const collectionLd = applyJsonLdOverrides(
     collectionJsonLd({
       url: canonical,
-      name: section.name,
+      name: displayName,
+      description: intro,
       products: list,
+      totalItemCount: baseline.length,
       breadcrumbId,
     }),
     seoOverride?.jsonLdOverrides,
   );
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
-    { name: section.name, url: canonical },
+    { name: displayName, url: canonical },
   ]);
   (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
 
@@ -159,8 +166,13 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
-            {section.name}
+            {displayName}
           </h1>
+          {intro ? (
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+              {intro}
+            </p>
+          ) : null}
         </header>
 
         <section>

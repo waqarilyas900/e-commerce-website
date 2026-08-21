@@ -157,27 +157,72 @@ function buildOffer(
   };
 }
 
+/** ~90 days ahead — honest enough for evergreen PKR prices without far-future fakes. */
 function priceValidUntilFromNow(): string {
   const d = new Date();
-  d.setUTCFullYear(d.getUTCFullYear() + 1);
-  d.setUTCMonth(11, 31);
-  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + 90);
   return d.toISOString().slice(0, 10);
 }
 
 /**
- * Merchant return / shipping structured data.
- *
- * Opaque `return_policy_id` / `shipping_policy_id` UUIDs are not enough to assert
- * return windows, free shipping, or delivery SLAs. Emitting fabricated values
- * risks Merchant Center / rich-result penalties — omit until typed policy fields
- * exist in the admin schema.
+ * Merchant return / shipping structured data for Pakistan COD storefront.
+ * Return window matches the public Return Policy FAQ (7 days).
+ * ShippingDetails is only emitted when the product has free delivery (known Rs 0 rate)
+ * so we never invent a standard fee Google could flag as inaccurate.
  */
 function buildMerchantPolicyNodes(
-  _input: ProductJsonLdInput,
-  _currency: string,
+  input: ProductJsonLdInput,
+  currency: string,
 ): Record<string, unknown> {
-  return {};
+  const returnPolicyUrl = absoluteUrl("/policies/return-policy");
+  const shippingPolicyUrl = absoluteUrl("/policies/shipping-policy");
+  const freeDelivery = Boolean(input.product.free_delivery);
+
+  const nodes: Record<string, unknown> = {
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "PK",
+      returnPolicyCategory:
+        "https://schema.org/MerchantReturnFiniteReturnWindow",
+      merchantReturnDays: 7,
+      returnMethod: "https://schema.org/ReturnByMail",
+      returnFees: "https://schema.org/ReturnShippingFees",
+      url: returnPolicyUrl,
+    },
+  };
+
+  if (freeDelivery) {
+    nodes.shippingDetails = {
+      "@type": "OfferShippingDetails",
+      shippingRate: {
+        "@type": "MonetaryAmount",
+        value: "0",
+        currency,
+      },
+      shippingDestination: {
+        "@type": "DefinedRegion",
+        addressCountry: "PK",
+      },
+      deliveryTime: {
+        "@type": "ShippingDeliveryTime",
+        handlingTime: {
+          "@type": "QuantitativeValue",
+          minValue: 1,
+          maxValue: 2,
+          unitCode: "DAY",
+        },
+        transitTime: {
+          "@type": "QuantitativeValue",
+          minValue: 2,
+          maxValue: 8,
+          unitCode: "DAY",
+        },
+      },
+      url: shippingPolicyUrl,
+    };
+  }
+
+  return nodes;
 }
 
 /** "en_US" → "en-US" for schema.org `inLanguage`. */

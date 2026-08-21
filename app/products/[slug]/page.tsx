@@ -8,18 +8,13 @@ import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { dbListProductReviewsForPdp } from "@/app/lib/db/catalog";
 import {
-  findUniqueActiveProductSlugByPrefix,
-  getCachedProductDetailBySlug,
-  getCachedProductsByCollectionSlug,
-} from "@/lib/cache/catalog-data";
-import { hasCatalogDb } from "@/app/lib/db/env";
-import {
   buildPageMetadata,
   canonicalUrlFor,
   loadProductSeoExtras,
   loadSeoOverrideForSubject,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
+  seoHeadingFromMetaTitle,
   stripHtml,
   type ProductOpenGraphExtras,
 } from "@/lib/seo";
@@ -34,6 +29,13 @@ import {
 } from "@/lib/seo/jsonld";
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
 import { StoreFaqSection } from "@/components/seo/store-faq";
+import {
+  findUniqueActiveProductSlugByPrefix,
+  getCachedListCollections,
+  getCachedProductDetailBySlug,
+  getCachedProductsByCollectionSlug,
+} from "@/lib/cache/catalog-data";
+import { hasCatalogDb } from "@/app/lib/db/env";
 
 /**
  * Compute Facebook product OG extension fields from a `ProductDetail`:
@@ -86,7 +88,12 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const PDP_REVIEWS_ARE_SYNTHETIC = true;
+/**
+ * Stars are shown on the PDP from product.rating / reviews_count.
+ * Emit AggregateRating in JSON-LD so markup matches visible UI (Google expects parity).
+ * Keep false only if you intentionally hide star markup from crawlers.
+ */
+const PDP_REVIEWS_ARE_SYNTHETIC = false;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -154,6 +161,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       keywords: detail.product.tags ?? [],
       ogType: "website",
       productExtras,
+      lastModifiedISO: detail.product.created_at ?? null,
     },
   });
 }
@@ -181,14 +189,29 @@ export default async function ProductPage({ params }: Props) {
   // Critical-path data (above-the-fold buy box + structured data) — block on
   // these. Related products and reviews are streamed in via Suspense below
   // so the user sees the buy box before those slower joins finish.
-  const [identity, seoExtras] = await Promise.all([
+  const [identity, seoExtras, collections] = await Promise.all([
     loadSiteIdentity(),
     loadProductSeoExtras(detail.product.id),
+    getCachedListCollections(),
   ]);
   const seoOverride = await loadSeoOverrideForSubject("product", detail.product.id, identity.locale);
   const hasRealCollection =
     detail.collectionSlug.trim() !== "" &&
     detail.collectionSlug.toLowerCase() !== "uncategorized";
+
+  const parentCollection = hasRealCollection
+    ? collections.find((c) => c.slug === detail.collectionSlug) ?? null
+    : null;
+  const collectionSeo = parentCollection
+    ? await loadSeoOverrideForSubject("collection", parentCollection.id, identity.locale)
+    : null;
+  const collectionLabel = hasRealCollection
+    ? seoHeadingFromMetaTitle(
+        collectionSeo?.title,
+        detail.collectionName || detail.collectionSlug,
+      )
+    : "";
+  const pdpHeading = seoHeadingFromMetaTitle(seoOverride?.title, detail.product.name);
 
   const canonical = resolveSeoCanonicalOverride(
     seoOverride?.canonicalUrl,
@@ -207,14 +230,14 @@ export default async function ProductPage({ params }: Props) {
     seoOverride,
     shoppingExtras: seoExtras,
     optionDefinitions: detail.optionDefinitions,
-    category: detail.collectionName || detail.collectionSlug,
+    category: collectionLabel || detail.collectionName || detail.collectionSlug,
   });
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
     ...(hasRealCollection
       ? [
           {
-            name: detail.collectionName || detail.collectionSlug,
+            name: collectionLabel,
             url: `/collections/${detail.collectionSlug}`,
           },
         ]
@@ -226,7 +249,10 @@ export default async function ProductPage({ params }: Props) {
     { ...productLd, breadcrumb: { "@id": `${canonical}#breadcrumb` } },
     seoOverride?.jsonLdOverrides,
   );
-  const faqItems = storeFaqItems(detail.product.name);
+  const faqItems = storeFaqItems({
+    productName: detail.product.name,
+    material: seoExtras.material,
+  });
   const faqLd = faqPageJsonLd({ url: canonical, items: faqItems });
 
   return (
@@ -246,7 +272,7 @@ export default async function ProductPage({ params }: Props) {
             ...(hasRealCollection
               ? [
                   {
-                    name: detail.collectionName || detail.collectionSlug,
+                    name: collectionLabel,
                     href: `/collections/${detail.collectionSlug}`,
                   },
                 ]
@@ -259,11 +285,8 @@ export default async function ProductPage({ params }: Props) {
           product={detail.product}
           productSlug={slug}
           optionDefinitions={detail.optionDefinitions}
-          collectionLabel={
-            hasRealCollection
-              ? detail.collectionName || detail.collectionSlug
-              : ""
-          }
+          heading={pdpHeading}
+          collectionLabel={collectionLabel}
           collectionHref={
             hasRealCollection ? `/collections/${detail.collectionSlug}` : ""
           }
@@ -281,13 +304,9 @@ export default async function ProductPage({ params }: Props) {
           />
         </Suspense>
         <Suspense fallback={<RelatedProductsFallback />}>
-          {/* Streamed in after the buy box renders. The query joins
-              product_collections → product_variants → inventory and runs ~150-300ms
-              on cold cache; with above-the-fold streaming the user can interact
-              with the PDP before this section paints. */}
           <RelatedProductsSection
             collectionSlug={detail.collectionSlug}
-            collectionName={detail.collectionName || detail.collectionSlug}
+            collectionName={collectionLabel || detail.collectionName || detail.collectionSlug}
             currentSlug={slug}
           />
         </Suspense>

@@ -98,9 +98,14 @@ function seoLocaleCandidates(hint?: string | null): string[] {
   if (h.includes("_")) add(h.split("_")[0]);
   if (h.includes("-")) add(h.split("-")[0]);
   const norm = h.toLowerCase().replace(/-/g, "_");
-  if (norm === "en_us") add("en");
-  if (norm === "en") add("en_US");
+  if (norm === "en_us" || norm === "en_pk") add("en");
+  if (norm === "en") {
+    add("en_PK");
+    add("en_US");
+  }
+  if (norm === "en_pk") add("en_US");
   add("en");
+  add("en_PK");
   add("en_US");
   return out;
 }

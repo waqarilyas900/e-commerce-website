@@ -202,7 +202,7 @@ export default async function RootLayout({
     siteTitle: identity.siteTitle || baseBrand.siteTitle,
     storeName: identity.storeName || baseBrand.storeName,
   });
-  const htmlLang = (identity.locale || "en_US").split("_")[0] || "en";
+  const htmlLang = (identity.locale || "en_PK").replace(/_/g, "-");
   const analyticsId = analytics.googleAnalyticsId;
   const gtmId = analytics.googleTagManagerId;
   const metaPixelId = analytics.metaPixelId;

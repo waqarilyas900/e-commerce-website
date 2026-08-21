@@ -25,9 +25,10 @@ import {
   resolveSeoCanonicalOverride,
   seoHeadingFromMetaTitle,
 } from "@/lib/seo";
-import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
+import { JsonLd, faqPageJsonLd, storeFaqItems, webPageJsonLd } from "@/lib/seo/jsonld";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
+import { StoreFaqSection } from "@/components/seo/store-faq";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -73,6 +74,8 @@ export default async function Home() {
     identity,
     primaryImageUrl: firstHeroImage || identity.defaultOgImageUrl || null,
   });
+  const homeFaqItems = storeFaqItems();
+  const homeFaqLd = faqPageJsonLd({ url: canonical, items: homeFaqItems });
 
   /**
    * Preload the same optimized candidate `next/image` will paint — never the raw
@@ -103,6 +106,7 @@ export default async function Home() {
   return (
     <>
       <JsonLd id="ld-home" data={homeLd} />
+      {homeFaqLd ? <JsonLd id="ld-home-faq" data={homeFaqLd} /> : null}
       {heroPreload ? (
         <link
           rel="preload"
@@ -148,6 +152,9 @@ export default async function Home() {
         </Suspense>
         <WhyShop />
         <TrustRatingStrip aggregate={storeReviews} />
+        <div className="mx-auto max-w-7xl shell-x pb-10 sm:pb-12">
+          <StoreFaqSection items={homeFaqItems} />
+        </div>
       </main>
       <Footer />
     </>

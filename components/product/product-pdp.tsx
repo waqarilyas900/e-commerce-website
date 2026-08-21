@@ -153,6 +153,11 @@ type Props = {
   collectionLabel: string;
   /** When set, collection label links to the collection page (internal SEO). */
   collectionHref?: string;
+  /**
+   * On-page H1 — prefer SEO heading from `seo_meta.title` when provided.
+   * Product JSON-LD still uses catalog `product.name`.
+   */
+  heading?: string;
   variants: DbProductVariantRow[];
   /** When set (e.g. from DB), drives gallery + video; otherwise uses `product.images` */
   assets?: DbProductAssetRow[];
@@ -171,6 +176,7 @@ export function ProductPdp({
   optionDefinitions,
   collectionLabel,
   collectionHref = "",
+  heading,
   variants,
   assets,
   colorById = {},
@@ -693,7 +699,7 @@ export function ProductPdp({
             </p>
           ) : null}
           <h1 className="text-3xl font-semibold tracking-tight">
-            {product.name}
+            {(heading ?? "").trim() || product.name}
           </h1>
           {product.free_delivery ? (
             <p className="text-sm font-medium text-emerald-800">

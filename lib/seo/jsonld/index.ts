@@ -6,4 +6,9 @@ export { breadcrumbJsonLd, type BreadcrumbCrumb } from "./breadcrumbs";
 export { productJsonLd, type ProductJsonLdInput } from "./product";
 export { collectionJsonLd, type CollectionItemListInput } from "./collection";
 export { webPageJsonLd, type WebPageJsonLdInput } from "./webpage";
-export { faqPageJsonLd, storeFaqItems, type FaqItem } from "./faq";
+export {
+  faqPageJsonLd,
+  storeFaqItems,
+  type FaqItem,
+  type StoreFaqExtras,
+} from "./faq";

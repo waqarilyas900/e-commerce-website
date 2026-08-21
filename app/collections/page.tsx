@@ -12,6 +12,7 @@ import {
   buildPageMetadata,
   canonicalUrlFor,
   loadSeoOverrideForRoute,
+  loadSeoOverrideForSubject,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
   seoHeadingFromMetaTitle,
@@ -61,6 +62,15 @@ export default async function CollectionsPage() {
     { name: "Collections", url: canonical },
   ]);
   (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
+
+  const collectionCards = await Promise.all(
+    collections.map(async (c) => {
+      const seo = await loadSeoOverrideForSubject("collection", c.id, identity.locale);
+      const displayName = seoHeadingFromMetaTitle(seo?.title, c.name);
+      return { ...c, displayName };
+    }),
+  );
+
   const hubLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -71,12 +81,12 @@ export default async function CollectionsPage() {
     breadcrumb: { "@id": breadcrumbId },
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: collections.length,
-      itemListElement: collections.map((c, i) => ({
+      numberOfItems: collectionCards.length,
+      itemListElement: collectionCards.map((c, i) => ({
         "@type": "ListItem",
         position: i + 1,
         url: absoluteUrl(`/collections/${c.slug}`),
-        name: c.name,
+        name: c.displayName,
       })),
     },
   };
@@ -96,9 +106,9 @@ export default async function CollectionsPage() {
           <section>
             <h1 className="text-3xl font-semibold tracking-tight">{heading}</h1>
             <p className="mt-2 max-w-2xl text-sm text-neutral-600 sm:text-base">{intro}</p>
-            {collections.length > 0 ? (
+            {collectionCards.length > 0 ? (
               <ul className="mt-5 grid list-none grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3">
-                {collections.map((c) => (
+                {collectionCards.map((c) => (
                   <li key={c.id}>
                     <Link
                       href={`/collections/${c.slug}`}
@@ -108,7 +118,7 @@ export default async function CollectionsPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={c.hero_image}
-                          alt={`${c.name} collection`}
+                          alt={`${c.displayName} collection`}
                           className="aspect-[4/3] w-full object-cover"
                           loading="lazy"
                         />
@@ -116,7 +126,7 @@ export default async function CollectionsPage() {
                         <div className="aspect-[4/3] w-full bg-neutral-200" />
                       )}
                       <span className="px-3 py-2.5 text-sm font-semibold text-neutral-900 group-hover:underline underline-offset-4">
-                        {c.name}
+                        {c.displayName}
                       </span>
                     </Link>
                   </li>
