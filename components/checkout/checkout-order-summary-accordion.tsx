@@ -31,6 +31,8 @@ type Props = {
   /** When true, message is styled as an error and the code field gets a red border. */
   discountNoticeIsError?: boolean;
   applyingVoucher?: boolean;
+  /** True while cart lines are being resolved from the catalog. */
+  cartLoading?: boolean;
 };
 
 type Line = ResolvedCartLine;
@@ -53,6 +55,7 @@ type SummaryBodyProps = {
   discountNotice: string | null;
   discountNoticeIsError?: boolean;
   applyingVoucher?: boolean;
+  cartLoading?: boolean;
   inert?: boolean;
 };
 
@@ -72,6 +75,7 @@ function CheckoutOrderSummaryBody({
   discountNotice,
   discountNoticeIsError = false,
   applyingVoucher = false,
+  cartLoading = false,
   inert = false,
 }: SummaryBodyProps) {
   const brand = useStoreBrand();
@@ -94,7 +98,10 @@ function CheckoutOrderSummaryBody({
       className={`border-t border-neutral-200 bg-white px-4 py-4 md:border-t-0 md:bg-transparent md:px-0 ${inert ? "pointer-events-none" : ""}`}
     >
       <ul className="space-y-4 border-b border-neutral-200 pb-4">
-        {lines.map(({ line, product, unitPrice, variantLabel }) => {
+        {cartLoading ? (
+          <li className="py-6 text-center text-sm text-neutral-500">Loading your cart…</li>
+        ) : (
+        lines.map(({ line, product, unitPrice, variantLabel }) => {
           const lineTotal = unitPrice * line.quantity;
           return (
             <li key={line.variantId} className="flex gap-3 text-sm">
@@ -122,7 +129,8 @@ function CheckoutOrderSummaryBody({
               </p>
             </li>
           );
-        })}
+        })
+        )}
       </ul>
 
       <div className="mt-4 flex gap-2">
@@ -322,6 +330,7 @@ export function CheckoutOrderSummaryAccordion({
   discountNotice,
   discountNoticeIsError,
   applyingVoucher,
+  cartLoading,
 }: Props) {
   return (
     <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
@@ -381,6 +390,7 @@ export function CheckoutOrderSummaryAccordion({
           discountNotice={discountNotice}
           discountNoticeIsError={discountNoticeIsError}
           applyingVoucher={applyingVoucher}
+          cartLoading={cartLoading}
           inert={!expanded}
         />
       </motion.div>

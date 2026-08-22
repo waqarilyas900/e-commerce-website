@@ -45,6 +45,7 @@ const SKIP_PROMPT_PREFIXES = [
   "/signup",
   "/forgot-password",
   "/reset-password",
+  "/checkout",
 ];
 
 function shouldSkipPromptRoute(pathname: string): boolean {

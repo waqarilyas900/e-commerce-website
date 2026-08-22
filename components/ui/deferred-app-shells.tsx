@@ -55,10 +55,11 @@ export function DeferredAppShells() {
   if (!ready) return null;
 
   const hideStoreAi = isCheckoutPath(pathname);
+  const hideDiscountPrompt = isCheckoutPath(pathname);
 
   return (
     <>
-      <DiscountNotificationPrompt />
+      {hideDiscountPrompt ? null : <DiscountNotificationPrompt />}
       {hideStoreAi ? null : <AskTheStore />}
     </>
   );
