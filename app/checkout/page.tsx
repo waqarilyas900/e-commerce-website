@@ -898,8 +898,8 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <form id="checkout-form" onSubmit={onSubmit} className="mt-6 space-y-5 md:mt-8">
-              <div className="md:hidden">
+            <div className="mt-6 flex flex-col gap-5 md:mt-8">
+              <div className="order-1 md:hidden">
                 <CheckoutOrderSummaryAccordion
                   id="co-summary-top"
                   expanded={topSummaryOpen}
@@ -927,8 +927,9 @@ export default function CheckoutPage() {
                 />
               </div>
 
+            <form id="checkout-form" onSubmit={onSubmit} className="contents">
             <div
-              className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
+              className="order-2 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
               aria-label="Delivery and contact"
             >
               <CheckoutTemplateFields
@@ -973,7 +974,7 @@ export default function CheckoutPage() {
               />
             </div>
 
-            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+            <section className="order-3 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
               <h2 className="text-base font-semibold text-neutral-900">Shipping method</h2>
               <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-sm">
                 <span className="text-sm leading-tight text-neutral-800">
@@ -995,7 +996,7 @@ export default function CheckoutPage() {
               </p>
             </section>
 
-            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+            <section className="order-4 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
               <h2 className="text-base font-semibold text-neutral-900">Payment</h2>
               <p className="mt-1 text-xs text-neutral-500">
                 All transactions are secure and encrypted.
@@ -1009,13 +1010,57 @@ export default function CheckoutPage() {
             </section>
 
             <div
-              className="hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
+              className="order-6 hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
               aria-hidden
             >
               <MoneyBackBadge />
             </div>
 
-              <div className="md:hidden">
+              {signedIn ? (
+              <label className="order-7 flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-left text-sm text-neutral-800">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+                  checked={newsletterOptIn}
+                  onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                />
+                <span>Email me with news and offers</span>
+              </label>
+              ) : null}
+
+              {submitError ? (
+                <p
+                  className="order-8 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+                  role="alert"
+                >
+                  {submitError}
+                </p>
+              ) : null}
+
+              {cartResolveFailed ? (
+                <p
+                  className="order-9 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                  role="status"
+                >
+                  We couldn&apos;t load one or more items in your cart from the catalog. Open your
+                  cart and try again, or continue shopping.
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={placing || resolvedLines.length === 0 || cartResolveFailed}
+                className="order-10 w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {placing ? "Placing order…" : "Complete order"}
+              </button>
+
+              <div className="order-11">
+                <CheckoutPolicyFooterLinks />
+              </div>
+            </form>
+
+              <div className="order-5 md:hidden">
                 <CheckoutOrderSummaryAccordion
                   id="co-summary-bottom"
                   expanded={bottomSummaryOpen}
@@ -1042,48 +1087,7 @@ export default function CheckoutPage() {
                   applyingVoucher={applyingVoucher}
                 />
               </div>
-
-              {signedIn ? (
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-left text-sm text-neutral-800">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
-                  checked={newsletterOptIn}
-                  onChange={(e) => setNewsletterOptIn(e.target.checked)}
-                />
-                <span>Email me with news and offers</span>
-              </label>
-              ) : null}
-
-              {submitError ? (
-                <p
-                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-                  role="alert"
-                >
-                  {submitError}
-                </p>
-              ) : null}
-
-              {cartResolveFailed ? (
-                <p
-                  className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
-                  role="status"
-                >
-                  We couldn&apos;t load one or more items in your cart from the catalog. Open your
-                  cart and try again, or continue shopping.
-                </p>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={placing || resolvedLines.length === 0 || cartResolveFailed}
-                className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {placing ? "Placing order…" : "Complete order"}
-              </button>
-
-              <CheckoutPolicyFooterLinks />
-            </form>
+            </div>
           </div>
           <aside className="hidden border-l border-neutral-200 bg-[#f5f5f5] md:block shell-x md:py-0">
             <div className="md:sticky md:top-0 md:h-screen md:overflow-y-auto md:pt-8 md:pb-8">

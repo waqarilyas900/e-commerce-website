@@ -130,8 +130,14 @@ function CheckoutOrderSummaryBody({
           type="text"
           value={discountCode}
           onChange={(e) => onDiscountCodeChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            onApplyDiscount();
+          }}
           placeholder="Discount code"
           autoComplete="off"
+          enterKeyHint="go"
           aria-invalid={inputError}
           aria-describedby={inputError ? voucherNoticeId : undefined}
           className={
