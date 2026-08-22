@@ -161,6 +161,7 @@ export async function GET(): Promise<NextResponse> {
     { url: `${base}/contact`, lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/about`, lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/how-to-buy`, lastModified, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${base}/blogs`, lastModified, changeFrequency: "daily", priority: 0.75 },
     {
       url: `${base}/purchase-protection`,
       lastModified,
@@ -229,6 +230,15 @@ export async function GET(): Promise<NextResponse> {
       lastModified: lastMod,
       changeFrequency: "weekly",
       priority: 0.85,
+      imageLoc: safeImage ?? undefined,
+    });
+
+    // One SEO blog guide per active product (same images + deep link to PDP).
+    byUrl.set(`${base}/blogs/${encodeURIComponent(slug)}`, {
+      url: `${base}/blogs/${encodeURIComponent(slug)}`,
+      lastModified: lastMod,
+      changeFrequency: "weekly",
+      priority: 0.65,
       imageLoc: safeImage ?? undefined,
     });
   }

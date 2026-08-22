@@ -21,6 +21,8 @@ const ABOUT_US_HREF = "/about";
 const ABOUT_US_LABEL = "About us";
 const HOW_TO_BUY_HREF = "/how-to-buy";
 const HOW_TO_BUY_LABEL = "How to Buy";
+const BLOGS_HREF = "/blogs";
+const BLOGS_LABEL = "SimpleCart Blogs";
 const PURCHASE_PROTECTION_HREF = "/purchase-protection";
 const PURCHASE_PROTECTION_LABEL = "Purchase Protection";
 const TERMS_HREF = "/terms";
@@ -30,6 +32,7 @@ const HARDCODED_CUSTOMER_CARE_PATHS = [
   CONTACT_US_HREF,
   ABOUT_US_HREF,
   HOW_TO_BUY_HREF,
+  BLOGS_HREF,
   PURCHASE_PROTECTION_HREF,
   TERMS_HREF,
 ] as const;
@@ -203,6 +206,7 @@ function PolicyLinksList({ policyRows }: { policyRows: { label: string; href: st
     { key: "__contact-us", href: CONTACT_US_HREF, label: CONTACT_US_LABEL },
     { key: "__about-us", href: ABOUT_US_HREF, label: ABOUT_US_LABEL },
     { key: "__how-to-buy", href: HOW_TO_BUY_HREF, label: HOW_TO_BUY_LABEL },
+    { key: "__blogs", href: BLOGS_HREF, label: BLOGS_LABEL },
     {
       key: "__purchase-protection",
       href: PURCHASE_PROTECTION_HREF,
