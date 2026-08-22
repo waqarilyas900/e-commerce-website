@@ -17,30 +17,44 @@ export type HomeRailSection = HomeCategoryRail & {
   totalProductCount: number;
 };
 
+/** Must match `RAIL_PREVIEW` in ProductSection — home shows this many cards per category. */
+const HOME_RAIL_PREVIEW = 4;
+/** Cap curated + fill so we don't over-fetch; UI still previews 4. */
+const MAX_RAIL_PRODUCTS = 8;
+
 function parseCollectionSlugFromHref(href: string): string | null {
   const m = href.trim().match(/^\/collections\/([^/?#]+)\/?$/);
   return m?.[1] ?? null;
 }
 
-/** Prefer at least this many cards so homepage rails don't look empty after slug renames. */
-const MIN_RAIL_PRODUCTS = 4;
-/** Cap curated + fill so we don't over-fetch; UI still previews 4. */
-const MAX_RAIL_PRODUCTS = 8;
-
 function isRatedProduct(p: Product): boolean {
   return (p.rating ?? 0) > 0 || (p.reviews ?? 0) > 0;
 }
 
-/** Rated first, then unrated fill — higher reviews/rating within the rated group. */
-function sortRatedFirst(a: Product, b: Product): number {
-  const aRated = isRatedProduct(a) ? 1 : 0;
-  const bRated = isRatedProduct(b) ? 1 : 0;
-  if (bRated !== aRated) return bRated - aRated;
-  const byReviews = (b.reviews ?? 0) - (a.reviews ?? 0);
-  if (byReviews !== 0) return byReviews;
+/** Among rated products: highest rating first, then most reviews (descending). */
+function compareRatedDescending(a: Product, b: Product): number {
   const byRating = (b.rating ?? 0) - (a.rating ?? 0);
   if (byRating !== 0) return byRating;
+  const byReviews = (b.reviews ?? 0) - (a.reviews ?? 0);
+  if (byReviews !== 0) return byReviews;
   return a.name.localeCompare(b.name);
+}
+
+/**
+ * Per category: all rated products first (rating desc), then unrated fill.
+ * Example: 3 rated + many unrated → order is [R1, R2, R3, U1, U2, ...] so the
+ * 4-card grid shows 3 rated + 1 unrated.
+ */
+export function orderRatedThenUnrated(products: Product[]): Product[] {
+  const rated: Product[] = [];
+  const unrated: Product[] = [];
+  for (const p of products) {
+    if (isRatedProduct(p)) rated.push(p);
+    else unrated.push(p);
+  }
+  rated.sort(compareRatedDescending);
+  unrated.sort((a, b) => a.name.localeCompare(b.name));
+  return [...rated, ...unrated];
 }
 
 async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<number> {
@@ -67,34 +81,34 @@ async function resolveRailProducts(
   rail: HomeCategoryRail,
   usedProductIds: Set<string>,
 ): Promise<{ items: Product[]; productSlugs: string[] }> {
-  const curated = [...(await getCachedProductsBySlugs(rail.productSlugs))].sort(
-    sortRatedFirst,
-  );
-  const merged: Product[] = [];
-  const take = (list: Product[]) => {
+  const curated = await getCachedProductsBySlugs(rail.productSlugs);
+  const pool: Product[] = [];
+  const seen = new Set<string>();
+  const pushPool = (list: Product[]) => {
     for (const p of list) {
-      if (usedProductIds.has(p.id)) continue;
-      usedProductIds.add(p.id);
-      merged.push(p);
-      if (merged.length >= MAX_RAIL_PRODUCTS) return;
+      if (usedProductIds.has(p.id) || seen.has(p.id)) continue;
+      seen.add(p.id);
+      pool.push(p);
     }
   };
 
-  take(curated);
+  pushPool(curated);
 
-  if (merged.length < MIN_RAIL_PRODUCTS) {
+  if (pool.length < HOME_RAIL_PREVIEW) {
     const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
     if (collectionSlug && collectionSlug !== "sale") {
-      const fromCollection = [
-        ...(await getCachedProductsByCollectionSlug(collectionSlug)),
-      ].sort(sortRatedFirst);
-      take(fromCollection);
+      pushPool(await getCachedProductsByCollectionSlug(collectionSlug));
     }
   }
 
+  const items = orderRatedThenUnrated(pool).slice(0, MAX_RAIL_PRODUCTS);
+  for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
+    usedProductIds.add(p.id);
+  }
+
   return {
-    items: merged,
-    productSlugs: merged.map((p) => p.slug),
+    items,
+    productSlugs: items.map((p) => p.slug),
   };
 }
 
@@ -110,11 +124,13 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
     const out: HomeRailSection[] = [];
     for (const s of sectionsWithTags) {
       const raw = await getCachedProductsForHomeSectionTags(s.tagIds, s.slug);
-      const items = raw.filter((p) => {
-        if (usedProductIds.has(p.id)) return false;
+      // This category only — drop cards already shown on an earlier rail.
+      const available = raw.filter((p) => !usedProductIds.has(p.id));
+      // Rated first (desc), then unrated fill so the 4-card preview stays full.
+      const items = orderRatedThenUnrated(available);
+      for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
         usedProductIds.add(p.id);
-        return true;
-      });
+      }
       const rail: HomeCategoryRail = {
         title: s.name,
         viewAllHref: `/s/${s.slug}`,
