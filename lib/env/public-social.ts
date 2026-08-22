@@ -25,12 +25,16 @@ export function getPublicWhatsAppUrl(): string {
 }
 
 export type PublicSocialLink = {
-  id: "facebook" | "instagram" | "tiktok" | "whatsapp";
+  id: "facebook" | "instagram" | "tiktok" | "whatsapp" | "youtube";
   label: string;
   href: string;
   /** True when env is empty — UI keeps the icon but link is a no-op placeholder. */
   placeholder: boolean;
 };
+
+export function getPublicYouTubeUrl(): string {
+  return readPublicUrl("NEXT_PUBLIC_YOUTUBE_URL");
+}
 
 export function getPublicSocialLinks(): PublicSocialLink[] {
   const row = (
@@ -48,6 +52,7 @@ export function getPublicSocialLinks(): PublicSocialLink[] {
     row("facebook", "Facebook", getPublicFacebookUrl()),
     row("instagram", "Instagram", getPublicInstagramUrl()),
     row("tiktok", "TikTok", getPublicTikTokUrl()),
+    row("youtube", "YouTube", getPublicYouTubeUrl()),
     row("whatsapp", "WhatsApp", getPublicWhatsAppUrl()),
   ];
 }
