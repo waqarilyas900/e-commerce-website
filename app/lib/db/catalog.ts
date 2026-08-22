@@ -887,11 +887,11 @@ export async function dbListProductsForHomeSectionTags(
     byProduct.set(row.product_id, list);
   }
 
-  // Home rails / section pages: only rated products, highest review count first.
-  const rated = plist.filter(
-    (p) => (p.rating ?? 0) > 0 || (p.reviews_count ?? 0) > 0,
-  );
-  rated.sort((a, b) => {
+  // Rated first (more reviews, then higher rating), then unrated — keeps 4-card rails full.
+  plist.sort((a, b) => {
+    const aRated = (a.rating ?? 0) > 0 || (a.reviews_count ?? 0) > 0 ? 1 : 0;
+    const bRated = (b.rating ?? 0) > 0 || (b.reviews_count ?? 0) > 0 ? 1 : 0;
+    if (bRated !== aRated) return bRated - aRated;
     const byReviews = (b.reviews_count ?? 0) - (a.reviews_count ?? 0);
     if (byReviews !== 0) return byReviews;
     const byRating = (b.rating ?? 0) - (a.rating ?? 0);
@@ -899,7 +899,7 @@ export async function dbListProductsForHomeSectionTags(
     return a.name.localeCompare(b.name);
   });
 
-  return rated.map((p) =>
+  return plist.map((p) =>
     mapProductCard(p, byProduct.get(p.id) ?? [], sectionSlug),
   );
 }

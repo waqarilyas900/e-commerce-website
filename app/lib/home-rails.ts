@@ -31,8 +31,11 @@ function isRatedProduct(p: Product): boolean {
   return (p.rating ?? 0) > 0 || (p.reviews ?? 0) > 0;
 }
 
-/** Higher review count, then rating — unrated products are excluded upstream. */
+/** Rated first, then unrated fill — higher reviews/rating within the rated group. */
 function sortRatedFirst(a: Product, b: Product): number {
+  const aRated = isRatedProduct(a) ? 1 : 0;
+  const bRated = isRatedProduct(b) ? 1 : 0;
+  if (bRated !== aRated) return bRated - aRated;
   const byReviews = (b.reviews ?? 0) - (a.reviews ?? 0);
   if (byReviews !== 0) return byReviews;
   const byRating = (b.rating ?? 0) - (a.rating ?? 0);
@@ -64,13 +67,12 @@ async function resolveRailProducts(
   rail: HomeCategoryRail,
   usedProductIds: Set<string>,
 ): Promise<{ items: Product[]; productSlugs: string[] }> {
-  const curated = (await getCachedProductsBySlugs(rail.productSlugs))
-    .filter(isRatedProduct)
-    .sort(sortRatedFirst);
+  const curated = [...(await getCachedProductsBySlugs(rail.productSlugs))].sort(
+    sortRatedFirst,
+  );
   const merged: Product[] = [];
   const take = (list: Product[]) => {
     for (const p of list) {
-      if (!isRatedProduct(p)) continue;
       if (usedProductIds.has(p.id)) continue;
       usedProductIds.add(p.id);
       merged.push(p);
@@ -83,9 +85,9 @@ async function resolveRailProducts(
   if (merged.length < MIN_RAIL_PRODUCTS) {
     const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
     if (collectionSlug && collectionSlug !== "sale") {
-      const fromCollection = (await getCachedProductsByCollectionSlug(collectionSlug))
-        .filter(isRatedProduct)
-        .sort(sortRatedFirst);
+      const fromCollection = [
+        ...(await getCachedProductsByCollectionSlug(collectionSlug)),
+      ].sort(sortRatedFirst);
       take(fromCollection);
     }
   }
