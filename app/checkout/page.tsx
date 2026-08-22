@@ -985,6 +985,7 @@ export default function CheckoutPage() {
                 />
               </div>
 
+              {signedIn ? (
               <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-left text-sm text-neutral-800">
                 <input
                   type="checkbox"
@@ -992,15 +993,9 @@ export default function CheckoutPage() {
                   checked={newsletterOptIn}
                   onChange={(e) => setNewsletterOptIn(e.target.checked)}
                 />
-                <span>
-                  Email me with news and offers
-                  {!signedIn ? (
-                    <span className="mt-1 block text-xs font-normal text-neutral-500">
-                      We&apos;ll use the email on this order. You can unsubscribe from any marketing email.
-                    </span>
-                  ) : null}
-                </span>
+                <span>Email me with news and offers</span>
               </label>
+              ) : null}
 
               {submitError ? (
                 <p

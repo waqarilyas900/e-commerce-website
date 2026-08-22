@@ -74,6 +74,7 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
           id: "phone",
           label: "Phone",
           type: "phone",
+          placeholder: "0300 1234567",
           required: true,
           colSpan: 2,
           meta: { lockCountry: true },

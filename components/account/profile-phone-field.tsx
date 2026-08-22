@@ -14,13 +14,14 @@ type Props = {
   disabled?: boolean;
   /** Pakistan-only: hide country dropdown and keep +92 (react-international-phone). */
   lockCountry?: boolean;
+  placeholder?: string;
 };
 
 /**
  * International phone input — default Pakistan (+92). Styled to match profile text inputs
  * (single border, no nested card). Value stored as E.164.
  */
-export function ProfilePhoneField({ id, value, onChange, disabled, lockCountry }: Props) {
+export function ProfilePhoneField({ id, value, onChange, disabled, lockCountry, placeholder }: Props) {
   return (
     <div
       className={`profile-phone-field w-full ${disabled ? "opacity-60" : ""}`}
@@ -47,7 +48,7 @@ export function ProfilePhoneField({ id, value, onChange, disabled, lockCountry }
         hideDropdown={lockCountry}
         disableCountryGuess={lockCountry}
         forceDialCode={lockCountry}
-        placeholder="3XX XXX XXXX"
+        placeholder={placeholder ?? "0300 1234567"}
         name="phone"
         inputProps={{
           id,

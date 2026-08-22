@@ -189,16 +189,19 @@ export async function POST(req: Request) {
       ].join("\n");
       const customerName =
         `${rpcPayload.first_name} ${rpcPayload.last_name}`.trim() || "Customer";
-      const sendResult = await sendOrderConfirmationEmail({
-        to: rpcPayload.email.trim(),
-        orderNumber: result.order_number,
-        totalLabel: formatPkr(result.total_cents / 100),
-        customerName,
-        lines,
-        shippingSummary,
-      });
-      if (!sendResult.sent) {
-        console.error("[orders/place] confirmation email:", sendResult.error);
+      const orderEmail = rpcPayload.email?.trim() ?? "";
+      if (orderEmail) {
+        const sendResult = await sendOrderConfirmationEmail({
+          to: orderEmail,
+          orderNumber: result.order_number,
+          totalLabel: formatPkr(result.total_cents / 100),
+          customerName,
+          lines,
+          shippingSummary,
+        });
+        if (!sendResult.sent) {
+          console.error("[orders/place] confirmation email:", sendResult.error);
+        }
       }
     } catch (e) {
       console.error("[orders/place] confirmation email failed", e);

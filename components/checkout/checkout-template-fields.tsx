@@ -49,7 +49,12 @@ export function CheckoutTemplateFields({
 }: Props) {
   return (
     <div className={rootClassName}>
-      {template.sections.map((section) => (
+      {template.sections.map((section) => {
+        const visibleFields = section.fields.filter(
+          (field) => signedIn || field.id !== "email",
+        );
+
+        return (
         <section key={section.id}>
           {section.title === "Contact information" ? (
             <div className="flex items-center justify-between gap-3">
@@ -80,8 +85,9 @@ export function CheckoutTemplateFields({
           {section.description ? (
             <p className="mt-1 text-xs text-neutral-600">{section.description}</p>
           ) : null}
+          {visibleFields.length > 0 ? (
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {section.fields.map((field) => {
+            {visibleFields.map((field) => {
               const span = field.colSpan === 2 ? "sm:col-span-2" : "";
               const v = values[field.id] ?? "";
               const resolvedPlaceholder = field.placeholder ?? field.label;
@@ -121,6 +127,7 @@ export function CheckoutTemplateFields({
                       id={`co-${field.id}`}
                       value={v}
                       lockCountry={field.meta?.lockCountry}
+                      placeholder={field.placeholder}
                       onChange={(next) => {
                         onChange(field.id, next);
                       }}
@@ -147,7 +154,7 @@ export function CheckoutTemplateFields({
                   <div key={field.id} className={span}>
                     <textarea
                       id={`co-${field.id}`}
-                      required={field.required}
+                      required={signedIn ? field.required : field.id === "email" ? false : field.required}
                       value={v}
                       onChange={(e) => onChange(field.id, e.target.value)}
                       className={`min-h-[100px] w-full resize-y rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/15`}
@@ -168,7 +175,7 @@ export function CheckoutTemplateFields({
                   <div key={field.id} className={span}>
                     <select
                       id={`co-${field.id}`}
-                      required={field.required}
+                      required={signedIn ? field.required : field.id === "email" ? false : field.required}
                       value={v}
                       onChange={(e) => onChange(field.id, e.target.value)}
                       className={inputClassName}
@@ -188,7 +195,7 @@ export function CheckoutTemplateFields({
                   <input
                     id={`co-${field.id}`}
                     type={field.type === "email" ? "email" : "text"}
-                    required={field.required}
+                    required={signedIn ? field.required : field.id === "email" ? false : field.required}
                     value={v}
                     onChange={(e) => onChange(field.id, e.target.value)}
                     className={inputClassName}
@@ -204,6 +211,7 @@ export function CheckoutTemplateFields({
               );
             })}
           </div>
+          ) : null}
           {section.id === "delivery" && signedIn ? (
             <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
               <p className="text-xs font-semibold tracking-wide text-neutral-700">Saved addresses</p>
@@ -266,7 +274,8 @@ export function CheckoutTemplateFields({
             />
           ) : null}
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }
