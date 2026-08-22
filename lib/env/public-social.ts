@@ -1,12 +1,53 @@
 /**
- * Social URLs for footer / mobile nav. Omit env vars to hide icons (no generic instagram.com fallback).
+ * Social URLs for footer / mobile nav.
+ * Icons always render; missing env vars use a blank `#` placeholder until you set the real URL.
  */
-export function getPublicInstagramUrl(): string | undefined {
-  const v = process.env.NEXT_PUBLIC_INSTAGRAM_URL?.trim();
-  return v && v.length > 0 ? v : undefined;
+
+function readPublicUrl(envKey: string): string {
+  const v = process.env[envKey]?.trim();
+  return v && v.length > 0 ? v : "#";
 }
 
-export function getPublicFacebookUrl(): string | undefined {
-  const v = process.env.NEXT_PUBLIC_FACEBOOK_URL?.trim();
-  return v && v.length > 0 ? v : undefined;
+export function getPublicInstagramUrl(): string {
+  return readPublicUrl("NEXT_PUBLIC_INSTAGRAM_URL");
+}
+
+export function getPublicFacebookUrl(): string {
+  return readPublicUrl("NEXT_PUBLIC_FACEBOOK_URL");
+}
+
+export function getPublicTikTokUrl(): string {
+  return readPublicUrl("NEXT_PUBLIC_TIKTOK_URL");
+}
+
+export function getPublicWhatsAppUrl(): string {
+  return readPublicUrl("NEXT_PUBLIC_WHATSAPP_URL");
+}
+
+export type PublicSocialLink = {
+  id: "facebook" | "instagram" | "tiktok" | "whatsapp";
+  label: string;
+  href: string;
+  /** True when env is empty — UI keeps the icon but link is a no-op placeholder. */
+  placeholder: boolean;
+};
+
+export function getPublicSocialLinks(): PublicSocialLink[] {
+  const row = (
+    id: PublicSocialLink["id"],
+    label: string,
+    href: string,
+  ): PublicSocialLink => ({
+    id,
+    label,
+    href,
+    placeholder: !href || href === "#",
+  });
+
+  return [
+    row("facebook", "Facebook", getPublicFacebookUrl()),
+    row("instagram", "Instagram", getPublicInstagramUrl()),
+    row("tiktok", "TikTok", getPublicTikTokUrl()),
+    row("whatsapp", "WhatsApp", getPublicWhatsAppUrl()),
+  ];
 }
