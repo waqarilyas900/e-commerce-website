@@ -65,6 +65,48 @@ function isOutOfStock(p: Product): boolean {
   return p.inStock === false;
 }
 
+function isRatedProduct(p: Product): boolean {
+  return (p.rating ?? 0) > 0 || (p.reviews ?? 0) > 0;
+}
+
+/** Among rated: highest rating first, then most reviews. */
+function compareRatedDescending(a: Product, b: Product): number {
+  const byRating = (b.rating ?? 0) - (a.rating ?? 0);
+  if (byRating !== 0) return byRating;
+  const byReviews = (b.reviews ?? 0) - (a.reviews ?? 0);
+  if (byReviews !== 0) return byReviews;
+  return a.name.localeCompare(b.name);
+}
+
+/**
+ * Default storefront priority (home rails + category featured):
+ * 1) rated + in stock
+ * 2) unrated + in stock
+ * 3) out of stock (rated OOS before unrated OOS)
+ */
+export function orderByRatingAndStockPriority(products: Product[]): Product[] {
+  const ratedInStock: Product[] = [];
+  const unratedInStock: Product[] = [];
+  const ratedOos: Product[] = [];
+  const unratedOos: Product[] = [];
+
+  for (const p of products) {
+    const rated = isRatedProduct(p);
+    const stock = isInStock(p);
+    if (rated && stock) ratedInStock.push(p);
+    else if (!rated && stock) unratedInStock.push(p);
+    else if (rated) ratedOos.push(p);
+    else unratedOos.push(p);
+  }
+
+  ratedInStock.sort(compareRatedDescending);
+  unratedInStock.sort((a, b) => a.name.localeCompare(b.name));
+  ratedOos.sort(compareRatedDescending);
+  unratedOos.sort((a, b) => a.name.localeCompare(b.name));
+
+  return [...ratedInStock, ...unratedInStock, ...ratedOos, ...unratedOos];
+}
+
 export function filterCollectionProducts(
   products: Product[],
   availability: AvailabilityFilter,
@@ -101,6 +143,7 @@ export function sortCollectionProducts(
 ): Product[] {
   const copy = [...products];
   if (sort === "featured") {
+    // Preserve catalog / home-section priority (rating+stock) when index was built from that order.
     copy.sort((a, b) => (featuredIndex.get(a.slug) ?? 0) - (featuredIndex.get(b.slug) ?? 0));
     return copy;
   }

@@ -15,6 +15,7 @@ import {
   type VariantOptionSchemaEntry,
 } from "@/app/lib/catalog/variant-option-schema";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { orderByRatingAndStockPriority } from "@/app/lib/collection-query";
 
 /**
  * Public catalog reads (products, collections, variants, assets, inventory,
@@ -887,26 +888,10 @@ export async function dbListProductsForHomeSectionTags(
     byProduct.set(row.product_id, list);
   }
 
-  // Per category: rated first (rating desc → reviews desc), then unrated fill for full grids.
-  const rated: DbProductRow[] = [];
-  const unrated: DbProductRow[] = [];
-  for (const p of plist) {
-    if ((p.rating ?? 0) > 0 || (p.reviews_count ?? 0) > 0) rated.push(p);
-    else unrated.push(p);
-  }
-  rated.sort((a, b) => {
-    const byRating = (b.rating ?? 0) - (a.rating ?? 0);
-    if (byRating !== 0) return byRating;
-    const byReviews = (b.reviews_count ?? 0) - (a.reviews_count ?? 0);
-    if (byReviews !== 0) return byReviews;
-    return a.name.localeCompare(b.name);
-  });
-  unrated.sort((a, b) => a.name.localeCompare(b.name));
-  const ordered = [...rated, ...unrated];
-
-  return ordered.map((p) =>
+  const cards = plist.map((p) =>
     mapProductCard(p, byProduct.get(p.id) ?? [], sectionSlug),
   );
+  return orderByRatingAndStockPriority(cards);
 }
 
 /** PDP review list — RLS shows approved to everyone; authors also see their own pending/rejected. */

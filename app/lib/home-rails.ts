@@ -8,6 +8,7 @@ import {
   getCachedProductsForHomeSectionTags,
 } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { orderByRatingAndStockPriority } from "@/app/lib/collection-query";
 import { dbGetHomeRailsConfig } from "@/app/lib/home-rails-from-db";
 import type { HomeCategoryRail } from "@/app/lib/store-brand.types";
 
@@ -25,36 +26,6 @@ const MAX_RAIL_PRODUCTS = 8;
 function parseCollectionSlugFromHref(href: string): string | null {
   const m = href.trim().match(/^\/collections\/([^/?#]+)\/?$/);
   return m?.[1] ?? null;
-}
-
-function isRatedProduct(p: Product): boolean {
-  return (p.rating ?? 0) > 0 || (p.reviews ?? 0) > 0;
-}
-
-/** Among rated products: highest rating first, then most reviews (descending). */
-function compareRatedDescending(a: Product, b: Product): number {
-  const byRating = (b.rating ?? 0) - (a.rating ?? 0);
-  if (byRating !== 0) return byRating;
-  const byReviews = (b.reviews ?? 0) - (a.reviews ?? 0);
-  if (byReviews !== 0) return byReviews;
-  return a.name.localeCompare(b.name);
-}
-
-/**
- * Per category: all rated products first (rating desc), then unrated fill.
- * Example: 3 rated + many unrated → order is [R1, R2, R3, U1, U2, ...] so the
- * 4-card grid shows 3 rated + 1 unrated.
- */
-export function orderRatedThenUnrated(products: Product[]): Product[] {
-  const rated: Product[] = [];
-  const unrated: Product[] = [];
-  for (const p of products) {
-    if (isRatedProduct(p)) rated.push(p);
-    else unrated.push(p);
-  }
-  rated.sort(compareRatedDescending);
-  unrated.sort((a, b) => a.name.localeCompare(b.name));
-  return [...rated, ...unrated];
 }
 
 async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<number> {
@@ -101,7 +72,7 @@ async function resolveRailProducts(
     }
   }
 
-  const items = orderRatedThenUnrated(pool).slice(0, MAX_RAIL_PRODUCTS);
+  const items = orderByRatingAndStockPriority(pool).slice(0, MAX_RAIL_PRODUCTS);
   for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
     usedProductIds.add(p.id);
   }
@@ -124,10 +95,8 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
     const out: HomeRailSection[] = [];
     for (const s of sectionsWithTags) {
       const raw = await getCachedProductsForHomeSectionTags(s.tagIds, s.slug);
-      // This category only — drop cards already shown on an earlier rail.
       const available = raw.filter((p) => !usedProductIds.has(p.id));
-      // Rated first (desc), then unrated fill so the 4-card preview stays full.
-      const items = orderRatedThenUnrated(available);
+      const items = orderByRatingAndStockPriority(available);
       for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
         usedProductIds.add(p.id);
       }

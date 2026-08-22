@@ -12,6 +12,7 @@ import {
   buildFeaturedIndex,
   filterCollectionProducts,
   maxPriceCeiling,
+  orderByRatingAndStockPriority,
   parseCollectionSearchParams,
   sortCollectionProducts,
 } from "@/app/lib/collection-query";
@@ -114,6 +115,7 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
   if (section.tagIds.length > 0) {
     baseline = await getCachedProductsForHomeSectionTags(section.tagIds, section.slug);
   }
+  baseline = orderByRatingAndStockPriority(baseline);
 
   const [navLinks, identity] = await Promise.all([
     getNavCollectionLinks(),
