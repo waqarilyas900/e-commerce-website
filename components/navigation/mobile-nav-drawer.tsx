@@ -58,8 +58,8 @@ function CloseIcon() {
 function DrawerSocialIcons() {
   return (
     <SocialIconLinks
-      className="flex flex-wrap gap-3"
-      iconClassName="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 text-neutral-900 transition hover:border-neutral-400 hover:bg-neutral-50"
+      className="gap-2"
+      iconClassName="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 text-neutral-900 transition hover:border-neutral-400 hover:bg-neutral-50"
     />
   );
 }

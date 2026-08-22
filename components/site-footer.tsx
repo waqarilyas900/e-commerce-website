@@ -89,7 +89,7 @@ function SocialLinks({ className }: { className?: string }) {
   return (
     <SocialIconLinks
       className={className}
-      iconClassName="flex h-10 w-10 items-center justify-center rounded-full border border-white/90 text-white transition hover:bg-white/10"
+      iconClassName="flex h-8 w-8 items-center justify-center rounded-full border border-white/90 text-white transition hover:bg-white/10"
     />
   );
 }
@@ -333,7 +333,7 @@ export function Footer() {
               <p className="sr-only">{storeName}</p>
               <SiteLogoFull />
             </div>
-            <SocialLinks className="flex shrink-0 items-center gap-2.5 sm:gap-3" />
+            <SocialLinks className="gap-1.5 sm:gap-2" />
           </div>
 
           {/* Desktop: aligned 4-column grid — same heading rhythm and left edge */}
@@ -367,7 +367,7 @@ export function Footer() {
               </div>
               <div className="flex min-w-0 flex-col items-start gap-6 border-l border-white/10 pl-10 xl:pl-14">
                 <SiteLogoFull className="shrink-0" />
-                <SocialLinks className="flex flex-wrap items-center gap-3" />
+                <SocialLinks className="gap-2" />
               </div>
             </div>
           </div>
