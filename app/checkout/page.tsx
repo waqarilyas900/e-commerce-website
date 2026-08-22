@@ -28,6 +28,24 @@ import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { SiteLogoMark } from "@/components/site-logo";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
+
+type SignInModalReason = "save-address" | "voucher" | "general";
+
+const SIGN_IN_MODAL_COPY: Record<SignInModalReason, { title: string; description: string }> = {
+  "save-address": {
+    title: "Sign in to save this information",
+    description:
+      "Sign in to save your delivery details for faster checkout next time. You will stay on this page.",
+  },
+  voucher: {
+    title: "Sign in to apply your voucher",
+    description: "Sign in to use your discount code on this order. You will stay on this page.",
+  },
+  general: {
+    title: "Sign in",
+    description: "Sign in to your account. You will stay on this page.",
+  },
+};
 import { fetchStoreDeliverySettings } from "@/app/lib/fetch-store-delivery-settings";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { voucherErrorMessage } from "@/app/lib/voucher-user-messages";
@@ -170,6 +188,7 @@ export default function CheckoutPage() {
   const [signedIn, setSignedIn] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
+  const [signInModalReason, setSignInModalReason] = useState<SignInModalReason>("general");
   const [savedAddressDeleteId, setSavedAddressDeleteId] = useState<string | null>(null);
   const [saveForNextTime, setSaveForNextTime] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -178,6 +197,12 @@ export default function CheckoutPage() {
   const [savingAddress, setSavingAddress] = useState(false);
   const [saveAddressErrors, setSaveAddressErrors] = useState<Partial<Record<string, string>>>({});
   const saveIntentAfterSignInRef = useRef(false);
+  const voucherIntentAfterSignInRef = useRef(false);
+
+  const openSignInModal = useCallback((reason: SignInModalReason) => {
+    setSignInModalReason(reason);
+    setSignInModalOpen(true);
+  }, []);
   const sentInitiateCheckoutRef = useRef<Set<string>>(new Set());
   /** Always points at latest validator so `persistCurrentAddress` never hits TDZ if hooks are reordered. */
   const validateSaveAddressFieldsRef = useRef<() => boolean>(() => false);
@@ -308,7 +333,9 @@ export default function CheckoutPage() {
       return;
     }
     if (!signedIn) {
-      setDiscountIssue("Sign in to apply a voucher code.");
+      clearDiscountNotice();
+      voucherIntentAfterSignInRef.current = true;
+      openSignInModal("voucher");
       return;
     }
     if (resolvedLines.length === 0) {
@@ -359,7 +386,15 @@ export default function CheckoutPage() {
     } finally {
       setApplyingVoucher(false);
     }
-  }, [clearDiscountNotice, discountCode, resolvedLines, setDiscountIssue, signedIn, subtotal]);
+  }, [
+    clearDiscountNotice,
+    discountCode,
+    openSignInModal,
+    resolvedLines,
+    setDiscountIssue,
+    signedIn,
+    subtotal,
+  ]);
 
   const fetchSavedAddresses = useCallback(async () => {
     if (!signedIn) {
@@ -541,11 +576,11 @@ export default function CheckoutPage() {
   const handleToggleSaveForNextTime = useCallback((checked: boolean) => {
     if (checked && !signedIn) {
       saveIntentAfterSignInRef.current = true;
-      setSignInModalOpen(true);
+      openSignInModal("save-address");
       return;
     }
     setSaveForNextTime(checked);
-  }, [signedIn]);
+  }, [openSignInModal, signedIn]);
 
   useEffect(() => {
     closeCart();
@@ -563,11 +598,19 @@ export default function CheckoutPage() {
   }, [fetchSavedAddresses, signedIn]);
 
   useEffect(() => {
-    if (!signedIn || !saveIntentAfterSignInRef.current) return;
-    saveIntentAfterSignInRef.current = false;
-    setSignInModalOpen(false);
-    setSaveForNextTime(true);
-  }, [signedIn]);
+    if (!signedIn) return;
+    if (saveIntentAfterSignInRef.current) {
+      saveIntentAfterSignInRef.current = false;
+      setSignInModalOpen(false);
+      setSaveForNextTime(true);
+      return;
+    }
+    if (voucherIntentAfterSignInRef.current) {
+      voucherIntentAfterSignInRef.current = false;
+      setSignInModalOpen(false);
+      void applyDiscount();
+    }
+  }, [applyDiscount, signedIn]);
 
   useEffect(() => {
     if (!hasCatalogDb()) return;
@@ -916,7 +959,7 @@ export default function CheckoutPage() {
                 rootClassName="mt-0 space-y-4"
                 phoneError={formError}
                 signedIn={signedIn}
-                onRequestSignIn={() => setSignInModalOpen(true)}
+                onRequestSignIn={() => openSignInModal("general")}
                 saveForNextTime={saveForNextTime}
                 onToggleSaveForNextTime={handleToggleSaveForNextTime}
                 savedAddresses={savedAddresses}
@@ -1094,11 +1137,12 @@ export default function CheckoutPage() {
         open={signInModalOpen}
         onClose={() => {
           saveIntentAfterSignInRef.current = false;
+          voucherIntentAfterSignInRef.current = false;
           setSignInModalOpen(false);
         }}
         nextPath="/checkout"
-        title="Sign in to save this information"
-        description="Sign in to save your delivery details for faster checkout next time. You will stay on this page."
+        title={SIGN_IN_MODAL_COPY[signInModalReason].title}
+        description={SIGN_IN_MODAL_COPY[signInModalReason].description}
       />
     </CheckoutChrome>
   );
