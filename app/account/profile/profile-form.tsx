@@ -14,6 +14,7 @@ import { ProfilePhoneField } from "@/components/account/profile-phone-field";
 import type { AppSelectOption } from "@/components/ui/app-select";
 import { AppSelect } from "@/components/ui/app-select";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useAuth } from "@/app/providers/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import type { SavedAddress } from "@/app/lib/saved-addresses";
 import {
@@ -201,6 +202,7 @@ function formatSignupProvider(provider: string) {
 
 export function ProfileForm() {
   const router = useRouter();
+  const { refreshProfile } = useAuth();
   const [email, setEmail] = useState("");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -510,6 +512,7 @@ export function ProfileForm() {
       }
 
       toast.success("Profile saved successfully.");
+      await refreshProfile();
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed.");

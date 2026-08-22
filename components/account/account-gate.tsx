@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/app/providers/auth-provider";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
-import { createClient } from "@/lib/supabase/client";
 import { AccountShell } from "@/components/account/account-shell";
 import { ProfileFormSkeleton } from "@/app/account/profile/profile-form";
 import { ProfilePageLayout } from "@/app/account/profile/profile-page-layout";
@@ -17,46 +17,33 @@ export function AccountGate({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { session, user, authReady } = useAuth();
   const [status, setStatus] = useState<GateStatus>("loading");
 
   useEffect(() => {
-    let cancelled = false;
+    if (!authReady) return;
 
-    async function run() {
-      try {
-        const supabase = createClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (cancelled) return;
-        const user = session?.user ?? null;
-        if (!user) {
-          const next = encodeURIComponent(
-            pathname + (searchParams.toString() ? `?${searchParams}` : ""),
-          );
-          router.replace(`/login?next=${next}`);
-          setStatus("redirect");
-          return;
-        }
-        if (isCompletingPasswordReset(session)) {
-          router.replace("/reset-password");
-          setStatus("redirect");
-          return;
-        }
-        setStatus("ok");
-      } catch {
-        if (cancelled) return;
-        setStatus("misconfigured");
+    try {
+      if (!user) {
+        const next = encodeURIComponent(
+          pathname + (searchParams.toString() ? `?${searchParams}` : ""),
+        );
+        router.replace(`/login?next=${next}`);
+        setStatus("redirect");
+        return;
       }
+      if (isCompletingPasswordReset(session)) {
+        router.replace("/reset-password");
+        setStatus("redirect");
+        return;
+      }
+      setStatus("ok");
+    } catch {
+      setStatus("misconfigured");
     }
+  }, [authReady, session, user, pathname, router, searchParams]);
 
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname, router, searchParams]);
-
-  if (status === "loading") {
+  if (!authReady || status === "loading") {
     if (pathname === "/account/profile") {
       return (
         <AccountShell>

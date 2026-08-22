@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
 import { useScrollLock } from "@/lib/scroll-lock";
@@ -171,6 +171,24 @@ export function CartDrawer() {
   const [recoLoading, setRecoLoading] = useState(false);
   const [deliverySettings, setDeliverySettings] = useState<StoreDeliverySettingsState | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
+  /** Ignore the opening click so the backdrop does not instantly close the drawer. */
+  const [backdropArmed, setBackdropArmed] = useState(false);
+  const openGenRef = useRef(0);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setBackdropArmed(false);
+      return;
+    }
+    const gen = ++openGenRef.current;
+    setBackdropArmed(false);
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (openGenRef.current === gen) setBackdropArmed(true);
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen]);
 
   const merchandiseShippingBasisPkr = useMemo(
     () =>
@@ -266,14 +284,14 @@ export function CartDrawer() {
           <motion.button
             type="button"
             aria-label="Close cart"
-            onClick={closeCart}
+            onClick={backdropArmed ? closeCart : undefined}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={
               prefersReducedMotion ? { duration: 0.12 } : { duration: 0.5, ease: easeSilk }
             }
-            className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+            className={`absolute inset-0 bg-black/25 backdrop-blur-[2px] ${backdropArmed ? "" : "pointer-events-none"}`}
           />
           <motion.aside
             className="absolute inset-y-0 right-0 z-181 flex min-h-0 w-full max-w-md flex-col bg-white px-5 pt-5 shadow-[0_0_0_1px_rgba(0,0,0,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.18)] sm:max-w-lg sm:px-6"

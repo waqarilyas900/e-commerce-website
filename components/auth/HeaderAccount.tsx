@@ -3,96 +3,47 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import {
-  clearPasswordRecoveryFlow,
-  isPasswordRecoverySession,
-  markPasswordRecoveryFlow,
-  shouldUsePasswordRecoveryHeader,
-} from "@/lib/auth/password-recovery-session";
+import type { User } from "@supabase/supabase-js";
+import { useAuth } from "@/app/providers/auth-provider";
+import { readAuthDisplayCache, type AuthDisplayCache } from "@/lib/auth/auth-display-cache";
+import { shouldUsePasswordRecoveryHeader } from "@/lib/auth/password-recovery-session";
 import {
   avatarInitialsFromUser,
   avatarPhotoUrlFromUser,
   displayNameFromUser,
   type UserNameProfile,
 } from "@/lib/auth/user-display-name";
-import { createClient } from "@/lib/supabase/client";
-
-async function loadUserNameProfile(authId: string): Promise<UserNameProfile | null> {
-  try {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("users")
-      .select("first_name, last_name")
-      .eq("auth_id", authId)
-      .maybeSingle();
-    return data ?? null;
-  } catch {
-    return null;
-  }
-}
 
 const menuLinkClass =
   "block w-full px-3 py-2.5 text-left text-sm font-normal text-neutral-800 transition-colors hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none";
 
+function displayUserFromSnapshot(snapshot: AuthDisplayCache): User {
+  return {
+    id: snapshot.userId,
+    email: snapshot.email ?? undefined,
+    user_metadata: snapshot.avatarUrl ? { avatar_url: snapshot.avatarUrl } : {},
+  } as User;
+}
+
 export function HeaderAccount() {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [nameProfile, setNameProfile] = useState<UserNameProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { session, user, nameProfile, authReady, signOut } = useAuth();
+  const [displaySnapshot, setDisplaySnapshot] = useState<AuthDisplayCache | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuId = "header-account-menu";
 
+  /** Read sessionStorage only after mount so SSR HTML matches the first client paint. */
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-
-    try {
-      const supabase = createClient();
-
-      supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-        setSession(s ?? null);
-        setUser(s?.user ?? null);
-        if (s?.user) {
-          setNameProfile(await loadUserNameProfile(s.user.id));
-        } else {
-          setNameProfile(null);
-        }
-        setLoading(false);
-      });
-
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((event, nextSession) => {
-        setSession(nextSession ?? null);
-        setUser(nextSession?.user ?? null);
-        if (nextSession?.user) {
-          void loadUserNameProfile(nextSession.user.id).then(setNameProfile);
-        } else {
-          setNameProfile(null);
-        }
-        if (event === "PASSWORD_RECOVERY" && nextSession) {
-          markPasswordRecoveryFlow();
-        }
-        if (event === "SIGNED_OUT" || !nextSession) {
-          clearPasswordRecoveryFlow();
-        } else if (
-          event === "SIGNED_IN" &&
-          nextSession &&
-          !isPasswordRecoverySession(nextSession)
-        ) {
-          clearPasswordRecoveryFlow();
-        }
-      });
-      unsubscribe = () => subscription.unsubscribe();
-    } catch {
-      queueMicrotask(() => setLoading(false));
-    }
-
-    return () => unsubscribe?.();
+    setDisplaySnapshot(readAuthDisplayCache());
   }, []);
+
+  const effectiveUser =
+    user ?? (displaySnapshot ? displayUserFromSnapshot(displaySnapshot) : null);
+  const effectiveProfile: UserNameProfile | null =
+    nameProfile ?? displaySnapshot?.nameProfile ?? null;
+  const showLoadingPlaceholder = !authReady && !effectiveUser;
 
   useEffect(() => {
     queueMicrotask(() => setMenuOpen(false));
@@ -117,16 +68,13 @@ export function HeaderAccount() {
     };
   }, [menuOpen, closeMenu]);
 
-  async function signOut() {
+  async function handleSignOut() {
     closeMenu();
-    clearPasswordRecoveryFlow();
-    setSession(null);
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await signOut();
     router.refresh();
   }
 
-  if (loading) {
+  if (showLoadingPlaceholder) {
     return (
       <span className="inline-flex items-center px-2 py-2 text-xs text-neutral-400 sm:px-2.5">
         …
@@ -178,10 +126,10 @@ export function HeaderAccount() {
     );
   }
 
-  if (user) {
-    const photo = avatarPhotoUrlFromUser(user);
-    const initials = avatarInitialsFromUser(user, nameProfile);
-    const name = displayNameFromUser(user, nameProfile);
+  if (effectiveUser) {
+    const photo = avatarPhotoUrlFromUser(effectiveUser) ?? displaySnapshot?.avatarUrl ?? null;
+    const initials = avatarInitialsFromUser(effectiveUser, effectiveProfile);
+    const name = displayNameFromUser(effectiveUser, effectiveProfile);
 
     return (
       <div className="flex min-w-0 max-w-full items-center justify-end">
@@ -268,7 +216,7 @@ export function HeaderAccount() {
                 type="button"
                 role="menuitem"
                 className={`${menuLinkClass} text-neutral-700 cursor-pointer`}
-                onClick={() => void signOut()}
+                onClick={() => void handleSignOut()}
               >
                 Sign out
               </button>

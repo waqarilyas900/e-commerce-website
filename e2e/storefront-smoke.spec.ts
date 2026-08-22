@@ -100,6 +100,32 @@ test.describe("Storefront smoke (Shopify-style paths)", () => {
     await expect(page.getByRole("heading", { name: /^Cart$/ })).toBeHidden({ timeout: 10_000 });
   });
 
+  test("cart drawer stays open after hard reload and reopen", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#MainContent, main").first()).toBeVisible({ timeout: 30_000 });
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("#MainContent, main").first()).toBeVisible({ timeout: 30_000 });
+
+    await page.locator("#site-header").getByRole("button", { name: /^Cart/i }).click();
+    await expect(page.getByRole("heading", { name: /^Cart$/ })).toBeVisible();
+
+    await page.waitForTimeout(600);
+    await expect(page.getByRole("heading", { name: /^Cart$/ })).toBeVisible();
+  });
+
+  test("cart drawer stays open across client navigation", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#MainContent, main").first()).toBeVisible({ timeout: 30_000 });
+
+    await page.locator("#site-header").getByRole("button", { name: /^Cart/i }).click();
+    await expect(page.getByRole("heading", { name: /^Cart$/ })).toBeVisible();
+
+    await page.getByRole("link", { name: /^Collections$/i }).first().click();
+    await expect(page).toHaveURL(/\/collections\/?$/);
+    await expect(page.getByRole("heading", { name: /^Cart$/ })).toBeVisible({ timeout: 10_000 });
+  });
+
   test("PLP → PDP when product link exists", async ({ page }) => {
     await page.goto("/collections");
     await expect(page.locator("#MainContent, main").first()).toBeVisible({ timeout: 30_000 });

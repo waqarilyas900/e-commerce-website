@@ -25,6 +25,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
+import { useAuth } from "@/app/providers/auth-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { SiteLogoMark } from "@/components/site-logo";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
@@ -154,6 +155,8 @@ export default function CheckoutPage() {
     closeCart,
     openCart,
   } = useCart();
+  const { user, session, authReady, nameProfile } = useAuth();
+  const signedIn = Boolean(user);
   const { storeName } = useStoreBrand();
   const skipEmptyCartRedirectOnce = useRef(false);
   const linesLengthRef = useRef(0);
@@ -168,7 +171,6 @@ export default function CheckoutPage() {
     setFormValues((prev) => ({ ...prev, [id]: value }));
   }, []);
 
-  const [signedIn, setSignedIn] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
   const [signInModalReason, setSignInModalReason] = useState<SignInModalReason>("general");
@@ -643,68 +645,51 @@ export default function CheckoutPage() {
   }, [ready, lines.length, router]);
 
   useEffect(() => {
+    if (!authReady) return;
+    if (session && isCompletingPasswordReset(session)) {
+      router.replace("/reset-password");
+      return;
+    }
+    if (!user) return;
+    const activeUser = user;
+
     let cancelled = false;
-    async function loadUser() {
+    async function fillCheckoutIdentity() {
       try {
+        const m = readNames((activeUser.user_metadata ?? {}) as Record<string, unknown>);
         const supabase = createClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (cancelled) return;
-        if (session && isCompletingPasswordReset(session)) {
-          router.replace("/reset-password");
-          return;
-        }
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (cancelled || !user) {
-          return;
-        }
-        setSignedIn(true);
-        const m = readNames((user.user_metadata ?? {}) as Record<string, unknown>);
         const { data: row } = await supabase
           .from("users")
           .select("first_name,last_name,phone")
-          .eq("auth_id", user.id)
+          .eq("auth_id", activeUser.id)
           .maybeSingle();
         if (cancelled) return;
+        const profileFirst = (nameProfile?.first_name ?? "").trim();
+        const profileLast = (nameProfile?.last_name ?? "").trim();
         setFormValues((prev) => ({
           ...prev,
-          email: user.email ?? prev.email,
+          email: activeUser.email ?? prev.email,
           first_name:
-            (row?.first_name ?? "").trim() || m.first || prev.first_name,
-          last_name: (row?.last_name ?? "").trim() || m.last || prev.last_name,
+            (row?.first_name ?? "").trim() ||
+            profileFirst ||
+            m.first ||
+            prev.first_name,
+          last_name:
+            (row?.last_name ?? "").trim() ||
+            profileLast ||
+            m.last ||
+            prev.last_name,
           phone: (row?.phone ?? "").trim() || prev.phone,
         }));
       } catch {
         /* ignore */
       }
     }
-    void loadUser();
+    void fillCheckoutIdentity();
     return () => {
       cancelled = true;
     };
-  }, [router]);
-
-  useEffect(() => {
-    const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const nowSignedIn = Boolean(session?.user);
-      setSignedIn(nowSignedIn);
-      if (!nowSignedIn) return;
-      setFormValues((prev) => ({
-        ...prev,
-        email: session?.user?.email ?? prev.email,
-      }));
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  }, [authReady, session, user, nameProfile, router]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

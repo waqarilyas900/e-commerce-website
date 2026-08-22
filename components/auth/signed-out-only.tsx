@@ -2,9 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import type { Session } from "@supabase/supabase-js";
+import { useAuth } from "@/app/providers/auth-provider";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
-import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   children: ReactNode;
@@ -18,43 +17,24 @@ type Props = {
  */
 export function SignedOutOnly({ children, whenSignedInHref }: Props) {
   const router = useRouter();
+  const { session, user, authReady } = useAuth();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    const supabase = createClient();
+    if (!authReady) return;
 
-    function applySession(session: Session | null) {
-      if (cancelled) return;
-      const user = session?.user ?? null;
-      if (user && isCompletingPasswordReset(session)) {
-        router.replace("/reset-password");
-        return;
-      }
-      if (user) {
-        router.replace(whenSignedInHref);
-        return;
-      }
-      setReady(true);
+    if (user && isCompletingPasswordReset(session)) {
+      router.replace("/reset-password");
+      return;
     }
+    if (user) {
+      router.replace(whenSignedInHref);
+      return;
+    }
+    setReady(true);
+  }, [authReady, session, user, router, whenSignedInHref]);
 
-    void supabase.auth.getSession().then(({ data: { session } }) => {
-      applySession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      applySession(session);
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, [router, whenSignedInHref]);
-
-  if (!ready) {
+  if (!authReady || !ready) {
     return (
       <main
         id="MainContent"

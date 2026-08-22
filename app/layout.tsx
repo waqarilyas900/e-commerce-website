@@ -19,14 +19,11 @@ import {
 } from "@/lib/site-brand-env";
 import { getPublicSiteUrl } from "@/lib/site-url";
 import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
-import { CartProvider } from "@/app/providers/cart-provider";
 import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider";
 import { HeaderNavMenuProvider } from "@/app/providers/header-nav-menu-provider";
 import { AskTheStoreProvider } from "@/app/providers/ask-the-store-provider";
 import { StoreBrandProvider } from "@/app/providers/store-brand-provider";
-import { AppToaster } from "@/components/ui/app-toaster";
-import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
-import { DeferredAppShells } from "@/components/ui/deferred-app-shells";
+import { StorefrontAppShell } from "@/components/storefront-app-shell";
 import {
   JsonLd,
   organizationJsonLd,
@@ -358,24 +355,10 @@ export default async function RootLayout({
               <HeaderNavMenuProvider items={headerNavMenuItems}>
                 {showGoogleOneTap ? (
                   <GoogleOneTap>
-                    <CartProvider>
-                      <HeaderStickyObserver />
-                      <div id="PageContainer" className="page-container">
-                        <div className="transition-body">{children}</div>
-                      </div>
-                      <AppToaster />
-                      <DeferredAppShells />
-                    </CartProvider>
+                    <StorefrontAppShell>{children}</StorefrontAppShell>
                   </GoogleOneTap>
                 ) : (
-                  <CartProvider>
-                    <HeaderStickyObserver />
-                    <div id="PageContainer" className="page-container">
-                      <div className="transition-body">{children}</div>
-                    </div>
-                    <AppToaster />
-                    <DeferredAppShells />
-                  </CartProvider>
+                  <StorefrontAppShell>{children}</StorefrontAppShell>
                 )}
               </HeaderNavMenuProvider>
             </NavCollectionsProvider>

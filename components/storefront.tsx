@@ -20,7 +20,6 @@ import { HeaderAccount } from "@/components/auth/HeaderAccount";
 import { HeaderSearchPopover } from "@/components/HeaderSearchPopover";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
-import { CartDrawer } from "@/components/cart/CartDrawer";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
 import { SiteLogoMark } from "@/components/site-logo";
 import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
@@ -280,8 +279,6 @@ export function Header() {
       </header>
 
       <MobileNavDrawer open={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
-
-      <CartDrawer />
     </>
   );
 }

@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
 import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { useAuth } from "@/app/providers/auth-provider";
 import { SiteLogoMark } from "@/components/site-logo";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { useScrollLock } from "@/lib/scroll-lock";
-import { createClient } from "@/lib/supabase/client";
 import {
   getPublicFacebookUrl,
   getPublicInstagramUrl,
@@ -113,8 +112,8 @@ export function MobileNavDrawer({ open, onClose }: Props) {
   const headerNavItems = useHeaderNavMenuItems();
   const { storeName } = useStoreBrand();
   const pathname = usePathname();
+  const { user: authUser } = useAuth();
   const [shopOpen, setShopOpen] = useState(true);
-  const [authUser, setAuthUser] = useState<User | null>(null);
   const hubActive = pathname === "/collections";
   /** Shop row selected only on hub — child collection pages select the child link instead. */
   const shopParentSelected = hubActive;
@@ -124,23 +123,6 @@ export function MobileNavDrawer({ open, onClose }: Props) {
   useEffect(() => {
     if (open) queueMicrotask(() => setShopOpen(true));
   }, [open]);
-
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    try {
-      const supabase = createClient();
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setAuthUser(session?.user ?? null);
-      });
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-        setAuthUser(nextSession?.user ?? null);
-      });
-      unsubscribe = () => subscription.unsubscribe();
-    } catch {}
-    return () => unsubscribe?.();
-  }, []);
 
   useEffect(() => {
     if (!open) return;
