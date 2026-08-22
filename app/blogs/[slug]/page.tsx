@@ -11,8 +11,13 @@ import {
 } from "@/lib/cache/catalog-data";
 import {
   buildProductBlogArticle,
+  type BlogArticle,
   type BlogProductInput,
 } from "@/app/lib/blog/product-blog";
+import {
+  buildWelcome10GuideArticle,
+  getStaticGuideMeta,
+} from "@/app/lib/blog/guides";
 import {
   buildPageMetadata,
   canonicalUrlFor,
@@ -20,6 +25,7 @@ import {
   resolveSeoCanonicalOverride,
 } from "@/lib/seo";
 import { JsonLd, breadcrumbJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
+import type { Product } from "@/app/lib/catalog/types";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -39,24 +45,67 @@ async function loadBlogProduct(slug: string): Promise<BlogProductInput | null> {
   };
 }
 
+async function loadGuideImageProducts(slugs: string[]): Promise<Product[]> {
+  if (!hasCatalogDb()) return [];
+  const fromSlugs = await getCachedProductsBySlugs(slugs);
+  const bySlug = new Map(fromSlugs.map((p) => [p.slug, p]));
+  const ordered = slugs.map((s) => bySlug.get(s)).filter(Boolean) as Product[];
+  if (ordered.length >= 3) return ordered.filter((p) => p.image);
+  const fill = (await getCachedAllActiveProductsForCards())
+    .filter((p) => p.image && !ordered.some((o) => o.slug === p.slug))
+    .slice(0, 5 - ordered.length);
+  return [...ordered, ...fill].filter((p) => p.image);
+}
+
+async function resolveArticle(
+  slug: string,
+  storeName: string,
+): Promise<{ article: BlogArticle; crumbLabel: string; productLink: { href: string; label: string } | null } | null> {
+  const guide = getStaticGuideMeta(slug);
+  if (guide) {
+    const imageProducts = await loadGuideImageProducts(guide.imageProductSlugs);
+    const article =
+      slug === "welcome10-voucher-code-rs-100-discount"
+        ? buildWelcome10GuideArticle(storeName, imageProducts)
+        : null;
+    if (!article) return null;
+    return {
+      article,
+      crumbLabel: "WELCOME10 voucher",
+      productLink: { href: "/collections", label: "Browse collections & shop" },
+    };
+  }
+
+  const product = await loadBlogProduct(slug);
+  if (!product) return null;
+  return {
+    article: buildProductBlogArticle(product, storeName),
+    crumbLabel: product.name,
+    productLink: {
+      href: `/products/${product.slug}`,
+      label: `View ${product.name} product page`,
+    },
+  };
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const identity = await loadSiteIdentity();
   const storeName = identity.storeName || identity.siteTitle || "SimpleCart Store";
-  const product = await loadBlogProduct(slug);
-  if (!product) {
+  const resolved = await resolveArticle(slug, storeName);
+  if (!resolved) {
     return buildPageMetadata({
       pathname: `/blogs/${slug}`,
       identity,
       override: null,
       defaults: {
         title: "Blog guide",
-        description: `Product buying guide from ${storeName}.`,
+        description: `Buying guide from ${storeName}.`,
         forceNoindex: true,
       },
     });
   }
-  const article = buildProductBlogArticle(product, storeName);
+  const { article } = resolved;
   return buildPageMetadata({
     pathname: `/blogs/${slug}`,
     identity,
@@ -84,10 +133,11 @@ export default async function BlogPostPage({ params }: Props) {
 
   const identity = await loadSiteIdentity();
   const storeName = identity.storeName || identity.siteTitle || "SimpleCart Store";
-  const product = await loadBlogProduct(slug);
-  if (!product) notFound();
+  const resolved = await resolveArticle(slug, storeName);
+  if (!resolved) notFound();
 
-  const article = buildProductBlogArticle(product, storeName);
+  const { article, crumbLabel, productLink } = resolved;
+  const isGuide = Boolean(getStaticGuideMeta(slug));
   const canonical = resolveSeoCanonicalOverride(null, canonicalUrlFor(`/blogs/${slug}`));
   const breadcrumbId = `${canonical}#breadcrumb`;
   const crumbs = breadcrumbJsonLd([
@@ -111,9 +161,16 @@ export default async function BlogPostPage({ params }: Props) {
     primaryImageUrl: article.hero.src,
   });
 
-  const related = (await getCachedAllActiveProductsForCards())
-    .filter((p) => p.slug !== slug && p.collection === product.collection && p.image)
-    .slice(0, 4);
+  const related = isGuide
+    ? (await getCachedAllActiveProductsForCards())
+        .filter((p) => p.image)
+        .slice(0, 4)
+    : (await getCachedAllActiveProductsForCards())
+        .filter((p) => {
+          // productSlug on product blogs matches the URL slug
+          return p.slug !== slug && p.image;
+        })
+        .slice(0, 4);
 
   return (
     <>
@@ -142,7 +199,7 @@ export default async function BlogPostPage({ params }: Props) {
             <span className="px-0.5 text-neutral-300" aria-hidden>
               /
             </span>
-            <span className="font-medium text-neutral-900 line-clamp-1">{product.name}</span>
+            <span className="line-clamp-1 font-medium text-neutral-900">{crumbLabel}</span>
           </nav>
 
           <header className="mt-8 border-b border-neutral-200/90 pb-8">
@@ -153,29 +210,33 @@ export default async function BlogPostPage({ params }: Props) {
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-600 sm:text-[1.05rem]">
               {article.metaDescription}
             </p>
-            <p className="mt-3 text-sm text-neutral-500">
-              <Link
-                href={`/products/${article.productSlug}`}
-                className="font-semibold text-neutral-900 underline underline-offset-2"
-              >
-                View {product.name} product page
-              </Link>
-            </p>
+            {productLink ? (
+              <p className="mt-3 text-sm text-neutral-500">
+                <Link
+                  href={productLink.href}
+                  className="font-semibold text-neutral-900 underline underline-offset-2"
+                >
+                  {productLink.label}
+                </Link>
+              </p>
+            ) : null}
           </header>
 
           <BlogArticleView article={article} />
 
           {related.length > 0 ? (
             <section className="border-t border-neutral-200/90 pt-10">
-              <h2 className="text-xl font-semibold text-neutral-900">Related guides</h2>
+              <h2 className="text-xl font-semibold text-neutral-900">
+                {isGuide ? "Shop these products" : "Related guides"}
+              </h2>
               <ul className="mt-4 list-none space-y-2 pl-0">
                 {related.map((p) => (
                   <li key={p.slug}>
                     <Link
-                      href={`/blogs/${p.slug}`}
+                      href={isGuide ? `/products/${p.slug}` : `/blogs/${p.slug}`}
                       className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
                     >
-                      {p.name} buying guide
+                      {isGuide ? p.name : `${p.name} buying guide`}
                     </Link>
                   </li>
                 ))}

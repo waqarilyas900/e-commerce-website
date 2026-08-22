@@ -3,8 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Footer, Header, TopStrip } from "@/components/storefront";
 import { hasCatalogDb } from "@/app/lib/db/env";
-import { getCachedAllActiveProductsForCards } from "@/lib/cache/catalog-data";
+import {
+  getCachedAllActiveProductsForCards,
+  getCachedProductsBySlugs,
+} from "@/lib/cache/catalog-data";
 import { blogListingCard } from "@/app/lib/blog/product-blog";
+import { STATIC_BLOG_GUIDES, staticGuideListingCard } from "@/app/lib/blog/guides";
 import { orderByRatingAndStockPriority } from "@/app/lib/collection-query";
 import {
   buildPageMetadata,
@@ -47,9 +51,24 @@ export default async function BlogsIndexPage() {
   const products = hasCatalogDb()
     ? orderByRatingAndStockPriority(await getCachedAllActiveProductsForCards())
     : [];
-  const cards = products
+
+  const welcomeMeta = STATIC_BLOG_GUIDES[0];
+  let welcomeHero: string | null = null;
+  if (hasCatalogDb() && welcomeMeta) {
+    const imgs = await getCachedProductsBySlugs(welcomeMeta.imageProductSlugs.slice(0, 1));
+    welcomeHero = imgs[0]?.image ?? products[0]?.image ?? null;
+  }
+  const guideCards = welcomeMeta
+    ? [staticGuideListingCard(storeName, welcomeHero)]
+    : [];
+  const productCards = products
     .filter((p) => p.slug && p.image)
-    .map((p) => blogListingCard(p, storeName));
+    .map((p) => ({
+      ...blogListingCard(p, storeName),
+      productHref: `/products/${p.slug}` as string,
+      isGuide: false as const,
+    }));
+  const cards = [...guideCards, ...productCards];
 
   const breadcrumbId = `${canonical}#breadcrumb`;
   const crumbs = breadcrumbJsonLd([
@@ -137,12 +156,16 @@ export default async function BlogsIndexPage() {
                         >
                           Read guide
                         </Link>
-                        <Link
-                          href={card.productHref}
-                          className="text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
-                        >
-                          View product
-                        </Link>
+                        {card.productHref ? (
+                          <Link
+                            href={card.productHref}
+                            className="text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
+                          >
+                            {"isGuide" in card && card.isGuide
+                              ? "Shop collections"
+                              : "View product"}
+                          </Link>
+                        ) : null}
                       </div>
                     </div>
                   </article>

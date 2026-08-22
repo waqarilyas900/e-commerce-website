@@ -7,6 +7,7 @@ import {
   dbListCollections,
 } from "@/app/lib/db/catalog";
 import { dbListPolicySummaries } from "@/app/lib/policy-pages-db";
+import { STATIC_BLOG_GUIDES } from "@/app/lib/blog/guides";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -162,6 +163,12 @@ export async function GET(): Promise<NextResponse> {
     { url: `${base}/about`, lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/how-to-buy`, lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/blogs`, lastModified, changeFrequency: "daily", priority: 0.75 },
+    ...STATIC_BLOG_GUIDES.map((g) => ({
+      url: `${base}/blogs/${encodeURIComponent(g.slug)}`,
+      lastModified: new Date(g.publishedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
     {
       url: `${base}/purchase-protection`,
       lastModified,
