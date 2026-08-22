@@ -21,6 +21,8 @@ type Props = {
    * so the session flag is not cleared before that handler runs.
    */
   closeModalOnPasswordSuccess?: boolean;
+  /** When false, skip `router.refresh()` after password sign-in (e.g. checkout modal). */
+  refreshAfterSignIn?: boolean;
 };
 
 const DEFAULT_DESCRIPTION =
@@ -33,6 +35,7 @@ export function SignInModal({
   nextPath,
   onClose,
   closeModalOnPasswordSuccess = true,
+  refreshAfterSignIn = true,
 }: Props) {
   const router = useRouter();
   const formId = useId();
@@ -75,7 +78,9 @@ export function SignInModal({
       setError(signError.message);
       return;
     }
-    router.refresh();
+    if (refreshAfterSignIn) {
+      router.refresh();
+    }
     if (closeModalOnPasswordSuccess) {
       onClose();
     }

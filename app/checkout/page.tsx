@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   CHECKOUT_PENDING_CART_CLEAR_KEY,
@@ -52,6 +52,7 @@ import { voucherErrorMessage } from "@/app/lib/voucher-user-messages";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 import { metaContentsFromCartLines, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import type { SavedAddress } from "@/app/lib/saved-addresses";
+import { pakistanCheckoutPhoneError } from "@/app/lib/validate-pakistan-phone";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
 
@@ -94,25 +95,6 @@ function fingerprintSavedAddress(address: SavedAddress): string {
     shipping_postal_code: normalizeText(address.shipping_postal_code),
     shipping_province: normalizeText(address.shipping_province),
   });
-}
-
-function MoneyBackBadge() {
-  return (
-    <div className="mt-4 flex items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
-          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
-        </svg>
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-neutral-900">7-day money-back guarantee</p>
-        <p className="mt-0.5 text-xs leading-relaxed text-neutral-600">
-          Shop with confidence — eligible items can be returned within 7 days of delivery per our
-          return policy.
-        </p>
-      </div>
-    </div>
-  );
 }
 
 function CheckoutPageSkeleton() {
@@ -174,6 +156,8 @@ export default function CheckoutPage() {
   } = useCart();
   const { storeName } = useStoreBrand();
   const skipEmptyCartRedirectOnce = useRef(false);
+  const linesLengthRef = useRef(0);
+  linesLengthRef.current = lines.length;
 
   const [placing, setPlacing] = useState(false);
   const [redirectingToConfirmation, setRedirectingToConfirmation] = useState(false);
@@ -184,7 +168,6 @@ export default function CheckoutPage() {
     setFormValues((prev) => ({ ...prev, [id]: value }));
   }, []);
 
-  const [userLoaded, setUserLoaded] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
@@ -203,12 +186,17 @@ export default function CheckoutPage() {
     setSignInModalReason(reason);
     setSignInModalOpen(true);
   }, []);
+
+  const dismissSignInModal = useCallback(() => {
+    saveIntentAfterSignInRef.current = false;
+    voucherIntentAfterSignInRef.current = false;
+    setSignInModalOpen(false);
+  }, []);
   const sentInitiateCheckoutRef = useRef<Set<string>>(new Set());
   /** Always points at latest validator so `persistCurrentAddress` never hits TDZ if hooks are reordered. */
   const validateSaveAddressFieldsRef = useRef<() => boolean>(() => false);
 
   const [topSummaryOpen, setTopSummaryOpen] = useState(false);
-  const [bottomSummaryOpen, setBottomSummaryOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
   const [discountPreviewCents, setDiscountPreviewCents] = useState<number | null>(null);
@@ -338,6 +326,15 @@ export default function CheckoutPage() {
       openSignInModal("voucher");
       return;
     }
+    if (
+      hasCatalogDb() &&
+      lines.length > 0 &&
+      resolvedLines.length === 0 &&
+      isResolvingCart
+    ) {
+      setDiscountIssue("Your cart is still loading. Try again in a moment.");
+      return;
+    }
     if (resolvedLines.length === 0) {
       setDiscountIssue("Your cart is empty.");
       return;
@@ -389,6 +386,8 @@ export default function CheckoutPage() {
   }, [
     clearDiscountNotice,
     discountCode,
+    isResolvingCart,
+    lines.length,
     openSignInModal,
     resolvedLines,
     setDiscountIssue,
@@ -637,7 +636,7 @@ export default function CheckoutPage() {
       return;
     }
     const timer = window.setTimeout(() => {
-      if (lines.length > 0) return;
+      if (linesLengthRef.current > 0) return;
       router.replace("/");
     }, 300);
     return () => window.clearTimeout(timer);
@@ -654,14 +653,12 @@ export default function CheckoutPage() {
         if (cancelled) return;
         if (session && isCompletingPasswordReset(session)) {
           router.replace("/reset-password");
-          setUserLoaded(true);
           return;
         }
         const {
           data: { user },
         } = await supabase.auth.getUser();
         if (cancelled || !user) {
-          setUserLoaded(true);
           return;
         }
         setSignedIn(true);
@@ -682,8 +679,6 @@ export default function CheckoutPage() {
         }));
       } catch {
         /* ignore */
-      } finally {
-        if (!cancelled) setUserLoaded(true);
       }
     }
     void loadUser();
@@ -713,8 +708,9 @@ export default function CheckoutPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!formValues.phone?.trim()) {
-      setFormError("Please enter a valid phone number for delivery.");
+    const phoneError = pakistanCheckoutPhoneError(formValues.phone);
+    if (phoneError) {
+      setFormError(phoneError);
       return;
     }
     setFormError(null);
@@ -836,6 +832,17 @@ export default function CheckoutPage() {
   const pendingCartCatalog =
     hasCatalogDb() && lines.length > 0 && resolvedLines.length === 0 && isResolvingCart;
 
+  const preventCheckoutEnterSubmit = useCallback((e: KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== "Enter") return;
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest("[data-voucher-field]")) return;
+    if (target instanceof HTMLTextAreaElement) return;
+    if (target instanceof HTMLButtonElement && target.type === "submit") return;
+    if (target instanceof HTMLInputElement && target.type === "submit") return;
+    e.preventDefault();
+  }, []);
+
   if (!ready) {
     return <CheckoutPageSkeleton />;
   }
@@ -931,7 +938,12 @@ export default function CheckoutPage() {
                 />
               </div>
 
-            <form id="checkout-form" onSubmit={onSubmit} className="space-y-5">
+            <form
+              id="checkout-form"
+              onSubmit={onSubmit}
+              onKeyDown={preventCheckoutEnterSubmit}
+              className="space-y-5"
+            >
             <div
               className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
               aria-label="Delivery and contact"
@@ -1012,42 +1024,6 @@ export default function CheckoutPage() {
                 </p>
               </div>
             </section>
-
-            <div
-              className="hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
-              aria-hidden
-            >
-              <MoneyBackBadge />
-            </div>
-
-              <div className="md:hidden">
-                <CheckoutOrderSummaryAccordion
-                  id="co-summary-bottom"
-                  expanded={bottomSummaryOpen}
-                  onToggle={() => setBottomSummaryOpen((o) => !o)}
-                  lines={resolvedLines}
-                  subtotal={subtotal}
-                  shipping={deliveryPkr}
-                  total={grandTotal}
-                  shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
-                  standardDeliveryPkr={standardDeliveryPkr}
-                  freeShippingThresholdPkr={freeShippingThresholdPkr}
-                  discountCode={discountCode}
-                  onDiscountCodeChange={(v) => {
-                    setDiscountCode(v);
-                    clearDiscountNotice();
-                    setDiscountApplied(false);
-                    setDiscountPreviewCents(null);
-                  }}
-                  onApplyDiscount={() => void applyDiscount()}
-                  discountApplied={discountApplied}
-                  discountPkr={discountPkr}
-                  discountNotice={discountNotice}
-                  discountNoticeIsError={discountNoticeIsError}
-                  applyingVoucher={applyingVoucher}
-                  cartLoading={pendingCartCatalog}
-                />
-              </div>
 
               {signedIn ? (
               <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-left text-sm text-neutral-800">
@@ -1143,12 +1119,10 @@ export default function CheckoutPage() {
       </ConfirmationModal>
       <SignInModal
         open={signInModalOpen}
-        onClose={() => {
-          saveIntentAfterSignInRef.current = false;
-          voucherIntentAfterSignInRef.current = false;
-          setSignInModalOpen(false);
-        }}
+        onClose={dismissSignInModal}
         nextPath="/checkout"
+        closeModalOnPasswordSuccess={false}
+        refreshAfterSignIn={false}
         title={SIGN_IN_MODAL_COPY[signInModalReason].title}
         description={SIGN_IN_MODAL_COPY[signInModalReason].description}
       />

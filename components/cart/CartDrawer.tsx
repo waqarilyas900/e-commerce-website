@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
@@ -153,6 +154,7 @@ function DrawerRecoTileSkeleton() {
 }
 
 export function CartDrawer() {
+  const router = useRouter();
   const {
     isOpen,
     closeCart,
@@ -161,7 +163,9 @@ export function CartDrawer() {
     subtotal,
     updateQuantity,
     removeItem,
+    waitForCartResolution,
   } = useCart();
+  const [checkoutNavigating, setCheckoutNavigating] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const [recommended, setRecommended] = useState<Product[]>([]);
   const [recoLoading, setRecoLoading] = useState(false);
@@ -506,13 +510,25 @@ export function CartDrawer() {
                   Shipping, taxes, and discount codes calculated at checkout.
                 </p>
                 {resolvedLines.length > 0 ? (
-                  <Link
-                    href="/checkout"
-                    onClick={closeCart}
-                    className="mt-5 flex w-full items-center justify-center rounded-md bg-black px-5 py-3 text-sm font-semibold capitalize text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985]"
+                  <button
+                    type="button"
+                    disabled={checkoutNavigating}
+                    onClick={() => {
+                      void (async () => {
+                        setCheckoutNavigating(true);
+                        try {
+                          await waitForCartResolution();
+                          closeCart();
+                          router.push("/checkout");
+                        } finally {
+                          setCheckoutNavigating(false);
+                        }
+                      })();
+                    }}
+                    className="mt-5 flex w-full items-center justify-center rounded-md bg-black px-5 py-3 text-sm font-semibold capitalize text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Check out
-                  </Link>
+                    {checkoutNavigating ? "Loading…" : "Check out"}
+                  </button>
                 ) : null}
               </motion.div>
             ) : null}

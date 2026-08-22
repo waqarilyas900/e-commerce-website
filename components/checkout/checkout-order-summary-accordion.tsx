@@ -133,7 +133,7 @@ function CheckoutOrderSummaryBody({
         )}
       </ul>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex gap-2" data-voucher-field>
         <input
           type="text"
           value={discountCode}
@@ -141,11 +141,12 @@ function CheckoutOrderSummaryBody({
           onKeyDown={(e) => {
             if (e.key !== "Enter") return;
             e.preventDefault();
-            onApplyDiscount();
+            if (!cartLoading) onApplyDiscount();
           }}
           placeholder="Discount code"
           autoComplete="off"
           enterKeyHint="go"
+          disabled={cartLoading}
           aria-invalid={inputError}
           aria-describedby={inputError ? voucherNoticeId : undefined}
           className={
@@ -157,12 +158,15 @@ function CheckoutOrderSummaryBody({
         <button
           type="button"
           onClick={onApplyDiscount}
-          disabled={applyingVoucher}
+          disabled={applyingVoucher || cartLoading}
           className="shrink-0 rounded-md border border-neutral-200 bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {applyingVoucher ? "…" : "Apply"}
         </button>
       </div>
+      {cartLoading ? (
+        <p className="mt-2 text-xs text-neutral-500">Loading cart details…</p>
+      ) : null}
       {showNotice ? (
         <p
           id={voucherNoticeId}
@@ -225,7 +229,7 @@ function CheckoutOrderSummaryBody({
             </span>
           </div>
         </div>
-        <p className="mt-1 text-right text-xs text-neutral-500">Including Rs 0.00 in taxes</p>
+        <p className="mt-1 text-right text-xs text-neutral-500">All prices in PKR</p>
       </div>
 
       <ModalShell

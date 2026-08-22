@@ -132,4 +132,9 @@ test.describe("Storefront smoke (Shopify-style paths)", () => {
     await expect(heading).toBeVisible();
     await page.getByRole("button", { name: "×" }).click();
   });
+
+  test("empty checkout redirects to home", async ({ page }) => {
+    await page.goto("/checkout", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\/(\?.*)?$/, { timeout: 15_000 });
+  });
 });

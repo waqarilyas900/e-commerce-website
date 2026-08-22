@@ -49,7 +49,6 @@ export async function completeGoogleIdTokenSignIn(options: {
       return;
     }
 
-    router.refresh();
     const dest =
       (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
         ? nextPath
@@ -59,6 +58,7 @@ export async function completeGoogleIdTokenSignIn(options: {
       const same =
         target.pathname === window.location.pathname && target.search === window.location.search;
       if (!same) {
+        router.refresh();
         router.push(dest);
       }
     }
