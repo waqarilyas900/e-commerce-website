@@ -174,6 +174,7 @@ export default function CheckoutPage() {
   } = useCart();
   const { storeName } = useStoreBrand();
   const skipEmptyCartRedirectOnce = useRef(false);
+  const checkoutBootstrappedRef = useRef(false);
 
   const [placing, setPlacing] = useState(false);
   const [redirectingToConfirmation, setRedirectingToConfirmation] = useState(false);
@@ -829,8 +830,18 @@ export default function CheckoutPage() {
     [],
   );
 
-  if (!ready || !userLoaded) {
+  const pendingCartCatalog =
+    hasCatalogDb() && lines.length > 0 && resolvedLines.length === 0 && isResolvingCart;
+
+  const isCheckoutBootstrapping =
+    !ready || !userLoaded || pendingCartCatalog;
+
+  if (!checkoutBootstrappedRef.current && isCheckoutBootstrapping) {
     return <CheckoutPageSkeleton />;
+  }
+
+  if (!isCheckoutBootstrapping) {
+    checkoutBootstrappedRef.current = true;
   }
 
   if (redirectingToConfirmation) {
@@ -855,10 +866,6 @@ export default function CheckoutPage() {
         </main>
       </CheckoutChrome>
     );
-  }
-
-  if (cartResolving) {
-    return <CheckoutPageSkeleton />;
   }
 
   return (

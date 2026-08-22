@@ -156,7 +156,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       } catch {
         /* ignore */
       }
-      setLines(readStorage());
+      const stored = readStorage();
+      if (stored.length > 0 && hasCatalogDb()) {
+        setIsResolvingCart(true);
+      }
+      setLines(stored);
       setReady(true);
     });
   }, []);
