@@ -266,6 +266,14 @@ export default function CheckoutPage() {
 
   const grandTotal = Math.max(0, subtotal + deliveryPkr - discountPkr);
 
+  const freeShippingThresholdPkr = useMemo(() => {
+    const tiers = deliverySettings.freeThresholdsPaisa.filter((t) => t > 0);
+    if (tiers.length === 0) return null;
+    return Math.min(...tiers) / 100;
+  }, [deliverySettings.freeThresholdsPaisa]);
+
+  const standardDeliveryPkr = deliverySettings.standardPaisa / 100;
+
   const cartFingerprint = useMemo(
     () => resolvedLines.map(({ line }) => `${line.variantId}:${line.quantity}`).join("|"),
     [resolvedLines],
@@ -858,6 +866,8 @@ export default function CheckoutPage() {
                   shipping={deliveryPkr}
                   total={grandTotal}
                   shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
+                  standardDeliveryPkr={standardDeliveryPkr}
+                  freeShippingThresholdPkr={freeShippingThresholdPkr}
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
@@ -972,6 +982,8 @@ export default function CheckoutPage() {
                   shipping={deliveryPkr}
                   total={grandTotal}
                   shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
+                  standardDeliveryPkr={standardDeliveryPkr}
+                  freeShippingThresholdPkr={freeShippingThresholdPkr}
                   discountCode={discountCode}
                   onDiscountCodeChange={(v) => {
                     setDiscountCode(v);
@@ -1038,6 +1050,8 @@ export default function CheckoutPage() {
                 shipping={deliveryPkr}
                 total={grandTotal}
                 shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
+                standardDeliveryPkr={standardDeliveryPkr}
+                freeShippingThresholdPkr={freeShippingThresholdPkr}
                 discountCode={discountCode}
                 onDiscountCodeChange={(v) => {
                   setDiscountCode(v);

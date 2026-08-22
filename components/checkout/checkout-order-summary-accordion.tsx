@@ -19,6 +19,8 @@ type Props = {
   shipping: number;
   total: number;
   shippingWaiverCutoffPkr?: number | null;
+  standardDeliveryPkr?: number | null;
+  freeShippingThresholdPkr?: number | null;
   discountCode: string;
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
@@ -39,6 +41,10 @@ type SummaryBodyProps = {
   shipping: number;
   total: number;
   shippingWaiverCutoffPkr?: number | null;
+  /** From `store_settings.standard_delivery_paisa` (PKR). */
+  standardDeliveryPkr?: number | null;
+  /** Lowest free-delivery tier from `store_settings` (PKR); omit bullets when unset. */
+  freeShippingThresholdPkr?: number | null;
   discountCode: string;
   onDiscountCodeChange: (value: string) => void;
   onApplyDiscount: () => void;
@@ -56,6 +62,8 @@ function CheckoutOrderSummaryBody({
   shipping,
   total,
   shippingWaiverCutoffPkr = null,
+  standardDeliveryPkr = null,
+  freeShippingThresholdPkr = null,
   discountCode,
   onDiscountCodeChange,
   onApplyDiscount,
@@ -73,6 +81,13 @@ function CheckoutOrderSummaryBody({
   const showNotice = Boolean(discountNotice);
   const inputError = showNotice && discountNoticeIsError;
   const [shippingPolicyOpen, setShippingPolicyOpen] = useState(false);
+
+  const freeThreshold =
+    freeShippingThresholdPkr != null && freeShippingThresholdPkr > 0
+      ? freeShippingThresholdPkr
+      : null;
+  const standardFee =
+    standardDeliveryPkr != null && standardDeliveryPkr > 0 ? standardDeliveryPkr : null;
 
   return (
     <div
@@ -207,13 +222,23 @@ function CheckoutOrderSummaryBody({
         zIndexClassName="z-[220]"
       >
         <ul className="list-disc space-y-4 pl-5 text-base leading-relaxed text-neutral-900">
-          <li>
-            <strong>Free Shipping</strong> on all orders over the value of <strong>Rs.3000</strong>.
-          </li>
-          <li>
-            We charge <strong>Rs.250</strong> for shipping on all orders under the value of{" "}
-            <strong>Rs.3000</strong>.
-          </li>
+          {freeThreshold ? (
+            <li>
+              <strong>Free shipping</strong> on all orders over the value of{" "}
+              <strong>{formatPkr(freeThreshold)}</strong>.
+            </li>
+          ) : null}
+          {freeThreshold && standardFee ? (
+            <li>
+              We charge <strong>{formatPkr(standardFee)}</strong> for shipping on all orders under
+              the value of <strong>{formatPkr(freeThreshold)}</strong>.
+            </li>
+          ) : standardFee ? (
+            <li>
+              Standard delivery is <strong>{formatPkr(standardFee)}</strong> on eligible orders
+              (excluding products marked with free delivery).
+            </li>
+          ) : null}
           <li>
             Orders placed by 12:00 pm (Pakistan Standard Time) will be shipped the same day via
             Registered Courier Service. Orders received after 12:00 pm will be dispatched the next
@@ -281,6 +306,8 @@ export function CheckoutOrderSummaryAccordion({
   shipping,
   total,
   shippingWaiverCutoffPkr,
+  standardDeliveryPkr,
+  freeShippingThresholdPkr,
   discountCode,
   onDiscountCodeChange,
   onApplyDiscount,
@@ -338,6 +365,8 @@ export function CheckoutOrderSummaryAccordion({
           shipping={shipping}
           total={total}
           shippingWaiverCutoffPkr={shippingWaiverCutoffPkr}
+          standardDeliveryPkr={standardDeliveryPkr}
+          freeShippingThresholdPkr={freeShippingThresholdPkr}
           discountCode={discountCode}
           onDiscountCodeChange={onDiscountCodeChange}
           onApplyDiscount={onApplyDiscount}
