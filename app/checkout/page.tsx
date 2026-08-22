@@ -955,7 +955,10 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+            <div
+              className="hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
+              aria-hidden
+            >
               <MoneyBackBadge />
             </div>
 
