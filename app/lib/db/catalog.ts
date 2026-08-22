@@ -887,9 +887,19 @@ export async function dbListProductsForHomeSectionTags(
     byProduct.set(row.product_id, list);
   }
 
-  plist.sort((a, b) => a.name.localeCompare(b.name));
+  // Home rails / section pages: only rated products, highest review count first.
+  const rated = plist.filter(
+    (p) => (p.rating ?? 0) > 0 || (p.reviews_count ?? 0) > 0,
+  );
+  rated.sort((a, b) => {
+    const byReviews = (b.reviews_count ?? 0) - (a.reviews_count ?? 0);
+    if (byReviews !== 0) return byReviews;
+    const byRating = (b.rating ?? 0) - (a.rating ?? 0);
+    if (byRating !== 0) return byRating;
+    return a.name.localeCompare(b.name);
+  });
 
-  return plist.map((p) =>
+  return rated.map((p) =>
     mapProductCard(p, byProduct.get(p.id) ?? [], sectionSlug),
   );
 }
