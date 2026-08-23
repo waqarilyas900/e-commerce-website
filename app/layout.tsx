@@ -212,7 +212,14 @@ export default async function RootLayout({
    */
   const loadDirectGoogleAnalytics =
     analyticsAllowed && analytics.googleAnalyticsId.trim().length > 0;
-  /** Avoid double-firing pixels: when GTM is present it should own Meta/TikTok. */
+  /**
+   * Meta Pixel: load from `seo_analytics.meta_pixel_id` even when GTM is set
+   * (same pattern as GA4). If the same Pixel ID is also configured inside GTM,
+   * remove one side to avoid double PageView counts.
+   */
+  const loadDirectMetaPixel =
+    analyticsAllowed && analytics.metaPixelId.trim().length > 0;
+  /** TikTok stays GTM-owned when GTM is present to avoid double-firing. */
   const standaloneMarketingTags = analyticsAllowed && !gtmId;
   const storageOrigin = getStorageOrigin();
   const themeColor = parseThemeColor(announcementBar.backgroundColor, "#1c1d1d");
@@ -281,7 +288,7 @@ export default async function RootLayout({
             >{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`}</Script>
           </>
         ) : null}
-        {standaloneMarketingTags && metaPixelId ? (
+        {loadDirectMetaPixel ? (
           <Script
             id="meta-pixel"
             strategy="afterInteractive"
@@ -321,7 +328,7 @@ export default async function RootLayout({
             />
           </noscript>
         ) : null}
-        {standaloneMarketingTags && metaPixelId ? (
+        {loadDirectMetaPixel ? (
           <noscript>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
