@@ -6,6 +6,7 @@ import {
 } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import {
   loadSeoOverrideForSubject,
@@ -82,21 +83,20 @@ export async function HomeCollectionsStrip() {
       className="border-b border-[#e8e8e1] bg-white"
     >
       <ScrollReveal className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
+        <div className="relative mb-6 flex items-end justify-center">
+          <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
               Browse
             </p>
-            <h2
-              id="home-collections-heading"
-              className="mt-2 text-2xl font-semibold tracking-tight text-[#1c1d1d] sm:text-[28px]"
-            >
-              Shop collections
-            </h2>
+            <div className="mt-2">
+              <HomeSectionTitle id="home-collections-heading">
+                Shop collections
+              </HomeSectionTitle>
+            </div>
           </div>
           <Link
             href="/collections"
-            className="shrink-0 text-sm font-semibold text-neutral-900 underline-offset-4 hover:underline"
+            className="absolute right-0 top-1/2 hidden -translate-y-1/2 text-sm font-semibold text-neutral-900 underline-offset-4 hover:underline sm:inline"
           >
             View all
           </Link>

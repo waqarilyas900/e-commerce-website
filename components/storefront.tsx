@@ -24,6 +24,8 @@ import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
 import { SiteLogoMark } from "@/components/site-logo";
 import { primaryNavLinkClass, ShopCollectionsMenu } from "@/components/navigation/shop-collections-menu";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { RiseUpTitle } from "@/components/ui/rise-up-title";
+import { homeSectionTitleClass } from "@/components/ui/home-section-title";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import type { Product } from "@/app/lib/catalog/types";
 import { formatPkr } from "@/app/lib/format-currency";
@@ -553,6 +555,9 @@ function RailScrollStrip({ children }: { children: ReactNode }) {
   );
 }
 
+/** Home rail category titles — same weight/appear as other home section titles. */
+const homeRailTitleClass = homeSectionTitleClass;
+
 export function ProductSection({
   title,
   items,
@@ -577,11 +582,13 @@ export function ProductSection({
     return (
       <section className="bg-neutral-100/80">
         <ScrollReveal className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <h2 className="text-xl font-semibold tracking-tight text-neutral-900">{title}</h2>
+          <div className="relative mb-5 flex items-end justify-center">
+            <RiseUpTitle className="text-center">
+              <h2 className={homeRailTitleClass}>{title}</h2>
+            </RiseUpTitle>
             <Link
               href={viewAllHref}
-              className="hidden shrink-0 text-sm font-semibold text-neutral-900 md:inline"
+              className="absolute right-0 top-1/2 hidden -translate-y-1/2 text-sm font-semibold text-neutral-900 md:inline"
             >
               View all
             </Link>

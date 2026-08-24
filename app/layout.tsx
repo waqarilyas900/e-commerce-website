@@ -41,12 +41,13 @@ export const dynamic = "force-dynamic";
 
 /**
  * Storefront typeface — Montserrat across UI.
- * 400 body · 500 nav/labels · 600 buttons/prices · 700 headings
+ * 400 body · 500 nav/labels · 600 buttons/prices · 700 headings · 900 italic footer section titles
  */
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "900"],
+  style: ["normal", "italic"],
   display: "swap",
   adjustFontFallback: true,
 });

@@ -11,6 +11,10 @@ import { SiteLogoFull } from "@/components/site-logo";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
+/** Need help? / Explore / Customer care — Montserrat 900 italic, all caps */
+const footerSectionHeadingClass =
+  "font-sans text-[13.86px] font-black uppercase italic leading-[16.632px] tracking-normal text-white";
+
 /** Always shown in Customer care; not editable from admin. Footer-only (not header). */
 const CONTACT_US_HREF = "/contact";
 const CONTACT_US_LABEL = "Contact us";
@@ -235,7 +239,7 @@ function MobileAccordion({
         onClick={() => onToggle(id)}
         className="touch-manipulation flex min-h-[52px] w-full items-center justify-between gap-4 py-3 text-left transition-colors active:bg-white/6 lg:active:bg-transparent"
       >
-        <span className="text-[15px] font-semibold tracking-wide text-white">{title}</span>
+        <span className={footerSectionHeadingClass}>{title}</span>
         <motion.span
           aria-hidden
           animate={{ rotate: open ? 180 : 0 }}
@@ -258,7 +262,7 @@ function MobileAccordion({
         transition={{ duration: 0.38, ease: easeFooter }}
         className="overflow-hidden"
       >
-        <div className="border-t border-white/8 pb-6 pl-0 pr-0 pt-4">{children}</div>
+        <div className="pb-6 pl-0 pr-0 pt-4">{children}</div>
       </motion.div>
     </div>
   );
@@ -302,10 +306,10 @@ export function Footer() {
         data-section-id="sections--footer"
         data-section-type="footer"
       >
-        <div className="mx-auto max-w-7xl shell-x pb-10 pt-12 sm:pb-12 sm:pt-12 lg:py-14">
+        <div className="footer-shell shell-x pb-8 pt-8 sm:pb-10 sm:pt-10 lg:py-12">
           {/* Mobile: clear sections + comfortable tap targets */}
-          <div className="border-t border-white/12 lg:hidden">
-            <div className="divide-y divide-white/10">
+          <div className="lg:hidden">
+            <div>
               <MobileAccordion
                 id="help"
                 title="Need help?"
@@ -319,8 +323,8 @@ export function Footer() {
                   <ExploreLinksList links={footerExploreLinks} />
                 </MobileAccordion>
               ) : null}
-              <div className="py-6">
-                <h2 className="text-[15px] font-semibold tracking-wide text-white">{customerCareTitle}</h2>
+              <div className="py-4">
+                <h2 className={footerSectionHeadingClass}>{customerCareTitle}</h2>
                 <div className="mt-5">
                   <PolicyLinksList policyRows={policyRows} />
                 </div>
@@ -328,7 +332,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="flex w-full items-center justify-between gap-6 border-t border-white/12 pt-10 lg:hidden">
+          <div className="flex w-full items-center justify-between gap-6 pt-6 lg:hidden">
             <div className="min-w-0">
               <p className="sr-only">{storeName}</p>
               <SiteLogoFull />
@@ -337,7 +341,7 @@ export function Footer() {
           </div>
 
           {/* Desktop: aligned 4-column grid — same heading rhythm and left edge */}
-          <div className="hidden border-t border-white/10 pt-12 lg:block">
+          <div className="hidden lg:block">
             <div
               className={
                 hasExploreLinks
@@ -346,26 +350,26 @@ export function Footer() {
               }
             >
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-white">Need help?</h2>
+                <h2 className={footerSectionHeadingClass}>Need help?</h2>
                 <div className="mt-6">
                   <NeedHelpBlock mailto={mailto} footer={footer} />
                 </div>
               </div>
               {hasExploreLinks ? (
                 <div className="min-w-0">
-                  <h2 className="text-sm font-semibold text-white">Explore</h2>
+                  <h2 className={footerSectionHeadingClass}>Explore</h2>
                   <div className="mt-6">
                     <ExploreLinksList links={footerExploreLinks} />
                   </div>
                 </div>
               ) : null}
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-white">{customerCareTitle}</h2>
+                <h2 className={footerSectionHeadingClass}>{customerCareTitle}</h2>
                 <div className="mt-6">
                   <PolicyLinksList policyRows={policyRows} />
                 </div>
               </div>
-              <div className="flex min-w-0 flex-col items-start gap-6 border-l border-white/10 pl-10 xl:pl-14">
+              <div className="flex min-w-0 flex-col items-start gap-6 pl-10 xl:pl-14">
                 <SiteLogoFull className="shrink-0" />
                 <SocialLinks className="gap-2" />
               </div>
@@ -373,8 +377,8 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/12 bg-black">
-          <div className="mx-auto max-w-7xl shell-x py-5 text-center text-xs leading-relaxed tracking-wide text-white/50 sm:py-4 lg:text-left">
+        <div className="bg-black">
+          <div className="footer-shell shell-x py-4 text-center text-xs leading-relaxed tracking-wide text-white/50 sm:py-4">
             © {new Date().getFullYear()}{" "}
             <Link href="/" className="text-white/65 underline-offset-2 transition hover:text-white hover:underline">
               {storeName}

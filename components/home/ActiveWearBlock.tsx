@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
 /** Homepage featured band — content from `home_page_settings.featured_block` (admin / SQL). */
@@ -88,9 +89,9 @@ export function ActiveWearBlock() {
                 </p>
               ) : null}
               {featured.title.trim() ? (
-                <h2 className="h3 mt-3 text-3xl font-semibold tracking-tight text-[#1c1d1d] md:text-[34px] md:leading-tight">
-                  {featured.title}
-                </h2>
+                <div className="mt-3">
+                  <HomeSectionTitle center={false}>{featured.title}</HomeSectionTitle>
+                </div>
               ) : null}
               {featured.description.trim() ? (
                 <div className="rte mt-4 text-[15px] leading-relaxed text-[#1c1d1d] md:text-base">

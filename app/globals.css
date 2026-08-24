@@ -24,6 +24,8 @@
    * that felt “small” at 100% vs browser 125% zoom; widen via this token only (no zoom).
    */
   --page-shell-max: 1500px;
+  /** Footer content shell — radstore.pk footer `.page-width` is 1100px (narrower than main). */
+  --footer-shell-max: 1100px;
 }
 
 @theme inline {
@@ -150,6 +152,13 @@ body {
  */
 .max-w-7xl {
   max-width: min(100%, var(--page-shell-max));
+}
+
+/** Footer inner shell — matches radstore.pk footer `.page-width` (1100px). */
+.footer-shell {
+  width: 100%;
+  max-width: min(100%, var(--footer-shell-max));
+  margin-inline: auto;
 }
 
 /* Radstore: .transition-body wraps main + footer; keep visible (see layout). */

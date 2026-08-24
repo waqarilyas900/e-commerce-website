@@ -27,6 +27,7 @@ import {
 } from "@/lib/seo";
 import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
+import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -125,12 +126,12 @@ export default async function Home() {
         ) : null}
         <section className="border-b border-[#e8e8e1] bg-white">
           <div className="mx-auto max-w-7xl shell-x py-4 text-center sm:py-5">
-            <h1 className="text-xl font-semibold tracking-tight text-neutral-950 sm:text-2xl md:text-3xl">
+            <HomeSectionTitle as="h1">
               {seoHeadingFromMetaTitle(
                 homeName,
                 "Home Essentials Online in Pakistan",
               )}
-            </h1>
+            </HomeSectionTitle>
             <p className="mx-auto mt-1.5 max-w-2xl text-sm text-neutral-600 sm:text-[15px]">
               {homeDescription}
             </p>
