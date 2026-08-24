@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { HeroSlide } from "@/app/lib/store-brand.types";
 import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
 
@@ -18,6 +19,33 @@ const HERO_OVERLAY =
 /** Delay autoplay so LCP can settle before the carousel starts moving. */
 const AUTOPLAY_START_MS = 8000;
 const INTERVAL_MS = 7000;
+
+const easeHero: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+const T_SLIDE_MAIN = 0.55;
+const T_SLIDE_OPACITY = 0.45;
+const T_TITLE = 0.4;
+const T_TITLE_DELAY = 0.08;
+const T_REDUCED = 0.25;
+
+/** No blur filters ÔÇö blur forces expensive paint and hurts mobile SI/LCP. */
+const slideLayerVariantsFull = {
+  enter: (direction: number) => ({
+    x: direction >= 0 ? "18%" : "-18%",
+    opacity: 0,
+  }),
+  center: { x: "0%", opacity: 1 },
+  exit: (direction: number) => ({
+    x: direction >= 0 ? "-14%" : "14%",
+    opacity: 0,
+  }),
+};
+
+const slideLayerVariantsReduced = {
+  enter: { opacity: 0 },
+  center: { opacity: 1 },
+  exit: { opacity: 0 },
+};
 
 function ArrowPrevIcon({ className }: { className?: string }) {
   return (
@@ -74,49 +102,68 @@ function HeroSlideImage({
   );
 }
 
-function HeroSlideTitle({ slide }: { slide: HeroSlide }) {
+function HeroSlideTitle({
+  slide,
+  animate,
+  prefersReducedMotion,
+}: {
+  slide: HeroSlide;
+  animate?: boolean;
+  prefersReducedMotion?: boolean | null;
+}) {
   if (!slide.title?.trim()) return null;
+  const link = (
+    <Link
+      href={slide.href}
+      className="pointer-events-auto block text-center text-3xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl"
+    >
+      {slide.title}
+    </Link>
+  );
+  if (!animate) {
+    return (
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-20 sm:pb-24 md:pb-28">
+        {link}
+      </div>
+    );
+  }
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-20 sm:pb-24 md:pb-28">
-      <Link
-        href={slide.href}
-        className="pointer-events-auto block text-center text-3xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl"
-      >
-        {slide.title}
-      </Link>
-    </div>
+    <motion.div
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-20 sm:pb-24 md:pb-28"
+      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: prefersReducedMotion ? 0.12 : T_TITLE,
+        delay: prefersReducedMotion ? 0 : T_TITLE_DELAY,
+        ease: easeHero,
+      }}
+    >
+      {link}
+    </motion.div>
   );
 }
 
-/**
- * Hero carousel without framer-motion — CSS crossfade keeps LCP / TBT cheap on mobile.
- * First slide paints as a static SSR frame until the user or delayed autoplay advances.
- */
 export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
+  /** Stay on a static first frame until the user/autoplay advances (LCP-safe). */
   const [hasAdvanced, setHasAdvanced] = useState(false);
   const [autoplayArmed, setAutoplayArmed] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const next = useCallback(() => {
     setHasAdvanced(true);
+    setDirection(1);
     setIndex((i) => (i + 1) % slides.length);
   }, [slides.length]);
 
   const prev = useCallback(() => {
     setHasAdvanced(true);
+    setDirection(-1);
     setIndex((i) => (i - 1 + slides.length) % slides.length);
   }, [slides.length]);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mq.matches);
-    const onChange = () => setPrefersReducedMotion(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -172,9 +219,8 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
       aria-label="Featured collections"
       data-section-type="slideshow-section"
     >
-      <div className="slideshow-wrapper relative w-full">
+      <div className="slideshow-wrapper relative w-full pb-5 sm:pb-6 md:pb-7">
         <div className="relative w-full overflow-hidden">
-          {/* Fixed aspect box prevents CLS when slides swap. */}
           <div className="relative aspect-12/5 w-full max-w-[100vw]">
             {!showCarousel ? (
               <div className="absolute inset-0 overflow-hidden">
@@ -182,24 +228,40 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
                 <HeroSlideTitle slide={slides[0]} />
               </div>
             ) : (
-              slides.map((s, i) => {
-                const active = i === index;
-                return (
-                  <div
-                    key={slideStableKey(s, i)}
-                    className="absolute inset-0 overflow-hidden transition-opacity duration-500 ease-out"
-                    style={{
-                      opacity: active ? 1 : 0,
-                      pointerEvents: active ? "auto" : "none",
-                      zIndex: active ? 2 : 0,
-                    }}
-                    aria-hidden={!active}
-                  >
-                    <HeroSlideImage slide={s} priority={i === 0} />
-                    <HeroSlideTitle slide={s} />
-                  </div>
-                );
-              })
+              <AnimatePresence initial={false} custom={direction} mode="sync">
+                <motion.div
+                  key={slideStableKey(slide, index)}
+                  custom={direction}
+                  variants={
+                    prefersReducedMotion
+                      ? slideLayerVariantsReduced
+                      : slideLayerVariantsFull
+                  }
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{
+                    duration: prefersReducedMotion ? T_REDUCED : T_SLIDE_MAIN,
+                    ease: easeHero,
+                    opacity: {
+                      duration: prefersReducedMotion ? T_REDUCED : T_SLIDE_OPACITY,
+                      ease: easeHero,
+                    },
+                    x: {
+                      duration: prefersReducedMotion ? T_REDUCED : T_SLIDE_MAIN,
+                      ease: easeHero,
+                    },
+                  }}
+                  className="absolute inset-0 overflow-hidden will-change-transform"
+                >
+                  <HeroSlideImage slide={slide} priority={index === 0} />
+                  <HeroSlideTitle
+                    slide={slide}
+                    animate
+                    prefersReducedMotion={prefersReducedMotion}
+                  />
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
 
