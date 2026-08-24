@@ -44,32 +44,39 @@ async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
     getCachedListCollections(),
     loadSiteIdentity(),
   ]);
-  const tiles: HomeCollectionTile[] = [];
 
-  for (const col of collections) {
+  const candidates = collections.filter((col) => {
     const slug = col.slug?.trim();
     const name = col.name?.trim();
-    if (!slug || !name) continue;
-    if (slug === "sale") continue;
+    return Boolean(slug && name && slug !== "sale");
+  });
 
-    const products = await getCachedProductsByCollectionSlug(slug);
-    if (products.length === 0) continue;
+  // Parallel: one round-trip wave instead of serial per-collection awaits.
+  const tiles = await Promise.all(
+    candidates.map(async (col): Promise<HomeCollectionTile | null> => {
+      const slug = col.slug.trim();
+      const name = col.name.trim();
+      const [products, seo] = await Promise.all([
+        getCachedProductsByCollectionSlug(slug),
+        loadSeoOverrideForSubject("collection", col.id, identity.locale),
+      ]);
+      if (products.length === 0) return null;
 
-    const seo = await loadSeoOverrideForSubject("collection", col.id, identity.locale);
-    const displayName = seoHeadingFromMetaTitle(seo?.title, name);
+      const displayName = seoHeadingFromMetaTitle(seo?.title, name);
+      const hero = (col.hero_image ?? "").trim();
+      const fallback =
+        products.find((p) => (p.image ?? "").trim())?.image?.trim() ?? "";
+      return {
+        slug,
+        name: displayName,
+        href: `/collections/${slug}`,
+        imageUrl: optimizeSupplierImageUrl(hero || fallback, 400),
+        count: products.length,
+      };
+    }),
+  );
 
-    const hero = (col.hero_image ?? "").trim();
-    const fallback = products.find((p) => (p.image ?? "").trim())?.image?.trim() ?? "";
-    tiles.push({
-      slug,
-      name: displayName,
-      href: `/collections/${slug}`,
-      imageUrl: optimizeSupplierImageUrl(hero || fallback, 400),
-      count: products.length,
-    });
-  }
-
-  return tiles;
+  return tiles.filter((t): t is HomeCollectionTile => t != null);
 }
 
 /** Compact collection grid under the featured band — short names, equal tiles. */

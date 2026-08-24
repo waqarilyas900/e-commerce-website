@@ -43,40 +43,23 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
   return list.length;
 }
 
-/**
- * Resolve rail products from curated slugs, then backfill from the linked collection
- * when slugs are stale. Skips products already shown on an earlier homepage rail
- * so Kitchen / Appliances (etc.) never repeat the same card image.
- */
-async function resolveRailProducts(
-  rail: HomeCategoryRail,
+function pickRailItems(
+  lists: Product[][],
   usedProductIds: Set<string>,
-): Promise<{ items: Product[]; productSlugs: string[] }> {
-  const curated = await getCachedProductsBySlugs(rail.productSlugs);
+): { items: Product[]; productSlugs: string[] } {
   const pool: Product[] = [];
   const seen = new Set<string>();
-  const pushPool = (list: Product[]) => {
+  for (const list of lists) {
     for (const p of list) {
       if (usedProductIds.has(p.id) || seen.has(p.id)) continue;
       seen.add(p.id);
       pool.push(p);
     }
-  };
-
-  pushPool(curated);
-
-  if (pool.length < HOME_RAIL_PREVIEW) {
-    const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
-    if (collectionSlug && collectionSlug !== "sale") {
-      pushPool(await getCachedProductsByCollectionSlug(collectionSlug));
-    }
   }
-
   const items = orderByRatingAndStockPriority(pool).slice(0, MAX_RAIL_PRODUCTS);
   for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
     usedProductIds.add(p.id);
   }
-
   return {
     items,
     productSlugs: items.map((p) => p.slug),
@@ -91,10 +74,17 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
   const configuredSections = await getCachedActiveHomePageSectionsWithTags();
   const sectionsWithTags = configuredSections.filter((s) => s.tagIds.length > 0);
   if (sectionsWithTags.length > 0) {
+    // Fetch every section's products in parallel, then dedupe in rail order.
+    const rawLists = await Promise.all(
+      sectionsWithTags.map((s) =>
+        getCachedProductsForHomeSectionTags(s.tagIds, s.slug),
+      ),
+    );
     const usedProductIds = new Set<string>();
     const out: HomeRailSection[] = [];
-    for (const s of sectionsWithTags) {
-      const raw = await getCachedProductsForHomeSectionTags(s.tagIds, s.slug);
+    for (let i = 0; i < sectionsWithTags.length; i++) {
+      const s = sectionsWithTags[i]!;
+      const raw = rawLists[i] ?? [];
       const available = raw.filter((p) => !usedProductIds.has(p.id));
       const items = orderByRatingAndStockPriority(available);
       for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
@@ -115,11 +105,56 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
     return [];
   }
 
+  // Prefetch totals + curated + collection fill for all rails together.
+  const railData = await Promise.all(
+    rails.map(async (rail) => {
+      const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
+
+      if (collectionSlug === "sale") {
+        const [totalProductCount, curated] = await Promise.all([
+          getTotalProductsForViewAllHref(rail.viewAllHref),
+          getCachedProductsBySlugs(rail.productSlugs),
+        ]);
+        return {
+          rail,
+          totalProductCount,
+          curated,
+          collectionProducts: [] as Product[],
+        };
+      }
+
+      if (collectionSlug) {
+        const [curated, collectionProducts] = await Promise.all([
+          getCachedProductsBySlugs(rail.productSlugs),
+          getCachedProductsByCollectionSlug(collectionSlug),
+        ]);
+        return {
+          rail,
+          totalProductCount: collectionProducts.length,
+          curated,
+          collectionProducts,
+        };
+      }
+
+      const curated = await getCachedProductsBySlugs(rail.productSlugs);
+      return {
+        rail,
+        totalProductCount: 0,
+        curated,
+        collectionProducts: [] as Product[],
+      };
+    }),
+  );
+
   const usedProductIds = new Set<string>();
   const out: HomeRailSection[] = [];
-  for (const rail of rails) {
-    const totalProductCount = await getTotalProductsForViewAllHref(rail.viewAllHref);
-    const { items, productSlugs } = await resolveRailProducts(rail, usedProductIds);
+  for (const { rail, totalProductCount, curated, collectionProducts } of railData) {
+    const lists: Product[][] = [curated];
+    // Match prior behavior: only backfill from collection when curated is short.
+    if (curated.filter((p) => !usedProductIds.has(p.id)).length < HOME_RAIL_PREVIEW) {
+      lists.push(collectionProducts);
+    }
+    const { items, productSlugs } = pickRailItems(lists, usedProductIds);
     out.push({ ...rail, productSlugs, items, totalProductCount });
   }
   return out;
