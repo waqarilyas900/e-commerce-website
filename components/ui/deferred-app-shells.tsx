@@ -3,8 +3,6 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Script from "next/script";
-import { GOOGLE_ADSENSE_CLIENT_ID } from "@/lib/seo/google-adsense";
 
 function isCheckoutPath(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -26,9 +24,7 @@ const AskTheStore = dynamic(
 
 /**
  * Mounts heavy "after the page is usable" client widgets only once the browser
- * is idle. This keeps the discount popup, AI assistant, AdSense, and their
- * dependencies out of the initial JS that the main thread has to parse before
- * LCP / TBT settle.
+ * is idle (discount popup + store AI), so they stay off the LCP / TBT path.
  */
 export function DeferredAppShells() {
   const pathname = usePathname();
@@ -58,12 +54,6 @@ export function DeferredAppShells() {
 
   return (
     <>
-      <Script
-        id="adsense-loader"
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(GOOGLE_ADSENSE_CLIENT_ID)}`}
-        strategy="lazyOnload"
-        crossOrigin="anonymous"
-      />
       {hideDiscountPrompt ? null : <DiscountNotificationPrompt />}
       {hideStoreAi ? null : <AskTheStore />}
     </>

@@ -72,7 +72,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip static crawlers + well-known files (ads.txt must be plain text for AdSense).
-    "/((?!_next/static|_next/image|favicon.ico|ads\\.txt|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|txt)$).*)",
+    // Skip static crawlers + well-known files (robots/sitemap/txt assets).
+    "/((?!_next/static|_next/image|favicon.ico|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|txt)$).*)",
   ],
 };

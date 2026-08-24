@@ -33,7 +33,6 @@ import {
   metaPixelInlineScript,
   tiktokPixelInlineScript,
 } from "@/lib/seo/pixel-snippets";
-import { GOOGLE_ADSENSE_CLIENT_ID } from "@/lib/seo/google-adsense";
 import "./globals.css";
 
 /** Supabase SSR + `cookies()` require dynamic rendering; static prerender would throw. */
@@ -234,7 +233,6 @@ export default async function RootLayout({
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content={themeColor} />
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
-        <meta name="google-adsense-account" content={GOOGLE_ADSENSE_CLIENT_ID} />
         {storageOrigin ? (
           <>
             <link rel="preconnect" href={storageOrigin} crossOrigin="anonymous" />
