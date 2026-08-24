@@ -319,6 +319,28 @@ body {
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+
+/**
+ * Card rise without framer-motion — SSR stays visible (no opacity:0).
+ * Animation is progressive enhancement; reduced-motion users get a static card.
+ */
+@keyframes product-card-rise {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.product-card-reveal {
+  animation: product-card-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--card-reveal-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card-reveal {
+    animation: none;
+  }
+}
 .policy-prose li {
   margin-top: 0.35rem;
   margin-bottom: 0.35rem;

@@ -3,6 +3,8 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Script from "next/script";
+import { GOOGLE_ADSENSE_CLIENT_ID } from "@/lib/seo/google-adsense";
 
 function isCheckoutPath(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -24,12 +26,9 @@ const AskTheStore = dynamic(
 
 /**
  * Mounts heavy "after the page is usable" client widgets only once the browser
- * is idle. This keeps the discount popup, AI assistant, and their dependencies
- * (framer-motion, large icon sets, etc.) out of the initial JS that the main
- * thread has to parse before First Input Delay / TBT settle.
- *
- * Visually identical to mounting them immediately because both widgets only
- * render after their own internal triggers (timer / button click).
+ * is idle. This keeps the discount popup, AI assistant, AdSense, and their
+ * dependencies out of the initial JS that the main thread has to parse before
+ * LCP / TBT settle.
  */
 export function DeferredAppShells() {
   const pathname = usePathname();
@@ -42,7 +41,7 @@ export function DeferredAppShells() {
       .requestIdleCallback;
     const handle = ric
       ? ric(() => setReady(true))
-      : window.setTimeout(() => setReady(true), 1500);
+      : window.setTimeout(() => setReady(true), 2500);
     return () => {
       const cic = (
         window as unknown as { cancelIdleCallback?: (id: number) => void }
@@ -59,6 +58,12 @@ export function DeferredAppShells() {
 
   return (
     <>
+      <Script
+        id="adsense-loader"
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(GOOGLE_ADSENSE_CLIENT_ID)}`}
+        strategy="lazyOnload"
+        crossOrigin="anonymous"
+      />
       {hideDiscountPrompt ? null : <DiscountNotificationPrompt />}
       {hideStoreAi ? null : <AskTheStore />}
     </>

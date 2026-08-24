@@ -235,12 +235,6 @@ export default async function RootLayout({
         <meta name="theme-color" content={themeColor} />
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
         <meta name="google-adsense-account" content={GOOGLE_ADSENSE_CLIENT_ID} />
-        <Script
-          id="adsense-loader"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(GOOGLE_ADSENSE_CLIENT_ID)}`}
-          strategy="lazyOnload"
-          crossOrigin="anonymous"
-        />
         {storageOrigin ? (
           <>
             <link rel="preconnect" href={storageOrigin} crossOrigin="anonymous" />
@@ -266,13 +260,13 @@ export default async function RootLayout({
         <JsonLd id="ld-organization" data={orgLd} />
         <JsonLd id="ld-website" data={siteLd} />
         {/**
-         * GTM / GA load after hydration so they do not contend with the LCP hero
-         * on mobile Slow-4G. Tags still fire on first paint of interactive content.
+         * Marketing tags load on idle (lazyOnload) so they never contend with
+         * mobile LCP / TBT on Slow-4G. Page views still fire once the page is usable.
          */}
         {analyticsAllowed && gtmId ? (
           <Script
             id="gtm-loader"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           >{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode&&f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}</Script>
         ) : null}
         {loadDirectGoogleAnalytics ? (
@@ -280,24 +274,24 @@ export default async function RootLayout({
             <Script
               id="ga-loader"
               src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
             />
             <Script
               id="ga-init"
-              strategy="afterInteractive"
+              strategy="lazyOnload"
             >{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${JSON.stringify(analyticsId)},{anonymize_ip:true});`}</Script>
           </>
         ) : null}
         {loadDirectMetaPixel ? (
           <Script
             id="meta-pixel"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           >{metaPixelInlineScript(metaPixelId)}</Script>
         ) : null}
         {standaloneMarketingTags && tiktokPixelId ? (
           <Script
             id="tiktok-pixel"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           >{tiktokPixelInlineScript(tiktokPixelId)}</Script>
         ) : null}
       </head>

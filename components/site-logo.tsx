@@ -50,6 +50,9 @@ function SiteLogoImage({
         height={LOGO_HEIGHT}
         className={className}
         decoding="async"
+        // Keep logo off the LCP critical path — hero owns fetchPriority=high.
+        loading="eager"
+        fetchPriority={priority ? "high" : "low"}
       />
     );
   }
@@ -62,6 +65,7 @@ function SiteLogoImage({
       height={LOGO_HEIGHT}
       className={className}
       priority={priority}
+      fetchPriority={priority ? "high" : "low"}
     />
   );
 }

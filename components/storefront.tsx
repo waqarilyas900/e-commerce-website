@@ -10,9 +10,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
-import { motion } from "framer-motion";
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
@@ -394,22 +394,13 @@ export function ProductCard({
   };
 
   return (
-    <motion.article
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
-      /**
-       * Reveal animation:
-       * - 8px translate instead of opacity-fade so the SSR HTML is still
-       *   readable when hydration stalls (e.g. third-party script error).
-       *   Previously `opacity: 0` made the entire grid invisible until JS
-       *   ran successfully, which left the page blank in pathological cases.
-       * - shorter distance + duration to keep scroll at 60fps on mid-range
-       *   Android by giving framer-motion less work per card.
-       * - earlier viewport trigger so cards don't pop in mid-scroll.
-       */
-      initial={{ y: 8 }}
-      whileInView={{ y: 0 }}
-      viewport={{ once: true, amount: 0, margin: "0px 0px 5% 0px" }}
-      transition={{ duration: 0.45, delay: revealDelay, ease: [0.22, 1, 0.36, 1] }}
+    <article
+      className="product-card-reveal flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
+      style={
+        revealDelay > 0
+          ? ({ ["--card-reveal-delay"]: `${revealDelay}s` } as CSSProperties)
+          : undefined
+      }
     >
       <HoverPrefetchLink
         href={`/products/${product.slug}`}
@@ -504,7 +495,7 @@ export function ProductCard({
           <div className="mt-auto" aria-hidden />
         )}
       </div>
-    </motion.article>
+    </article>
   );
 }
 
