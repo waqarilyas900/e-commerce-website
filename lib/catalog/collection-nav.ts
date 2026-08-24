@@ -75,7 +75,7 @@ export function normalizeCollectionSlug(slug: string): string {
 
 export function collectionDisplayName(slug: string, fallbackName = ""): string {
   const normalized = normalizeCollectionSlug(slug);
-  return DISPLAY_NAME_BY_SLUG.get(normalized) ?? fallbackName.trim() || normalized;
+  return DISPLAY_NAME_BY_SLUG.get(normalized) ?? (fallbackName.trim() || normalized);
 }
 
 export function collectionHref(slug: string): string {
