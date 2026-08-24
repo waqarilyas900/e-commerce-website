@@ -18,6 +18,12 @@
   --colorHeroText: #ffffff;
   --typeBaseSize: 15px;
   --typeBaseLineHeight: 1.6;
+  /**
+   * Main page shell width (header / home / PDP / collections).
+   * Matches radstore.pk `.page-width` (1500px). Default Tailwind `max-w-7xl` is 1280px —
+   * that felt “small” at 100% vs browser 125% zoom; widen via this token only (no zoom).
+   */
+  --page-shell-max: 1500px;
 }
 
 @theme inline {
@@ -25,6 +31,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Remap utility so every `max-w-7xl` shell picks up radstore-width automatically */
+  --container-7xl: var(--page-shell-max);
+  --max-width-7xl: var(--page-shell-max);
 }
 
 /* Main header always visible; second sticky header appears after hero scroll. */
@@ -133,6 +142,14 @@ body {
   display: block;
   width: 100%;
   min-height: 100%;
+}
+
+/**
+ * Safety net: ensure `max-w-7xl` shells use --page-shell-max even if theme tokens differ by TW version.
+ * Unlayered so it wins over Tailwind utility layer. No zoom.
+ */
+.max-w-7xl {
+  max-width: min(100%, var(--page-shell-max));
 }
 
 /* Radstore: .transition-body wraps main + footer; keep visible (see layout). */
