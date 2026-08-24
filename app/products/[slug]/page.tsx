@@ -189,15 +189,16 @@ export default async function ProductPage({ params }: Props) {
   // Critical-path data (above-the-fold buy box + structured data) — block on
   // these. Related products and reviews are streamed in via Suspense below
   // so the user sees the buy box before those slower joins finish.
+  const productId = detail.product.id;
   const identityPromise = loadSiteIdentity();
   const [aggregates, identity, seoExtras, collections, seoOverride] =
     await Promise.all([
-      dbGetProductReviewAggregates(detail.product.id),
+      dbGetProductReviewAggregates(productId),
       identityPromise,
-      loadProductSeoExtras(detail.product.id),
+      loadProductSeoExtras(productId),
       getCachedListCollections(),
       identityPromise.then((id) =>
-        loadSeoOverrideForSubject("product", detail.product.id, id.locale),
+        loadSeoOverrideForSubject("product", productId, id.locale),
       ),
     ]);
   if (aggregates) {
