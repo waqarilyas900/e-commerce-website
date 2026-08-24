@@ -341,8 +341,8 @@ function productImageUseNativeImg(src: string): boolean {
 
 function ProductCardStarRow({ rating }: { rating: number }) {
   return (
-    <div className="mt-0.5">
-      <StarRating value={rating} labeled />
+    <div className="leading-none">
+      <StarRating value={rating} size={16} labeled />
     </div>
   );
 }
@@ -458,36 +458,38 @@ export function ProductCard({
           </span>
         ) : null}
       </HoverPrefetchLink>
-      {/* Single column: mt-auto only on the button so it pins to the bottom when the row stretches */}
-      <div className="flex min-h-0 flex-1 flex-col gap-1 p-2 text-[13px] leading-snug text-neutral-900 sm:gap-1.5 sm:p-2.5 sm:text-sm">
-        <HoverPrefetchLink
-          href={`/products/${product.slug}`}
-          className={
-            rail || clampTitle
-              ? "product-card-title-clamp block min-h-9 font-semibold leading-snug text-neutral-900"
-              : "block font-semibold leading-snug text-neutral-900"
-          }
-        >
-          {product.name}
-        </HoverPrefetchLink>
-        {product.reviews > 0 || product.rating > 0 ? (
-          <ProductCardStarRow rating={product.rating} />
-        ) : null}
+      {/* Tight, even stack: image → title → stars → price (no forced title min-height gap). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-1 px-2 pb-2 pt-1.5 text-[13px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm">
+        <div className="flex flex-col gap-0">
+          <HoverPrefetchLink
+            href={`/products/${product.slug}`}
+            className={
+              rail || clampTitle
+                ? "product-card-title-clamp block font-semibold leading-tight text-neutral-900"
+                : "block font-semibold leading-tight text-neutral-900"
+            }
+          >
+            {product.name}
+          </HoverPrefetchLink>
+          {product.reviews > 0 || product.rating > 0 ? (
+            <ProductCardStarRow rating={product.rating} />
+          ) : null}
+        </div>
         {product.compareAtPrice != null && product.compareAtPrice > product.price ? (
-          <>
-            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+          <div className="flex w-full items-baseline justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
               <span className="text-neutral-500 line-through">{formatPkr(product.compareAtPrice)}</span>
               <span className="font-semibold text-neutral-900">{formatPkr(product.price)}</span>
             </div>
-            <p className="text-[12px] font-medium text-red-600 sm:text-[13px]">
+            <p className="shrink-0 text-right text-[12px] font-medium text-red-600 sm:text-[13px]">
               Save {formatPkr(product.compareAtPrice - product.price)}
             </p>
-          </>
+          </div>
         ) : (
-          <p className="mt-0.5 font-semibold text-neutral-900">{formatPkr(product.price)}</p>
+          <p className="font-semibold text-neutral-900">{formatPkr(product.price)}</p>
         )}
         {showAddToCart ? (
-          <div className="mt-auto pt-1 sm:pt-2">
+          <div className="mt-auto pt-1 sm:pt-1.5">
             <AddToCartButton
               product={product}
               openDrawer

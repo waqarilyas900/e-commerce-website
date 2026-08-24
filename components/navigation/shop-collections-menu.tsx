@@ -131,8 +131,8 @@ export function ShopCollectionsMenu() {
         <Link
           href="/collections"
           aria-current={hubActive ? "page" : undefined}
-          className={`${primaryNavLinkClass} relative rounded-md px-1.5 py-1 ${
-            shopLabelActive ? "font-semibold text-neutral-950" : ""
+          className={`relative rounded-md px-1.5 py-1 text-sm font-semibold whitespace-nowrap text-neutral-800 transition-colors duration-200 hover:text-neutral-950 ${
+            shopLabelActive ? "text-neutral-950" : ""
           }`}
           onClick={() => {
             clearCloseTimer();
