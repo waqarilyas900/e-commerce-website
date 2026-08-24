@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ProductPdp } from "@/components/product/product-pdp";
 import { CustomerReviews } from "@/components/product/customer-reviews";
-import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
+import { ProductCard } from "@/components/storefront";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { dbListProductReviewsForPdp } from "@/app/lib/db/catalog";
 import {
@@ -186,8 +186,20 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
 
-  // Keep star aggregates fresh after review imports without waiting on PDP cache TTL.
-  const aggregates = await dbGetProductReviewAggregates(detail.product.id);
+  // Critical-path data (above-the-fold buy box + structured data) — block on
+  // these. Related products and reviews are streamed in via Suspense below
+  // so the user sees the buy box before those slower joins finish.
+  const identityPromise = loadSiteIdentity();
+  const [aggregates, identity, seoExtras, collections, seoOverride] =
+    await Promise.all([
+      dbGetProductReviewAggregates(detail.product.id),
+      identityPromise,
+      loadProductSeoExtras(detail.product.id),
+      getCachedListCollections(),
+      identityPromise.then((id) =>
+        loadSeoOverrideForSubject("product", detail.product.id, id.locale),
+      ),
+    ]);
   if (aggregates) {
     detail = {
       ...detail,
@@ -200,15 +212,6 @@ export default async function ProductPage({ params }: Props) {
     };
   }
 
-  // Critical-path data (above-the-fold buy box + structured data) — block on
-  // these. Related products and reviews are streamed in via Suspense below
-  // so the user sees the buy box before those slower joins finish.
-  const [identity, seoExtras, collections] = await Promise.all([
-    loadSiteIdentity(),
-    loadProductSeoExtras(detail.product.id),
-    getCachedListCollections(),
-  ]);
-  const seoOverride = await loadSeoOverrideForSubject("product", detail.product.id, identity.locale);
   const hasRealCollection =
     detail.collectionSlug.trim() !== "" &&
     detail.collectionSlug.toLowerCase() !== "uncategorized";
@@ -274,8 +277,6 @@ export default async function ProductPage({ params }: Props) {
       <JsonLd id="ld-product" data={productLdFinal} />
       <JsonLd id="ld-breadcrumb" data={crumbs} />
       {faqLd ? <JsonLd id="ld-faq" data={faqLd} /> : null}
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
@@ -326,7 +327,6 @@ export default async function ProductPage({ params }: Props) {
           />
         </Suspense>
       </main>
-      <Footer />
     </>
   );
 }

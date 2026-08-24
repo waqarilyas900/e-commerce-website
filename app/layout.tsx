@@ -85,7 +85,6 @@ function absolutizeFavicon(href: string, base: string): string {
   return `${origin}/${t}`;
 }
 
-
 /**
  * The Supabase Storage host that serves user-uploaded media. Surfacing it as a
  * `<link rel="preconnect">` shaves ~50–150 ms off the LCP image fetch on

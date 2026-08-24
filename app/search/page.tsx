@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { SearchPageInteractive } from "@/components/search/search-page-interactive";
 import { dbSearchProducts } from "@/app/lib/db/catalog";
@@ -49,8 +49,6 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <>
-      <TopStrip />
-      <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
         <ScrollReveal>
           <h1 className="text-3xl font-semibold tracking-tight">Search</h1>
@@ -62,7 +60,6 @@ export default async function SearchPage({ searchParams }: Props) {
           initialProducts={initialProducts}
         />
       </main>
-      <Footer />
     </>
   );
 }

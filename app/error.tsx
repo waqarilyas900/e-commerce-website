@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 
 export default function GlobalError({
   error,
@@ -17,8 +17,6 @@ export default function GlobalError({
 
   return (
     <>
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-lg shell-x py-20 text-center"
@@ -44,7 +42,6 @@ export default function GlobalError({
           </Link>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

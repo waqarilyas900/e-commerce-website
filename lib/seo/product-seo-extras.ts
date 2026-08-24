@@ -7,7 +7,9 @@
  * brand and computed values.
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { createAnonServerSupabase } from "@/lib/supabase/anon-server";
 import { hasCatalogDb } from "@/app/lib/db/env";
 
 export type ProductSeoExtras = {
@@ -32,10 +34,10 @@ const EMPTY: ProductSeoExtras = {
   shippingPolicyId: null,
 };
 
-export async function loadProductSeoExtras(productId: string): Promise<ProductSeoExtras> {
+async function fetchProductSeoExtras(productId: string): Promise<ProductSeoExtras> {
   if (!productId || !hasCatalogDb()) return EMPTY;
   try {
-    const supabase = await createClient();
+    const supabase = createAnonServerSupabase();
     const { data, error } = await supabase
       .from("product_shopping_attributes")
       .select(
@@ -55,9 +57,24 @@ export async function loadProductSeoExtras(productId: string): Promise<ProductSe
       returnPolicyId:
         typeof row.return_policy_id === "string" && row.return_policy_id ? row.return_policy_id : null,
       shippingPolicyId:
-        typeof row.shipping_policy_id === "string" && row.shipping_policy_id ? row.shipping_policy_id : null,
+        typeof row.shipping_policy_id === "string" && row.shipping_policy_id
+          ? row.shipping_policy_id
+          : null,
     };
   } catch {
     return EMPTY;
   }
 }
+
+async function loadProductSeoExtrasImpl(productId: string): Promise<ProductSeoExtras> {
+  return unstable_cache(
+    () => fetchProductSeoExtras(productId),
+    ["product-seo-extras-v1", productId],
+    {
+      revalidate: 60 * 5,
+      tags: ["seo:product-extras", `seo:product-extras:${productId}`],
+    },
+  )();
+}
+
+export const loadProductSeoExtras = cache(loadProductSeoExtrasImpl);

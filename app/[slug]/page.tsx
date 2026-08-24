@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PolicyHtml } from "@/components/policy/policy-html";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { dbGetPolicyPage } from "@/app/lib/policy-pages-db";
 import {
   buildPageMetadata,
@@ -106,8 +106,6 @@ export default async function FooterItemPage({ params }: Props) {
     <>
       <JsonLd id="ld-article-policy" data={articleLd} />
       <JsonLd id="ld-breadcrumb-policy" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content bg-linear-to-b from-neutral-50 to-white pb-12 pt-4 sm:pb-16 sm:pt-6 md:pb-20 md:pt-8"
@@ -147,7 +145,6 @@ export default async function FooterItemPage({ params }: Props) {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

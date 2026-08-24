@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import {
   buildPageMetadata,
   canonicalUrlFor,
@@ -71,8 +71,6 @@ export default async function AboutPage() {
     <>
       <JsonLd id="ld-about" data={aboutLd} />
       <JsonLd id="ld-about-breadcrumb" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content bg-linear-to-b from-neutral-50 to-white pb-12 pt-4 sm:pb-16 sm:pt-6 md:pb-20 md:pt-8"
@@ -130,7 +128,6 @@ export default async function AboutPage() {
           </article>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

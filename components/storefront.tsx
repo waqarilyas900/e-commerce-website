@@ -205,16 +205,17 @@ export function Header() {
         >
           <ShopCollectionsMenu />
           {headerNavItems.map((item) => (
-            <Link
+            <HoverPrefetchLink
               key={item.id}
               href={item.href}
+              prefetch
               className={`${primaryNavLinkClass} inline-flex shrink-0 items-center gap-1 rounded-md px-0.5 py-1 hover:text-neutral-950`}
             >
               {item.slug === "sale" ? (
                 <SaleBoltIcon className="h-[15px] w-[15px] shrink-0" aria-hidden />
               ) : null}
               {item.label}
-            </Link>
+            </HoverPrefetchLink>
           ))}
         </nav>
       </div>
@@ -412,6 +413,7 @@ export function ProductCard({
     >
       <HoverPrefetchLink
         href={`/products/${product.slug}`}
+        prefetch
         className="group relative block shrink-0"
       >
         <div
@@ -463,6 +465,7 @@ export function ProductCard({
         <div className="flex flex-col gap-0">
           <HoverPrefetchLink
             href={`/products/${product.slug}`}
+            prefetch
             className={
               rail || clampTitle
                 ? "product-card-title-clamp block font-semibold leading-tight text-neutral-900"

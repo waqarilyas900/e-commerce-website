@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { LoginForm } from "./login-form";
 import { LoginSignedOutGate } from "./login-signed-out-gate";
 
@@ -28,8 +28,6 @@ function LoginMain() {
 export default function LoginPage() {
   return (
     <>
-      <TopStrip />
-      <Header />
       <Suspense
         fallback={
           <main
@@ -44,7 +42,6 @@ export default function LoginPage() {
           <LoginMain />
         </LoginSignedOutGate>
       </Suspense>
-      <Footer />
     </>
   );
 }

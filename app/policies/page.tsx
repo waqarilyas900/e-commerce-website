@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { dbListPolicySummaries } from "@/app/lib/policy-pages-db";
 import {
   buildPageMetadata,
@@ -94,8 +94,6 @@ export default async function PoliciesPage() {
       <JsonLd id="ld-policies" data={pageLd} />
       {listLd ? <JsonLd id="ld-policies-list" data={listLd} /> : null}
       <JsonLd id="ld-policies-breadcrumb" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content bg-gradient-to-b from-neutral-50 to-white pb-12 pt-4 sm:pb-16 sm:pt-6 md:pb-20 md:pt-8"
@@ -139,7 +137,6 @@ export default async function PoliciesPage() {
           )}
         </div>
       </main>
-      <Footer />
     </>
   );
 }

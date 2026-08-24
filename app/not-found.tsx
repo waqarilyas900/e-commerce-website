@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 
 export default function NotFound() {
   return (
     <>
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-lg shell-x py-20 text-center"
@@ -22,7 +20,6 @@ export default function NotFound() {
           Back to home
         </Link>
       </main>
-      <Footer />
     </>
   );
 }

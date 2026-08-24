@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Footer, Header, TopStrip } from "@/components/storefront";
 import {
   getCachedCollectionBySlug,
   getCachedListCollections,
@@ -213,8 +212,6 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
       <JsonLd id="ld-collection" data={collectionLd} />
       <JsonLd id="ld-breadcrumb" data={crumbs} />
       {faqLd ? <JsonLd id="ld-faq" data={faqLd} /> : null}
-      <TopStrip />
-      <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
         <PageBreadcrumbs
           items={[
@@ -248,7 +245,6 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
         <RelatedCollections items={relatedCollections} />
         <StoreFaqSection items={faqItems} />
       </main>
-      <Footer />
     </>
   );
 }

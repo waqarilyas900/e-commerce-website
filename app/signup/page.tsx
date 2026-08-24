@@ -1,12 +1,10 @@
 import { SignedOutOnly } from "@/components/auth/signed-out-only";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { SignupForm } from "./signup-form";
 
 export default function SignupPage() {
   return (
     <>
-      <TopStrip />
-      <Header />
       <SignedOutOnly whenSignedInHref="/account">
         <main
           id="MainContent"
@@ -23,7 +21,6 @@ export default function SignupPage() {
           </div>
         </main>
       </SignedOutOnly>
-      <Footer />
     </>
   );
 }

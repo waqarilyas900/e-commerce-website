@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Footer, Header, TopStrip } from "@/components/storefront";
 import {
   getCachedActiveHomePageSectionWithTagsBySlug,
   getCachedProductsForHomeSectionTags,
@@ -163,8 +162,6 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
     <>
       <JsonLd id="ld-section" data={collectionLd} />
       <JsonLd id="ld-breadcrumb-section" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
@@ -190,7 +187,6 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
           </Suspense>
         </section>
       </main>
-      <Footer />
     </>
   );
 }

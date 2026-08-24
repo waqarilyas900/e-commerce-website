@@ -1,7 +1,8 @@
 /** Server-side reader for `public.seo_meta` overrides. Graceful when migration not applied. */
 
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createAnonServerSupabase } from "@/lib/supabase/anon-server";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import type { SeoOverride, SeoSubjectType } from "./types";
 
@@ -54,6 +55,8 @@ function warnMissing(reason: string) {
 
 const SELECT_COLUMNS =
   "subject_type, subject_id, subject_key, locale, title, description, keywords, canonical_url, og_image_url, og_image_alt, og_image_width, og_image_height, twitter_card, noindex, nofollow, json_ld_overrides";
+
+const SEO_META_TTL = 60 * 5;
 
 function rowToOverride(row: SeoMetaRow): SeoOverride {
   const card = row.twitter_card === "summary" ? "summary" : "summary_large_image";
@@ -110,14 +113,14 @@ function seoLocaleCandidates(hint?: string | null): string[] {
   return out;
 }
 
-async function loadSeoOverrideForSubjectImpl(
+async function fetchSeoOverrideForSubject(
   subjectType: Exclude<SeoSubjectType, "route" | "site_default">,
   subjectId: string,
   localeHint?: string | null,
 ): Promise<SeoOverride | null> {
   if (!hasCatalogDb()) return null;
   try {
-    const supabase = await createClient();
+    const supabase = createAnonServerSupabase();
     for (const loc of seoLocaleCandidates(localeHint)) {
       const { data, error } = await supabase
         .from("seo_meta")
@@ -141,13 +144,13 @@ async function loadSeoOverrideForSubjectImpl(
   }
 }
 
-async function loadSeoOverrideForRouteImpl(
+async function fetchSeoOverrideForRoute(
   subjectKey: string,
   localeHint?: string | null,
 ): Promise<SeoOverride | null> {
   if (!hasCatalogDb()) return null;
   try {
-    const supabase = await createClient();
+    const supabase = createAnonServerSupabase();
     for (const loc of seoLocaleCandidates(localeHint)) {
       const { data, error } = await supabase
         .from("seo_meta")
@@ -171,10 +174,35 @@ async function loadSeoOverrideForRouteImpl(
   }
 }
 
-/** Fetch override for an entity row (`product`, `collection`, `policy_page`, ...). Cached per request. */
+async function loadSeoOverrideForSubjectImpl(
+  subjectType: Exclude<SeoSubjectType, "route" | "site_default">,
+  subjectId: string,
+  localeHint?: string | null,
+): Promise<SeoOverride | null> {
+  const localeKey = (localeHint ?? "").trim() || "default";
+  return unstable_cache(
+    () => fetchSeoOverrideForSubject(subjectType, subjectId, localeHint),
+    ["seo-meta-subject-v1", subjectType, subjectId, localeKey],
+    { revalidate: SEO_META_TTL, tags: ["seo:meta", `seo:meta:${subjectType}:${subjectId}`] },
+  )();
+}
+
+async function loadSeoOverrideForRouteImpl(
+  subjectKey: string,
+  localeHint?: string | null,
+): Promise<SeoOverride | null> {
+  const localeKey = (localeHint ?? "").trim() || "default";
+  return unstable_cache(
+    () => fetchSeoOverrideForRoute(subjectKey, localeHint),
+    ["seo-meta-route-v1", subjectKey, localeKey],
+    { revalidate: SEO_META_TTL, tags: ["seo:meta", `seo:meta:route:${subjectKey}`] },
+  )();
+}
+
+/** Fetch override for an entity row (`product`, `collection`, `policy_page`, ...). */
 export const loadSeoOverrideForSubject = cache(loadSeoOverrideForSubjectImpl);
 
-/** Fetch override for a static route (key like `/`, `/search`, `/contact`). Cached per request. */
+/** Fetch override for a static route (key like `/`, `/search`, `/contact`). */
 export const loadSeoOverrideForRoute = cache(loadSeoOverrideForRouteImpl);
 
 export function emptyOverrideFor(subjectType: SeoSubjectType): SeoOverride {

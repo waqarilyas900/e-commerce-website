@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { BlogArticleView } from "@/components/blog/blog-article-view";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import {
@@ -176,8 +176,6 @@ export default async function BlogPostPage({ params }: Props) {
     <>
       <JsonLd id="ld-blog-post" data={pageLd} />
       <JsonLd id="ld-blog-post-breadcrumb" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content bg-linear-to-b from-neutral-50 to-white pb-12 pt-4 sm:pb-16 sm:pt-6 md:pb-20 md:pt-8"
@@ -245,7 +243,6 @@ export default async function BlogPostPage({ params }: Props) {
           ) : null}
         </div>
       </main>
-      <Footer />
     </>
   );
 }

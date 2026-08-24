@@ -1,12 +1,10 @@
 import { Suspense } from "react";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { ResetPasswordForm } from "./reset-password-form";
 
 export default function ResetPasswordPage() {
   return (
     <>
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-md shell-x py-12"
@@ -22,7 +20,6 @@ export default function ResetPasswordPage() {
           </Suspense>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

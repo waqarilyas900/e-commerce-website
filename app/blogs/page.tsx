@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { hasCatalogDb } from "@/app/lib/db/env";
 import {
   getCachedAllActiveProductsForCards,
@@ -89,8 +89,6 @@ export default async function BlogsIndexPage() {
     <>
       <JsonLd id="ld-blogs" data={pageLd} />
       <JsonLd id="ld-blogs-breadcrumb" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content bg-linear-to-b from-neutral-50 to-white pb-12 pt-4 sm:pb-16 sm:pt-6 md:pb-20 md:pt-8"
@@ -175,7 +173,6 @@ export default async function BlogsIndexPage() {
           )}
         </div>
       </main>
-      <Footer />
     </>
   );
 }

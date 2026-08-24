@@ -34,6 +34,7 @@ import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { metaContentsSingleItem, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import { getPublicSiteUrl } from "@/lib/site-url";
+import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import Link from "next/link";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import type { FaqItem } from "@/lib/seo/jsonld/faq";
@@ -137,12 +138,24 @@ function buildGallery(
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((a) => ({
         kind: a.kind,
-        url: a.url,
+        // Keep original CDN URLs; size Daraz/Lazada variants for faster LCP.
+        url:
+          a.kind === "image"
+            ? optimizeSupplierImageUrl(a.url, 800) || a.url
+            : a.url,
         alt: a.alt_text || "",
       }));
   }
   const img = firstImage(fallbackImages);
-  if (img) return [{ kind: "image", url: img, alt: "" }];
+  if (img) {
+    return [
+      {
+        kind: "image",
+        url: optimizeSupplierImageUrl(img, 800) || img,
+        alt: "",
+      },
+    ];
+  }
   return [];
 }
 

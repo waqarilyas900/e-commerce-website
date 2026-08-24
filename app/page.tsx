@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { getImageProps } from "next/image";
 import {
-  Footer,
-  Header,
   ProductSection,
-  TopStrip,
   WhyShop,
 } from "@/components/storefront";
 import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
@@ -130,8 +127,6 @@ export default async function Home() {
         />
       ) : null}
       <SkipToContent />
-      <TopStrip />
-      <Header />
       <main id="MainContent" className="main-content bg-white">
         {homeMarketing.slides.length > 0 ? (
           <HeroBanner slides={homeMarketing.slides} />
@@ -168,7 +163,6 @@ export default async function Home() {
         <WhyShop />
         <TrustRatingStrip aggregate={storeReviews} />
       </main>
-      <Footer />
     </>
   );
 }

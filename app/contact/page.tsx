@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ContactPageContent } from "@/components/contact/contact-page-content";
-import { Footer, Header, TopStrip } from "@/components/storefront";
 import {
   buildPageMetadata,
   canonicalUrlFor,
@@ -71,15 +70,12 @@ export default async function ContactPage() {
     <>
       <JsonLd id="ld-contact" data={contactLd} />
       <JsonLd id="ld-contact-breadcrumb" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-3xl shell-x py-6 sm:py-10"
       >
         <ContactPageContent />
       </main>
-      <Footer />
     </>
   );
 }

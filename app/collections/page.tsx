@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Footer, Header, ProductCard, TopStrip } from "@/components/storefront";
+import { ProductCard } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
   getCachedAllActiveProductsForCards,
@@ -95,8 +95,6 @@ export default async function CollectionsPage() {
     <>
       <JsonLd id="ld-collections-hub" data={hubLd} />
       <JsonLd id="ld-breadcrumb" data={crumbs} />
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
@@ -153,7 +151,6 @@ export default async function CollectionsPage() {
           </section>
         </ScrollReveal>
       </main>
-      <Footer />
     </>
   );
 }

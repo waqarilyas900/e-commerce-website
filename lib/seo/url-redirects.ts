@@ -25,7 +25,8 @@ export async function lookupUrlRedirect(
         Authorization: `Bearer ${key}`,
         Accept: "application/json",
       },
-      cache: "no-store",
+      // Short CDN/data cache — slug redirects change rarely; admin revalidate covers edits.
+      next: { revalidate: 60 },
     });
     if (!res.ok) return null;
     const rows = (await res.json()) as Array<{ to_path?: string; status_code?: number }>;

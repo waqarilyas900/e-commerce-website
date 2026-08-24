@@ -1,12 +1,10 @@
 import { Suspense } from "react";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export default function ForgotPasswordPage() {
   return (
     <>
-      <TopStrip />
-      <Header />
       <main
         id="MainContent"
         className="main-content mx-auto max-w-md shell-x py-12"
@@ -21,7 +19,6 @@ export default function ForgotPasswordPage() {
           </Suspense>
         </div>
       </main>
-      <Footer />
     </>
   );
 }
