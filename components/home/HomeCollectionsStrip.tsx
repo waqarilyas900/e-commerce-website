@@ -38,7 +38,7 @@ function useNativeImg(src: string): boolean {
   }
 }
 
-async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
+export async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
   if (!hasCatalogDb()) return [];
   const [collections, identity] = await Promise.all([
     getCachedListCollections(),
@@ -80,8 +80,11 @@ async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
 }
 
 /** Compact collection grid under the featured band — short names, equal tiles. */
-export async function HomeCollectionsStrip() {
-  const tiles = await loadHomeCollectionTiles();
+export function HomeCollectionsStrip({
+  tiles,
+}: {
+  tiles: HomeCollectionTile[];
+}) {
   if (tiles.length === 0) return null;
 
   return (

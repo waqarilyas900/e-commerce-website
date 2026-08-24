@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getImageProps } from "next/image";
 import {
   Footer,
@@ -10,7 +9,10 @@ import {
 } from "@/components/storefront";
 import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
 import { HeroBanner } from "@/components/home/HeroBanner";
-import { HomeCollectionsStrip } from "@/components/home/HomeCollectionsStrip";
+import {
+  HomeCollectionsStrip,
+  loadHomeCollectionTiles,
+} from "@/components/home/HomeCollectionsStrip";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
 import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
@@ -26,7 +28,6 @@ import {
   seoHeadingFromMetaTitle,
 } from "@/lib/seo";
 import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
-import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
 
@@ -46,14 +47,25 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
+/**
+ * Await catalog sections with the rest of the home payload (no Suspense).
+ * Warm `unstable_cache` keeps this fast; the first paint includes collections
+ * + rails so grey skeletons never flash between shell and content.
+ */
 export default async function Home() {
-  const [homeMarketing, storeReviews, identity] = await Promise.all([
-    getHomeMarketingData(),
-    getCachedStoreReviewAggregate(),
-    loadSiteIdentity(),
-  ]);
+  const [homeMarketing, storeReviews, identityBundle, collectionTiles, railSections] =
+    await Promise.all([
+      getHomeMarketingData(),
+      getCachedStoreReviewAggregate(),
+      loadSiteIdentity().then(async (identity) => ({
+        identity,
+        override: await loadSeoOverrideForRoute("/", identity.locale),
+      })),
+      loadHomeCollectionTiles(),
+      getHomeRailSections(),
+    ]);
+  const { identity, override } = identityBundle;
   const firstHeroImage = homeMarketing.slides[0]?.image ?? "";
-  const override = await loadSeoOverrideForRoute("/", identity.locale);
   const canonical = resolveSeoCanonicalOverride(
     override?.canonicalUrl,
     canonicalUrlFor("/"),
@@ -141,67 +153,22 @@ export default async function Home() {
           <MissionStrip missionHtml={homeMarketing.missionParagraph} />
         ) : null}
         <ActiveWearBlock />
-        <Suspense fallback={<HomeCollectionsFallback />}>
-          <HomeCollectionsStrip />
-        </Suspense>
-        <Suspense fallback={<HomeRailsFallback />}>
-          <HomeRails />
-        </Suspense>
+        <HomeCollectionsStrip tiles={collectionTiles} />
+        {railSections.map((rail) => (
+          <ProductSection
+            key={rail.viewAllHref}
+            title={rail.title}
+            items={rail.items}
+            viewAllHref={rail.viewAllHref}
+            showAddToCart={false}
+            layout="rail"
+            totalProductCount={rail.totalProductCount}
+          />
+        ))}
         <WhyShop />
         <TrustRatingStrip aggregate={storeReviews} />
       </main>
       <Footer />
     </>
-  );
-}
-
-async function HomeRails() {
-  const railSections = await getHomeRailSections();
-  return railSections.map((rail) => (
-    <ProductSection
-      key={rail.viewAllHref}
-      title={rail.title}
-      items={rail.items}
-      viewAllHref={rail.viewAllHref}
-      showAddToCart={false}
-      layout="rail"
-      totalProductCount={rail.totalProductCount}
-    />
-  ));
-}
-
-function HomeCollectionsFallback() {
-  return (
-    <section className="border-b border-[#e8e8e1] bg-white">
-      <div className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
-        <div className="mb-6 h-8 w-48 animate-pulse rounded bg-neutral-200" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50"
-            >
-              <div className="aspect-[4/3] animate-pulse bg-neutral-200" />
-              <div className="h-11 animate-pulse bg-neutral-100" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HomeRailsFallback() {
-  return (
-    <section className="bg-neutral-100/80">
-      <div className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
-        <div className="mb-4 h-7 w-40 animate-pulse rounded bg-neutral-200" />
-        <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <ProductCardSkeleton key={i} showAddToCart={false} />
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }
