@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   getCachedCollectionBySlug,
   getCachedListCollections,
@@ -72,7 +72,8 @@ function ListingFallback() {
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = normalizeCollectionSlug(rawSlug);
   const sp = searchParams != null ? await searchParams : {};
   const pathname = `/collections/${slug}`;
 
@@ -120,8 +121,23 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 }
 
 export default async function CollectionDetailsPage({ params, searchParams }: Props) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = normalizeCollectionSlug(rawSlug);
   const sp = searchParams != null ? await searchParams : {};
+
+  if (slug !== rawSlug.trim()) {
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(sp)) {
+      if (Array.isArray(value)) {
+        for (const v of value) qs.append(key, v);
+      } else if (value != null) {
+        qs.set(key, value);
+      }
+    }
+    const q = qs.toString();
+    permanentRedirect(q ? `/collections/${slug}?${q}` : `/collections/${slug}`);
+  }
+
   const parsed = parseCollectionSearchParams(sp);
 
   let collection: {

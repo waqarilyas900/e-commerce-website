@@ -10,6 +10,7 @@ import type {
 import { collectionIsTagBased } from "@/app/lib/db/collection-type";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Product } from "@/app/lib/catalog/types";
+import { normalizeCollectionSlug } from "@/lib/catalog/collection-nav";
 import {
   optionDefinitionsFromDbRows,
   type VariantOptionSchemaEntry,
@@ -334,11 +335,12 @@ export async function dbGetCollectionBySlug(
   slug: string,
 ): Promise<DbCollectionRow | null> {
   if (!hasCatalogDb()) return null;
+  const normalized = normalizeCollectionSlug(slug);
   const supabase = catalogClient();
   const { data, error } = await supabase
     .from("collections")
     .select("id, slug, name, description, hero_image, sort_order, collection_type")
-    .eq("slug", slug)
+    .eq("slug", normalized)
     .maybeSingle();
   if (error) {
     logDbCatalogIssue("getCollectionBySlug", error.message);

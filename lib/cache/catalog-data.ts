@@ -30,6 +30,7 @@ import {
   dbGetCollectionBySlug,
   dbGetProductsBySlugs,
 } from "@/app/lib/db/catalog";
+import { normalizeCollectionSlug } from "@/lib/catalog/collection-nav";
 
 // ---------- Tags ----------
 
@@ -91,9 +92,10 @@ export async function findUniqueActiveProductSlugByPrefix(prefix: string) {
 }
 
 export function getCachedCollectionBySlug(slug: string) {
+  const normalized = normalizeCollectionSlug(slug);
   return unstable_cache(
-    async () => dbGetCollectionBySlug(slug),
-    ["catalog:collection-by-slug-v2", slug],
+    async () => dbGetCollectionBySlug(normalized),
+    ["catalog:collection-by-slug-v3", normalized],
     {
       revalidate: LIST_TTL,
       tags: [
@@ -106,9 +108,10 @@ export function getCachedCollectionBySlug(slug: string) {
 
 /** Listing for `/collections/<slug>` and PDP "related products" panel. */
 export function getCachedProductsByCollectionSlug(slug: string) {
+  const normalized = normalizeCollectionSlug(slug);
   return unstable_cache(
-    async () => dbListProductsByCollectionSlug(slug),
-    ["catalog:products-by-collection-v2", slug],
+    async () => dbListProductsByCollectionSlug(normalized),
+    ["catalog:products-by-collection-v3", normalized],
     {
       revalidate: LIST_TTL,
       tags: [

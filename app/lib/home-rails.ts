@@ -1,6 +1,11 @@
 import { cache } from "react";
 import type { Product } from "@/app/lib/catalog/types";
 import {
+  collectionDisplayName,
+  collectionHref,
+  normalizeCollectionSlug,
+} from "@/lib/catalog/collection-nav";
+import {
   getCachedActiveHomePageSectionsWithTags,
   getCachedAllActiveProductsForCards,
   getCachedProductsByCollectionSlug,
@@ -20,12 +25,11 @@ export type HomeRailSection = HomeCategoryRail & {
 
 /** Must match `RAIL_PREVIEW` in ProductSection — home shows this many cards per category. */
 const HOME_RAIL_PREVIEW = 4;
-/** Cap curated + fill so we don't over-fetch; UI still previews 4. */
-const MAX_RAIL_PRODUCTS = 8;
 
 function parseCollectionSlugFromHref(href: string): string | null {
   const m = href.trim().match(/^\/collections\/([^/?#]+)\/?$/);
-  return m?.[1] ?? null;
+  if (!m?.[1]) return null;
+  return normalizeCollectionSlug(m[1]);
 }
 
 async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<number> {
@@ -41,29 +45,6 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
   if (!hasCatalogDb()) return 0;
   const list = await getCachedProductsByCollectionSlug(slug);
   return list.length;
-}
-
-function pickRailItems(
-  lists: Product[][],
-  usedProductIds: Set<string>,
-): { items: Product[]; productSlugs: string[] } {
-  const pool: Product[] = [];
-  const seen = new Set<string>();
-  for (const list of lists) {
-    for (const p of list) {
-      if (usedProductIds.has(p.id) || seen.has(p.id)) continue;
-      seen.add(p.id);
-      pool.push(p);
-    }
-  }
-  const items = orderByRatingAndStockPriority(pool).slice(0, MAX_RAIL_PRODUCTS);
-  for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
-    usedProductIds.add(p.id);
-  }
-  return {
-    items,
-    productSlugs: items.map((p) => p.slug),
-  };
 }
 
 async function loadHomeRails(): Promise<HomeRailSection[]> {
@@ -149,13 +130,35 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
   const usedProductIds = new Set<string>();
   const out: HomeRailSection[] = [];
   for (const { rail, totalProductCount, curated, collectionProducts } of railData) {
-    const lists: Product[][] = [curated];
-    // Match prior behavior: only backfill from collection when curated is short.
-    if (curated.filter((p) => !usedProductIds.has(p.id)).length < HOME_RAIL_PREVIEW) {
-      lists.push(collectionProducts);
+    const collectionSlug = parseCollectionSlugFromHref(rail.viewAllHref);
+    const normalizedHref = collectionSlug ? collectionHref(collectionSlug) : rail.viewAllHref;
+    const normalizedTitle = collectionSlug
+      ? collectionDisplayName(collectionSlug, rail.title)
+      : rail.title;
+
+    let items: Product[];
+    if (collectionProducts.length > 0) {
+      // Each rail shows its own collection — do not strip products already used above.
+      items = orderByRatingAndStockPriority(collectionProducts).slice(0, HOME_RAIL_PREVIEW);
+    } else {
+      const available = curated.filter((p) => !usedProductIds.has(p.id));
+      items = orderByRatingAndStockPriority(available).slice(0, HOME_RAIL_PREVIEW);
+      for (const p of items) {
+        usedProductIds.add(p.id);
+      }
     }
-    const { items, productSlugs } = pickRailItems(lists, usedProductIds);
-    out.push({ ...rail, productSlugs, items, totalProductCount });
+
+    const count =
+      collectionProducts.length > 0 ? collectionProducts.length : totalProductCount;
+
+    out.push({
+      ...rail,
+      title: normalizedTitle,
+      viewAllHref: normalizedHref,
+      productSlugs: items.map((p) => p.slug),
+      items,
+      totalProductCount: count,
+    });
   }
   return out;
 }
