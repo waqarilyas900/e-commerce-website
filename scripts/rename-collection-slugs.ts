@@ -272,6 +272,28 @@ async function main() {
     console.log(`[home] Updated ${rails.length} rails + featured_block`);
   }
 
+  for (const u of UPDATES) {
+    if (u.oldSlug === u.slug) continue;
+    const { data: navRows, error: navErr } = await supabase
+      .from("header_nav_menu_items")
+      .select("id, label, slug")
+      .eq("slug", u.oldSlug);
+    if (navErr) fail(`header_nav_menu_items lookup ${u.oldSlug}: ${navErr.message}`);
+    for (const row of navRows ?? []) {
+      const { error } = await supabase
+        .from("header_nav_menu_items")
+        .update({
+          slug: u.slug,
+          label: u.name,
+          name: u.name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+      if (error) fail(`header_nav_menu_items ${row.id}: ${error.message}`);
+      console.log(`[header-nav] ${u.oldSlug} → ${u.slug} (${u.name})`);
+    }
+  }
+
   console.log("[rename] Done.");
 }
 

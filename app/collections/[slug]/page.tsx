@@ -36,6 +36,10 @@ import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import { RelatedCollections } from "@/components/seo/related-collections";
+import {
+  collectionDisplayName,
+  normalizeCollectionSlug,
+} from "@/lib/catalog/collection-nav";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -154,7 +158,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     getCachedListCollections(),
   ]);
   const seoOverride = await loadSeoOverrideForSubject("collection", dbCol.id, identity.locale);
-  const displayName = collection.name;
+  const displayName = collectionDisplayName(collection.slug, collection.name);
   const featuredIndex = buildFeaturedIndex(baseline);
   const maxCeil = maxPriceCeiling(baseline);
 
@@ -169,10 +173,13 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
   const relatedCollections = allCollections
     .filter((c) => c.slug !== slug && c.slug !== "sale")
     .slice(0, 5)
-    .map((c) => ({
-      slug: c.slug,
-      name: c.name,
-    }));
+    .map((c) => {
+      const normalized = normalizeCollectionSlug(c.slug);
+      return {
+        slug: normalized,
+        name: collectionDisplayName(normalized, c.name),
+      };
+    });
 
   const canonical = resolveSeoCanonicalOverride(
     seoOverride?.canonicalUrl,

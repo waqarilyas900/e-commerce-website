@@ -18,6 +18,10 @@ import {
 import { JsonLd, breadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
+import {
+  collectionDisplayName,
+  normalizeCollectionSlug,
+} from "@/lib/catalog/collection-nav";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -60,10 +64,14 @@ export default async function CollectionsPage() {
   ]);
   (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
 
-  const collectionCards = collections.map((c) => ({
-    ...c,
-    displayName: c.name,
-  }));
+  const collectionCards = collections.map((c) => {
+    const slug = normalizeCollectionSlug(c.slug);
+    return {
+      ...c,
+      slug,
+      displayName: collectionDisplayName(slug, c.name),
+    };
+  });
 
   const hubLd = {
     "@context": "https://schema.org",

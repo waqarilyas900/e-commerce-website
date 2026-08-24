@@ -8,6 +8,7 @@ import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider"
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { SocialIconLinks } from "@/components/social-icon-links";
 import { SiteLogoFull } from "@/components/site-logo";
+import { FOOTER_COLLECTION_LINKS } from "@/lib/catalog/collection-nav";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -41,14 +42,7 @@ const HARDCODED_CUSTOMER_CARE_PATHS = [
 /** Stable shop links for footer SEO internal linking. */
 const FOOTER_SHOP_LINKS: { href: string; label: string }[] = [
   { href: "/collections", label: "All collections" },
-  { href: "/collections/drinkware-tumblers", label: "Drinkware & Tumblers" },
-  { href: "/collections/kitchen-essentials", label: "Kitchen Essentials" },
-  { href: "/collections/home-appliances", label: "Home Appliances" },
-  { href: "/collections/beauty-personal-care", label: "Beauty & Personal Care" },
-  { href: "/collections/lamps-lighting", label: "Lamps & Lighting" },
-  { href: "/collections/pest-control", label: "Pest Control" },
-  { href: "/collections/wellness-comfort", label: "Wellness & Comfort" },
-  { href: "/collections/home-essentials", label: "Home Essentials" },
+  ...FOOTER_COLLECTION_LINKS.map((item) => ({ href: item.href, label: item.name })),
 ];
 
 function normalizeFooterPath(href: string): string {

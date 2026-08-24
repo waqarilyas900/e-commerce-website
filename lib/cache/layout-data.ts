@@ -34,6 +34,10 @@ import type {
 } from "@/app/lib/store-brand.types";
 import type { HeaderNavMenuItem } from "@/app/lib/header-nav-menu";
 import type { NavCollectionLink } from "@/app/lib/nav-collections";
+import {
+  collectionDisplayName,
+  normalizeCollectionSlug,
+} from "@/lib/catalog/collection-nav";
 import type { AnalyticsConfig } from "@/lib/seo/analytics-config";
 import type { SiteIdentity } from "@/lib/seo/types";
 
@@ -432,7 +436,13 @@ async function _loadNavCollections(): Promise<NavCollectionLink[]> {
       .select("slug, name, sort_order")
       .order("sort_order", { ascending: true });
     if (error || !data) return [];
-    return data.map((c) => ({ slug: c.slug as string, name: c.name as string }));
+    return data.map((c) => {
+      const slug = normalizeCollectionSlug(c.slug as string);
+      return {
+        slug,
+        name: collectionDisplayName(slug, c.name as string),
+      };
+    });
   } catch {
     return [];
   }
@@ -449,14 +459,18 @@ async function _loadHeaderNavMenu(): Promise<HeaderNavMenuItem[]> {
       .order("sort_order", { ascending: true })
       .order("label", { ascending: true });
     if (error || !data) return [];
-    return data.map((row) => ({
-      id: row.id as string,
-      name: row.name as string,
-      label: row.label as string,
-      slug: row.slug as string,
-      sort_order: Number(row.sort_order ?? 0),
-      href: `/collections/${row.slug as string}`,
-    }));
+    return data.map((row) => {
+      const slug = normalizeCollectionSlug(row.slug as string);
+      const label = collectionDisplayName(slug, (row.label as string) || (row.name as string));
+      return {
+        id: row.id as string,
+        name: row.name as string,
+        label,
+        slug,
+        sort_order: Number(row.sort_order ?? 0),
+        href: `/collections/${slug}`,
+      };
+    });
   } catch {
     return [];
   }
@@ -659,7 +673,7 @@ export const getCachedHomeHeroAndMission = unstable_cache(
 
 export const getCachedNavCollections = unstable_cache(
   _loadNavCollections,
-  ["layout-nav-collections"],
+  ["layout-nav-collections-v2"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.navCollections],
@@ -668,7 +682,7 @@ export const getCachedNavCollections = unstable_cache(
 
 export const getCachedHeaderNavMenu = unstable_cache(
   _loadHeaderNavMenu,
-  ["layout-header-nav-menu"],
+  ["layout-header-nav-menu-v2"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.headerNavMenu],

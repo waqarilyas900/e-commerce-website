@@ -8,6 +8,11 @@ import { hasCatalogDb } from "@/app/lib/db/env";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
+import {
+  collectionDisplayName,
+  collectionHref,
+  normalizeCollectionSlug,
+} from "@/lib/catalog/collection-nav";
 
 export type HomeCollectionTile = {
   slug: string;
@@ -46,8 +51,9 @@ export async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
   // Parallel: one round-trip wave instead of serial per-collection awaits.
   const tiles = await Promise.all(
     candidates.map(async (col): Promise<HomeCollectionTile | null> => {
-      const slug = col.slug.trim();
-      const name = col.name.trim();
+      const rawSlug = col.slug.trim();
+      const slug = normalizeCollectionSlug(rawSlug);
+      const name = collectionDisplayName(slug, col.name.trim());
       const products = await getCachedProductsByCollectionSlug(slug);
       if (products.length === 0) return null;
 
@@ -58,7 +64,7 @@ export async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
       return {
         slug,
         name: displayName,
-        href: `/collections/${slug}`,
+        href: collectionHref(slug),
         imageUrl: optimizeSupplierImageUrl(hero || fallback, 400),
         count: products.length,
       };

@@ -93,7 +93,7 @@ export async function findUniqueActiveProductSlugByPrefix(prefix: string) {
 export function getCachedCollectionBySlug(slug: string) {
   return unstable_cache(
     async () => dbGetCollectionBySlug(slug),
-    ["catalog:collection-by-slug", slug],
+    ["catalog:collection-by-slug-v2", slug],
     {
       revalidate: LIST_TTL,
       tags: [
@@ -108,7 +108,7 @@ export function getCachedCollectionBySlug(slug: string) {
 export function getCachedProductsByCollectionSlug(slug: string) {
   return unstable_cache(
     async () => dbListProductsByCollectionSlug(slug),
-    ["catalog:products-by-collection", slug],
+    ["catalog:products-by-collection-v2", slug],
     {
       revalidate: LIST_TTL,
       tags: [
@@ -148,7 +148,7 @@ export const getCachedAllActiveProductsForCards = unstable_cache(
 
 export const getCachedListCollections = unstable_cache(
   async () => dbListCollections(),
-  ["catalog:list-collections"],
+  ["catalog:list-collections-v2"],
   {
     revalidate: LIST_TTL,
     tags: [CATALOG_CACHE_TAGS.collections],
