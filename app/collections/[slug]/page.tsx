@@ -23,7 +23,6 @@ import {
   loadSeoOverrideForSubject,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
-  seoHeadingFromMetaTitle,
 } from "@/lib/seo";
 import {
   JsonLd,
@@ -155,7 +154,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     getCachedListCollections(),
   ]);
   const seoOverride = await loadSeoOverrideForSubject("collection", dbCol.id, identity.locale);
-  const displayName = seoHeadingFromMetaTitle(seoOverride?.title, collection.name);
+  const displayName = collection.name;
   const featuredIndex = buildFeaturedIndex(baseline);
   const maxCeil = maxPriceCeiling(baseline);
 
@@ -167,20 +166,13 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
   );
   list = sortCollectionProducts(list, parsed.sort, featuredIndex);
 
-  const relatedCollections = (
-    await Promise.all(
-      allCollections
-        .filter((c) => c.slug !== slug && c.slug !== "sale")
-        .slice(0, 6)
-        .map(async (c) => {
-          const seo = await loadSeoOverrideForSubject("collection", c.id, identity.locale);
-          return {
-            slug: c.slug,
-            name: seoHeadingFromMetaTitle(seo?.title, c.name),
-          };
-        }),
-    )
-  ).slice(0, 5);
+  const relatedCollections = allCollections
+    .filter((c) => c.slug !== slug && c.slug !== "sale")
+    .slice(0, 5)
+    .map((c) => ({
+      slug: c.slug,
+      name: c.name,
+    }));
 
   const canonical = resolveSeoCanonicalOverride(
     seoOverride?.canonicalUrl,
@@ -224,9 +216,9 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
           <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
             {displayName}
           </h1>
-          {(seoOverride?.description || collection.description)?.trim() ? (
+          {(collection.description)?.trim() ? (
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
-              {(seoOverride?.description || collection.description).trim()}
+              {collection.description.trim()}
             </p>
           ) : null}
         </header>

@@ -32,10 +32,10 @@ type CollectionDef = {
 
 const COLLECTIONS: CollectionDef[] = [
   {
-    slug: "drinkware",
-    name: "Drinkware",
+    slug: "drinkware-tumblers",
+    name: "Drinkware & Tumblers",
     description:
-      "Water bottles, flasks, tumblers, sippers and straws — hot & cold drinkware with delivery across Pakistan.",
+      "Water bottles, flasks, tumblers, sippers and straws — hot and cold drinkware for everyday use.",
     tag: "drinkware",
     tagLabel: "Drinkware",
     sort: 0,
@@ -47,10 +47,10 @@ const COLLECTIONS: CollectionDef[] = [
       ),
   },
   {
-    slug: "kitchen",
-    name: "Kitchen",
+    slug: "kitchen-essentials",
+    name: "Kitchen Essentials",
     description:
-      "Utensils, cutlery, choppers, grinders and kitchen tools for everyday cooking in Pakistan.",
+      "Utensils, cutlery, choppers, grinders and kitchen tools for everyday cooking.",
     tag: "kitchen",
     tagLabel: "Kitchen",
     sort: 1,
@@ -65,8 +65,8 @@ const COLLECTIONS: CollectionDef[] = [
     },
   },
   {
-    slug: "appliances",
-    name: "Appliances",
+    slug: "home-appliances",
+    name: "Home Appliances",
     description:
       "Electric kettles, stoves, heaters, humidifiers and handy home appliances.",
     tag: "appliances",
@@ -78,8 +78,8 @@ const COLLECTIONS: CollectionDef[] = [
       ) && !/wax/.test(`${s} ${n}`.toLowerCase()),
   },
   {
-    slug: "beauty",
-    name: "Beauty",
+    slug: "beauty-personal-care",
+    name: "Beauty & Personal Care",
     description:
       "Hair tools, wax warmers, mirrors, trimmers and personal care essentials.",
     tag: "beauty",
@@ -91,8 +91,8 @@ const COLLECTIONS: CollectionDef[] = [
       ),
   },
   {
-    slug: "lighting",
-    name: "Lighting",
+    slug: "lamps-lighting",
+    name: "Lamps & Lighting",
     description: "Table lamps, night lights and solar work lights for home and outdoor use.",
     tag: "lighting",
     tagLabel: "Lighting",
@@ -119,8 +119,8 @@ const COLLECTIONS: CollectionDef[] = [
     match: (s, n) => /mosquito|bug|zapper|insect|racket/.test(`${s} ${n}`.toLowerCase()),
   },
   {
-    slug: "wellness",
-    name: "Wellness",
+    slug: "wellness-comfort",
+    name: "Wellness & Comfort",
     description: "Massagers, relief belts and everyday comfort products.",
     tag: "wellness",
     tagLabel: "Wellness",
@@ -128,8 +128,8 @@ const COLLECTIONS: CollectionDef[] = [
     match: (s, n) => /massager|cramp|relief|cellulite|body massager/.test(`${s} ${n}`.toLowerCase()),
   },
   {
-    slug: "home",
-    name: "Home",
+    slug: "home-essentials",
+    name: "Home Essentials",
     description: "Clocks, organizers and everyday home essentials.",
     tag: "home",
     tagLabel: "Home",
@@ -153,9 +153,11 @@ function clamp(s: string, max: number): string {
 
 /** All matching niches (products can sit in 2–3 collections); fall back to Home. */
 function classifyAll(p: ProductRow): CollectionDef[] {
-  const matches = COLLECTIONS.filter((c) => c.slug !== "home" && c.match(p.slug, p.name));
+  const matches = COLLECTIONS.filter(
+    (c) => c.slug !== "home-essentials" && c.match(p.slug, p.name),
+  );
   if (matches.length > 0) return matches;
-  return [COLLECTIONS.find((c) => c.slug === "home")!];
+  return [COLLECTIONS.find((c) => c.slug === "home-essentials")!];
 }
 
 async function main() {
@@ -211,8 +213,8 @@ async function main() {
     await supabase
       .from("collections")
       .update({
-        slug: "drinkware",
-        name: "Drinkware",
+        slug: "drinkware-tumblers",
+        name: "Drinkware & Tumblers",
         description: COLLECTIONS[0]!.description,
         sort_order: 0,
         collection_type: "manual",
@@ -347,11 +349,21 @@ async function main() {
   );
 
   const kitchenHero =
-    (await supabase.from("collections").select("hero_image").eq("slug", "kitchen").maybeSingle())
-      .data?.hero_image ?? "";
+    (
+      await supabase
+        .from("collections")
+        .select("hero_image")
+        .eq("slug", "kitchen-essentials")
+        .maybeSingle()
+    ).data?.hero_image ?? "";
   const drinkwareHero =
-    (await supabase.from("collections").select("hero_image").eq("slug", "drinkware").maybeSingle())
-      .data?.hero_image ?? "";
+    (
+      await supabase
+        .from("collections")
+        .select("hero_image")
+        .eq("slug", "drinkware-tumblers")
+        .maybeSingle()
+    ).data?.hero_image ?? "";
   const featuredImage = kitchenHero || drinkwareHero || "";
 
   const { error: settingsErr } = await supabase
@@ -362,10 +374,12 @@ async function main() {
         eyebrow: "Shop by category",
         title: "Home essentials, sorted",
         description:
-          "Browse drinkware, kitchen tools, beauty gadgets and appliances — curated for everyday use in Pakistan.",
+          "Browse drinkware, kitchen tools, beauty gadgets and appliances — curated for everyday use.",
         imageUrl: featuredImage,
         primaryLabel: kitchenHero ? "Shop kitchen" : "Shop drinkware",
-        primaryHref: kitchenHero ? "/collections/kitchen" : "/collections/drinkware",
+        primaryHref: kitchenHero
+          ? "/collections/kitchen-essentials"
+          : "/collections/drinkware-tumblers",
         secondaryLabel: "All collections",
         secondaryHref: "/collections",
       },

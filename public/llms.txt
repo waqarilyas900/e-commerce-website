@@ -17,14 +17,14 @@
 
 ## Collections
 
-- [Water bottles & tumblers](https://www.simplecartstore.com/collections/drinkware)
-- [Kitchen tools](https://www.simplecartstore.com/collections/kitchen)
-- [Home appliances](https://www.simplecartstore.com/collections/appliances)
-- [Beauty tools](https://www.simplecartstore.com/collections/beauty)
-- [Lamps & lights](https://www.simplecartstore.com/collections/lighting)
-- [Pest control](https://www.simplecartstore.com/collections/pest-control)
-- [Wellness](https://www.simplecartstore.com/collections/wellness)
-- [Home essentials](https://www.simplecartstore.com/collections/home)
+- [Drinkware & Tumblers](https://www.simplecartstore.com/collections/drinkware-tumblers)
+- [Kitchen Essentials](https://www.simplecartstore.com/collections/kitchen-essentials)
+- [Home Appliances](https://www.simplecartstore.com/collections/home-appliances)
+- [Beauty & Personal Care](https://www.simplecartstore.com/collections/beauty-personal-care)
+- [Lamps & Lighting](https://www.simplecartstore.com/collections/lamps-lighting)
+- [Pest Control](https://www.simplecartstore.com/collections/pest-control)
+- [Wellness & Comfort](https://www.simplecartstore.com/collections/wellness-comfort)
+- [Home Essentials](https://www.simplecartstore.com/collections/home-essentials)
 
 ## Shopping notes
 

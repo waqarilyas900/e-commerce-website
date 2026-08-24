@@ -22,7 +22,6 @@ import {
   loadSeoOverrideForRoute,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
-  seoHeadingFromMetaTitle,
 } from "@/lib/seo";
 import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
@@ -67,19 +66,17 @@ export default async function Home() {
     override?.canonicalUrl,
     canonicalUrlFor("/"),
   );
-  const homeName =
-    override?.title?.trim() ||
-    identity.siteTitle ||
-    identity.storeName ||
-    "Store";
-  const homeDescription =
-    override?.description?.trim() ||
-    identity.siteDescription ||
-    `Shop home, kitchen and beauty essentials from ${identity.storeName || identity.siteTitle || "our shop"} with delivery across Pakistan.`;
+  const homeDisplayTitle =
+    identity.storeName || identity.siteTitle || "SimpleCart Store";
+  const homeDisplayDescription =
+    "Browse drinkware, kitchen tools, beauty gadgets and home essentials — curated for everyday use.";
   const homeLd = webPageJsonLd({
     url: canonical,
-    name: homeName,
-    description: homeDescription,
+    name: override?.title?.trim() || homeDisplayTitle,
+    description:
+      override?.description?.trim() ||
+      identity.siteDescription ||
+      homeDisplayDescription,
     identity,
     primaryImageUrl: firstHeroImage || identity.defaultOgImageUrl || null,
   });
@@ -133,14 +130,9 @@ export default async function Home() {
         ) : null}
         <section className="border-b border-[#e8e8e1] bg-white">
           <div className="mx-auto max-w-7xl shell-x py-4 text-center sm:py-5">
-            <HomeSectionTitle as="h1">
-              {seoHeadingFromMetaTitle(
-                homeName,
-                "Home Essentials Online in Pakistan",
-              )}
-            </HomeSectionTitle>
+            <HomeSectionTitle as="h1">{homeDisplayTitle}</HomeSectionTitle>
             <p className="mx-auto mt-1.5 max-w-2xl text-sm text-neutral-600 sm:text-[15px]">
-              {homeDescription}
+              {homeDisplayDescription}
             </p>
           </div>
         </section>

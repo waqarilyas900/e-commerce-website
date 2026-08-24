@@ -12,10 +12,8 @@ import {
   buildPageMetadata,
   canonicalUrlFor,
   loadSeoOverrideForRoute,
-  loadSeoOverrideForSubject,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
-  seoHeadingFromMetaTitle,
 } from "@/lib/seo";
 import { JsonLd, breadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { absoluteUrl } from "@/lib/seo/canonical";
@@ -48,10 +46,9 @@ export default async function CollectionsPage() {
     loadSiteIdentity(),
   ]);
   const override = await loadSeoOverrideForRoute("/collections", identity.locale);
-  const heading = seoHeadingFromMetaTitle(override?.title, "Shop All Collections");
+  const heading = "Shop All Collections";
   const intro =
-    override?.description?.trim() ||
-    "Browse drinkware, kitchen tools, beauty gadgets, appliances and more — curated home essentials for Pakistan.";
+    "Browse drinkware, kitchen tools, beauty gadgets, appliances and more — curated home essentials.";
   const canonical = resolveSeoCanonicalOverride(
     override?.canonicalUrl,
     canonicalUrlFor("/collections"),
@@ -63,13 +60,10 @@ export default async function CollectionsPage() {
   ]);
   (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
 
-  const collectionCards = await Promise.all(
-    collections.map(async (c) => {
-      const seo = await loadSeoOverrideForSubject("collection", c.id, identity.locale);
-      const displayName = seoHeadingFromMetaTitle(seo?.title, c.name);
-      return { ...c, displayName };
-    }),
-  );
+  const collectionCards = collections.map((c) => ({
+    ...c,
+    displayName: c.name,
+  }));
 
   const hubLd = {
     "@context": "https://schema.org",

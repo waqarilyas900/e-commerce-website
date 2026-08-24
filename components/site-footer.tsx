@@ -41,14 +41,14 @@ const HARDCODED_CUSTOMER_CARE_PATHS = [
 /** Stable shop links for footer SEO internal linking. */
 const FOOTER_SHOP_LINKS: { href: string; label: string }[] = [
   { href: "/collections", label: "All collections" },
-  { href: "/collections/drinkware", label: "Water bottles & tumblers" },
-  { href: "/collections/kitchen", label: "Kitchen tools" },
-  { href: "/collections/appliances", label: "Home appliances" },
-  { href: "/collections/beauty", label: "Beauty tools" },
-  { href: "/collections/lighting", label: "Lamps & lights" },
-  { href: "/collections/pest-control", label: "Pest control" },
-  { href: "/collections/wellness", label: "Wellness" },
-  { href: "/collections/home", label: "Home essentials" },
+  { href: "/collections/drinkware-tumblers", label: "Drinkware & Tumblers" },
+  { href: "/collections/kitchen-essentials", label: "Kitchen Essentials" },
+  { href: "/collections/home-appliances", label: "Home Appliances" },
+  { href: "/collections/beauty-personal-care", label: "Beauty & Personal Care" },
+  { href: "/collections/lamps-lighting", label: "Lamps & Lighting" },
+  { href: "/collections/pest-control", label: "Pest Control" },
+  { href: "/collections/wellness-comfort", label: "Wellness & Comfort" },
+  { href: "/collections/home-essentials", label: "Home Essentials" },
 ];
 
 function normalizeFooterPath(href: string): string {

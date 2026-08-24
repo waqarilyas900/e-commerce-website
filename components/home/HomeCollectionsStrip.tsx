@@ -8,11 +8,6 @@ import { hasCatalogDb } from "@/app/lib/db/env";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
-import {
-  loadSeoOverrideForSubject,
-  loadSiteIdentity,
-  seoHeadingFromMetaTitle,
-} from "@/lib/seo";
 
 export type HomeCollectionTile = {
   slug: string;
@@ -40,10 +35,7 @@ function useNativeImg(src: string): boolean {
 
 export async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
   if (!hasCatalogDb()) return [];
-  const [collections, identity] = await Promise.all([
-    getCachedListCollections(),
-    loadSiteIdentity(),
-  ]);
+  const collections = await getCachedListCollections();
 
   const candidates = collections.filter((col) => {
     const slug = col.slug?.trim();
@@ -56,13 +48,10 @@ export async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
     candidates.map(async (col): Promise<HomeCollectionTile | null> => {
       const slug = col.slug.trim();
       const name = col.name.trim();
-      const [products, seo] = await Promise.all([
-        getCachedProductsByCollectionSlug(slug),
-        loadSeoOverrideForSubject("collection", col.id, identity.locale),
-      ]);
+      const products = await getCachedProductsByCollectionSlug(slug);
       if (products.length === 0) return null;
 
-      const displayName = seoHeadingFromMetaTitle(seo?.title, name);
+      const displayName = name;
       const hero = (col.hero_image ?? "").trim();
       const fallback =
         products.find((p) => (p.image ?? "").trim())?.image?.trim() ?? "";
@@ -127,7 +116,7 @@ export function HomeCollectionsStrip({
                         // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs (Daraz) outside next/image allowlist
                         <img
                           src={tile.imageUrl}
-                          alt={`${tile.name} — shop online in Pakistan`}
+                          alt={`${tile.name} collection`}
                           className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
                           loading="lazy"
                           decoding="async"
@@ -137,7 +126,7 @@ export function HomeCollectionsStrip({
                       ) : (
                         <Image
                           src={tile.imageUrl}
-                          alt={`${tile.name} — shop online in Pakistan`}
+                          alt={`${tile.name} collection`}
                           fill
                           className="object-cover object-center transition duration-500 group-hover:scale-[1.03]"
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
