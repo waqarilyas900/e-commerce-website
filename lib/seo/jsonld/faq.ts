@@ -79,7 +79,7 @@ export function storeFaqItems(
     items.push({
       question: "How can I contact SimpleCart Store?",
       answer:
-        "Reach us by email at support@simplecartstore.com or WhatsApp/call at +923009761427 (Mon–Sat, 10:00 AM – 8:00 PM). You can also use the Contact page on our website.",
+        "Reach us by email at support@scs.com or WhatsApp/call at +923009761427 (Mon–Sat, 10:00 AM – 8:00 PM). You can also use the Contact page on our website.",
     });
   }
 

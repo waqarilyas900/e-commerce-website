@@ -28,7 +28,6 @@ import {
   storeFaqItems,
 } from "@/lib/seo/jsonld";
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
-import { StoreFaqSection } from "@/components/seo/store-faq";
 import {
   findUniqueActiveProductSlugByPrefix,
   getCachedListCollections,
@@ -309,6 +308,7 @@ export default async function ProductPage({ params }: Props) {
           assets={detail.assets}
           colorById={detail.colorById}
           safeDescriptionHtml={sanitizeRichHtml(detail.product.description)}
+          faqItems={faqItems}
         />
         <Suspense fallback={<ReviewsFallback />}>
           <ProductReviewsSection
@@ -325,7 +325,6 @@ export default async function ProductPage({ params }: Props) {
             currentSlug={slug}
           />
         </Suspense>
-        <StoreFaqSection items={faqItems} />
       </main>
       <Footer />
     </>
@@ -353,7 +352,7 @@ async function RelatedProductsSection({
   const heading = collectionName?.trim() || "Related products";
   return (
     <section className="mt-8 sm:mt-10">
-      <div className="flex flex-wrap items-end justify-between gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-x-6 sm:gap-y-3">
         <h2 className="text-2xl font-semibold tracking-tight">
           More from {heading}
         </h2>
@@ -364,7 +363,7 @@ async function RelatedProductsSection({
           View all {heading}
         </Link>
       </div>
-      <div className="mt-3 sm:mt-4 md:hidden">
+      <div className="mt-6 sm:mt-8 md:hidden">
         <ul
           className="-mx-2 flex list-none items-stretch gap-1 overflow-x-auto scroll-px-2 scroll-smooth px-2 pb-2 pt-1 snap-x snap-mandatory sm:mx-0 sm:gap-1.5 sm:px-0 sm:scroll-px-0"
           style={{ WebkitOverflowScrolling: "touch" }}
@@ -387,7 +386,7 @@ async function RelatedProductsSection({
           ))}
         </ul>
       </div>
-      <div className="hidden md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+      <div className="mt-6 hidden md:mt-8 md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
         {related.map((item, idx) => (
           <ProductCard
             key={item.id}
@@ -406,7 +405,7 @@ function RelatedProductsFallback() {
   return (
     <section className="mt-8 sm:mt-10">
       <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 md:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 md:grid-cols-3 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, idx) => (
           <ProductCardSkeleton key={idx} />
         ))}

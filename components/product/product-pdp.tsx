@@ -35,6 +35,8 @@ import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { metaContentsSingleItem, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import { getPublicSiteUrl } from "@/lib/site-url";
 import Link from "next/link";
+import { StoreFaqSection } from "@/components/seo/store-faq";
+import type { FaqItem } from "@/lib/seo/jsonld/faq";
 
 function sellableQty(v: DbProductVariantRow): number {
   return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
@@ -168,6 +170,8 @@ type Props = {
    * `sanitizeRichHtml`). Empty string when there is no description.
    */
   safeDescriptionHtml: string;
+  /** Store FAQs — rendered as accordion after the description. */
+  faqItems?: FaqItem[];
 };
 
 export function ProductPdp({
@@ -181,6 +185,7 @@ export function ProductPdp({
   assets,
   colorById = {},
   safeDescriptionHtml,
+  faqItems = [],
 }: Props) {
   const showCollectionLabel =
     typeof collectionLabel === "string" &&
@@ -1107,6 +1112,8 @@ export function ProductPdp({
               ) : null}
             </div>
           ) : null}
+
+          {faqItems.length > 0 ? <StoreFaqSection items={faqItems} /> : null}
         </div>
       </section>
 
