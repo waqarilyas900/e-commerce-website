@@ -160,7 +160,7 @@ export function HeaderAccountV2() {
             <img src={photo} alt="" width={32} height={32} className="h-full w-full object-cover" />
           </span>
         ) : effectiveUser ? (
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-neutral-900 text-[10px] font-semibold text-white">
             {initials}
           </span>
         ) : (
@@ -211,7 +211,7 @@ export function HeaderAccountV2() {
                 <Link
                   href="/login"
                   role="menuitem"
-                  className="flex h-10 w-full items-center justify-center rounded-full text-sm font-semibold text-white transition hover:opacity-95"
+                  className="btn flex w-full items-center justify-center rounded-none text-white transition hover:opacity-95"
                   style={{ backgroundColor: NAV2_ACCENT }}
                   onClick={closeMenu}
                 >

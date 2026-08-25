@@ -186,7 +186,7 @@ export function PdpWishlistActions({
 
   const btnClass = compact
     ? `inline-flex min-h-9 shrink-0 items-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50 disabled:opacity-50 sm:text-xs ${inline ? "max-w-none" : "max-w-[14rem]"}`
-    : `inline-flex shrink-0 items-center gap-2 rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-neutral-50 disabled:opacity-50 ${inline ? "min-w-0" : "w-full min-w-[12rem] sm:w-auto"}`;
+    : `inline-flex shrink-0 items-center gap-2 btn rounded-none border border-neutral-300 bg-white text-neutral-900 shadow-sm transition hover:bg-neutral-50 disabled:opacity-50 ${inline ? "min-w-0" : "w-full min-w-[12rem] sm:w-auto"}`;
 
   return (
     <>

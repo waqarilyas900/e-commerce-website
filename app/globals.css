@@ -72,6 +72,39 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Action CTAs — Rad Store style: square, bold, uppercase */
+a.btn,
+.btn,
+button.btn {
+  appearance: none;
+  border-radius: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  line-height: 1.42;
+  letter-spacing: normal;
+  text-transform: uppercase !important;
+  padding: 11px 20px !important;
+  min-width: 90px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  white-space: normal;
+  transition:
+    background 0.3s ease,
+    opacity 0.3s ease;
+}
+
+a.btn:active,
+.btn:active,
+button.btn:active {
+  opacity: 0.6;
+}
+
 body {
   background: var(--colorBody);
   color: var(--colorTextBody);
@@ -390,3 +423,158 @@ body {
     transform: translateY(0) scale(1);
   }
 }
+
+@keyframes callout-image-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Rad-style collection callout collage (homepage ActiveWearBlock) — enlarged */
+#shopify-section-template-collection-callout .callout-images {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 28px auto;
+  width: 310px;
+  max-width: 100%;
+}
+
+#shopify-section-template-collection-callout .callout-image-centered {
+  position: relative;
+  width: 195px;
+}
+
+#shopify-section-template-collection-callout .callout-image {
+  background-color: #fff;
+  height: auto;
+  object-fit: cover;
+  position: absolute;
+  z-index: 1;
+  opacity: 0;
+  transition: transform 2.5s cubic-bezier(0.39, 0.68, 0.29, 1) 0.5s;
+}
+
+#shopify-section-template-collection-callout .callout-image.callout-image--1 {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  margin: 52px auto;
+}
+
+#shopify-section-template-collection-callout .callout-image.callout-image--2 {
+  left: 0;
+  top: 52px;
+  max-width: 125px;
+}
+
+#shopify-section-template-collection-callout .callout-image.callout-image--3 {
+  right: 0;
+  bottom: 52px;
+  max-width: 112px;
+}
+
+#shopify-section-template-collection-callout .callout-image.callout-image--4 {
+  left: 0;
+  bottom: 52px;
+  max-width: 140px;
+}
+
+#shopify-section-template-collection-callout .callout-image.callout-image--5 {
+  right: 0;
+  top: 52px;
+  max-width: 70px;
+}
+
+#shopify-section-template-collection-callout
+  .callout-images.is-callout-active
+  .callout-image {
+  opacity: 1;
+  animation: callout-image-fade-in 0.5s cubic-bezier(0.29, 0.65, 0.58, 1) forwards;
+}
+
+#shopify-section-template-collection-callout
+  .callout-images.is-callout-active
+  .callout-image.callout-image--1 {
+  box-shadow: 0 14px 22px rgba(0, 0, 0, 0.3);
+}
+
+#shopify-section-template-collection-callout
+  .callout-images.is-callout-active
+  .callout-image.callout-image--2 {
+  transform: translate3d(-90px, -42px, 0);
+}
+
+#shopify-section-template-collection-callout
+  .callout-images.is-callout-active
+  .callout-image.callout-image--3 {
+  transform: translate3d(90px, 13%, 0);
+}
+
+#shopify-section-template-collection-callout
+  .callout-images.is-callout-active
+  .callout-image.callout-image--4 {
+  transform: translate3d(-70px, 56px, 0);
+}
+
+#shopify-section-template-collection-callout
+  .callout-images.is-callout-active
+  .callout-image.callout-image--5 {
+  transform: translate3d(56px, 14px, 0);
+}
+
+@media only screen and (min-width: 590px) {
+  #shopify-section-template-collection-callout .callout-images {
+    width: 620px;
+  }
+
+  #shopify-section-template-collection-callout .callout-image-centered {
+    width: 380px;
+  }
+
+  #shopify-section-template-collection-callout .callout-image.callout-image--2 {
+    max-width: 245px;
+  }
+
+  #shopify-section-template-collection-callout .callout-image.callout-image--3 {
+    max-width: 220px;
+  }
+
+  #shopify-section-template-collection-callout .callout-image.callout-image--4 {
+    max-width: 270px;
+  }
+
+  #shopify-section-template-collection-callout .callout-image.callout-image--5 {
+    max-width: 135px;
+  }
+
+  #shopify-section-template-collection-callout
+    .callout-images.is-callout-active
+    .callout-image.callout-image--2 {
+    transform: translate3d(-175px, -55px, 0);
+  }
+
+  #shopify-section-template-collection-callout
+    .callout-images.is-callout-active
+    .callout-image.callout-image--3 {
+    transform: translate3d(165px, 13%, 0);
+  }
+
+  #shopify-section-template-collection-callout
+    .callout-images.is-callout-active
+    .callout-image.callout-image--4 {
+    transform: translate3d(-135px, 110px, 0);
+  }
+
+  #shopify-section-template-collection-callout
+    .callout-images.is-callout-active
+    .callout-image.callout-image--5 {
+    transform: translate3d(110px, 55px, 0);
+  }
+}
+
+

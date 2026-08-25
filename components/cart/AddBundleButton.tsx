@@ -14,7 +14,7 @@ type Props = {
 
 export function AddBundleButton({
   lines,
-  className = "rounded-full px-5 py-2 text-sm",
+  className = "",
   label = "Add bundle",
 }: Props) {
   const { addVariant, openCart } = useCart();

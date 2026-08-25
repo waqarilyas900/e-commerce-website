@@ -345,7 +345,7 @@ export function ProductCard({
             <AddToCartButton
               product={product}
               openDrawer
-              className="w-full rounded-md py-1.5 text-[11px] sm:py-2 sm:text-xs"
+              className="w-full"
               label="Add to cart"
             />
           </div>
@@ -568,7 +568,7 @@ export function WhyShop() {
           {whyShop.ctaLabel.trim() ? (
             <Link
               href={whyShop.ctaHref}
-              className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-semibold capitalize text-white"
+              className="mt-6 inline-flex btn rounded-none bg-black text-white"
             >
               {whyShop.ctaLabel}
             </Link>

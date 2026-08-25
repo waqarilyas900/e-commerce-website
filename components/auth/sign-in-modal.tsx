@@ -100,7 +100,7 @@ export function SignInModal({
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+            className="cursor-pointer btn rounded-none border border-neutral-300 bg-white text-neutral-800 transition hover:bg-neutral-50"
           >
             Not now
           </button>
@@ -108,7 +108,7 @@ export function SignInModal({
             type="submit"
             form={signInFormId}
             disabled={loading}
-            className="cursor-pointer rounded-full bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer btn rounded-none bg-neutral-950 text-white transition hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>

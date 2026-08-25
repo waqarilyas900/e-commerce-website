@@ -340,7 +340,7 @@ function CartHoverButton() {
                 <p className="mt-1 text-[12px] text-neutral-500">Add items to get started</p>
                 <Link
                   href="/collections"
-                  className="mt-4 inline-flex rounded-full px-4 py-2 text-[12px] font-semibold text-white"
+                  className="btn mt-4 inline-flex rounded-none text-white"
                   style={{ backgroundColor: NAV2_ACCENT }}
                   onClick={() => setOpen(false)}
                 >
@@ -395,7 +395,7 @@ function CartHoverButton() {
                     setOpen(false);
                     openCart();
                   }}
-                  className="mt-2.5 w-full rounded-full py-2 text-[12px] font-semibold text-white"
+                  className="btn mt-2.5 w-full rounded-none text-white"
                   style={{ backgroundColor: NAV2_ACCENT }}
                 >
                   View cart

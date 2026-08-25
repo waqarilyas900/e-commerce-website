@@ -266,7 +266,7 @@ export function OrderConfirmation({
           <Link
             href="/collections"
             replace
-            className="inline-flex items-center justify-center rounded-full bg-neutral-950 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/20 transition hover:bg-neutral-800"
+            className="inline-flex items-center justify-center btn rounded-none bg-neutral-950 text-white shadow-lg shadow-neutral-900/20 transition hover:bg-neutral-800"
           >
             Continue shopping
           </Link>

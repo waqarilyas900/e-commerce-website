@@ -859,7 +859,7 @@ function CustomerReviewsInner({
                 <button
                   type="button"
                   onClick={closeReviewModal}
-                  className="w-full cursor-pointer rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-900 sm:w-auto"
+                  className="w-full cursor-pointer btn rounded-none bg-neutral-950 text-white shadow-sm transition hover:bg-neutral-900 sm:w-auto"
                 >
                   Back to product
                 </button>
@@ -869,7 +869,7 @@ function CustomerReviewsInner({
                 <button
                   type="button"
                   onClick={closeReviewModal}
-                  className="cursor-pointer rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+                  className="cursor-pointer btn rounded-none border border-neutral-300 bg-white text-neutral-800 transition hover:bg-neutral-50"
                 >
                   Cancel
                 </button>
@@ -877,7 +877,7 @@ function CustomerReviewsInner({
                   type="submit"
                   form={`${formId}-review-form`}
                   disabled={submitting}
-                  className="cursor-pointer rounded-full bg-neutral-950 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="cursor-pointer btn rounded-none bg-neutral-950 text-white transition hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Submitting…" : "Submit review"}
                 </button>
@@ -1049,7 +1049,7 @@ function CustomerReviewsInner({
                       <button
                         type="button"
                         onClick={() => removePendingAttachment(a.id)}
-                        className="absolute right-1 top-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-neutral-900/85 text-sm font-bold leading-none text-white shadow-sm hover:bg-neutral-900"
+                        className="absolute right-1 top-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-none bg-neutral-900/85 text-sm font-bold leading-none text-white shadow-sm hover:bg-neutral-900"
                         aria-label="Remove file"
                       >
                         ×

@@ -61,7 +61,7 @@ function SectionBlock({ section }: { section: BlogSection }) {
       <p className="text-[15px] leading-relaxed text-white/90">{section.text}</p>
       <Link
         href={section.href}
-        className="mt-4 inline-flex items-center justify-center rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-100"
+        className="mt-4 btn inline-flex items-center justify-center rounded-none bg-white text-neutral-900 transition hover:bg-neutral-100"
       >
         {section.label}
       </Link>

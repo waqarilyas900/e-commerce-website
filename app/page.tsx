@@ -14,6 +14,7 @@ import {
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
 import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
+import { getHomeCalloutImages } from "@/app/lib/home-callout-images";
 import { getHomeMarketingData } from "@/app/lib/home-marketing";
 import { getHomeRailSections } from "@/app/lib/home-rails";
 import { getCachedStoreReviewAggregate } from "@/lib/cache/store-review-aggregate";
@@ -50,7 +51,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * + rails so grey skeletons never flash between shell and content.
  */
 export default async function Home() {
-  const [homeMarketing, storeReviews, identityBundle, collectionTiles, railSections] =
+  const [homeMarketing, storeReviews, identityBundle, collectionTiles, railSections, calloutImages] =
     await Promise.all([
       getHomeMarketingData(),
       getCachedStoreReviewAggregate(),
@@ -60,6 +61,7 @@ export default async function Home() {
       })),
       loadHomeCollectionTiles(),
       getHomeRailSections(),
+      getHomeCalloutImages(),
     ]);
   const { identity, override } = identityBundle;
   const firstHeroImage = homeMarketing.slides[0]?.image ?? "";
@@ -144,7 +146,7 @@ export default async function Home() {
         {homeMarketing.missionParagraph ? (
           <MissionStrip missionHtml={homeMarketing.missionParagraph} />
         ) : null}
-        <ActiveWearBlock />
+        <ActiveWearBlock calloutImages={calloutImages} />
         <HomeCollectionsStrip tiles={collectionTiles} />
         {railSections.map((rail) => (
           <ProductSection

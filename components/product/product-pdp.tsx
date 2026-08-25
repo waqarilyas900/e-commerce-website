@@ -900,7 +900,7 @@ export function ProductPdp({
                         {formatPkr(Number(priceVariant.price))}
                       </p>
                       {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
-                        <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
+                        <span className="inline-flex items-center rounded-none bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
                           {purchaseDiscountPct}% OFF
                         </span>
                       ) : null}
@@ -981,7 +981,7 @@ export function ProductPdp({
                         disabled={maxQty < 1}
                         openDrawer
                         itemName={product.name}
-                        className="min-w-0 flex-1 rounded-full px-3 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm disabled:opacity-50"
+                        className="min-w-0 flex-1"
                       />
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
@@ -995,7 +995,7 @@ export function ProductPdp({
                         redirectHref="/checkout"
                         label="Buy now"
                         itemName={product.name}
-                        className="min-w-0 flex-1 rounded-full px-3 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm disabled:opacity-50"
+                        className="min-w-0 flex-1"
                       />
                     </div>
                   </div>
@@ -1271,7 +1271,7 @@ export function ProductPdp({
                             {formatPkr(Number(priceVariant.price))}
                           </span>
                           {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
-                            <span className="inline-flex items-center rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white sm:text-[10px]">
+                            <span className="inline-flex items-center rounded-none bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white sm:text-[10px]">
                               {purchaseDiscountPct}% OFF
                             </span>
                           ) : null}

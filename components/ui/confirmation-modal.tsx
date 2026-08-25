@@ -75,8 +75,8 @@ export function ConfirmationModal({
 
   const confirmClass =
     tone === "danger"
-      ? "rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60"
-      : "rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 disabled:opacity-60";
+      ? "btn rounded-none bg-red-600 text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60"
+      : "btn rounded-none bg-neutral-900 text-white shadow-sm transition hover:bg-neutral-800 disabled:opacity-60";
 
   const footer = (
     <div className="flex flex-wrap justify-end gap-2">
@@ -84,7 +84,7 @@ export function ConfirmationModal({
         type="button"
         onClick={guardedClose}
         disabled={busy}
-        className="rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 shadow-sm transition hover:bg-neutral-50 disabled:opacity-60"
+        className="btn rounded-none border border-neutral-300 bg-white text-neutral-800 shadow-sm transition hover:bg-neutral-50 disabled:opacity-60"
       >
         {cancelLabel}
       </button>

@@ -77,7 +77,7 @@ export function AccountGate({ children }: Props) {
         </p>
         <Link
           href="/login"
-          className="mt-6 inline-flex rounded-full bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white"
+          className="mt-6 inline-flex btn rounded-none bg-neutral-950 text-white"
         >
           Try sign in
         </Link>

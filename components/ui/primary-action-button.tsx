@@ -4,10 +4,10 @@ import { forwardRef, type ReactNode } from "react";
 import { motion, type HTMLMotionProps } from "framer-motion";
 
 const base =
-  "group relative isolate inline-flex cursor-pointer items-center justify-center overflow-hidden font-semibold transition-shadow duration-200 ease-out will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+  "group relative isolate inline-flex cursor-pointer items-center justify-center overflow-hidden transition-shadow duration-200 ease-out will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
 const theme =
-  "rounded-full bg-(--colorBtnPrimary) px-5 py-3 text-sm text-(--colorBtnPrimaryText) shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] focus-visible:ring-(--colorBtnPrimary)";
+  "!rounded-none !px-5 !py-[11px] !text-base !font-black !uppercase !leading-[1.42] bg-(--colorBtnPrimary) text-(--colorBtnPrimaryText) shadow-none hover:shadow-none focus-visible:ring-(--colorBtnPrimary)";
 
 export type PrimaryActionButtonProps = Omit<HTMLMotionProps<"button">, "ref"> & {
   children: ReactNode;
@@ -16,8 +16,7 @@ export type PrimaryActionButtonProps = Omit<HTMLMotionProps<"button">, "ref"> & 
 };
 
 /**
- * Primary CTA using theme tokens (`--colorBtnPrimary` / `--colorBtnPrimaryText`).
- * Spring tap/hover + subtle sheen for a polished feel.
+ * Primary CTA — Rad-style: square, 16px, weight 900, uppercase.
  */
 export const PrimaryActionButton = forwardRef<HTMLButtonElement, PrimaryActionButtonProps>(
   function PrimaryActionButton({ className, children, disabled, loading, ...rest }, ref) {
@@ -38,7 +37,7 @@ export const PrimaryActionButton = forwardRef<HTMLButtonElement, PrimaryActionBu
         }
         whileTap={inactive ? undefined : { scale: 0.98 }}
         transition={{ type: "spring", stiffness: 520, damping: 28, mass: 0.6 }}
-        className={[base, theme, className].filter(Boolean).join(" ")}
+        className={[base, className, theme].filter(Boolean).join(" ")}
         {...rest}
       >
         <span

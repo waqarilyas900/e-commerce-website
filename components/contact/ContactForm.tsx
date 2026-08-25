@@ -187,7 +187,7 @@ export function ContactForm({ onSentChange }: ContactFormProps) {
               </PrimaryActionButton>
               <Link
                 href="/"
-                className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 shadow-sm transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 sm:w-auto"
+                className="btn inline-flex w-full items-center justify-center rounded-none border border-neutral-200 bg-white text-neutral-900 shadow-sm transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 sm:w-auto"
               >
                 Continue shopping
               </Link>
@@ -259,7 +259,7 @@ export function ContactForm({ onSentChange }: ContactFormProps) {
                 </div>
                 <button
                   type="button"
-                  className="shrink-0 rounded-full border border-neutral-200 bg-white px-4 py-2 text-xs font-semibold text-neutral-900 shadow-sm transition-colors hover:bg-neutral-50"
+                  className="shrink-0 rounded-none border border-neutral-200 bg-white px-4 py-2 text-xs font-semibold text-neutral-900 shadow-sm transition-colors hover:bg-neutral-50"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Add images
@@ -286,7 +286,7 @@ export function ContactForm({ onSentChange }: ContactFormProps) {
                       <img src={p.previewUrl} alt="" className="aspect-square w-full object-cover" />
                       <button
                         type="button"
-                        className="absolute right-1.5 top-1.5 rounded-full bg-black/75 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm hover:bg-black"
+                        className="absolute right-1.5 top-1.5 rounded-none bg-black/75 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm hover:bg-black"
                         onClick={() => removeAt(i)}
                         aria-label={`Remove ${p.file.name}`}
                       >

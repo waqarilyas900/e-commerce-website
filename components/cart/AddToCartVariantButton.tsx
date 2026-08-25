@@ -36,7 +36,7 @@ type Props = {
 export function AddToCartVariantButton({
   variantId,
   productId,
-  className = "rounded-full px-6 py-3 text-sm",
+  className = "",
   label = "Add to cart",
   openDrawer = true,
   quantity = 1,

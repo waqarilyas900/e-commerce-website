@@ -543,7 +543,7 @@ export function CartDrawer() {
                         }
                       })();
                     }}
-                    className="mt-5 flex w-full items-center justify-center rounded-md bg-black px-5 py-3 text-sm font-semibold capitalize text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn mt-5 flex w-full items-center justify-center rounded-none bg-black text-white shadow-lg shadow-black/20 transition-[transform,box-shadow] hover:scale-[1.015] hover:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {checkoutNavigating ? "Loading…" : "Check out"}
                   </button>
