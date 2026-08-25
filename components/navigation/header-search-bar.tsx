@@ -16,7 +16,7 @@ import { createPortal } from "react-dom";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
 import { useHeaderNavMenuItems } from "@/app/providers/header-nav-menu-provider";
 import { formatPkr } from "@/app/lib/format-currency";
-import { NAV2_ACCENT, NAV2_ACCENT_RGB } from "@/components/navigation/nav2-theme";
+import { NAV2_ACCENT } from "@/components/navigation/nav2-theme";
 
 type SuggestProduct = {
   id: string;
@@ -214,13 +214,13 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
 
   const placeholder =
     hintsReady && !open && !q
-      ? rotatingHints[hintIndex] ?? "I'm shopping for..."
-      : "I'm shopping for...";
+      ? `Search for ${rotatingHints[hintIndex] ?? "home essentials"}`
+      : "Search products, categories…";
+
+  const showClear = q.length > 0;
 
   const panelPos =
-    open && pos && (matchedCategories.length > 0 || q.trim().length > 0)
-      ? pos
-      : null;
+    open && pos && (q.trim().length > 0 || popularCategories.length > 0) ? pos : null;
 
   const panel =
     mounted && panelPos
@@ -230,7 +230,7 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
             id={listboxId}
             role="listbox"
             aria-label="Search suggestions"
-            className="fixed z-[220] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]"
+            className="fixed z-[220] overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-[0_20px_48px_-12px_rgba(28,29,29,0.18)] ring-1 ring-black/[0.04]"
             style={{
               top: panelPos.top,
               left: panelPos.left,
@@ -238,18 +238,38 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
             }}
             onMouseDown={(e) => e.preventDefault()}
           >
-            <div className="max-h-[min(70dvh,420px)] overflow-y-auto overscroll-contain py-2">
-              {matchedCategories.length > 0 ? (
+            <div className="max-h-[min(70dvh,420px)] overflow-y-auto overscroll-contain py-2.5">
+              {!q.trim() && popularCategories.length > 0 ? (
+                <div className="mb-2 px-3.5">
+                  <p className="pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-400">
+                    Trending categories
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {popularCategories.slice(0, 6).map((c) => (
+                      <Link
+                        key={c.slug}
+                        href={c.href}
+                        className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[12px] font-medium text-neutral-700 transition hover:border-[#E0703A]/40 hover:bg-[rgba(224,112,58,0.08)] hover:text-[#E0703A]"
+                        onClick={closePanel}
+                      >
+                        {c.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {q.trim() && matchedCategories.length > 0 ? (
                 <div className="mb-1">
-                  <p className="px-3.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
-                    {q.trim() ? "Categories" : "Popular categories"}
+                  <p className="px-3.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-400">
+                    Categories
                   </p>
                   <ul>
                     {matchedCategories.map((c) => (
                       <li key={c.slug} role="option">
                         <Link
                           href={c.href}
-                          className="flex w-full items-center gap-2.5 px-3.5 py-[9px] text-left text-[13px] text-neutral-800 transition-colors hover:bg-[rgba(224,112,58,0.08)] hover:text-[#E0703A]"
+                          className="flex w-full items-center gap-2.5 px-3.5 py-[9px] text-left text-[13px] text-neutral-800 transition-colors hover:bg-[rgba(224,112,58,0.08)] hover:text-[#E0703A] focus-visible:bg-[rgba(224,112,58,0.08)] focus-visible:outline-none"
                           onClick={closePanel}
                         >
                           <svg
@@ -274,11 +294,21 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
 
               {q.trim() ? (
                 <div className="border-t border-neutral-100 pt-1">
-                  <p className="px-3.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+                  <p className="px-3.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-400">
                     Products
                   </p>
                   {loading && products.length === 0 ? (
-                    <p className="px-3.5 py-3 text-[13px] text-neutral-500">Searching…</p>
+                    <ul className="px-3.5 py-1" aria-hidden>
+                      {[0, 1, 2].map((i) => (
+                        <li key={i} className="flex items-center gap-3 py-2">
+                          <span className="h-11 w-11 shrink-0 animate-pulse rounded-md bg-neutral-100" />
+                          <span className="flex-1 space-y-2">
+                            <span className="block h-3 w-4/5 animate-pulse rounded bg-neutral-100" />
+                            <span className="block h-3 w-1/3 animate-pulse rounded bg-neutral-100" />
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   ) : null}
                   {!loading && products.length === 0 ? (
                     <p className="px-3.5 py-3 text-[13px] text-neutral-500">
@@ -290,7 +320,7 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
                       <li key={p.id} role="option">
                         <Link
                           href={`/products/${p.slug}`}
-                          className="flex w-full items-center gap-3 px-3.5 py-2 text-left transition-colors hover:bg-[rgba(224,112,58,0.08)]"
+                          className="flex w-full items-center gap-3 px-3.5 py-2 text-left transition-colors hover:bg-[rgba(224,112,58,0.08)] focus-visible:bg-[rgba(224,112,58,0.08)] focus-visible:outline-none"
                           onClick={closePanel}
                         >
                           <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-neutral-50">
@@ -324,12 +354,12 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
                   </ul>
                   <button
                     type="button"
-                    className="mt-1 flex w-full items-center gap-2 border-t border-neutral-100 px-3.5 py-2.5 text-left text-[13px] font-semibold transition-colors hover:bg-neutral-50"
+                    className="mt-1 flex w-full items-center justify-between gap-2 border-t border-neutral-100 px-3.5 py-3 text-left text-[13px] font-semibold transition-colors hover:bg-neutral-50"
                     style={{ color: NAV2_ACCENT }}
                     onClick={() => goSearch(q)}
                   >
-                    Search all products for “{q.trim()}”
-                    <span aria-hidden>→</span>
+                    <span className="min-w-0 truncate">View all results for “{q.trim()}”</span>
+                    <span aria-hidden className="shrink-0">→</span>
                   </button>
                 </div>
               ) : null}
@@ -343,20 +373,34 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
     <div ref={rootRef} className={`relative w-full min-w-0 ${className}`.trim()}>
       <form
         onSubmit={onSubmit}
-        className="flex h-9 w-full items-center gap-1 rounded-full border-[0.8px] border-neutral-900 bg-white pl-4 pr-1 transition-[border-color,box-shadow] sm:h-[36px]"
-        style={
+        className={`group/search flex h-10 w-full items-center gap-1 rounded-full border bg-white pl-3 pr-1 transition-[border-color,box-shadow,background-color] sm:h-[40px] ${
           open
-            ? {
-                borderColor: NAV2_ACCENT,
-                boxShadow: `0 0 0 2px rgba(${NAV2_ACCENT_RGB}, 0.18)`,
-              }
-            : undefined
-        }
+            ? "border-[#E0703A] shadow-[0_0_0_3px_rgba(224,112,58,0.14)]"
+            : "border-neutral-200 hover:border-neutral-300"
+        }`}
         role="search"
       >
         <label htmlFor={inputId} className="sr-only">
           Search products
         </label>
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
+            open ? "text-[#E0703A]" : "text-neutral-400 group-hover/search:text-neutral-500"
+          }`}
+          aria-hidden
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.25"
+            className="h-[16px] w-[16px]"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
+          </svg>
+        </span>
         <input
           ref={inputRef}
           id={inputId}
@@ -384,21 +428,40 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
           }}
           placeholder={placeholder}
           autoComplete="off"
-          className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-[13px] text-neutral-900 outline-none placeholder:text-neutral-400 sm:text-sm"
+          className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-[13px] text-neutral-900 outline-none placeholder:text-neutral-400 sm:text-sm [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
         />
+        {showClear ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setQ("");
+              setProducts([]);
+              setOpen(true);
+              inputRef.current?.focus();
+            }}
+          >
+            ×
+          </button>
+        ) : null}
         <button
           type="submit"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white transition hover:opacity-90 sm:h-8 sm:w-8"
+          className="flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-white transition hover:opacity-95 sm:px-3.5"
           style={{ backgroundColor: NAV2_ACCENT }}
           aria-label="Search"
         >
+          <span className="hidden text-[12px] font-semibold uppercase tracking-wide sm:inline">
+            Search
+          </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="2.5"
-            className="h-[14px] w-[14px]"
+            className="h-[14px] w-[14px] sm:hidden"
             aria-hidden
           >
             <circle cx="11" cy="11" r="7" />
