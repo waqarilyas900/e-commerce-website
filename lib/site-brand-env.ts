@@ -3,9 +3,9 @@
  *
  * To change the logo or store name site-wide, update `.env`:
  *   NEXT_PUBLIC_SITE_NAME=SimpleCart Store
- *   NEXT_PUBLIC_LOGO_URL=/brand/logo-dark.webp
- *   NEXT_PUBLIC_FOOTER_LOGO_URL=/brand/logo-light.webp
- *   NEXT_PUBLIC_FAVICON_URL=/brand/favicon.ico
+ *   NEXT_PUBLIC_LOGO_URL=/brand/logo-dark.svg
+ *   NEXT_PUBLIC_FOOTER_LOGO_URL=/brand/logo-light.svg
+ *   NEXT_PUBLIC_FAVICON_URL=/brand/favicon.png
  *
  * Logo/favicon may be root-relative (`/brand/logo.svg`) or absolute URLs.
  * Restart the dev server after changing these values.
@@ -18,13 +18,13 @@ import type { StoreBrandConfig } from "@/app/lib/store-brand.types";
 export const FALLBACK_SITE_NAME = "SimpleCart Store";
 
 /** Header logo (dark mark on light backgrounds). */
-export const FALLBACK_LOGO_URL = "/brand/logo-dark.webp";
+export const FALLBACK_LOGO_URL = "/brand/logo-dark.svg";
 
 /** Footer logo (light mark on dark backgrounds). */
-export const FALLBACK_FOOTER_LOGO_URL = "/brand/logo-light.webp";
+export const FALLBACK_FOOTER_LOGO_URL = "/brand/logo-light.svg";
 
-/** Local default when `NEXT_PUBLIC_FAVICON_URL` is unset (`public/brand/favicon.ico`). */
-export const FALLBACK_FAVICON_URL = "/brand/favicon.ico";
+/** Local default when `NEXT_PUBLIC_FAVICON_URL` is unset (`public/brand/favicon.png`). */
+export const FALLBACK_FAVICON_URL = "/brand/favicon.png";
 
 export function getEnvSiteName(): string {
   return process.env.NEXT_PUBLIC_SITE_NAME?.trim() ?? "";

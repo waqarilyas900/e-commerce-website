@@ -40,7 +40,9 @@ function SiteLogoImage({
   className: string;
   priority?: boolean;
 }) {
-  if (isRemoteAssetUrl(src)) {
+  // SVGs + remote URLs use <img> — next/image blocks/optimizes SVG poorly.
+  const useImg = isRemoteAssetUrl(src) || /\.svg($|\?)/i.test(src);
+  if (useImg) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
