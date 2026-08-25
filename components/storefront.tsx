@@ -11,9 +11,11 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 import { useCart } from "@/app/providers/cart-provider";
+import { useProductPreview } from "@/app/providers/product-preview-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { HeaderNavV2 } from "@/components/navigation/header-nav-v2";
@@ -25,6 +27,24 @@ import type { Product } from "@/app/lib/catalog/types";
 import { formatPkr } from "@/app/lib/format-currency";
 import { isEffectivelyEmptyHtml } from "@/app/lib/html-content";
 
+function CartGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="9" cy="20" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="17" cy="20" r="1.5" fill="currentColor" stroke="none" />
+      <path d="M3 4h2l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h7.4a1.5 1.5 0 0 0 1.5-1.2L20 8H7" />
+    </svg>
+  );
+}
 const stripShellClass =
   "shopify-section shopify-section-group-header-group flex min-h-[37px] w-full shrink-0 items-center justify-center overflow-hidden shell-x py-1.5 text-center text-[13px] font-medium leading-snug tracking-wide";
 
@@ -222,6 +242,8 @@ export function ProductCard({
   revealDelay?: number;
   clampTitle?: boolean;
 }) {
+  const { openPreview } = useProductPreview();
+
   if (!product?.slug) {
     return null;
   }
@@ -251,56 +273,65 @@ export function ProductCard({
     objectPosition: "top center" as const,
   };
 
+  const openQuickPreview = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openPreview(product);
+  };
+
   return (
     <article
-      className="product-card-reveal flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
+      className="product-card-reveal group/card flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
       style={
         revealDelay > 0
           ? ({ ["--card-reveal-delay"]: `${revealDelay}s` } as CSSProperties)
           : undefined
       }
     >
-      <HoverPrefetchLink
-        href={`/products/${product.slug}`}
-        prefetch
-        className="group relative block shrink-0"
-      >
-        <div
-          className={
-            rail
-              ? "relative h-[248px] w-full overflow-hidden bg-neutral-100 sm:h-64"
-              : "relative aspect-4/5 w-full overflow-hidden bg-neutral-50 sm:aspect-auto sm:h-64 md:h-72 lg:h-80"
-          }
+      <div className="relative shrink-0">
+        <HoverPrefetchLink
+          href={`/products/${product.slug}`}
+          prefetch
+          className="group relative block"
         >
-          {product.image ? (
-            useNativeProductImg ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={optimizeSupplierImageUrl(product.image, rail ? 400 : 400)}
-                alt={product.name}
-                loading="lazy"
-                decoding="async"
-                width={400}
-                height={500}
-                style={productImgFitStyle}
-                className={`absolute inset-0 h-full w-full ${productImgClassName}`}
-              />
-            ) : (
-              <Image
-                src={product.image}
-                alt={product.name}
-                fill
-                sizes={
-                  rail
-                    ? "(max-width: 767px) 60vw, 300px"
-                    : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 340px"
-                }
-                style={productImgFitStyle}
-                className={productImgClassName}
-              />
-            )
-          ) : null}
-        </div>
+          <div
+            className={
+              rail
+                ? "relative h-[248px] w-full overflow-hidden bg-neutral-100 sm:h-64"
+                : "relative aspect-4/5 w-full overflow-hidden bg-neutral-50 sm:aspect-auto sm:h-64 md:h-72 lg:h-80"
+            }
+          >
+            {product.image ? (
+              useNativeProductImg ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={optimizeSupplierImageUrl(product.image, rail ? 400 : 400)}
+                  alt={product.name}
+                  loading="lazy"
+                  decoding="async"
+                  width={400}
+                  height={500}
+                  style={productImgFitStyle}
+                  className={`absolute inset-0 h-full w-full ${productImgClassName}`}
+                />
+              ) : (
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  sizes={
+                    rail
+                      ? "(max-width: 767px) 60vw, 300px"
+                      : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 340px"
+                  }
+                  style={productImgFitStyle}
+                  className={productImgClassName}
+                />
+              )
+            ) : null}
+          </div>
+        </HoverPrefetchLink>
+
         {badgeLabel ? (
           <span
             className={`pointer-events-none absolute right-0 top-0 z-10 uppercase leading-tight tracking-wide ${badgeSizeClass} ${badgeClass} rounded-none`}
@@ -308,7 +339,27 @@ export function ProductCard({
             {badgeLabel}
           </span>
         ) : null}
-      </HoverPrefetchLink>
+
+        {/* AliExpress-style rounded cart — always on mobile, hover on desktop */}
+        <button
+          type="button"
+          onClick={openQuickPreview}
+          aria-label={`Preview ${product.name}`}
+          className="absolute bottom-2 right-2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1c1d1d] shadow-md ring-1 ring-black/5 transition hover:bg-[#E0703A] hover:text-white sm:bottom-12 sm:opacity-0 sm:pointer-events-none sm:group-hover/card:opacity-100 sm:group-hover/card:pointer-events-auto"
+        >
+          <CartGlyph className="h-[18px] w-[18px]" />
+        </button>
+
+        {/* AliExpress-style See preview — desktop hover only */}
+        <button
+          type="button"
+          onClick={openQuickPreview}
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden h-10 translate-y-full items-center justify-center bg-black/70 text-[12px] font-semibold uppercase tracking-wide text-white opacity-0 transition hover:bg-black/80 sm:flex sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
+        >
+          See preview
+        </button>
+      </div>
+
       {/* Tight, even stack: image → title → stars → price (no forced title min-height gap). */}
       <div className="flex min-h-0 flex-1 flex-col gap-1 px-2 pb-2 pt-1.5 text-[13px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm">
         <div className="flex flex-col gap-0">

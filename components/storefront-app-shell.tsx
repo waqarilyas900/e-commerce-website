@@ -4,7 +4,9 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/app/providers/auth-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
+import { ProductPreviewProvider } from "@/app/providers/product-preview-provider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { ProductPreviewSheet } from "@/components/product/product-preview-sheet";
 import { Footer, Header } from "@/components/storefront";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { DeferredAppShells } from "@/components/ui/deferred-app-shells";
@@ -30,17 +32,20 @@ export function StorefrontAppShell({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <CartProvider>
-        <HeaderStickyObserver />
-        <div id="PageContainer" className="page-container">
-          <div className="transition-body">
-            {showChrome ? <Header /> : null}
-            {children}
-            {showChrome ? <Footer /> : null}
+        <ProductPreviewProvider>
+          <HeaderStickyObserver />
+          <div id="PageContainer" className="page-container">
+            <div className="transition-body">
+              {showChrome ? <Header /> : null}
+              {children}
+              {showChrome ? <Footer /> : null}
+            </div>
           </div>
-        </div>
-        <CartDrawer />
-        <AppToaster />
-        <DeferredAppShells />
+          <CartDrawer />
+          <ProductPreviewSheet />
+          <AppToaster />
+          <DeferredAppShells />
+        </ProductPreviewProvider>
       </CartProvider>
     </AuthProvider>
   );
