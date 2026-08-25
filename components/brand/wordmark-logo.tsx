@@ -1,5 +1,6 @@
 /**
  * Inline wordmark so site Montserrat applies (external <img> SVGs cannot load page fonts).
+ * viewBox is cropped to the glyph so empty SVG margins don't shrink the visible logo.
  */
 
 type Variant = "dark" | "light";
@@ -19,6 +20,9 @@ const palette = {
   },
 } as const;
 
+/** Tight crop around icon + wordmark (stroke-safe). */
+const VIEWBOX = "48 50 870 275";
+
 export function WordmarkLogo({
   variant,
   className = "",
@@ -31,7 +35,7 @@ export function WordmarkLogo({
   const c = palette[variant];
   return (
     <svg
-      viewBox="0 0 1400 360"
+      viewBox={VIEWBOX}
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       role="img"

@@ -19,18 +19,15 @@ const LOGO_WIDTH = 280;
 const LOGO_HEIGHT = 90;
 
 /**
- * Shared scale — header `default` and footer use the same visual size.
- * Aspect ≈ 1400:360 (~3.9:1).
+ * Shared scale — height-driven + w-auto so tight SVG crop fills the box
+ * without empty side padding. Header `default` === footer.
  */
 const LOGO_SIZE = {
-  /** Primary header + footer wordmark */
   default:
-    "h-16 w-[15.5rem] sm:h-[4.5rem] sm:w-[17.5rem] md:h-20 md:w-[19.5rem]",
-  /** Checkout / promo */
+    "h-16 w-auto sm:h-[4.5rem] md:h-20",
   large:
-    "h-[4.5rem] w-[17.5rem] sm:h-20 sm:w-[19.5rem] md:h-[5.25rem] md:w-[22rem]",
-  /** Mobile drawer only */
-  compact: "h-12 w-[11.75rem] sm:h-14 sm:w-[13.5rem]",
+    "h-[4.5rem] w-auto sm:h-20 md:h-[5.25rem]",
+  compact: "h-12 w-auto sm:h-14",
 } as const;
 
 const markSizeClass = LOGO_SIZE;
@@ -124,7 +121,7 @@ export function SiteLogoMark({
         <WordmarkLogo
           variant="dark"
           title={alt}
-          className="h-full w-full max-h-full max-w-full"
+          className="h-full w-auto max-h-full"
         />
       </span>
     );
@@ -162,7 +159,7 @@ export function SiteLogoFull({ className = "" }: FullProps) {
         <WordmarkLogo
           variant="light"
           title={alt}
-          className="h-full w-full max-h-full max-w-full"
+          className="h-full w-auto max-h-full"
         />
       </span>
     );

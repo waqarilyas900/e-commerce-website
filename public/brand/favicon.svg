@@ -1,7 +1,7 @@
 <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
   <rect width="600" height="600" rx="120" fill="#1C1D1D"/>
-  <!-- Full glyph bounds ≈ x40–258, y32–241; center (149, 136.5) -->
-  <g transform="translate(300,300) scale(1.28) translate(-149,-136.5)">
+  <!-- Fill the square: scale ~1.72, centered on full glyph (149, 136.5); small safe margin for strokes -->
+  <g transform="translate(300,300) scale(1.72) translate(-149,-136.5)">
     <path d="M40 60 H74 L98 90" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M98 90 L178 32 L258 90 L258 198 L98 198 Z" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"/>
     <rect x="150" y="140" width="56" height="58" rx="7" fill="#E88A5A"/>
