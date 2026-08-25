@@ -217,14 +217,13 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
       ? rotatingHints[hintIndex] ?? "I'm shopping for..."
       : "I'm shopping for...";
 
-  const showPanel = Boolean(
-    open &&
-      pos &&
-      (matchedCategories.length > 0 || q.trim().length > 0),
-  );
+  const panelPos =
+    open && pos && (matchedCategories.length > 0 || q.trim().length > 0)
+      ? pos
+      : null;
 
   const panel =
-    mounted && showPanel
+    mounted && panelPos
       ? createPortal(
           <div
             ref={panelRef}
@@ -232,7 +231,11 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
             role="listbox"
             aria-label="Search suggestions"
             className="fixed z-[220] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]"
-            style={{ top: pos.top, left: pos.left, width: pos.width }}
+            style={{
+              top: panelPos.top,
+              left: panelPos.left,
+              width: panelPos.width,
+            }}
             onMouseDown={(e) => e.preventDefault()}
           >
             <div className="max-h-[min(70dvh,420px)] overflow-y-auto overscroll-contain py-2">
