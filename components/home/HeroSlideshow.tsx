@@ -221,8 +221,8 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
     >
       <div className="slideshow-wrapper relative w-full pb-5 sm:pb-6 md:pb-7">
         <div className="relative w-full overflow-hidden">
-          {/* ~35% shorter than aspect-12/5 (height ≈ 65% of previous) */}
-          <div className="relative aspect-[48/13] w-full max-w-[100vw]">
+          {/* ~44% shorter than original aspect-12/5 */}
+          <div className="relative aspect-[160/37] w-full max-w-[100vw]">
             {!showCarousel ? (
               <div className="absolute inset-0 overflow-hidden">
                 <HeroSlideImage slide={slides[0]} priority />
