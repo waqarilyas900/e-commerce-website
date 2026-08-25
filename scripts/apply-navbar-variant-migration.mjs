@@ -31,7 +31,9 @@ const sql = fs.readFileSync(
   "utf8",
 );
 
-const connectionString = `postgresql://postgres.${ref}:${encodeURIComponent(password)}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres`;
+// Project lives in ap-south-1 (Mumbai); ap-southeast-1 pooler returns ENOTFOUND tenant.
+const region = process.env.SUPABASE_DB_REGION || "ap-south-1";
+const connectionString = `postgresql://postgres.${ref}:${encodeURIComponent(password)}@aws-0-${region}.pooler.supabase.com:6543/postgres`;
 
 const client = new pg.Client({
   connectionString,
