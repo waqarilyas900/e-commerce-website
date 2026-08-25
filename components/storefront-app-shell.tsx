@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/app/providers/auth-provider";
 import { CartProvider } from "@/app/providers/cart-provider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
-import { Footer, Header, TopStrip } from "@/components/storefront";
+import { Footer, Header } from "@/components/storefront";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { DeferredAppShells } from "@/components/ui/deferred-app-shells";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
@@ -34,8 +34,6 @@ export function StorefrontAppShell({ children }: { children: ReactNode }) {
         <div id="PageContainer" className="page-container">
           <div className="transition-body">
             {showChrome ? <Header /> : null}
-            {/* Homepage places TopStrip under the hero banner in page.tsx */}
-            {showChrome && pathname !== "/" ? <TopStrip /> : null}
             {children}
             {showChrome ? <Footer /> : null}
           </div>
