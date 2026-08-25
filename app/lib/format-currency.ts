@@ -11,4 +11,12 @@ export function formatPkr(amount: number): string {
   }).format(amount);
 }
 
+/** Numeric amount only — for AliExpress-style “PKR” + big number layouts. */
+export function formatPkrAmount(amount: number): string {
+  return new Intl.NumberFormat("en-PK", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export const STORE_CURRENCY_CODE = "PKR" as const;

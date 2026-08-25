@@ -23,8 +23,8 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { RiseUpTitle } from "@/components/ui/rise-up-title";
 import { homeSectionTitleClass, mobileHeadingSizeClass } from "@/components/ui/home-section-title";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
+import { ProductCardPrice } from "@/components/ui/product-card-price";
 import type { Product } from "@/app/lib/catalog/types";
-import { formatPkr } from "@/app/lib/format-currency";
 import { isEffectivelyEmptyHtml } from "@/app/lib/html-content";
 
 function CartGlyph({ className }: { className?: string }) {
@@ -378,19 +378,7 @@ export function ProductCard({
             <ProductCardStarRow rating={product.rating} />
           ) : null}
         </div>
-        {product.compareAtPrice != null && product.compareAtPrice > product.price ? (
-          <div className="flex w-full items-baseline justify-between gap-2">
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-              <span className="text-neutral-500 line-through">{formatPkr(product.compareAtPrice)}</span>
-              <span className="font-semibold text-neutral-900">{formatPkr(product.price)}</span>
-            </div>
-            <p className="shrink-0 text-right text-[12px] font-medium text-red-600 sm:text-[13px]">
-              Save {formatPkr(product.compareAtPrice - product.price)}
-            </p>
-          </div>
-        ) : (
-          <p className="font-semibold text-neutral-900">{formatPkr(product.price)}</p>
-        )}
+        <ProductCardPrice price={product.price} compareAtPrice={product.compareAtPrice} />
         {showAddToCart ? (
           <div className="mt-auto pt-1 sm:pt-1.5">
             <AddToCartButton
