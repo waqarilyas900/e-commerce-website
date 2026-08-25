@@ -15,19 +15,17 @@ import {
  * Bundled brand SVGs render inline so Montserrat (page font) applies.
  */
 
-const LOGO_WIDTH = 280;
-const LOGO_HEIGHT = 90;
+const LOGO_WIDTH = 150;
+const LOGO_HEIGHT = 50;
 
 /**
- * Shared scale — height-driven + w-auto so tight SVG crop fills the box
- * without empty side padding. Header `default` === footer.
+ * Shared scale — same as original header mark (pre-enlargement).
+ * `w-auto` keeps the tight SVG crop from adding empty side padding.
  */
 const LOGO_SIZE = {
-  default:
-    "h-16 w-auto sm:h-[4.5rem] md:h-20",
-  large:
-    "h-[4.5rem] w-auto sm:h-20 md:h-[5.25rem]",
-  compact: "h-12 w-auto sm:h-14",
+  default: "h-8 w-auto sm:h-10 md:h-11",
+  large: "h-11 w-auto sm:h-12",
+  compact: "h-7 w-auto sm:h-9",
 } as const;
 
 const markSizeClass = LOGO_SIZE;
