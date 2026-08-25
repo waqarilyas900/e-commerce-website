@@ -16,7 +16,6 @@ import {
 import { useCart } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
-import { HeaderNavV1 } from "@/components/navigation/header-nav-v1";
 import { HeaderNavV2 } from "@/components/navigation/header-nav-v2";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { RiseUpTitle } from "@/components/ui/rise-up-title";
@@ -142,11 +141,7 @@ export function TopStrip() {
 }
 
 export function Header() {
-  const { navbarVariant } = useStoreBrand();
-  if (navbarVariant === "v2") {
-    return <HeaderNavV2 />;
-  }
-  return <HeaderNavV1 />;
+  return <HeaderNavV2 />;
 }
 
 /**

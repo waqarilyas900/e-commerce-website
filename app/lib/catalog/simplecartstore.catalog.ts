@@ -12,7 +12,6 @@ export const simpleCartStoreDemoCatalog: StoreCatalog = {
     siteDescription:
       "Tailoring supplies, industrial sewing parts, and presser feet — clear specs, fair pricing, and fast delivery across Pakistan.",
     faviconUrl: "/brand/favicon.png",
-    navbarVariant: "v1",
     announcement: "FREE shipping on orders over Rs. 3,000 · Easy returns within 14 days",
     missionParagraph:
       "We stock presser feet, needles, guides, oil, and machine accessories for tailors and workshops — with transparent pricing and stock you can trust.",

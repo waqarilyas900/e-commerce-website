@@ -89,7 +89,6 @@ const EMPTY_BRAND: StoreBrandConfig = {
   siteTitle: "",
   siteDescription: "",
   faviconUrl: "",
-  navbarVariant: "v1",
   featured: EMPTY_FEATURED,
   whyShop: EMPTY_WHY,
   footer: {
@@ -276,7 +275,7 @@ async function _loadStoreBrand(): Promise<StoreBrandConfig> {
   if (!hasCatalogDb()) return EMPTY_BRAND;
   try {
     const supabase = createAnonServerSupabase();
-    const [storeRes, footerTitleRes, homeRes, navVariantRes, footerItemsRes] = await Promise.all([
+    const [storeRes, footerTitleRes, homeRes, footerItemsRes] = await Promise.all([
       supabase
         .from("store_settings")
         .select(
@@ -292,11 +291,6 @@ async function _loadStoreBrand(): Promise<StoreBrandConfig> {
       supabase
         .from("home_page_settings")
         .select("featured_block, why_shop_block")
-        .eq("id", 1)
-        .maybeSingle(),
-      supabase
-        .from("home_page_settings")
-        .select("navbar_variant")
         .eq("id", 1)
         .maybeSingle(),
       supabase
@@ -326,22 +320,12 @@ async function _loadStoreBrand(): Promise<StoreBrandConfig> {
           ).trim()
         : "";
     const customerCareTitle = careRaw || "Customer care";
-    const rawVariant = String(
-      (!navVariantRes.error && navVariantRes.data
-        ? (navVariantRes.data as { navbar_variant?: string }).navbar_variant
-        : "") ?? "",
-    )
-      .trim()
-      .toLowerCase();
-    const navbarVariant: StoreBrandConfig["navbarVariant"] =
-      rawVariant === "v2" ? "v2" : "v1";
 
     return {
       storeName,
       siteTitle: siteTitleRaw || storeName,
       siteDescription,
       faviconUrl: "",
-      navbarVariant,
       featured: parseFeaturedBlock(h?.featured_block),
       whyShop: parseWhyShopBlock(h?.why_shop_block),
       footer: {
