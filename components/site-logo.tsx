@@ -15,16 +15,25 @@ import {
  * Bundled brand SVGs render inline so Montserrat (page font) applies.
  */
 
-const LOGO_WIDTH = 220;
-const LOGO_HEIGHT = 72;
+const LOGO_WIDTH = 280;
+const LOGO_HEIGHT = 90;
 
-/** ~35–40% larger than previous header marks. */
-const markSizeClass = {
+/**
+ * Shared scale — header `default` and footer use the same visual size.
+ * Aspect ≈ 1400:360 (~3.9:1).
+ */
+const LOGO_SIZE = {
+  /** Primary header + footer wordmark */
   default:
-    "h-11 w-[9.5rem] sm:h-12 sm:w-[11.5rem] md:h-14 md:w-[13.5rem]",
-  large: "h-12 w-[11rem] sm:h-14 sm:w-[13rem] md:h-16 md:w-[15rem]",
-  compact: "h-9 w-[8rem] sm:h-11 sm:w-[10rem]",
+    "h-16 w-[15.5rem] sm:h-[4.5rem] sm:w-[17.5rem] md:h-20 md:w-[19.5rem]",
+  /** Checkout / promo */
+  large:
+    "h-[4.5rem] w-[17.5rem] sm:h-20 sm:w-[19.5rem] md:h-[5.25rem] md:w-[22rem]",
+  /** Mobile drawer only */
+  compact: "h-12 w-[11.75rem] sm:h-14 sm:w-[13.5rem]",
 } as const;
+
+const markSizeClass = LOGO_SIZE;
 
 export type SiteLogoMarkSize = keyof typeof markSizeClass;
 
@@ -139,24 +148,35 @@ type FullProps = {
   className?: string;
 };
 
-/** Footer / marketing — light logo on dark footer backgrounds. */
+/** Footer / marketing — same size as header `default` for consistency. */
 export function SiteLogoFull({ className = "" }: FullProps) {
   const src = resolveFooterLogoUrl();
   const alt = resolveSiteName();
-  const footerClass =
-    `h-14 w-auto max-w-[260px] object-contain object-left sm:h-16 sm:max-w-[300px] md:h-[4.25rem] md:max-w-[340px] ${className}`.trim();
+  const sizeClass = LOGO_SIZE.default;
 
   if (isBundledLightLogo(src)) {
     return (
-      <span className={`inline-flex font-semibold ${footerClass}`}>
+      <span
+        className={`inline-flex shrink-0 items-center justify-start font-semibold ${sizeClass} ${className}`.trim()}
+      >
         <WordmarkLogo
           variant="light"
           title={alt}
-          className="h-full w-auto max-h-full max-w-full"
+          className="h-full w-full max-h-full max-w-full"
         />
       </span>
     );
   }
 
-  return <SiteLogoImage src={src} alt={alt} className={footerClass} />;
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-start ${sizeClass} ${className}`.trim()}
+    >
+      <SiteLogoImage
+        src={src}
+        alt={alt}
+        className="h-full w-full max-h-full max-w-full object-contain object-left"
+      />
+    </span>
+  );
 }
