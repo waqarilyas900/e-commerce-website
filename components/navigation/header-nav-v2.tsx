@@ -517,63 +517,61 @@ export function HeaderNavV2() {
         )}
       </div>
 
-      {/* Category strip only on in-flow header — sticky bar stays logo + search + utils */}
-      {!isStickyHeader ? (
-        <div className="hidden border-t border-neutral-100/80 lg:block">
-          <div className="flex items-center gap-1 py-1.5">
-            <AllCategoriesMegaMenu />
-            <nav
-              className="flex min-w-0 flex-1 items-center gap-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              aria-label="Department links"
-            >
-              {headerNavItems.map((item) => {
-                const isSale = item.slug === "sale" || /sale|deal/i.test(item.label);
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <HoverPrefetchLink
-                    key={item.id}
-                    href={item.href}
-                    prefetch
-                    className={
-                      isSale || active
-                        ? "inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold transition-colors hover:opacity-90"
-                        : stripHover
-                    }
-                    style={isSale || active ? { color: NAV2_ACCENT } : undefined}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    {isSale ? (
-                      <SaleBoltIcon className="h-[14px] w-[14px] shrink-0" aria-hidden />
-                    ) : null}
-                    {item.label}
-                  </HoverPrefetchLink>
-                );
-              })}
-              {visibleCollections.map((c) => {
-                const href = `/collections/${c.slug}`;
-                const active = pathname === href || pathname.startsWith(`${href}/`);
-                return (
-                  <HoverPrefetchLink
-                    key={c.slug}
-                    href={href}
-                    prefetch
-                    className={
-                      active
-                        ? "inline-flex shrink-0 items-center whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold"
-                        : stripHover
-                    }
-                    style={active ? { color: NAV2_ACCENT } : undefined}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    {c.name}
-                  </HoverPrefetchLink>
-                );
-              })}
-            </nav>
-            <MoreCategoriesMenu items={moreCollections} />
-          </div>
+      {/* Category strip stays with the header when sticky */}
+      <div className="hidden border-t border-neutral-100/80 lg:block">
+        <div className="flex items-center gap-1 py-1.5">
+          <AllCategoriesMegaMenu />
+          <nav
+            className="flex min-w-0 flex-1 items-center gap-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            aria-label="Department links"
+          >
+            {headerNavItems.map((item) => {
+              const isSale = item.slug === "sale" || /sale|deal/i.test(item.label);
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <HoverPrefetchLink
+                  key={item.id}
+                  href={item.href}
+                  prefetch
+                  className={
+                    isSale || active
+                      ? "inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold transition-colors hover:opacity-90"
+                      : stripHover
+                  }
+                  style={isSale || active ? { color: NAV2_ACCENT } : undefined}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {isSale ? (
+                    <SaleBoltIcon className="h-[14px] w-[14px] shrink-0" aria-hidden />
+                  ) : null}
+                  {item.label}
+                </HoverPrefetchLink>
+              );
+            })}
+            {visibleCollections.map((c) => {
+              const href = `/collections/${c.slug}`;
+              const active = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <HoverPrefetchLink
+                  key={c.slug}
+                  href={href}
+                  prefetch
+                  className={
+                    active
+                      ? "inline-flex shrink-0 items-center whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold"
+                      : stripHover
+                  }
+                  style={active ? { color: NAV2_ACCENT } : undefined}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {c.name}
+                </HoverPrefetchLink>
+              );
+            })}
+          </nav>
+          <MoreCategoriesMenu items={moreCollections} />
         </div>
-      ) : null}
+      </div>
     </div>
   );
 
