@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getImageProps } from "next/image";
 import {
   ProductSection,
+  TopStrip,
   WhyShop,
 } from "@/components/storefront";
 import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
@@ -131,6 +132,7 @@ export default async function Home() {
         {homeMarketing.slides.length > 0 ? (
           <HeroBanner slides={homeMarketing.slides} />
         ) : null}
+        <TopStrip />
         <section className="border-b border-[#e8e8e1] bg-white">
           <div className="mx-auto max-w-7xl shell-x py-4 text-center sm:py-5">
             <HomeSectionTitle as="h1">{homeDisplayTitle}</HomeSectionTitle>

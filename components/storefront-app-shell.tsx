@@ -33,8 +33,9 @@ export function StorefrontAppShell({ children }: { children: ReactNode }) {
         <HeaderStickyObserver />
         <div id="PageContainer" className="page-container">
           <div className="transition-body">
-            {showChrome ? <TopStrip /> : null}
             {showChrome ? <Header /> : null}
+            {/* Homepage places TopStrip under the hero banner in page.tsx */}
+            {showChrome && pathname !== "/" ? <TopStrip /> : null}
             {children}
             {showChrome ? <Footer /> : null}
           </div>
