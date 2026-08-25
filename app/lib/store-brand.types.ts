@@ -30,6 +30,12 @@ export type StoreBrandConfig = {
   siteDescription: string;
   faviconUrl: string;
   /**
+   * Storefront header layout:
+   * - `v1` classic centered logo + side nav (default)
+   * - `v2` AliExpress-style logo + search + category row
+   */
+  navbarVariant: "v1" | "v2";
+  /**
    * When set (root layout), drives the top announcement bar: HTML, colors, rotation.
    */
   announcementBar?: AnnouncementBarSettings;

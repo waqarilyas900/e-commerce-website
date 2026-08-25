@@ -38,6 +38,8 @@ import {
   collectionDisplayName,
   normalizeCollectionSlug,
 } from "@/lib/catalog/collection-nav";
+import { getCachedProductsByCollectionSlug } from "@/lib/cache/catalog-data";
+import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import type { AnalyticsConfig } from "@/lib/seo/analytics-config";
 import type { SiteIdentity } from "@/lib/seo/types";
 
@@ -87,6 +89,7 @@ const EMPTY_BRAND: StoreBrandConfig = {
   siteTitle: "",
   siteDescription: "",
   faviconUrl: "",
+  navbarVariant: "v1",
   featured: EMPTY_FEATURED,
   whyShop: EMPTY_WHY,
   footer: {
@@ -273,7 +276,7 @@ async function _loadStoreBrand(): Promise<StoreBrandConfig> {
   if (!hasCatalogDb()) return EMPTY_BRAND;
   try {
     const supabase = createAnonServerSupabase();
-    const [storeRes, footerTitleRes, homeRes, footerItemsRes] = await Promise.all([
+    const [storeRes, footerTitleRes, homeRes, navVariantRes, footerItemsRes] = await Promise.all([
       supabase
         .from("store_settings")
         .select(
@@ -292,6 +295,11 @@ async function _loadStoreBrand(): Promise<StoreBrandConfig> {
         .eq("id", 1)
         .maybeSingle(),
       supabase
+        .from("home_page_settings")
+        .select("navbar_variant")
+        .eq("id", 1)
+        .maybeSingle(),
+      supabase
         .from("policy_pages")
         .select("slug, title, sort_order")
         .order("sort_order", { ascending: true })
@@ -301,7 +309,7 @@ async function _loadStoreBrand(): Promise<StoreBrandConfig> {
     if (storeRes.error || !storeRes.data) return EMPTY_BRAND;
 
     const s = storeRes.data;
-    const h = homeRes.data;
+    const h = homeRes.error ? null : homeRes.data;
     const footerItems =
       !footerItemsRes.error && footerItemsRes.data
         ? mapFooterItemsFromPolicyPages(footerItemsRes.data)
@@ -318,12 +326,22 @@ async function _loadStoreBrand(): Promise<StoreBrandConfig> {
           ).trim()
         : "";
     const customerCareTitle = careRaw || "Customer care";
+    const rawVariant = String(
+      (!navVariantRes.error && navVariantRes.data
+        ? (navVariantRes.data as { navbar_variant?: string }).navbar_variant
+        : "") ?? "",
+    )
+      .trim()
+      .toLowerCase();
+    const navbarVariant: StoreBrandConfig["navbarVariant"] =
+      rawVariant === "v2" ? "v2" : "v1";
 
     return {
       storeName,
       siteTitle: siteTitleRaw || storeName,
       siteDescription,
       faviconUrl: "",
+      navbarVariant,
       featured: parseFeaturedBlock(h?.featured_block),
       whyShop: parseWhyShopBlock(h?.why_shop_block),
       footer: {
@@ -433,16 +451,40 @@ async function _loadNavCollections(): Promise<NavCollectionLink[]> {
     const supabase = createAnonServerSupabase();
     const { data, error } = await supabase
       .from("collections")
-      .select("slug, name, sort_order")
+      .select("slug, name, hero_image, sort_order")
       .order("sort_order", { ascending: true });
     if (error || !data) return [];
-    return data.map((c) => {
-      const slug = normalizeCollectionSlug(c.slug as string);
-      return {
-        slug,
-        name: collectionDisplayName(slug, c.name as string),
-      };
-    });
+
+    const links = await Promise.all(
+      data.map(async (c): Promise<NavCollectionLink | null> => {
+        const slug = normalizeCollectionSlug(c.slug as string);
+        if (!slug || slug === "sale") return null;
+        const name = collectionDisplayName(slug, c.name as string);
+        const products = await getCachedProductsByCollectionSlug(slug);
+        const previews = products
+          .filter((p) => (p.image ?? "").trim())
+          .slice(0, 8)
+          .map((p) => ({
+            slug: p.slug,
+            name: p.name,
+            image: optimizeSupplierImageUrl(p.image, 360),
+            href: `/products/${p.slug}`,
+          }));
+        const hero = ((c as { hero_image?: string | null }).hero_image ?? "").trim();
+        const imageUrl = optimizeSupplierImageUrl(
+          hero || previews[0]?.image || "",
+          360,
+        );
+        return {
+          slug,
+          name,
+          imageUrl: imageUrl || undefined,
+          products: previews,
+        };
+      }),
+    );
+
+    return links.filter((l): l is NavCollectionLink => l != null);
   } catch {
     return [];
   }
@@ -673,7 +715,7 @@ export const getCachedHomeHeroAndMission = unstable_cache(
 
 export const getCachedNavCollections = unstable_cache(
   _loadNavCollections,
-  ["layout-nav-collections-v2"],
+  ["layout-nav-collections-v3"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.navCollections],

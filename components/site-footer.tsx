@@ -104,7 +104,7 @@ function NeedHelpBlock({
       <p className="text-sm text-white/70">Reach us at</p>
       <a
         href={mailto}
-        className="block break-all font-semibold tracking-wide text-white underline-offset-4 transition hover:underline"
+        className="block break-all font-semibold tracking-wide text-white underline-offset-4 transition hover:text-[#E0703A] hover:underline"
       >
         {footer.supportEmail}
       </a>
@@ -131,7 +131,7 @@ function ExploreLinksList({
           item.label.trim().toLowerCase() === "sale";
         return (
           <li key={item.href + item.label}>
-            <Link href={item.href} className="transition-colors hover:text-white hover:underline">
+            <Link href={item.href} className="transition-colors hover:text-[#E0703A] hover:underline">
               {isSale ? (
                 <span className="inline-flex items-center gap-1.5">
                   <SaleBoltIcon className="h-4 w-4 shrink-0 text-amber-400" />
@@ -149,7 +149,7 @@ function ExploreLinksList({
 }
 
 const policyLinkClass =
-  "underline decoration-white/35 underline-offset-4 transition-colors hover:text-white hover:decoration-white";
+  "underline decoration-white/35 underline-offset-4 transition-colors hover:text-[#E0703A] hover:decoration-[#E0703A]";
 
 function PolicyNavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const external = href.startsWith("http://") || href.startsWith("https://");
@@ -374,7 +374,7 @@ export function Footer() {
         <div className="bg-black">
           <div className="footer-shell shell-x py-4 text-center text-xs leading-relaxed tracking-wide text-white/50 sm:py-4">
             © {new Date().getFullYear()}{" "}
-            <Link href="/" className="text-white/65 underline-offset-2 transition hover:text-white hover:underline">
+            <Link href="/" className="text-white/65 underline-offset-2 transition hover:text-[#E0703A] hover:underline">
               {storeName}
             </Link>
             . All rights reserved.

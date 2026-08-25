@@ -61,7 +61,14 @@ function isShopHubPath(pathname: string | null): boolean {
 }
 
 /** “Shop” label → `/collections`; chevron alone toggles the per-collection menu. */
-export function ShopCollectionsMenu() {
+export function ShopCollectionsMenu({
+  label = "Shop",
+  tone = "default",
+}: {
+  label?: string;
+  /** AliExpress-style filled chip for the categories trigger. */
+  tone?: "default" | "categories";
+}) {
   const links = useNavCollections();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -76,6 +83,7 @@ export function ShopCollectionsMenu() {
   const shopLabelActive = hubActive;
   /** Chevron “pressed” look only while open, and never as a route-selected stand-in for a child. */
   const chevronActive = open && !childCollectionActive;
+  const categoriesTone = tone === "categories";
 
   function clearCloseTimer() {
     if (!closeTimerRef.current) return;
@@ -125,7 +133,11 @@ export function ShopCollectionsMenu() {
     >
       <div
         className={`flex items-center gap-0.5 rounded-md transition-colors duration-200 ${
-          shopLabelActive || chevronActive ? "bg-neutral-100" : ""
+          categoriesTone
+            ? `border border-neutral-200 bg-neutral-100 px-1 ${open || shopLabelActive ? "bg-neutral-200" : ""}`
+            : shopLabelActive || chevronActive
+              ? "bg-neutral-100"
+              : ""
         }`}
       >
         <Link
@@ -139,7 +151,7 @@ export function ShopCollectionsMenu() {
             setOpen(false);
           }}
         >
-          Shop
+          {label}
           <span
             aria-hidden
             className={`absolute inset-x-1.5 -bottom-0.5 h-0.5 origin-left rounded-full bg-neutral-950 transition-transform duration-300 ease-out ${

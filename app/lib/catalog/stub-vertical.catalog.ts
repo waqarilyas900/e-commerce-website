@@ -9,6 +9,7 @@ export function createStubVerticalCatalog(siteTitle: string): StoreCatalog {
       siteTitle,
       siteDescription: "Catalog not configured for this vertical.",
       faviconUrl: "",
+      navbarVariant: "v1",
       announcement: "",
       missionParagraph: "Browse our main collection for available products.",
       featured: {

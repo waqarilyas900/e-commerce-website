@@ -42,6 +42,13 @@ export function getEnvFaviconUrl(): string {
   return process.env.NEXT_PUBLIC_FAVICON_URL?.trim() ?? "";
 }
 
+/** `v1` | `v2` from env — overrides DB when set. */
+export function getEnvNavbarVariant(): "v1" | "v2" | "" {
+  const v = process.env.NEXT_PUBLIC_NAVBAR_VARIANT?.trim().toLowerCase() ?? "";
+  if (v === "v1" || v === "v2") return v;
+  return "";
+}
+
 export function isRemoteAssetUrl(url: string): boolean {
   return url.startsWith("http://") || url.startsWith("https://");
 }
@@ -114,10 +121,12 @@ export function applyEnvToStoreBrand(brand: StoreBrandConfig): StoreBrandConfig 
   const name = getEnvSiteName();
   const logo = getEnvLogoUrl();
   const favicon = getEnvFaviconUrl();
-  if (!name && !logo && !favicon) return brand;
+  const navbarVariant = getEnvNavbarVariant();
+  if (!name && !logo && !favicon && !navbarVariant) return brand;
   return {
     ...brand,
     ...(name ? { storeName: name, siteTitle: name } : {}),
     ...(favicon || logo ? { faviconUrl: favicon || logo } : {}),
+    ...(navbarVariant ? { navbarVariant } : {}),
   };
 }
