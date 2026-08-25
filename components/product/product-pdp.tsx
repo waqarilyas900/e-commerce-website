@@ -716,7 +716,7 @@ export function ProductPdp({
               )}
             </p>
           ) : null}
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">
             {(heading ?? "").trim() || product.name}
           </h1>
           {product.free_delivery ? (
@@ -1297,8 +1297,8 @@ export function ProductPdp({
                         disabled={maxQty < 1}
                         openDrawer
                         itemName={product.name}
-                        className="rounded-md! px-2! py-1.5! text-[11px]! font-semibold! leading-tight! shadow-none! hover:shadow-sm! disabled:opacity-50 sm:px-2.5! sm:py-1.5! sm:text-xs!"
-                      />
+                        className="min-h-11 min-w-0 flex-1 !text-[11px] sm:!text-xs"
+                        />
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
@@ -1311,7 +1311,7 @@ export function ProductPdp({
                         redirectHref="/checkout"
                         label="Buy now"
                         itemName={product.name}
-                        className="rounded-md! px-2! py-1.5! text-[11px]! font-semibold! leading-tight! shadow-none! hover:shadow-sm! disabled:opacity-50 sm:px-2.5! sm:py-1.5! sm:text-xs!"
+                        className="min-h-11 min-w-0 flex-1 !text-[11px] sm:!text-xs"
                       />
                     </>
                   ) : (

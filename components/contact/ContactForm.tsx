@@ -173,7 +173,7 @@ export function ContactForm({ onSentChange }: ContactFormProps) {
               <SuccessCheckIcon className="h-7 w-7 sm:h-8 sm:w-8" />
             </div>
 
-            <h1 className="mt-6 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
+            <h1 className="mt-6 text-[1.50rem] font-semibold tracking-tight text-neutral-950 sm:text-3xl">
               We&apos;ve received your message
             </h1>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-neutral-600 sm:text-base">

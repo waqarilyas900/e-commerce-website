@@ -96,31 +96,41 @@ export function HomeCollectionsStrip({
         aria-hidden
       />
 
-      <ScrollReveal className="relative mx-auto max-w-7xl shell-x py-10 sm:py-12">
-        <div className="relative mb-8 flex flex-col items-center gap-4 sm:mb-10 sm:block">
-          <div className="text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#E0703A]">
-              Browse
-            </p>
-            <div className="mt-2">
-              <HomeSectionTitle id="home-collections-heading">
-                Shop collections
-              </HomeSectionTitle>
+      <ScrollReveal className="relative mx-auto max-w-7xl shell-x py-8 sm:py-12">
+        <div className="relative mb-6 sm:mb-10">
+          <div className="flex flex-col items-center gap-2.5 text-center sm:gap-0">
+            <div className="flex w-full items-center justify-between gap-3 sm:justify-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#E0703A] sm:w-auto">
+                Browse
+              </p>
+              <Link
+                href="/collections"
+                className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[#E0703A] transition hover:text-[#c85f2f] sm:hidden"
+              >
+                View all
+                <span aria-hidden>→</span>
+              </Link>
             </div>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-neutral-500">
+
+            <HomeSectionTitle id="home-collections-heading" center>
+              Shop collections
+            </HomeSectionTitle>
+
+            <p className="mx-auto max-w-md text-center text-[13px] leading-snug text-neutral-500 sm:mt-2 sm:text-sm sm:leading-relaxed">
               Drinkware, kitchen, beauty, and home — curated for everyday Pakistan.
             </p>
           </div>
+
           <Link
             href="/collections"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#1c1d1d]/15 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#1c1d1d] shadow-sm backdrop-blur-sm transition hover:border-[#E0703A] hover:text-[#E0703A] sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
+            className="absolute right-0 top-1/2 hidden -translate-y-1/2 items-center gap-1.5 rounded-full border border-[#1c1d1d]/15 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#1c1d1d] shadow-sm backdrop-blur-sm transition hover:border-[#E0703A] hover:text-[#E0703A] sm:inline-flex"
           >
             View all
             <span aria-hidden>→</span>
           </Link>
         </div>
 
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+        <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
           {tiles.map((tile, i) => {
             const native = useNativeImg(tile.imageUrl);
             return (
@@ -173,18 +183,18 @@ export function HomeCollectionsStrip({
                     →
                   </span>
 
-                  <div className="absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4">
+                  <div className="absolute inset-x-0 bottom-0 z-20 p-2.5 sm:p-4">
                     <span
-                      className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80 opacity-0 translate-y-1 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100"
+                      className="mb-1 block text-[9px] font-semibold uppercase tracking-[0.14em] text-white/80 opacity-0 translate-y-1 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:mb-1.5 sm:text-[10px] sm:tracking-[0.16em]"
                       aria-hidden
                     >
                       Shop now
                     </span>
-                    <div className="flex items-end justify-between gap-2">
-                      <span className="text-sm font-semibold leading-snug text-white drop-shadow-sm sm:text-[15px]">
+                    <div className="flex items-end justify-between gap-1.5 sm:gap-2">
+                      <span className="text-[13px] font-semibold leading-snug text-white drop-shadow-sm sm:text-[15px]">
                         {tile.name}
                       </span>
-                      <span className="shrink-0 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white">
+                      <span className="shrink-0 rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white sm:px-2.5 sm:py-1 sm:text-[10px]">
                         {tile.count}{" "}
                         <span className="font-medium normal-case tracking-normal opacity-90">
                           {tile.count === 1 ? "item" : "items"}

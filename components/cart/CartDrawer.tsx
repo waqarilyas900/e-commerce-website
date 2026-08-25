@@ -93,7 +93,7 @@ function DrawerRecoTile({ product }: { product: Product }) {
           <motion.button
             type="button"
             whileTap={{ scale: 0.98 }}
-            className="mt-auto w-full rounded-md border border-neutral-900 bg-neutral-950 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800"
+            className="btn mt-auto w-full !rounded-none border border-neutral-900 bg-neutral-950 text-white hover:bg-neutral-800"
             onClick={() => addVariant(quick.variantId, quick.productId, 1)}
           >
             Add to cart
@@ -102,7 +102,7 @@ function DrawerRecoTile({ product }: { product: Product }) {
           <Link
             href={`/products/${product.slug}`}
             onClick={closeCart}
-            className="mt-auto flex w-full items-center justify-center rounded-md border border-neutral-300 py-1.5 text-center text-xs font-semibold text-neutral-900 hover:bg-neutral-50"
+            className="btn mt-auto flex w-full items-center justify-center !rounded-none border border-neutral-300 bg-transparent text-neutral-900 hover:bg-neutral-50"
           >
             Choose options
           </Link>
@@ -345,7 +345,7 @@ export function CartDrawer() {
                   : { delay: 0.06, duration: 0.35, ease: easeSilk }
               }
             >
-              <h2 className="text-3xl font-semibold tracking-tight">Cart</h2>
+              <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">Cart</h2>
               <motion.button
                 type="button"
                 onClick={closeCart}

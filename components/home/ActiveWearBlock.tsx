@@ -97,12 +97,12 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
     >
       <ScrollReveal className="page-width mx-auto max-w-7xl shell-x">
         <div
-          className={`feature-row flex flex-col items-center gap-10 md:min-h-[520px] md:flex-row md:items-center md:gap-0 ${
+          className={`feature-row flex flex-col items-center gap-10 lg:min-h-[520px] lg:flex-row lg:items-center lg:gap-8 xl:gap-0 ${
             hasImage ? "" : ""
           }`}
         >
           {hasImage ? (
-            <div className="feature-row__item feature-row__callout-image relative flex w-full shrink-0 justify-center md:w-1/2">
+            <div className="feature-row__item feature-row__callout-image relative flex w-full min-w-0 shrink-0 justify-center lg:w-1/2 lg:max-w-[50%] lg:overflow-hidden">
               {hasCollage ? (
                 <div
                   ref={collageRef}
@@ -147,8 +147,8 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
             </div>
           ) : null}
 
-          <div className="feature-row__item feature-row__callout-text feature-row__text flex w-full flex-col justify-center px-0 py-2 md:w-1/2 md:px-10 md:py-12 lg:px-14 lg:py-16">
-            <div className="feature-row__content larger-text max-w-lg md:mx-0">
+          <div className="feature-row__item feature-row__callout-text feature-row__text flex w-full min-w-0 flex-col justify-center px-0 py-2 lg:w-1/2 lg:max-w-[50%] lg:px-6 lg:py-10 xl:px-14 xl:py-16">
+            <div className="feature-row__content larger-text mx-auto max-w-lg text-center lg:mx-0 lg:text-left">
               {featured.eyebrow.trim() ? (
                 <p className="subtitle text-xs font-semibold capitalize tracking-[0.2em] text-neutral-500">
                   {featured.eyebrow}
@@ -156,7 +156,9 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
               ) : null}
               {featured.title.trim() ? (
                 <div className="mt-3">
-                  <HomeSectionTitle center={false}>{featured.title}</HomeSectionTitle>
+                  <HomeSectionTitle center={false} className="text-center lg:text-left">
+                    {featured.title}
+                  </HomeSectionTitle>
                 </div>
               ) : null}
               {featured.description.trim() ? (
@@ -165,7 +167,7 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
                 </div>
               ) : null}
               {featured.primaryLabel.trim() || featured.secondaryLabel.trim() ? (
-                <div className="mt-8 flex flex-wrap gap-3">
+                <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
                   {featured.primaryLabel.trim() ? (
                     <Link
                       href={featured.primaryHref}

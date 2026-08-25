@@ -51,7 +51,7 @@ export default async function SearchPage({ searchParams }: Props) {
     <>
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
         <ScrollReveal>
-          <h1 className="text-3xl font-semibold tracking-tight">Search</h1>
+          <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">Search</h1>
         </ScrollReveal>
 
         <SearchPageInteractive

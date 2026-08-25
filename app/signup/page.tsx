@@ -10,7 +10,7 @@ export default function SignupPage() {
           id="MainContent"
           className="main-content mx-auto max-w-md shell-x py-10 sm:py-14"
         >
-          <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
+          <h1 className="text-[1.50rem] font-semibold tracking-tight text-neutral-900 sm:text-3xl">
             Create account
           </h1>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-neutral-600">

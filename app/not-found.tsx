@@ -9,7 +9,7 @@ export default function NotFound() {
         className="main-content mx-auto max-w-lg shell-x py-20 text-center"
       >
         <p className="text-sm font-medium text-neutral-500">404</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Page not found</h1>
+        <h1 className="mt-2 text-[1.50rem] font-semibold tracking-tight sm:text-3xl">Page not found</h1>
         <p className="mt-3 text-sm text-neutral-600">
           The page you are looking for does not exist or was moved.
         </p>

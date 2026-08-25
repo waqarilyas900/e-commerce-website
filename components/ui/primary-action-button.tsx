@@ -7,7 +7,7 @@ const base =
   "group relative isolate inline-flex cursor-pointer items-center justify-center overflow-hidden transition-shadow duration-200 ease-out will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
 const theme =
-  "!rounded-none !px-5 !py-[11px] !text-base !font-black !uppercase !leading-[1.42] bg-(--colorBtnPrimary) text-(--colorBtnPrimaryText) shadow-none hover:shadow-none focus-visible:ring-(--colorBtnPrimary)";
+  "!rounded-none !px-3 !py-2 sm:!px-5 sm:!py-[11px] !text-[13px] sm:!text-base !font-black !uppercase !leading-[1.42] !min-w-0 bg-(--colorBtnPrimary) text-(--colorBtnPrimaryText) shadow-none hover:shadow-none focus-visible:ring-(--colorBtnPrimary)";
 
 export type PrimaryActionButtonProps = Omit<HTMLMotionProps<"button">, "ref"> & {
   children: ReactNode;
@@ -37,7 +37,7 @@ export const PrimaryActionButton = forwardRef<HTMLButtonElement, PrimaryActionBu
         }
         whileTap={inactive ? undefined : { scale: 0.98 }}
         transition={{ type: "spring", stiffness: 520, damping: 28, mass: 0.6 }}
-        className={[base, className, theme].filter(Boolean).join(" ")}
+        className={[base, theme, className].filter(Boolean).join(" ")}
         {...rest}
       >
         <span

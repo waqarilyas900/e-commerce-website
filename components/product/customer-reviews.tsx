@@ -676,7 +676,7 @@ function CustomerReviewsInner({
     <>
       <section className="mt-12 border border-neutral-200 bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-3xl font-semibold tracking-tight text-neutral-900">Customer Reviews</h2>
+          <h2 className="text-[1.50rem] font-semibold tracking-tight text-neutral-900 sm:text-3xl">Customer Reviews</h2>
           <button
             type="button"
             onClick={() => void onWriteReviewClick()}
@@ -1097,7 +1097,7 @@ function CustomerReviewsFallback({ rating, reviewsCount }: Pick<Props, "rating" 
   return (
     <section className="mt-12 border border-neutral-200 bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-3xl font-semibold tracking-tight text-neutral-900">Customer Reviews</h2>
+        <h2 className="text-[1.50rem] font-semibold tracking-tight text-neutral-900 sm:text-3xl">Customer Reviews</h2>
         <div className="h-10 w-36 animate-pulse rounded-sm bg-neutral-100" />
       </div>
       {!hasReviews ? (

@@ -9,7 +9,7 @@ export function ProfilePageLayout({ children }: { children: React.ReactNode }) {
         </Link>{" "}
         / Profile
       </p>
-      <h1 className="mt-2 text-3xl font-normal tracking-tight">Profile</h1>
+      <h1 className="mt-2 text-[1.50rem] font-normal tracking-tight sm:text-3xl">Profile</h1>
       <p className="mt-2 text-sm text-neutral-600">
         Keep your details up to date for checkout and support.
       </p>

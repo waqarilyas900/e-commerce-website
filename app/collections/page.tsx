@@ -104,7 +104,7 @@ export default async function CollectionsPage() {
         <PageBreadcrumbs items={[{ name: "Home", href: "/" }, { name: "Collections" }]} />
         <ScrollReveal>
           <section>
-            <h1 className="text-3xl font-semibold tracking-tight">{heading}</h1>
+            <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">{heading}</h1>
             <p className="mt-2 max-w-2xl text-sm text-neutral-600 sm:text-base">{intro}</p>
             {collectionCards.length > 0 ? (
               <ul className="mt-5 grid list-none grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3">
@@ -138,7 +138,7 @@ export default async function CollectionsPage() {
 
         <ScrollReveal>
           <section className="mt-10 sm:mt-12">
-            <h2 className="text-2xl font-semibold tracking-tight">All products</h2>
+            <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">All products</h2>
             <div className="mt-3 grid grid-cols-2 gap-1 sm:mt-4 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
               {allProducts.map((product, idx) => (
                 <ProductCard

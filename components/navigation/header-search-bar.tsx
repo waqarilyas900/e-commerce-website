@@ -448,25 +448,11 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
         ) : null}
         <button
           type="submit"
-          className="flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-white transition hover:opacity-95 sm:px-3.5"
+          className="flex h-8 shrink-0 items-center justify-center rounded-full px-3.5 text-[12px] font-semibold uppercase tracking-wide text-white transition hover:opacity-95"
           style={{ backgroundColor: NAV2_ACCENT }}
           aria-label="Search"
         >
-          <span className="hidden text-[12px] font-semibold uppercase tracking-wide sm:inline">
-            Search
-          </span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className="h-[14px] w-[14px] sm:hidden"
-            aria-hidden
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
-          </svg>
+          Search
         </button>
       </form>
       {panel}

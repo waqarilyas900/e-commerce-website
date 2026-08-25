@@ -164,7 +164,7 @@ export default async function HomeSectionListingPage({ params, searchParams }: P
       <JsonLd id="ld-breadcrumb-section" data={crumbs} />
       <main id="MainContent" className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6">
         <header className="mb-10 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
+          <h1 className="text-[1.50rem] font-semibold tracking-tight text-neutral-950 sm:text-4xl">
             {displayName}
           </h1>
           {intro ? (

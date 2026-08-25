@@ -1044,7 +1044,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={placing || resolvedLines.length === 0 || cartResolveFailed || pendingCartCatalog}
-                className="w-full rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn w-full !rounded-none bg-neutral-950 text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {placing ? "Placing order…" : "Complete order"}
               </button>

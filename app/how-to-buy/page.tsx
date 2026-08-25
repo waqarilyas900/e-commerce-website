@@ -75,7 +75,7 @@ export default async function HowToBuyPage() {
           </nav>
 
           <header className="mt-8 border-b border-neutral-200/90 pb-8">
-            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl sm:leading-tight">
+            <h1 className="text-[1.50rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl sm:leading-tight">
               How to Buy
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-600 sm:text-[1.05rem]">

@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function AccountPage() {
   return (
     <>
-      <h1 className="text-3xl font-normal tracking-tight">Your account</h1>
+      <h1 className="text-[1.50rem] font-normal tracking-tight sm:text-3xl">Your account</h1>
       <p className="mt-2 text-sm text-neutral-600">
         Manage your profile and view orders. Store management (inventory, admin) is handled in the
         separate admin app — not here.

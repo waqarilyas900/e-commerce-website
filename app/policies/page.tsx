@@ -108,7 +108,7 @@ export default async function PoliciesPage() {
           </nav>
 
           <header className="mt-8 border-b border-neutral-200/90 pb-8">
-            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl">
+            <h1 className="text-[1.50rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl">
               {pageHeading}
             </h1>
             {intro ? (

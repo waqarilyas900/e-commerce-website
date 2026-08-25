@@ -354,7 +354,7 @@ async function RelatedProductsSection({
   return (
     <section className="mt-8 sm:mt-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-x-6 sm:gap-y-3">
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">
           More from {heading}
         </h2>
         <Link
@@ -405,7 +405,7 @@ async function RelatedProductsSection({
 function RelatedProductsFallback() {
   return (
     <section className="mt-8 sm:mt-10">
-      <h2 className="text-2xl font-semibold tracking-tight">Related products</h2>
+      <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">Related products</h2>
       <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 md:grid-cols-3 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, idx) => (
           <ProductCardSkeleton key={idx} />

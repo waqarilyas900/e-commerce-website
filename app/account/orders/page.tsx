@@ -38,7 +38,7 @@ export default async function AccountOrdersPage() {
           </Link>{" "}
           / Order history
         </p>
-        <h1 className="mt-2 text-3xl font-normal tracking-tight text-neutral-900">Your orders</h1>
+        <h1 className="mt-2 text-[1.50rem] font-normal tracking-tight text-neutral-900 sm:text-3xl">Your orders</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
           Track deliveries and open any order for line items, payment, and shipping details.
         </p>

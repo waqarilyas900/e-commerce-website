@@ -10,7 +10,7 @@ function LoginMain() {
       id="MainContent"
       className="main-content mx-auto max-w-md shell-x py-12"
     >
-      <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
+      <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">Sign in</h1>
       <p className="mt-2 text-sm text-neutral-600">
         Use your email and password. New here?{" "}
         <Link href="/signup" className="font-medium text-neutral-900 underline">

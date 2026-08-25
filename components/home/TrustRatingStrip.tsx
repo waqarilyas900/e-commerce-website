@@ -56,7 +56,7 @@ export function TrustRatingStrip({ aggregate }: Props) {
             className={`flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 text-center ${bodyText}`}
           >
             <VerifiedBadge />
-            <span className="text-2xl font-semibold leading-none tracking-tight sm:text-[1.65rem]">
+            <span className="text-[1.50rem] font-semibold leading-none tracking-tight sm:text-2xl">
               {ratingLabel}
             </span>
             <StarRating value={averageRating} />

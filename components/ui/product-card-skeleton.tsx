@@ -25,7 +25,7 @@ export function ProductCardSkeleton({
         <div className="h-4 w-24 animate-pulse rounded bg-neutral-100 sm:w-28" />
         {showAddToCart ? (
           <div className="mt-auto pt-1 sm:pt-2">
-            <div className="h-8 w-full animate-pulse rounded-md bg-neutral-100 sm:h-9" />
+            <div className="h-10 w-full animate-pulse rounded-none bg-neutral-100 sm:h-11" />
           </div>
         ) : null}
       </div>

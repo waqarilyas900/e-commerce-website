@@ -108,7 +108,7 @@ export default async function BlogsIndexPage() {
           </nav>
 
           <header className="mt-8 max-w-3xl border-b border-neutral-200/90 pb-8">
-            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl sm:leading-tight">
+            <h1 className="text-[1.50rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl sm:leading-tight">
               SimpleCart Blogs
             </h1>
             <p className="mt-4 text-base leading-relaxed text-neutral-600 sm:text-[1.05rem]">

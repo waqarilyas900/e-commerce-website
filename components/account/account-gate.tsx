@@ -71,7 +71,7 @@ export function AccountGate({ children }: Props) {
   if (status === "misconfigured") {
     return (
       <AccountShell>
-        <h1 className="text-2xl font-semibold tracking-tight">Account unavailable</h1>
+        <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">Account unavailable</h1>
         <p className="mt-2 text-sm text-neutral-600">
           Sign-in is not configured for this deployment (missing Supabase URL or anon key).
         </p>

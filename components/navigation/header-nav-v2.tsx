@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { HeaderAccount, HeaderAccountV2 } from "@/components/auth/HeaderAccount";
 import { HeaderSearchBar } from "@/components/navigation/header-search-bar";
+import { HeaderMobileSearch } from "@/components/navigation/header-mobile-search";
 import { AllCategoriesMegaMenu } from "@/components/navigation/all-categories-mega-menu";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
 import { SiteLogoMark } from "@/components/site-logo";
@@ -476,45 +477,19 @@ export function HeaderNavV2() {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-0.5 text-neutral-800 sm:gap-1 lg:gap-1.5">
-          <button
-            type="button"
-            className="inline-flex items-center rounded-md p-2 text-neutral-800 transition-colors hover:text-[#E0703A] md:hidden"
-            aria-label="Search"
-            onClick={() => {
-              const el = document.querySelector<HTMLInputElement>(
-                "#site-header input[type=search], #site-header-sticky input[type=search]",
-              );
-              el?.focus();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="h-5 w-5"
-              aria-hidden
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
-            </svg>
-          </button>
+          <div className="md:hidden">
+            <HeaderMobileSearch
+              onOpenChange={(next) => {
+                if (next) setIsMobileNavOpen(false);
+              }}
+            />
+          </div>
 
           <LocaleCurrencyChip />
           <HeaderAccountV2 />
           <HeaderAccount />
           <CartHoverButton />
         </div>
-      </div>
-
-      <div className="pb-2 md:hidden">
-        {isStickyHeader ? (stickyActive ? <HeaderSearchBar /> : null) : !stickyActive ? (
-          <HeaderSearchBar />
-        ) : (
-          <div className="h-9" aria-hidden />
-        )}
       </div>
 
       {/* Category strip stays with the header when sticky */}

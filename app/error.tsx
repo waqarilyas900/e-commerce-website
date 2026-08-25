@@ -22,7 +22,7 @@ export default function GlobalError({
         className="main-content mx-auto max-w-lg shell-x py-20 text-center"
       >
         <p className="text-sm font-medium text-red-700">Something went wrong</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">We hit a snag</h1>
+        <h1 className="mt-2 text-[1.50rem] font-semibold tracking-tight sm:text-2xl">We hit a snag</h1>
         <p className="mt-3 text-sm text-neutral-600">
           Please try again. If the problem continues, return to the home page.
         </p>

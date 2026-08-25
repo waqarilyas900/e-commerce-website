@@ -9,7 +9,7 @@ export default function ResetPasswordPage() {
         id="MainContent"
         className="main-content mx-auto max-w-md shell-x py-12"
       >
-        <h1 className="text-3xl font-semibold tracking-tight">New password</h1>
+        <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">New password</h1>
         <p className="mt-2 text-sm text-neutral-600">
           Use the link from your email. It contains a one-time token (no sign-in required). After you
           set a new password, that link stops working.

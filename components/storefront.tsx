@@ -21,7 +21,7 @@ import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { HeaderNavV2 } from "@/components/navigation/header-nav-v2";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { RiseUpTitle } from "@/components/ui/rise-up-title";
-import { homeSectionTitleClass } from "@/components/ui/home-section-title";
+import { homeSectionTitleClass, mobileHeadingSizeClass } from "@/components/ui/home-section-title";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import type { Product } from "@/app/lib/catalog/types";
 import { formatPkr } from "@/app/lib/format-currency";
@@ -549,7 +549,9 @@ export function ProductSection({
     <section className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
       <ScrollReveal>
         <div className="mb-4 flex items-end justify-between gap-4">
-          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+          <h2 className={`${mobileHeadingSizeClass} font-semibold tracking-tight sm:text-xl sm:leading-normal`}>
+            {title}
+          </h2>
           <Link href={viewAllHref} className="shrink-0 text-sm font-semibold text-neutral-900">
             View all
           </Link>
@@ -607,7 +609,7 @@ export function WhyShop() {
             <p className="text-sm font-medium text-neutral-500">{whyShop.eyebrow}</p>
           ) : null}
           {whyShop.title.trim() ? (
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h2 className={`mt-2 ${mobileHeadingSizeClass} font-semibold tracking-tight sm:text-3xl sm:leading-normal`}>
               {whyShop.title}
             </h2>
           ) : null}

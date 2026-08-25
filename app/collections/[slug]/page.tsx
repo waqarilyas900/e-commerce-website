@@ -236,7 +236,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
           ]}
         />
         <header className="mb-8 text-center sm:mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
+          <h1 className="text-[1.50rem] font-semibold tracking-tight text-neutral-950 sm:text-4xl">
             {displayName}
           </h1>
           {(collection.description)?.trim() ? (

@@ -135,7 +135,7 @@ export default async function FooterItemPage({ params }: Props) {
           </nav>
 
           <header className="mt-8 border-b border-neutral-200/90 pb-8">
-            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl sm:leading-tight">
+            <h1 className="text-[1.50rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl sm:leading-tight">
               {policy.title}
             </h1>
           </header>

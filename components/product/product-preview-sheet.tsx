@@ -255,7 +255,7 @@ export function ProductPreviewSheet() {
                   <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-stretch">
                     {product.defaultVariantId && !soldOut ? (
                       <PrimaryActionButton
-                        className="flex-1"
+                        className="w-full flex-1 sm:w-auto"
                         loading={adding}
                         onClick={async () => {
                           if (adding) return;
@@ -297,7 +297,7 @@ export function ProductPreviewSheet() {
                       <Link
                         href={`/products/${product.slug}`}
                         onClick={closePreview}
-                        className="btn flex flex-1 items-center justify-center !rounded-none border border-neutral-900 bg-transparent text-center text-neutral-900 transition-colors hover:bg-neutral-950 hover:text-white"
+                        className="btn flex w-full flex-1 items-center justify-center !rounded-none border border-neutral-900 bg-transparent text-center text-neutral-900 transition-colors hover:bg-neutral-950 hover:text-white sm:w-auto"
                       >
                         {soldOut ? "View details" : "Choose options"}
                       </Link>
@@ -305,7 +305,7 @@ export function ProductPreviewSheet() {
                     <Link
                       href={`/products/${product.slug}`}
                       onClick={closePreview}
-                      className="btn flex flex-1 items-center justify-center !rounded-none border border-transparent bg-[#E0703A] text-center text-white transition hover:bg-[#c85f2f]"
+                      className="btn flex w-full flex-1 items-center justify-center !rounded-none border border-transparent bg-[#E0703A] text-center text-white transition hover:bg-[#c85f2f] sm:w-auto"
                     >
                       View full details
                     </Link>
