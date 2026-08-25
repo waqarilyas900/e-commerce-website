@@ -46,7 +46,7 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
 
   const images = calloutImages.slice(0, 5);
   const fallbackSrc = featured.imageUrl.trim()
-    ? optimizeSupplierImageUrl(featured.imageUrl.trim(), 560)
+    ? optimizeSupplierImageUrl(featured.imageUrl.trim(), 720)
     : "";
 
   const hasCollage = images.length >= 2;
