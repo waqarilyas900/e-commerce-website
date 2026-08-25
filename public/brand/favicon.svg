@@ -1,14 +1,11 @@
 <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
   <rect width="600" height="600" rx="120" fill="#1C1D1D"/>
-  <!-- Near-full fill; scale 2.2 keeps strokes clear of rounded corners -->
-  <g transform="translate(300,300) scale(2.2) translate(-149,-136.5)">
-    <path d="M40 60 H74 L98 90" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M98 90 L178 32 L258 90 L258 198 L98 198 Z" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"/>
-    <rect x="150" y="140" width="56" height="58" rx="7" fill="#E88A5A"/>
-    <line x1="98" y1="146" x2="258" y2="146" stroke="#FFFFFF" stroke-width="10"/>
-    <circle cx="130" cy="222" r="19" fill="#FFFFFF"/>
-    <circle cx="226" cy="222" r="19" fill="#FFFFFF"/>
-    <circle cx="130" cy="222" r="6" fill="#1C1D1D"/>
-    <circle cx="226" cy="222" r="6" fill="#1C1D1D"/>
-  </g>
+  <path d="M60.2 131.7 H135 L187.8 197.7" fill="none" stroke="#FFFFFF" stroke-width="28.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M187.8 197.7 L363.8 70.1 L539.8 197.7 L539.8 435.3 L187.8 435.3 Z" fill="none" stroke="#FFFFFF" stroke-width="28.6" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="302.2" y="307.7" width="123.2" height="127.6" rx="15.4" fill="#E88A5A"/>
+  <line x1="187.8" y1="320.9" x2="539.8" y2="320.9" stroke="#FFFFFF" stroke-width="22"/>
+  <circle cx="258.2" cy="488.1" r="41.8" fill="#FFFFFF"/>
+  <circle cx="469.4" cy="488.1" r="41.8" fill="#FFFFFF"/>
+  <circle cx="258.2" cy="488.1" r="13.2" fill="#1C1D1D"/>
+  <circle cx="469.4" cy="488.1" r="13.2" fill="#1C1D1D"/>
 </svg>
