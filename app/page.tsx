@@ -66,13 +66,16 @@ export default async function Home() {
     override?.canonicalUrl,
     canonicalUrlFor("/"),
   );
-  const homeDisplayTitle =
-    identity.storeName || identity.siteTitle || "SimpleCart Store";
+  const homeDisplayTitle = "Everyday essentials, thoughtfully curated";
   const homeDisplayDescription =
-    "Browse drinkware, kitchen tools, beauty gadgets and home essentials — curated for everyday use.";
+    "Browse drinkware, kitchen tools, beauty gadgets and home essentials — thoughtfully picked for comfort, convenience, and style, ready to make everyday living a little easier.";
   const homeLd = webPageJsonLd({
     url: canonical,
-    name: override?.title?.trim() || homeDisplayTitle,
+    name:
+      override?.title?.trim() ||
+      identity.storeName ||
+      identity.siteTitle ||
+      homeDisplayTitle,
     description:
       override?.description?.trim() ||
       identity.siteDescription ||
