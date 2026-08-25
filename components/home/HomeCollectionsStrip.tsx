@@ -101,55 +101,65 @@ export function HomeCollectionsStrip({
           </div>
           <Link
             href="/collections"
-            className="absolute right-0 top-1/2 hidden -translate-y-1/2 text-sm font-semibold text-neutral-900 underline-offset-4 hover:underline sm:inline"
+            className="absolute right-0 top-1/2 hidden -translate-y-1/2 text-xs font-semibold uppercase tracking-wider text-[#1c1d1d] underline-offset-4 transition hover:text-[#E0703A] hover:underline sm:inline"
           >
             View all
           </Link>
         </div>
 
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
           {tiles.map((tile) => {
             const native = useNativeImg(tile.imageUrl);
             return (
               <li key={tile.slug}>
                 <Link
                   href={tile.href}
-                  className="group flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 transition hover:border-neutral-900 hover:bg-white"
+                  className="group relative block aspect-[5/6] overflow-hidden rounded-2xl bg-[#1c1d1d] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E0703A] after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:z-20 after:h-[3px] after:w-0 after:bg-[#E0703A] after:transition-all after:duration-300 group-hover:after:w-full"
                 >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
-                    {tile.imageUrl ? (
-                      native ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs (Daraz) outside next/image allowlist
-                        <img
-                          src={tile.imageUrl}
-                          alt={`${tile.name} collection`}
-                          className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
-                          loading="lazy"
-                          decoding="async"
-                          width={400}
-                          height={300}
-                        />
-                      ) : (
-                        <Image
-                          src={tile.imageUrl}
-                          alt={`${tile.name} collection`}
-                          fill
-                          className="object-cover object-center transition duration-500 group-hover:scale-[1.03]"
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        />
-                      )
+                  {tile.imageUrl ? (
+                    native ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs (Daraz) outside next/image allowlist
+                      <img
+                        src={tile.imageUrl}
+                        alt={`${tile.name} collection`}
+                        className="absolute inset-0 h-full w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.06]"
+                        loading="lazy"
+                        decoding="async"
+                        width={400}
+                        height={480}
+                      />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-neutral-400">
-                        {tile.name}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-1 items-center justify-between gap-2 px-3 py-3 sm:px-4">
-                    <span className="text-sm font-semibold tracking-tight text-[#1c1d1d] sm:text-[15px]">
+                      <Image
+                        src={tile.imageUrl}
+                        alt={`${tile.name} collection`}
+                        fill
+                        className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.06]"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                    )
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-sm text-neutral-400">
+                      {tile.name}
+                    </div>
+                  )}
+                  <div
+                    className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-[#1c1d1d]/90 via-[#1c1d1d]/40 to-transparent"
+                    aria-hidden
+                  />
+                  <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-2 p-3 sm:p-4">
+                    <span className="text-sm font-semibold leading-snug text-white sm:text-[15px]">
                       {tile.name}
                     </span>
-                    <span className="text-xs text-neutral-500">{tile.count}</span>
+                    <span className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm">
+                      {tile.count}
+                    </span>
                   </div>
+                  <span
+                    className="pointer-events-none absolute right-3 top-3 z-10 text-lg text-white opacity-0 transition duration-300 group-hover:opacity-100 sm:right-4 sm:top-4"
+                    aria-hidden
+                  >
+                    →
+                  </span>
                 </Link>
               </li>
             );
