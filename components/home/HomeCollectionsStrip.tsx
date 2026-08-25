@@ -74,7 +74,7 @@ export async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
   return tiles.filter((t): t is HomeCollectionTile => t != null);
 }
 
-/** Compact collection grid under the featured band — short names, equal tiles. */
+/** Compact collection grid under the featured band — image-first overlay tiles. */
 export function HomeCollectionsStrip({
   tiles,
 }: {
@@ -85,12 +85,21 @@ export function HomeCollectionsStrip({
   return (
     <section
       aria-labelledby="home-collections-heading"
-      className="border-b border-[#e8e8e1] bg-white"
+      className="relative overflow-hidden border-b border-[#e8e8e1] bg-[linear-gradient(180deg,#f7f5f2_0%,#ffffff_42%,#ffffff_100%)]"
     >
-      <ScrollReveal className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
-        <div className="relative mb-6 flex items-end justify-center">
+      <div
+        className="pointer-events-none absolute -left-24 top-8 h-56 w-56 rounded-full bg-[#E0703A]/[0.07] blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-16 bottom-0 h-48 w-48 rounded-full bg-[#1c1d1d]/[0.04] blur-3xl"
+        aria-hidden
+      />
+
+      <ScrollReveal className="relative mx-auto max-w-7xl shell-x py-10 sm:py-12">
+        <div className="relative mb-8 flex flex-col items-center gap-4 sm:mb-10 sm:block">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#E0703A]">
               Browse
             </p>
             <div className="mt-2">
@@ -98,23 +107,31 @@ export function HomeCollectionsStrip({
                 Shop collections
               </HomeSectionTitle>
             </div>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-neutral-500">
+              Drinkware, kitchen, beauty, and home — curated for everyday Pakistan.
+            </p>
           </div>
           <Link
             href="/collections"
-            className="absolute right-0 top-1/2 hidden -translate-y-1/2 text-xs font-semibold uppercase tracking-wider text-[#1c1d1d] underline-offset-4 transition hover:text-[#E0703A] hover:underline sm:inline"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#1c1d1d]/15 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#1c1d1d] shadow-sm backdrop-blur-sm transition hover:border-[#E0703A] hover:text-[#E0703A] sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2"
           >
             View all
+            <span aria-hidden>→</span>
           </Link>
         </div>
 
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-          {tiles.map((tile) => {
+          {tiles.map((tile, i) => {
             const native = useNativeImg(tile.imageUrl);
             return (
-              <li key={tile.slug}>
+              <li
+                key={tile.slug}
+                className="home-collection-tile"
+                style={{ ["--tile-i" as string]: i }}
+              >
                 <Link
                   href={tile.href}
-                  className="group relative block aspect-[5/6] overflow-hidden rounded-2xl bg-[#1c1d1d] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E0703A] after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:z-20 after:h-[3px] after:w-0 after:bg-[#E0703A] after:transition-all after:duration-300 group-hover:after:w-full"
+                  className="group relative block aspect-[1/1] overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_8px_24px_-12px_rgba(28,29,29,0.35)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-16px_rgba(28,29,29,0.45)] hover:ring-[#E0703A]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E0703A]"
                 >
                   {tile.imageUrl ? (
                     native ? (
@@ -122,18 +139,18 @@ export function HomeCollectionsStrip({
                       <img
                         src={tile.imageUrl}
                         alt={`${tile.name} collection`}
-                        className="absolute inset-0 h-full w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.06]"
+                        className="absolute inset-0 h-full w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.08]"
                         loading="lazy"
                         decoding="async"
                         width={400}
-                        height={480}
+                        height={400}
                       />
                     ) : (
                       <Image
                         src={tile.imageUrl}
                         alt={`${tile.name} collection`}
                         fill
-                        className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.06]"
+                        className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.08]"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                     )
@@ -142,24 +159,43 @@ export function HomeCollectionsStrip({
                       {tile.name}
                     </div>
                   )}
+
+                  {/* Soft bottom scrim only — keeps photo colors clean */}
                   <div
-                    className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-[#1c1d1d]/90 via-[#1c1d1d]/40 to-transparent"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[48%] bg-gradient-to-t from-black/55 via-black/20 to-transparent"
                     aria-hidden
                   />
-                  <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-2 p-3 sm:p-4">
-                    <span className="text-sm font-semibold leading-snug text-white sm:text-[15px]">
-                      {tile.name}
-                    </span>
-                    <span className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm">
-                      {tile.count}
-                    </span>
-                  </div>
+
                   <span
-                    className="pointer-events-none absolute right-3 top-3 z-10 text-lg text-white opacity-0 transition duration-300 group-hover:opacity-100 sm:right-4 sm:top-4"
+                    className="pointer-events-none absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-base text-[#1c1d1d] opacity-0 shadow-sm backdrop-blur-md transition duration-300 group-hover:opacity-100 group-hover:bg-[#E0703A] group-hover:text-white sm:right-4 sm:top-4"
                     aria-hidden
                   >
                     →
                   </span>
+
+                  <div className="absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4">
+                    <span
+                      className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80 opacity-0 translate-y-1 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100"
+                      aria-hidden
+                    >
+                      Shop now
+                    </span>
+                    <div className="flex items-end justify-between gap-2">
+                      <span className="text-sm font-semibold leading-snug text-white drop-shadow-sm sm:text-[15px]">
+                        {tile.name}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white">
+                        {tile.count}{" "}
+                        <span className="font-medium normal-case tracking-normal opacity-90">
+                          {tile.count === 1 ? "item" : "items"}
+                        </span>
+                      </span>
+                    </div>
+                    <span
+                      className="mt-2.5 block h-[2px] w-8 origin-left scale-x-0 bg-[#E0703A] transition duration-300 group-hover:scale-x-100"
+                      aria-hidden
+                    />
+                  </div>
                 </Link>
               </li>
             );

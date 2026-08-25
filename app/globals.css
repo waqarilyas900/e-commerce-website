@@ -374,6 +374,27 @@ body {
     animation: none;
   }
 }
+
+/* Homepage shop-collections tiles — staggered rise (SSR stays visible). */
+@keyframes home-collection-rise {
+  from {
+    opacity: 0.55;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.home-collection-tile {
+  animation: home-collection-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--tile-i, 0) * 55ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-collection-tile {
+    animation: none;
+  }
+}
 .policy-prose li {
   margin-top: 0.35rem;
   margin-bottom: 0.35rem;
