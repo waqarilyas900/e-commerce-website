@@ -184,7 +184,7 @@ export function Header() {
      * the account avatar / search / cart on narrow phones (absolute centering used to).
      * Side rails share leftover width equally; below lg the left rail is hamburger only.
      */
-    <div className="header-wrapper relative mx-auto grid min-h-[64px] max-w-7xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 shell-x sm:min-h-[72px] sm:gap-x-4 md:min-h-[83px]">
+    <div className="header-wrapper relative mx-auto grid min-h-[72px] max-w-7xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 shell-x sm:min-h-[80px] sm:gap-x-4 md:min-h-[92px]">
       <div className="flex min-h-0 min-w-0 items-center justify-start gap-3">
         <button
           type="button"

@@ -1,5 +1,8 @@
 import Image from "next/image";
+import { WordmarkLogo } from "@/components/brand/wordmark-logo";
 import {
+  FALLBACK_FOOTER_LOGO_URL,
+  FALLBACK_LOGO_URL,
   isRemoteAssetUrl,
   resolveFooterLogoUrl,
   resolveLogoUrl,
@@ -7,18 +10,20 @@ import {
 } from "@/lib/site-brand-env";
 
 /**
- * Site logo components — header uses `NEXT_PUBLIC_LOGO_URL` (dark mark);
- * footer uses `NEXT_PUBLIC_FOOTER_LOGO_URL` (light mark on dark backgrounds).
+ * Site logo components — header uses dark wordmark;
+ * footer uses light wordmark on dark backgrounds.
+ * Bundled brand SVGs render inline so Montserrat (page font) applies.
  */
 
-const LOGO_WIDTH = 150;
-const LOGO_HEIGHT = 50;
+const LOGO_WIDTH = 220;
+const LOGO_HEIGHT = 72;
 
+/** ~35–40% larger than previous header marks. */
 const markSizeClass = {
   default:
-    "h-8 w-[6.5rem] sm:h-10 sm:w-[9.25rem] md:h-11 md:w-[10rem]",
-  large: "h-11 w-[9.75rem] sm:h-12 sm:w-[10.75rem]",
-  compact: "h-7 w-[6rem] sm:h-9 sm:w-[7.75rem]",
+    "h-11 w-[9.5rem] sm:h-12 sm:w-[11.5rem] md:h-14 md:w-[13.5rem]",
+  large: "h-12 w-[11rem] sm:h-14 sm:w-[13rem] md:h-16 md:w-[15rem]",
+  compact: "h-9 w-[8rem] sm:h-11 sm:w-[10rem]",
 } as const;
 
 export type SiteLogoMarkSize = keyof typeof markSizeClass;
@@ -28,6 +33,27 @@ type LogoMarkProps = {
   className?: string;
   priority?: boolean;
 };
+
+function isBundledDarkLogo(src: string): boolean {
+  const path = src.split("?")[0] ?? src;
+  return (
+    path === FALLBACK_LOGO_URL ||
+    path === "/brand/logo-dark.svg" ||
+    path === "/brand/logo-dark.png" ||
+    path === "/brand/logo-dark.webp" ||
+    path === "/brand/logo.svg"
+  );
+}
+
+function isBundledLightLogo(src: string): boolean {
+  const path = src.split("?")[0] ?? src;
+  return (
+    path === FALLBACK_FOOTER_LOGO_URL ||
+    path === "/brand/logo-light.svg" ||
+    path === "/brand/logo-light.png" ||
+    path === "/brand/logo-light.webp"
+  );
+}
 
 function SiteLogoImage({
   src,
@@ -52,7 +78,6 @@ function SiteLogoImage({
         height={LOGO_HEIGHT}
         className={className}
         decoding="async"
-        // Keep logo off the LCP critical path — hero owns fetchPriority=high.
         loading="eager"
         fetchPriority={priority ? "high" : "low"}
       />
@@ -80,10 +105,25 @@ export function SiteLogoMark({
 }: LogoMarkProps) {
   const src = resolveLogoUrl();
   const alt = resolveSiteName();
+  const sizeClass = markSizeClass[size];
+
+  if (isBundledDarkLogo(src)) {
+    return (
+      <span
+        className={`inline-flex shrink-0 items-center justify-center font-semibold ${sizeClass} ${className}`.trim()}
+      >
+        <WordmarkLogo
+          variant="dark"
+          title={alt}
+          className="h-full w-full max-h-full max-w-full"
+        />
+      </span>
+    );
+  }
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center ${markSizeClass[size]} ${className}`.trim()}
+      className={`inline-flex shrink-0 items-center justify-center ${sizeClass} ${className}`.trim()}
     >
       <SiteLogoImage
         src={src}
@@ -103,12 +143,20 @@ type FullProps = {
 export function SiteLogoFull({ className = "" }: FullProps) {
   const src = resolveFooterLogoUrl();
   const alt = resolveSiteName();
+  const footerClass =
+    `h-14 w-auto max-w-[260px] object-contain object-left sm:h-16 sm:max-w-[300px] md:h-[4.25rem] md:max-w-[340px] ${className}`.trim();
 
-  return (
-    <SiteLogoImage
-      src={src}
-      alt={alt}
-      className={`h-12 w-auto max-w-[210px] object-contain object-left sm:h-14 sm:max-w-[248px] md:h-[3.75rem] md:max-w-[280px] ${className}`.trim()}
-    />
-  );
+  if (isBundledLightLogo(src)) {
+    return (
+      <span className={`inline-flex font-semibold ${footerClass}`}>
+        <WordmarkLogo
+          variant="light"
+          title={alt}
+          className="h-full w-auto max-h-full max-w-full"
+        />
+      </span>
+    );
+  }
+
+  return <SiteLogoImage src={src} alt={alt} className={footerClass} />;
 }
