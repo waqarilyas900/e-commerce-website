@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
 import { dbListActiveProductsWithVideoUrl } from "@/app/lib/db/catalog";
 import { parseProductVideoSource } from "@/lib/product-video/url";
+import { warmInstagramVideoResolve } from "@/lib/product-video/resolve-instagram";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
 /**
@@ -28,5 +29,13 @@ export async function HomeStickyProductVideo() {
 
   if (!playable.length) return null;
   const startIndex = Math.floor(Math.random() * playable.length);
+
+  // Resolve Instagram CDN before HTML reaches the browser — first play is much faster.
+  const startSrc = parseProductVideoSource(playable[startIndex]?.videoUrl ?? "");
+  const codeMatch = startSrc?.src.match(/[?&]code=([^&]+)/);
+  if (codeMatch?.[1]) {
+    await warmInstagramVideoResolve(decodeURIComponent(codeMatch[1])).catch(() => {});
+  }
+
   return <StickyProductVideo reels={playable} startIndex={startIndex} />;
 }

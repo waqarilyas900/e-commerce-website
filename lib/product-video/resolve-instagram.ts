@@ -1,11 +1,22 @@
+import { unstable_cache } from "next/cache";
 import { extractInstagramCode } from "@/lib/product-video/url";
 
 const IG_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
 
+/** Process-local CDN URL cache — avoids re-scraping Instagram on every Range request. */
+const cdnCache = new Map<string, { url: string; expiresAt: number }>();
+const CDN_TTL_MS = 25 * 60 * 1000; // CDN tokens usually last longer; refresh under 30m
+const inflight = new Map<string, Promise<string | null>>();
+
+const cachedScrapeInstagramCdn = unstable_cache(
+  async (code: string) => scrapeInstagramCdn(code),
+  ["ig-cdn-video-v1"],
+  { revalidate: 1500 },
+);
+
 function unescapeIgUrl(raw: string): string {
   let url = raw;
-  // Embed HTML double-escapes slashes: https:\\\/\\\/host\\\/path.mp4?...
   while (url.includes("\\/")) url = url.replace(/\\\//g, "/");
   while (url.includes("\\\\")) url = url.replace(/\\\\/g, "\\");
   return url.replace(/\\u0026/g, "&").replace(/\\u003d/g, "=");
@@ -21,11 +32,9 @@ function extractVideoUrlFromHtml(html: string): string | null {
   if (mp4Idx < 0) return null;
 
   let end = mp4Idx + 4;
-  // Keep query string; stop at JSON delimiters / escapes that end the string value.
   while (end < slice.length) {
     const c = slice[end];
     if (c === '"' || c === "'" || c === "," || c === "}" || c === " " || c === "\n" || c === "\\") {
-      // Allow \\/ sequences inside the value — skip paired escapes.
       if (c === "\\" && slice[end + 1] === "/") {
         end += 2;
         continue;
@@ -43,34 +52,17 @@ function extractVideoUrlFromHtml(html: string): string | null {
     end += 1;
   }
 
-  const raw = slice.slice(httpsIdx, end);
-  const url = unescapeIgUrl(raw);
+  const url = unescapeIgUrl(slice.slice(httpsIdx, end));
   if (!/^https:\/\/.+\.mp4(\?|$)/i.test(url)) return null;
   return url;
 }
 
-/**
- * Resolve a public Instagram reel/post to a direct CDN MP4 URL (server-side only).
- * Uses the embed document which still exposes `video_url` for public media.
- */
-export async function resolveInstagramCdnVideoUrl(
-  instagramPageUrl: string,
-): Promise<string | null> {
-  let url: URL;
-  try {
-    url = new URL(instagramPageUrl);
-  } catch {
-    return null;
-  }
-
-  const extracted = extractInstagramCode(url.pathname);
-  if (!extracted) return null;
-
+async function scrapeInstagramCdn(code: string): Promise<string | null> {
+  // Captioned embed is the reliable source of video_url — try it first only.
   const candidates = [
-    `https://www.instagram.com/reel/${extracted.code}/embed/captioned/`,
-    `https://www.instagram.com/reel/${extracted.code}/embed/`,
-    `https://www.instagram.com/p/${extracted.code}/embed/captioned/`,
-    `https://www.instagram.com/${extracted.kind}/${extracted.code}/embed/captioned/`,
+    `https://www.instagram.com/reel/${code}/embed/captioned/`,
+    `https://www.instagram.com/p/${code}/embed/captioned/`,
+    `https://www.instagram.com/reel/${code}/embed/`,
   ];
 
   for (const page of candidates) {
@@ -82,7 +74,8 @@ export async function resolveInstagramCdnVideoUrl(
           "Accept-Language": "en-US,en;q=0.9",
         },
         redirect: "follow",
-        next: { revalidate: 1800 },
+        // Cache HTML briefly at the fetch layer when available.
+        next: { revalidate: 900 },
       });
       if (!res.ok) continue;
       const html = await res.text();
@@ -92,6 +85,55 @@ export async function resolveInstagramCdnVideoUrl(
       // try next
     }
   }
-
   return null;
+}
+
+/**
+ * Resolve Instagram shortcode → CDN MP4 (cached in-process).
+ */
+export async function resolveInstagramCdnByCode(code: string): Promise<string | null> {
+  const key = code.trim();
+  if (!/^[A-Za-z0-9_-]{5,64}$/.test(key)) return null;
+
+  const hit = cdnCache.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.url;
+
+  const existing = inflight.get(key);
+  if (existing) return existing;
+
+  const job = (async () => {
+    // Shared Next data cache (cross-instance) + local Map (same process / Range bursts).
+    const url = await cachedScrapeInstagramCdn(key);
+    if (url) {
+      cdnCache.set(key, { url, expiresAt: Date.now() + CDN_TTL_MS });
+    }
+    return url;
+  })().finally(() => {
+    inflight.delete(key);
+  });
+
+  inflight.set(key, job);
+  return job;
+}
+
+/**
+ * Resolve a public Instagram reel/post page URL to a direct CDN MP4.
+ */
+export async function resolveInstagramCdnVideoUrl(
+  instagramPageUrl: string,
+): Promise<string | null> {
+  let url: URL;
+  try {
+    url = new URL(instagramPageUrl);
+  } catch {
+    return null;
+  }
+  const extracted = extractInstagramCode(url.pathname);
+  if (!extracted) return null;
+  return resolveInstagramCdnByCode(extracted.code);
+}
+
+/** Fire-and-forget / awaited warm so the first video byte is faster. */
+export async function warmInstagramVideoResolve(code: string): Promise<void> {
+  await resolveInstagramCdnByCode(code);
 }

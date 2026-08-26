@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { resolveInstagramCdnVideoUrl } from "@/lib/product-video/resolve-instagram";
+import { resolveInstagramCdnByCode } from "@/lib/product-video/resolve-instagram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,8 +9,8 @@ const IG_UA =
 
 /**
  * Same-origin video stream for Instagram reels.
- * Browser plays `/api/product-video/stream?code=…` as a normal <video> (autoplay/mute/loop),
- * with no Instagram UI — we proxy the CDN bytes server-side.
+ * Browser plays `/api/product-video/stream?code=…` as a normal <video>
+ * (autoplay / mute / loop) with no Instagram UI.
  */
 export async function GET(req: NextRequest) {
   const code = (req.nextUrl.searchParams.get("code") ?? "").trim();
@@ -18,8 +18,7 @@ export async function GET(req: NextRequest) {
     return new Response("Invalid code", { status: 400 });
   }
 
-  const pageUrl = `https://www.instagram.com/reel/${code}/`;
-  const cdnUrl = await resolveInstagramCdnVideoUrl(pageUrl);
+  const cdnUrl = await resolveInstagramCdnByCode(code);
   if (!cdnUrl) {
     return new Response("Could not resolve Instagram video", { status: 502 });
   }
@@ -32,7 +31,6 @@ export async function GET(req: NextRequest) {
       ...(range ? { Range: range } : {}),
       Referer: "https://www.instagram.com/",
     },
-    // Don't cache the binary proxy response in Next data cache.
     cache: "no-store",
   });
 
@@ -41,10 +39,10 @@ export async function GET(req: NextRequest) {
   }
 
   const headers = new Headers();
-  const contentType = upstream.headers.get("content-type") || "video/mp4";
-  headers.set("Content-Type", contentType);
+  headers.set("Content-Type", upstream.headers.get("content-type") || "video/mp4");
   headers.set("Accept-Ranges", "bytes");
-  headers.set("Cache-Control", "public, max-age=1800, stale-while-revalidate=3600");
+  // Browser can keep the proxied bytes; speeds up reopen / scrub.
+  headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
   const contentLength = upstream.headers.get("content-length");
   if (contentLength) headers.set("Content-Length", contentLength);
   const contentRange = upstream.headers.get("content-range");

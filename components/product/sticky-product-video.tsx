@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -71,35 +72,85 @@ export function StickyProductVideo({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const miniVideoRef = useRef<HTMLVideoElement>(null);
   const slideVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const revealedRef = useRef(false);
 
-  const parsed: ParsedReel[] = reels
-    .map((r) => {
-      const source = parseProductVideoSource(r.videoUrl);
-      return source ? { ...r, src: source.src } : null;
-    })
-    .filter((r): r is ParsedReel => Boolean(r));
+  const parsed = useMemo(() => {
+    return reels
+      .map((r) => {
+        const source = parseProductVideoSource(r.videoUrl);
+        return source ? { ...r, src: source.src } : null;
+      })
+      .filter((r): r is ParsedReel => Boolean(r));
+  }, [reels]);
 
   const safeStart = Math.min(Math.max(0, startIndex), Math.max(0, parsed.length - 1));
+  const mini = parsed[safeStart] ?? parsed[0];
+  const miniSrc = mini?.src ?? "";
+
   const [dismissed, setDismissed] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(safeStart);
   const [muted, setMuted] = useState(true);
   const [paused, setPaused] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
+  /** Sticky chrome only after playback has started — no empty / buffering shell. */
   const [miniReady, setMiniReady] = useState(false);
+  const [slidePlaying, setSlidePlaying] = useState<Record<number, boolean>>({});
 
-  const mini = parsed[safeStart] ?? parsed[0];
-
+  // Reset reveal only when the source actually changes.
   useEffect(() => {
-    if (!mini || expanded || dismissed) return;
+    revealedRef.current = false;
+    setMiniReady(false);
+  }, [miniSrc]);
+
+  // Stable autoplay — deps are primitives only (never object identity).
+  useEffect(() => {
+    if (!miniSrc || dismissed) return;
     const el = miniVideoRef.current;
     if (!el) return;
-    el.muted = true;
-    void el
-      .play()
-      .then(() => setMiniReady(true))
-      .catch(() => setMiniReady(true));
-  }, [mini, expanded, dismissed, safeStart, parsed.length]);
+
+    let cancelled = false;
+    let retryTimer: number | undefined;
+
+    const reveal = () => {
+      if (cancelled || el.paused) return;
+      revealedRef.current = true;
+      // Only show sticky while collapsed; fullscreen uses its own players.
+      if (!expanded) setMiniReady(true);
+    };
+
+    const tryPlay = () => {
+      if (cancelled || expanded) return;
+      el.muted = true;
+      el.defaultMuted = true;
+      void el
+        .play()
+        .then(reveal)
+        .catch(() => {
+          if (cancelled || expanded) return;
+          retryTimer = window.setTimeout(() => {
+            void el.play().then(reveal).catch(() => {});
+          }, 600);
+        });
+    };
+
+    el.addEventListener("playing", reveal);
+    el.addEventListener("canplay", tryPlay);
+
+    if (expanded) {
+      el.pause();
+      setMiniReady(false);
+    } else {
+      tryPlay();
+    }
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) window.clearTimeout(retryTimer);
+      el.removeEventListener("playing", reveal);
+      el.removeEventListener("canplay", tryPlay);
+    };
+  }, [miniSrc, expanded, dismissed]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -154,57 +205,79 @@ export function StickyProductVideo({
     setShowSwipeHint(false);
   }, [parsed.length]);
 
+  const markSlidePlaying = useCallback((i: number) => {
+    setSlidePlaying((prev) => (prev[i] ? prev : { ...prev, [i]: true }));
+  }, []);
+
   if (!parsed.length || dismissed || !mini) return null;
 
   const counterLabel = `${activeIndex + 1} / ${parsed.length}`;
+  const showMini = miniReady && !expanded;
 
   return (
     <>
+      {/* Always mounted so the <video> never remounts / blinks */}
       <div
-        className={`pointer-events-none fixed right-4 z-[999996] ${bottomClassName}`}
+        className={`fixed right-4 z-[999996] ${bottomClassName} ${
+          showMini ? "pointer-events-auto" : "pointer-events-none"
+        }`}
         data-sticky-product-video
+        aria-hidden={!showMini}
+        style={{
+          // opacity only — visibility/display:none can pause media in browsers
+          opacity: showMini ? 1 : 0,
+          transform: showMini ? "scale(1) translateY(0)" : "scale(0.96) translateY(8px)",
+          transition: reduceMotion
+            ? undefined
+            : "opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1), transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
       >
         <div
-          className={`pointer-events-auto relative overflow-hidden bg-black shadow-[0_6px_20px_rgba(0,0,0,0.3)] transition-opacity duration-400 ${
-            miniReady ? "opacity-100" : "opacity-0"
-          }`}
+          className="relative overflow-hidden bg-black shadow-[0_8px_28px_rgba(0,0,0,0.35)]"
           style={{ width: 120, height: 213, borderRadius: 12 }}
         >
           <button
             type="button"
             className="absolute inset-0 z-10 cursor-pointer"
             aria-label="Open product videos"
+            tabIndex={showMini ? 0 : -1}
             onClick={() => setExpanded(true)}
           />
           <video
             ref={miniVideoRef}
             className="pointer-events-none block h-full w-full object-cover"
-            src={mini.src}
+            src={miniSrc}
             muted
             loop
             autoPlay
             playsInline
-            preload="metadata"
+            preload="auto"
             poster={mini.posterUrl || undefined}
           />
-          <button
-            type="button"
-            aria-label="Hide videos"
-            className="absolute right-[6px] top-[6px] z-20 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-black/55 text-[15px] leading-none text-white"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDismissed(true);
-              setExpanded(false);
-            }}
-          >
-            ×
-          </button>
-          <span
-            className="pointer-events-none absolute bottom-[6px] left-[6px] z-20 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-black/40 text-white"
-            aria-hidden
-          >
-            <ExpandHintIcon />
-          </span>
+          {showMini ? (
+            <>
+              <button
+                type="button"
+                aria-label="Hide videos"
+                className="absolute right-[6px] top-[6px] z-20 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-black/55 text-[15px] leading-none text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDismissed(true);
+                  setExpanded(false);
+                  setMiniReady(false);
+                  revealedRef.current = false;
+                }}
+              >
+                ×
+              </button>
+              <span
+                className="pointer-events-none absolute bottom-[6px] left-[6px] z-20 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-black/40 text-white"
+                aria-hidden
+              >
+                <ExpandHintIcon />
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -294,13 +367,16 @@ export function StickyProductVideo({
                     ref={(el) => {
                       slideVideoRefs.current[i] = el;
                     }}
-                    className="block h-full w-full object-contain"
+                    className={`block h-full w-full object-contain transition-opacity duration-300 ${
+                      slidePlaying[i] ? "opacity-100" : "opacity-0"
+                    }`}
                     src={reel.src}
                     loop
                     playsInline
                     muted={muted}
                     poster={reel.posterUrl || undefined}
-                    preload={Math.abs(i - activeIndex) <= 1 ? "auto" : "none"}
+                    preload={Math.abs(i - activeIndex) <= 1 ? "auto" : "metadata"}
+                    onPlaying={() => markSlidePlaying(i)}
                     onClick={() => setPaused((p) => !p)}
                   />
                   {paused && i === activeIndex ? (
