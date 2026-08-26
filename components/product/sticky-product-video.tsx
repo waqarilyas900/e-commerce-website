@@ -15,6 +15,7 @@ import {
   parseProductVideoSource,
   type ProductReelItem,
 } from "@/lib/product-video/url";
+import { useCart } from "@/app/providers/cart-provider";
 
 export type StickyProductVideoProps = {
   reels: ProductReelItem[];
@@ -69,6 +70,7 @@ export function StickyProductVideo({
 }: StickyProductVideoProps) {
   const titleId = useId();
   const reduceMotion = useReducedMotion();
+  const { isOpen: cartDrawerOpen } = useCart();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const miniVideoRef = useRef<HTMLVideoElement>(null);
   const slideVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -115,19 +117,19 @@ export function StickyProductVideo({
     const reveal = () => {
       if (cancelled || el.paused) return;
       revealedRef.current = true;
-      // Only show sticky while collapsed; fullscreen uses its own players.
-      if (!expanded) setMiniReady(true);
+      // Only show sticky while collapsed and cart drawer is closed.
+      if (!expanded && !cartDrawerOpen) setMiniReady(true);
     };
 
     const tryPlay = () => {
-      if (cancelled || expanded) return;
+      if (cancelled || expanded || cartDrawerOpen) return;
       el.muted = true;
       el.defaultMuted = true;
       void el
         .play()
         .then(reveal)
         .catch(() => {
-          if (cancelled || expanded) return;
+          if (cancelled || expanded || cartDrawerOpen) return;
           retryTimer = window.setTimeout(() => {
             void el.play().then(reveal).catch(() => {});
           }, 600);
@@ -137,11 +139,12 @@ export function StickyProductVideo({
     el.addEventListener("playing", reveal);
     el.addEventListener("canplay", tryPlay);
 
-    if (expanded) {
+    if (expanded || cartDrawerOpen) {
       el.pause();
-      setMiniReady(false);
+      if (expanded) setMiniReady(false);
     } else {
       tryPlay();
+      if (revealedRef.current) setMiniReady(true);
     }
 
     return () => {
@@ -150,7 +153,7 @@ export function StickyProductVideo({
       el.removeEventListener("playing", reveal);
       el.removeEventListener("canplay", tryPlay);
     };
-  }, [miniSrc, expanded, dismissed]);
+  }, [miniSrc, expanded, dismissed, cartDrawerOpen]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -212,13 +215,13 @@ export function StickyProductVideo({
   if (!parsed.length || dismissed || !mini) return null;
 
   const counterLabel = `${activeIndex + 1} / ${parsed.length}`;
-  const showMini = miniReady && !expanded;
+  const showMini = miniReady && !expanded && !cartDrawerOpen;
 
   return (
     <>
       {/* Always mounted so the <video> never remounts / blinks */}
       <div
-        className={`fixed right-4 z-[999996] ${bottomClassName} ${
+        className={`fixed right-4 z-100 ${bottomClassName} ${
           showMini ? "pointer-events-auto" : "pointer-events-none"
         }`}
         data-sticky-product-video
@@ -284,7 +287,7 @@ export function StickyProductVideo({
       <AnimatePresence>
         {expanded ? (
           <motion.div
-            className="fixed inset-0 z-[999999] bg-black"
+            className="fixed inset-0 z-230 bg-black"
             style={{ ["--rvw-edge" as string]: FEED_EDGE } as CSSProperties}
             role="dialog"
             aria-modal="true"
