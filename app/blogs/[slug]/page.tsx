@@ -20,6 +20,10 @@ import {
   getStaticGuideMeta,
 } from "@/app/lib/blog/guides";
 import {
+  buildSeoGuideArticle,
+  seoGuideCrumbLabel,
+} from "@/app/lib/blog/seo-guides";
+import {
   buildPageMetadata,
   canonicalUrlFor,
   loadSiteIdentity,
@@ -73,6 +77,9 @@ async function resolveArticle(
     } else if (slug === "inside-simplecart-store-real-stock-cod-pakistan") {
       article = buildStoreStoryGuideArticle(storeName);
       crumbLabel = "Inside our store";
+    } else {
+      article = buildSeoGuideArticle(slug, storeName, imageProducts);
+      if (article) crumbLabel = seoGuideCrumbLabel(slug);
     }
     if (!article) return null;
     return {

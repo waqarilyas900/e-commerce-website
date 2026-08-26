@@ -115,21 +115,21 @@ function HeroSlideTitle({
   const link = (
     <Link
       href={slide.href}
-      className="pointer-events-auto block text-center text-2xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-3xl md:text-4xl"
+      className="pointer-events-auto block text-center text-xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-2xl md:text-3xl"
     >
       {slide.title}
     </Link>
   );
   if (!animate) {
     return (
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-12 sm:pb-14 md:pb-16">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-9 sm:pb-11 md:pb-12">
         {link}
       </div>
     );
   }
   return (
     <motion.div
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-12 sm:pb-14 md:pb-16"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-9 sm:pb-11 md:pb-12"
       initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -221,8 +221,8 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
     >
       <div className="slideshow-wrapper relative w-full pb-5 sm:pb-6 md:pb-7">
         <div className="relative w-full overflow-hidden">
-          {/* ~50% shorter than original aspect-12/5 */}
-          <div className="relative aspect-[24/5] w-full max-w-[100vw]">
+          {/* Hero strip — slight bump from 28/5 / 30/5 */}
+          <div className="relative aspect-[26/5] w-full max-w-[100vw] sm:aspect-[28/5]">
             {!showCarousel ? (
               <div className="absolute inset-0 overflow-hidden">
                 <HeroSlideImage slide={slides[0]} priority />

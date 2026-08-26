@@ -55,13 +55,168 @@ export const STATIC_BLOG_GUIDES: StaticGuideMeta[] = [
     ],
     imageProductSlugs: [],
   },
+  {
+    slug: "cash-on-delivery-cod-simplecart-pakistan",
+    title: "Cash on Delivery (COD) at SimpleCart Store — How It Works in Pakistan",
+    metaTitle: "Cash on Delivery COD Pakistan | SimpleCart Store",
+    metaDescription:
+      "Learn how cash on delivery works at SimpleCart Store: place your order, receive the parcel, then pay in PKR when it arrives across Pakistan.",
+    publishedAt: "2026-08-26T18:00:00.000Z",
+    keywords: [
+      "cash on delivery Pakistan",
+      "COD online shopping Pakistan",
+      "SimpleCart Store COD",
+      "pay on delivery home essentials",
+      "COD checkout Pakistan",
+    ],
+    imageProductSlugs: [
+      "2l-stainless-steel-electric-kettle",
+      "ribbed-glass-sipper-with-straw",
+      "led-folding-makeup-mirror",
+      "rechargeable-mosquito-killer-bat",
+    ],
+  },
+  {
+    slug: "drinkware-buying-guide-pakistan",
+    title: "Drinkware Buying Guide for Pakistan — Sippers, Tumblers & Everyday Bottles",
+    metaTitle: "Drinkware Buying Guide Pakistan | Tumblers & Sippers",
+    metaDescription:
+      "Choose the right sipper, tumbler or bottle for daily use in Pakistan. Practical tips, then shop Drinkware & Tumblers at SimpleCart Store with COD.",
+    publishedAt: "2026-08-26T18:10:00.000Z",
+    keywords: [
+      "drinkware buying guide Pakistan",
+      "best tumbler Pakistan",
+      "glass sipper with straw",
+      "water bottle online Pakistan",
+      "drinkware tumblers SimpleCart",
+    ],
+    imageProductSlugs: [
+      "ribbed-glass-sipper-with-straw",
+      "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
+      "2l-stainless-steel-electric-kettle",
+    ],
+  },
+  {
+    slug: "kitchen-essentials-pakistani-homes",
+    title: "Kitchen Essentials for Pakistani Homes — Tools Worth Buying Online",
+    metaTitle: "Kitchen Essentials Pakistan | SimpleCart Store Guide",
+    metaDescription:
+      "Build a practical Pakistani kitchen with essentials you will actually use — kettles, choppers and everyday tools. Shop Kitchen Essentials with COD.",
+    publishedAt: "2026-08-26T18:20:00.000Z",
+    keywords: [
+      "kitchen essentials Pakistan",
+      "kitchen tools online Pakistan",
+      "electric kettle Pakistan",
+      "chopper grinder home kitchen",
+      "SimpleCart kitchen essentials",
+    ],
+    imageProductSlugs: [
+      "2l-stainless-steel-electric-kettle",
+      "ribbed-glass-sipper-with-straw",
+      "led-folding-makeup-mirror",
+    ],
+  },
+  {
+    slug: "winter-room-heaters-buying-guide-pakistan",
+    title: "Winter Room Heaters Buying Guide for Pakistan — Stay Warm Safely",
+    metaTitle: "Room Heaters Buying Guide Pakistan | Winter Comfort",
+    metaDescription:
+      "How to choose a room heater for Pakistani winters: room size, safety, power use and placement. Shop heaters in Home Appliances at SimpleCart Store.",
+    publishedAt: "2026-08-26T18:30:00.000Z",
+    keywords: [
+      "room heater Pakistan",
+      "winter heater buying guide",
+      "electric heater online Pakistan",
+      "fan heater Pakistan",
+      "home appliances heaters SimpleCart",
+    ],
+    imageProductSlugs: [
+      "2l-stainless-steel-electric-kettle",
+      "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
+    ],
+  },
+  {
+    slug: "how-to-place-track-order-simplecart",
+    title: "How to Place an Order at SimpleCart Store — Checkout, COD & What Happens Next",
+    metaTitle: "How to Place an Order | SimpleCart Store Pakistan",
+    metaDescription:
+      "Step-by-step: browse, add to cart, apply WELCOME10 if eligible, checkout with COD, and know what happens after you place an order at SimpleCart Store.",
+    publishedAt: "2026-08-26T18:40:00.000Z",
+    keywords: [
+      "how to order SimpleCart Store",
+      "checkout COD Pakistan",
+      "track order online shopping Pakistan",
+      "how to buy SimpleCart",
+      "place order cash on delivery",
+    ],
+    imageProductSlugs: [
+      "2l-stainless-steel-electric-kettle",
+      "ribbed-glass-sipper-with-straw",
+      "led-folding-makeup-mirror",
+      "rechargeable-mosquito-killer-bat",
+    ],
+  },
+  {
+    slug: "gift-ideas-under-budget-pakistan",
+    title: "Gift Ideas Under Budget in Pakistan — Useful Home & Beauty Picks",
+    metaTitle: "Budget Gift Ideas Pakistan | SimpleCart Store",
+    metaDescription:
+      "Practical gift ideas under a clear budget for family and friends in Pakistan — drinkware, kitchen helpers, beauty gadgets. Order online with COD.",
+    publishedAt: "2026-08-26T18:50:00.000Z",
+    keywords: [
+      "gift ideas Pakistan",
+      "budget gifts online Pakistan",
+      "home gift ideas COD",
+      "useful gifts drinkware kitchen",
+      "SimpleCart gift ideas",
+    ],
+    imageProductSlugs: [
+      "ribbed-glass-sipper-with-straw",
+      "led-folding-makeup-mirror",
+      "2l-stainless-steel-electric-kettle",
+      "rechargeable-mosquito-killer-bat",
+      "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
+    ],
+  },
+  {
+    slug: "returns-trust-why-buy-simplecart",
+    title: "Why Buy from SimpleCart Store — Trust, Packing & Purchase Protection",
+    metaTitle: "Why Buy SimpleCart Store | Trust & Purchase Protection",
+    metaDescription:
+      "Why shoppers choose SimpleCart Store: managed inventory, careful packing, COD across Pakistan, and purchase protection if something goes wrong.",
+    publishedAt: "2026-08-26T19:00:00.000Z",
+    keywords: [
+      "why buy SimpleCart Store",
+      "trusted online store Pakistan",
+      "purchase protection COD",
+      "returns help SimpleCart",
+      "shop with confidence Pakistan",
+    ],
+    imageProductSlugs: [
+      "2l-stainless-steel-electric-kettle",
+      "ribbed-glass-sipper-with-straw",
+      "led-folding-makeup-mirror",
+    ],
+  },
 ];
+
+/** Optional listing hero overrides (story photos) when product images are unavailable. */
+export const STATIC_GUIDE_LISTING_HERO: Record<string, string> = {
+  "inside-simplecart-store-real-stock-cod-pakistan": "/story/simplecart-store-06.jpg",
+  "cash-on-delivery-cod-simplecart-pakistan": "/story/simplecart-store-04.jpg",
+  "winter-room-heaters-buying-guide-pakistan": "/story/simplecart-store-05.jpg",
+  "returns-trust-why-buy-simplecart": "/story/simplecart-store-08.jpg",
+  "drinkware-buying-guide-pakistan": "/story/simplecart-store-03.jpg",
+  "kitchen-essentials-pakistani-homes": "/story/simplecart-store-01.jpg",
+  "how-to-place-track-order-simplecart": "/story/simplecart-store-07.jpg",
+  "gift-ideas-under-budget-pakistan": "/story/simplecart-store-02.jpg",
+};
 
 export function getStaticGuideMeta(slug: string): StaticGuideMeta | undefined {
   return STATIC_BLOG_GUIDES.find((g) => g.slug === slug);
 }
 
-function pickImages(products: Product[], storeName: string): BlogImage[] {
+export function pickGuideImages(products: Product[], storeName: string): BlogImage[] {
   const out: BlogImage[] = [];
   const seen = new Set<string>();
   for (const p of products) {
@@ -70,10 +225,14 @@ function pickImages(products: Product[], storeName: string): BlogImage[] {
     seen.add(src);
     out.push({
       src,
-      alt: `${p.name} — shop with WELCOME10 at ${storeName}`,
+      alt: `${p.name} — available at ${storeName}`,
     });
   }
   return out;
+}
+
+function pickImages(products: Product[], storeName: string): BlogImage[] {
+  return pickGuideImages(products, storeName);
 }
 
 export function buildWelcome10GuideArticle(

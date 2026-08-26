@@ -8,7 +8,11 @@ import {
   getCachedProductsBySlugs,
 } from "@/lib/cache/catalog-data";
 import { blogListingCard } from "@/app/lib/blog/product-blog";
-import { STATIC_BLOG_GUIDES, staticGuideListingCard } from "@/app/lib/blog/guides";
+import {
+  STATIC_BLOG_GUIDES,
+  STATIC_GUIDE_LISTING_HERO,
+  staticGuideListingCard,
+} from "@/app/lib/blog/guides";
 import { orderByRatingAndStockPriority } from "@/app/lib/collection-query";
 import {
   buildPageMetadata,
@@ -52,29 +56,34 @@ export default async function BlogsIndexPage() {
     ? orderByRatingAndStockPriority(await getCachedAllActiveProductsForCards())
     : [];
 
-  const welcomeMeta = STATIC_BLOG_GUIDES.find(
-    (g) => g.slug === "welcome10-voucher-code-rs-100-discount",
-  );
-  const storeStoryMeta = STATIC_BLOG_GUIDES.find(
-    (g) => g.slug === "inside-simplecart-store-real-stock-cod-pakistan",
-  );
-  let welcomeHero: string | null = null;
-  if (hasCatalogDb() && welcomeMeta) {
-    const imgs = await getCachedProductsBySlugs(welcomeMeta.imageProductSlugs.slice(0, 1));
-    welcomeHero = imgs[0]?.image ?? products[0]?.image ?? null;
+  const guideHeroBySlug = new Map<string, string | null>();
+  if (hasCatalogDb()) {
+    const firstSlugs = STATIC_BLOG_GUIDES.map((g) => g.imageProductSlugs[0]).filter(
+      Boolean,
+    ) as string[];
+    const unique = [...new Set(firstSlugs)];
+    const imgs = unique.length ? await getCachedProductsBySlugs(unique) : [];
+    const bySlug = new Map(imgs.map((p) => [p.slug, p.image ?? null]));
+    for (const g of STATIC_BLOG_GUIDES) {
+      const fromProduct = g.imageProductSlugs[0]
+        ? bySlug.get(g.imageProductSlugs[0]) ?? null
+        : null;
+      guideHeroBySlug.set(
+        g.slug,
+        STATIC_GUIDE_LISTING_HERO[g.slug] ?? fromProduct ?? products[0]?.image ?? null,
+      );
+    }
+  } else {
+    for (const g of STATIC_BLOG_GUIDES) {
+      guideHeroBySlug.set(g.slug, STATIC_GUIDE_LISTING_HERO[g.slug] ?? null);
+    }
   }
-  const guideCards = [
-    ...(storeStoryMeta
-      ? [
-          staticGuideListingCard(
-            storeStoryMeta,
-            storeName,
-            "/story/simplecart-store-06.jpg",
-          ),
-        ]
-      : []),
-    ...(welcomeMeta ? [staticGuideListingCard(welcomeMeta, storeName, welcomeHero)] : []),
-  ];
+
+  const guideCards = [...STATIC_BLOG_GUIDES]
+    .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+    .map((meta) =>
+      staticGuideListingCard(meta, storeName, guideHeroBySlug.get(meta.slug)),
+    );
   const productCards = products
     .filter((p) => p.slug && p.image)
     .map((p) => ({
@@ -126,9 +135,9 @@ export default async function BlogsIndexPage() {
               SimpleCart Blogs
             </h1>
             <p className="mt-4 text-base leading-relaxed text-neutral-600 sm:text-[1.05rem]">
-              SEO buying guides for every active product at {storeName}. Each article uses
-              real store photos and links straight to the product page so you can research,
-              then order with cash on delivery across Pakistan.
+              Editorial guides for COD, drinkware, kitchen, heaters and ordering — plus a
+              buying guide for every active product at {storeName}. Research, then shop with
+              cash on delivery across Pakistan.
             </p>
           </header>
 

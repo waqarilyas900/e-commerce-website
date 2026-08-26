@@ -28,8 +28,8 @@ export function HeroBanner({ slides }: { slides: HeroSlide[] }) {
     >
       <div className="slideshow-wrapper relative w-full">
         <div className="relative w-full overflow-hidden">
-          {/* ~50% shorter than original aspect-12/5 */}
-          <div className="relative aspect-[24/5] w-full max-w-[100vw]">
+          {/* Hero strip — slight bump from 28/5 / 30/5 */}
+          <div className="relative aspect-[26/5] w-full max-w-[100vw] sm:aspect-[28/5]">
             <div className="absolute inset-0 overflow-hidden">
               <Image
                 src={first.image}
@@ -46,10 +46,10 @@ export function HeroBanner({ slides }: { slides: HeroSlide[] }) {
                 style={{ backgroundImage: HERO_OVERLAY }}
               />
               {first.title?.trim() ? (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-12 sm:pb-14 md:pb-16">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-2 flex justify-center shell-x pb-9 sm:pb-11 md:pb-12">
                   <Link
                     href={first.href}
-                    className="pointer-events-auto block text-center text-2xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-3xl md:text-4xl"
+                    className="pointer-events-auto block text-center text-xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-2xl md:text-3xl"
                   >
                     {first.title}
                   </Link>
