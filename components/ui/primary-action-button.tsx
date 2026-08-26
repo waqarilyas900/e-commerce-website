@@ -7,7 +7,7 @@ const base =
   "group relative isolate inline-flex cursor-pointer items-center justify-center overflow-hidden transition-shadow duration-200 ease-out will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
 const theme =
-  "!rounded-none !px-3 !py-2 sm:!px-5 sm:!py-[11px] !text-[13px] sm:!text-base !font-black !uppercase !leading-[1.42] !min-w-0 bg-(--colorBtnPrimary) text-(--colorBtnPrimaryText) shadow-none hover:shadow-none focus-visible:ring-(--colorBtnPrimary)";
+  "!rounded-none !px-2.5 !py-2 sm:!px-5 sm:!py-[11px] !text-[12px] sm:!text-base !font-black !uppercase !leading-none !whitespace-nowrap !min-w-0 bg-(--colorBtnPrimary) text-(--colorBtnPrimaryText) shadow-none hover:shadow-none focus-visible:ring-(--colorBtnPrimary)";
 
 export type PrimaryActionButtonProps = Omit<HTMLMotionProps<"button">, "ref"> & {
   children: ReactNode;
@@ -46,7 +46,7 @@ export const PrimaryActionButton = forwardRef<HTMLButtonElement, PrimaryActionBu
         >
           <span className="absolute inset-0 -translate-x-full skew-x-[-18deg] bg-linear-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
         </span>
-        <span className="relative z-10 flex min-h-5 items-center justify-center">
+        <span className="relative z-10 flex min-h-5 items-center justify-center whitespace-nowrap">
           <span className={loading ? "invisible" : undefined}>{children}</span>
           {loading ? (
             <span className="absolute inset-0 flex items-center justify-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/app/providers/cart-provider";
 import {
@@ -17,7 +17,9 @@ type Props = {
   variantId: string;
   productId: string;
   className?: string;
-  label?: string;
+  label?: ReactNode;
+  /** Accessible name when `label` is abbreviated/short for small screens. */
+  ariaLabel?: string;
   /** When `redirectHref` is set, ignored (drawer is not opened). */
   openDrawer?: boolean;
   quantity?: number;
@@ -38,6 +40,7 @@ export function AddToCartVariantButton({
   productId,
   className = "",
   label = "Add to cart",
+  ariaLabel,
   openDrawer = true,
   quantity = 1,
   disabled = false,
@@ -57,6 +60,9 @@ export function AddToCartVariantButton({
       disabled={disabled}
       loading={adding}
       className={className}
+      aria-label={
+        ariaLabel ?? (typeof label === "string" ? label : undefined)
+      }
       onClick={async () => {
         if (disabled || adding) return;
         setAdding(true);
