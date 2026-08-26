@@ -2,21 +2,30 @@ import { unstable_noStore as noStore } from "next/cache";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
 import { dbListActiveProductsWithVideoUrl } from "@/app/lib/db/catalog";
 import { parseProductVideoUrl } from "@/lib/product-video/url";
+import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
 /**
- * Server-picked random sticky reel for the homepage (among products with video_url).
+ * Homepage sticky reel + Rad-style vertical feed of every product with a video_url.
  */
 export async function HomeStickyProductVideo() {
   noStore();
   const rows = await dbListActiveProductsWithVideoUrl();
-  const playable = rows.filter((r) => parseProductVideoUrl(r.video_url));
+  const playable = rows
+    .map((r) => {
+      if (!parseProductVideoUrl(r.video_url)) return null;
+      const poster = r.poster_url
+        ? optimizeSupplierImageUrl(r.poster_url, 600) || r.poster_url
+        : null;
+      return {
+        videoUrl: r.video_url,
+        productName: r.name,
+        productHref: `/products/${r.slug}`,
+        posterUrl: poster,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => Boolean(r));
+
   if (!playable.length) return null;
-  const pick = playable[Math.floor(Math.random() * playable.length)]!;
-  return (
-    <StickyProductVideo
-      videoUrl={pick.video_url}
-      productName={pick.name}
-      productHref={`/products/${pick.slug}`}
-    />
-  );
+  const startIndex = Math.floor(Math.random() * playable.length);
+  return <StickyProductVideo reels={playable} startIndex={startIndex} />;
 }

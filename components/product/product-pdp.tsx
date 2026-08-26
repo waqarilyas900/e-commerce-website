@@ -518,6 +518,8 @@ export function ProductPdp({
 
   const stickyVideoUrl = (product.video_url ?? "").trim();
   const showStickyVideo = Boolean(parseProductVideoUrl(stickyVideoUrl));
+  const stickyPoster =
+    gallery.find((g) => g.kind === "image")?.url || firstImage(product.images) || null;
 
   return (
     <>
@@ -1081,8 +1083,14 @@ export function ProductPdp({
 
       {showStickyVideo ? (
         <StickyProductVideo
-          videoUrl={stickyVideoUrl}
-          productName={product.name}
+          reels={[
+            {
+              videoUrl: stickyVideoUrl,
+              productName: product.name,
+              productHref: `/products/${productSlug}`,
+              posterUrl: stickyPoster,
+            },
+          ]}
           bottomClassName={
             showMobileStickyBar ? "bottom-24 sm:bottom-5" : "bottom-4 sm:bottom-5"
           }

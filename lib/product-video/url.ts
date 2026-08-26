@@ -4,6 +4,14 @@ export type ProductVideoSource =
   | { kind: "instagram"; embedUrl: string; pageUrl: string; code: string }
   | { kind: "direct"; src: string; pageUrl: string };
 
+export type ProductReelItem = {
+  videoUrl: string;
+  productName: string;
+  productHref: string;
+  /** Product card image — used when social embeds can't autoplay in the mini widget. */
+  posterUrl?: string | null;
+};
+
 function stripQueryAndHash(url: string): string {
   try {
     const u = new URL(url);
@@ -15,9 +23,10 @@ function stripQueryAndHash(url: string): string {
   }
 }
 
-function youtubeEmbed(id: string): string {
+function youtubeEmbed(id: string, opts?: { autoplay?: boolean }): string {
+  const autoplay = opts?.autoplay !== false;
   const params = new URLSearchParams({
-    autoplay: "1",
+    autoplay: autoplay ? "1" : "0",
     mute: "1",
     loop: "1",
     playlist: id,
@@ -66,24 +75,36 @@ function isDirectMediaUrl(raw: string): boolean {
   }
 }
 
+function normalizeIgKind(raw: string): "reel" | "p" | "tv" | null {
+  if (raw === "reel" || raw === "reels") return "reel";
+  if (raw === "p") return "p";
+  if (raw === "tv") return "tv";
+  return null;
+}
+
 /** Extract Instagram reel/post shortcode from common share URL shapes. */
-export function extractInstagramCode(pathname: string): { kind: "reel" | "p" | "tv"; code: string } | null {
+export function extractInstagramCode(
+  pathname: string,
+): { kind: "reel" | "p" | "tv"; code: string } | null {
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length < 2) return null;
 
-  // /reel/CODE, /p/CODE, /tv/CODE
-  if ((parts[0] === "reel" || parts[0] === "p" || parts[0] === "tv") && parts[1]) {
-    return { kind: parts[0], code: parts[1] };
+  // /reel/CODE, /reels/CODE, /p/CODE, /tv/CODE
+  const kind0 = normalizeIgKind(parts[0] ?? "");
+  if (kind0 && parts[1]) {
+    return { kind: kind0, code: parts[1] };
   }
 
-  // /share/reel/CODE or /share/p/CODE
-  if (parts[0] === "share" && (parts[1] === "reel" || parts[1] === "p" || parts[1] === "tv") && parts[2]) {
-    return { kind: parts[1], code: parts[2] };
+  // /share/reel/CODE or /share/reels/CODE
+  if (parts[0] === "share") {
+    const kind1 = normalizeIgKind(parts[1] ?? "");
+    if (kind1 && parts[2]) return { kind: kind1, code: parts[2] };
   }
 
   // /username/reel/CODE
-  if (parts.length >= 3 && (parts[1] === "reel" || parts[1] === "p" || parts[1] === "tv") && parts[2]) {
-    return { kind: parts[1], code: parts[2] };
+  if (parts.length >= 3) {
+    const kind1 = normalizeIgKind(parts[1] ?? "");
+    if (kind1 && parts[2]) return { kind: kind1, code: parts[2] };
   }
 
   return null;
@@ -148,7 +169,7 @@ export function parseProductVideoUrl(input: string | null | undefined): ProductV
         kind: "instagram",
         code: extracted.code,
         pageUrl: cleanPage,
-        // Official embed page (tap-to-play). Autoplay is blocked by Instagram.
+        // Official embed uses singular /reel/ even when share URL was /reels/
         embedUrl: `https://www.instagram.com/${extracted.kind}/${extracted.code}/embed/`,
       };
     }

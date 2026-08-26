@@ -645,16 +645,16 @@ export async function dbGetProductDetailBySlug(
   };
 }
 
-/** Active products that have a sticky promo `video_url` set (for home random reel). */
+/** Active products that have a sticky promo `video_url` set (for home reels feed). */
 export async function dbListActiveProductsWithVideoUrl(): Promise<
-  Array<{ id: string; slug: string; name: string; video_url: string }>
+  Array<{ id: string; slug: string; name: string; video_url: string; poster_url: string }>
 > {
   if (!hasCatalogDb()) return [];
   try {
     const supabase = catalogClient();
     const { data, error } = await supabase
       .from("products")
-      .select("id, slug, name, video_url")
+      .select("id, slug, name, video_url, images")
       .eq("status", "active")
       .not("video_url", "is", null)
       .neq("video_url", "");
@@ -663,12 +663,21 @@ export async function dbListActiveProductsWithVideoUrl(): Promise<
       return [];
     }
     return (data ?? [])
-      .map((r: { id: string; slug: string; name: string; video_url: string | null }) => ({
-        id: r.id,
-        slug: r.slug,
-        name: r.name,
-        video_url: (r.video_url ?? "").trim(),
-      }))
+      .map(
+        (r: {
+          id: string;
+          slug: string;
+          name: string;
+          video_url: string | null;
+          images: unknown;
+        }) => ({
+          id: r.id,
+          slug: r.slug,
+          name: r.name,
+          video_url: (r.video_url ?? "").trim(),
+          poster_url: firstImage(r.images),
+        }),
+      )
       .filter((r) => r.video_url.length > 0);
   } catch {
     return [];

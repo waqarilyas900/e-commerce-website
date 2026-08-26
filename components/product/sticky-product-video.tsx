@@ -1,19 +1,27 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   parseProductVideoUrl,
   productVideoCanAutoplay,
+  type ProductReelItem,
   type ProductVideoSource,
 } from "@/lib/product-video/url";
 
 export type StickyProductVideoProps = {
-  videoUrl: string;
-  productName: string;
-  /** When set, expanded modal can deep-link to the product. */
-  productHref?: string | null;
+  /** Full reels playlist (home = all products with video; PDP = usually one). */
+  reels: ProductReelItem[];
+  /** Index to open first / show in mini widget. */
+  startIndex?: number;
   /** Extra bottom offset (e.g. mobile sticky ATC bar on PDP). */
   bottomClassName?: string;
 };
@@ -41,100 +49,165 @@ function PlayIcon({ className }: { className?: string }) {
   );
 }
 
-function InstagramGlyph({ className }: { className?: string }) {
+function MuteIcon({ muted, className }: { muted: boolean; className?: string }) {
+  if (muted) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <path d="M5 9v6h4l5 5V4L9 9H5z" fill="currentColor" stroke="none" />
+        <line x1="16" y1="9" x2="22" y2="15" />
+        <line x1="22" y1="9" x2="16" y2="15" />
+      </svg>
+    );
+  }
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6Zm9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M5 9v6h4l5 5V4L9 9H5z" fill="currentColor" stroke="none" />
+      <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M19 6a9 9 0 0 1 0 12" />
     </svg>
   );
 }
 
-function VideoFrame({
+function SlideMedia({
   source,
   title,
-  className,
-  interactive = false,
+  active,
+  muted,
+  posterUrl,
 }: {
   source: ProductVideoSource;
   title: string;
-  className?: string;
-  interactive?: boolean;
+  active: boolean;
+  muted: boolean;
+  posterUrl?: string | null;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = muted;
+    if (active) {
+      void el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [active, muted]);
+
   if (source.kind === "direct") {
     return (
       <video
-        className={className}
+        ref={videoRef}
+        className="absolute inset-0 h-full w-full object-cover"
+        src={source.src}
+        loop
+        playsInline
+        muted={muted}
+        poster={posterUrl || undefined}
+        preload={active ? "auto" : "metadata"}
+        aria-label={title}
+      />
+    );
+  }
+
+  if (source.kind === "youtube") {
+    // Remount when becoming active so YouTube autoplay restarts for the visible slide.
+    if (!active) {
+      return posterUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={posterUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 bg-neutral-950" />
+      );
+    }
+    const params = new URLSearchParams({
+      autoplay: "1",
+      mute: muted ? "1" : "0",
+      loop: "1",
+      playlist: source.id,
+      playsinline: "1",
+      controls: "0",
+      modestbranding: "1",
+      rel: "0",
+    });
+    return (
+      <iframe
+        key={`yt-${source.id}-${muted ? "m" : "u"}`}
+        title={title}
+        src={`https://www.youtube.com/embed/${source.id}?${params.toString()}`}
+        className="absolute inset-0 h-full w-full border-0"
+        allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
+        allowFullScreen
+      />
+    );
+  }
+
+  // Instagram / Facebook — tap-to-play embeds (no reliable autoplay).
+  return (
+    <iframe
+      title={title}
+      src={active ? source.embedUrl : undefined}
+      className="absolute inset-0 h-full w-full border-0 bg-black"
+      allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
+      allowFullScreen
+      loading={active ? "eager" : "lazy"}
+    />
+  );
+}
+
+function MiniPreview({
+  source,
+  title,
+  posterUrl,
+}: {
+  source: ProductVideoSource;
+  title: string;
+  posterUrl?: string | null;
+}) {
+  const canAutoplay = productVideoCanAutoplay(source);
+
+  if (canAutoplay && source.kind === "direct") {
+    return (
+      <video
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
         src={source.src}
         autoPlay
         muted
         loop
         playsInline
-        controls={interactive}
+        poster={posterUrl || undefined}
         preload="metadata"
         aria-label={title}
       />
     );
   }
 
-  if (source.kind === "instagram") {
-    // Instagram embeds need ~320×568; scale into the mini tile so the reel cover shows.
+  if (canAutoplay && source.kind === "youtube") {
     return (
       <iframe
         title={title}
         src={source.embedUrl}
-        className={className}
-        allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
-        allowFullScreen
+        className="pointer-events-none absolute inset-0 h-full w-full border-0"
+        allow="autoplay; encrypted-media; picture-in-picture"
         loading="eager"
-        scrolling="no"
       />
     );
   }
 
+  // Instagram / Facebook: product poster + play affordance (embeds don't autoplay).
   return (
-    <iframe
-      title={title}
-      src={source.embedUrl}
-      className={className}
-      allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
-      allowFullScreen
-      loading="eager"
-      referrerPolicy="strict-origin-when-cross-origin"
-    />
-  );
-}
-
-function MiniInstagramPreview({
-  source,
-  title,
-}: {
-  source: Extract<ProductVideoSource, { kind: "instagram" }>;
-  title: string;
-}) {
-  return (
-    <div className="absolute inset-0 overflow-hidden bg-neutral-950">
-      <iframe
-        title={title}
-        src={source.embedUrl}
-        className="pointer-events-none absolute left-0 top-0 border-0"
-        style={{
-          width: 320,
-          height: 568,
-          transform: "scale(0.375)",
-          transformOrigin: "top left",
-        }}
-        allow="encrypted-media; picture-in-picture; clipboard-write"
-        loading="eager"
-        scrolling="no"
-      />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-white">
+    <div className="absolute inset-0 bg-neutral-950">
+      {posterUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={posterUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : null}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/30" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-white">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
           <PlayIcon className="ml-0.5 h-5 w-5" />
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm">
-          <InstagramGlyph className="h-3 w-3" />
-          Tap to play
+        <span className="rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm">
+          Tap to open
         </span>
       </div>
     </div>
@@ -142,16 +215,26 @@ function MiniInstagramPreview({
 }
 
 export function StickyProductVideo({
-  videoUrl,
-  productName,
-  productHref,
+  reels,
+  startIndex = 0,
   bottomClassName = "bottom-4 sm:bottom-5",
 }: StickyProductVideoProps) {
   const titleId = useId();
   const reduceMotion = useReducedMotion();
-  const source = parseProductVideoUrl(videoUrl);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const parsed = reels
+    .map((r) => {
+      const source = parseProductVideoUrl(r.videoUrl);
+      return source ? { ...r, source } : null;
+    })
+    .filter((r): r is ProductReelItem & { source: ProductVideoSource } => Boolean(r));
+
+  const safeStart = Math.min(Math.max(0, startIndex), Math.max(0, parsed.length - 1));
   const [dismissed, setDismissed] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(safeStart);
+  const [muted, setMuted] = useState(true);
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
 
   useEffect(() => {
     if (!expanded) return;
@@ -167,10 +250,37 @@ export function StickyProductVideo({
     };
   }, [expanded]);
 
-  if (!source || dismissed) return null;
+  useEffect(() => {
+    if (!expanded) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const slide = scroller.children[safeStart] as HTMLElement | undefined;
+    if (slide) {
+      slide.scrollIntoView({ block: "start", behavior: "instant" as ScrollBehavior });
+    }
+    setActiveIndex(safeStart);
+    setShowSwipeHint(parsed.length > 1);
+    const t = window.setTimeout(() => setShowSwipeHint(false), 2800);
+    return () => window.clearTimeout(t);
+    // only on open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded]);
 
-  const label = productName.trim() || "Product video";
-  const autoplay = productVideoCanAutoplay(source);
+  const onScroll = useCallback(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const h = scroller.clientHeight || 1;
+    const idx = Math.round(scroller.scrollTop / h);
+    setActiveIndex(Math.min(Math.max(0, idx), parsed.length - 1));
+    setShowSwipeHint(false);
+  }, [parsed.length]);
+
+  if (!parsed.length || dismissed) return null;
+
+  const mini = parsed[safeStart] ?? parsed[0]!;
+  const counterLabel = `${activeIndex + 1} / ${parsed.length}`;
+
+  const openFeed = () => setExpanded(true);
 
   return (
     <>
@@ -182,25 +292,14 @@ export function StickyProductVideo({
           <button
             type="button"
             className="absolute inset-0 z-10 cursor-pointer"
-            aria-label={`Expand video for ${label}`}
-            onClick={() => setExpanded(true)}
+            aria-label={`Open reels for ${mini.productName}`}
+            onClick={openFeed}
           />
-          {source.kind === "instagram" ? (
-            <MiniInstagramPreview source={source} title={label} />
-          ) : (
-            <VideoFrame
-              source={source}
-              title={label}
-              className="pointer-events-none absolute inset-0 h-full w-full border-0 object-cover"
-            />
-          )}
-          {!autoplay && source.kind !== "instagram" ? (
-            <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center bg-black/25">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm">
-                <PlayIcon className="ml-0.5 h-5 w-5" />
-              </span>
-            </div>
-          ) : null}
+          <MiniPreview
+            source={mini.source}
+            title={mini.productName}
+            posterUrl={mini.posterUrl}
+          />
           <button
             type="button"
             aria-label="Close video"
@@ -225,7 +324,7 @@ export function StickyProductVideo({
       <AnimatePresence>
         {expanded ? (
           <motion.div
-            className="fixed inset-0 z-230 flex items-center justify-center bg-black/80 p-4 sm:p-8"
+            className="fixed inset-0 z-230 bg-black"
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
@@ -233,69 +332,80 @@ export function StickyProductVideo({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setExpanded(false)}
           >
-            <motion.div
-              className={`relative flex w-full flex-col gap-3 ${
-                source.kind === "instagram" ? "max-w-lg" : "max-w-md"
-              }`}
-              initial={reduceMotion ? false : { scale: 0.94, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={reduceMotion ? undefined : { scale: 0.96, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <h2 id={titleId} className="text-base font-medium text-white sm:text-lg">
-                  {label}
-                </h2>
+            <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex items-start justify-between px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+              <div
+                className="rounded-full bg-black/40 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-sm"
+                aria-live="polite"
+              >
+                {counterLabel}
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  aria-label="Close expanded video"
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white"
+                  aria-label={muted ? "Unmute" : "Mute"}
+                  className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm"
+                  onClick={() => setMuted((m) => !m)}
+                >
+                  <MuteIcon muted={muted} className="h-[18px] w-[18px]" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close reels"
+                  className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-lg text-white backdrop-blur-sm"
                   onClick={() => setExpanded(false)}
                 >
                   ×
                 </button>
               </div>
-              <div
-                className={`relative w-full overflow-hidden rounded-2xl bg-black shadow-2xl ${
-                  source.kind === "instagram"
-                    ? "min-h-[min(72vh,640px)]"
-                    : "aspect-[9/16]"
-                }`}
-              >
-                <VideoFrame
-                  source={source}
-                  title={label}
-                  interactive
-                  className="absolute inset-0 h-full w-full border-0"
-                />
+            </div>
+
+            {showSwipeHint && parsed.length > 1 ? (
+              <div className="pointer-events-none absolute left-1/2 top-16 z-20 flex -translate-x-1/2 flex-col items-center gap-1 text-white/80">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M6 15l6-6 6 6" />
+                </svg>
+                <span className="text-xs">Swipe up for more</span>
               </div>
-              {source.kind === "instagram" ? (
-                <p className="text-center text-xs text-white/70">
-                  Instagram blocks autoplay on websites — tap play on the reel, or{" "}
-                  <a
-                    href={source.pageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline underline-offset-2 hover:text-white"
-                  >
-                    open on Instagram
-                  </a>
-                  .
-                </p>
-              ) : null}
-              {productHref ? (
-                <Link
-                  href={productHref}
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-[var(--brand-accent,#E0703A)] px-5 text-sm font-medium text-white transition hover:brightness-105"
-                  onClick={() => setExpanded(false)}
+            ) : null}
+
+            <h2 id={titleId} className="sr-only">
+              Product reels
+            </h2>
+
+            <div
+              ref={scrollerRef}
+              onScroll={onScroll}
+              className="h-full w-full snap-y snap-mandatory overflow-y-auto overscroll-contain"
+              style={{ WebkitOverflowScrolling: "touch" } as CSSProperties}
+            >
+              {parsed.map((reel, i) => (
+                <div
+                  key={`${reel.productHref}-${i}`}
+                  className="relative flex h-[100dvh] w-full snap-start snap-always flex-col justify-end"
                 >
-                  View product
-                </Link>
-              ) : null}
-            </motion.div>
+                  <SlideMedia
+                    source={reel.source}
+                    title={reel.productName}
+                    active={expanded && i === activeIndex}
+                    muted={muted}
+                    posterUrl={reel.posterUrl}
+                  />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-24">
+                    <p className="pointer-events-none line-clamp-2 text-base font-medium leading-snug text-white sm:text-lg">
+                      {reel.productName}
+                    </p>
+                    <Link
+                      href={reel.productHref}
+                      className="pointer-events-auto mt-3 inline-flex h-11 items-center justify-center rounded-full border border-white/25 bg-white/15 px-5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/25"
+                      onClick={() => setExpanded(false)}
+                    >
+                      View product
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         ) : null}
       </AnimatePresence>
