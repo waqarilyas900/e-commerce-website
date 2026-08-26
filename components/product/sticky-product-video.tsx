@@ -5,9 +5,9 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   parseProductVideoUrl,
+  productVideoCanAutoplay,
   type ProductVideoSource,
 } from "@/lib/product-video/url";
-import { useStickyProductVideoPresence } from "@/components/product/sticky-product-video-context";
 
 export type StickyProductVideoProps = {
   videoUrl: string;
@@ -33,14 +33,32 @@ function ExpandHintIcon({ className }: { className?: string }) {
   );
 }
 
+function PlayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86Z" />
+    </svg>
+  );
+}
+
+function InstagramGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6Zm9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+    </svg>
+  );
+}
+
 function VideoFrame({
   source,
   title,
   className,
+  interactive = false,
 }: {
   source: ProductVideoSource;
   title: string;
   className?: string;
+  interactive?: boolean;
 }) {
   if (source.kind === "direct") {
     return (
@@ -51,9 +69,24 @@ function VideoFrame({
         muted
         loop
         playsInline
-        controls={false}
+        controls={interactive}
         preload="metadata"
         aria-label={title}
+      />
+    );
+  }
+
+  if (source.kind === "instagram") {
+    // Instagram embeds need ~320×568; scale into the mini tile so the reel cover shows.
+    return (
+      <iframe
+        title={title}
+        src={source.embedUrl}
+        className={className}
+        allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
+        allowFullScreen
+        loading="eager"
+        scrolling="no"
       />
     );
   }
@@ -65,9 +98,46 @@ function VideoFrame({
       className={className}
       allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
       allowFullScreen
-      loading="lazy"
+      loading="eager"
       referrerPolicy="strict-origin-when-cross-origin"
     />
+  );
+}
+
+function MiniInstagramPreview({
+  source,
+  title,
+}: {
+  source: Extract<ProductVideoSource, { kind: "instagram" }>;
+  title: string;
+}) {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-neutral-950">
+      <iframe
+        title={title}
+        src={source.embedUrl}
+        className="pointer-events-none absolute left-0 top-0 border-0"
+        style={{
+          width: 320,
+          height: 568,
+          transform: "scale(0.375)",
+          transformOrigin: "top left",
+        }}
+        allow="encrypted-media; picture-in-picture; clipboard-write"
+        loading="eager"
+        scrolling="no"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-white">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+          <PlayIcon className="ml-0.5 h-5 w-5" />
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm">
+          <InstagramGlyph className="h-3 w-3" />
+          Tap to play
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -79,16 +149,9 @@ export function StickyProductVideo({
 }: StickyProductVideoProps) {
   const titleId = useId();
   const reduceMotion = useReducedMotion();
-  const { setVisible } = useStickyProductVideoPresence();
   const source = parseProductVideoUrl(videoUrl);
   const [dismissed, setDismissed] = useState(false);
   const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    const show = Boolean(source) && !dismissed;
-    setVisible(show);
-    return () => setVisible(false);
-  }, [source, dismissed, setVisible]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -107,6 +170,7 @@ export function StickyProductVideo({
   if (!source || dismissed) return null;
 
   const label = productName.trim() || "Product video";
+  const autoplay = productVideoCanAutoplay(source);
 
   return (
     <>
@@ -121,11 +185,22 @@ export function StickyProductVideo({
             aria-label={`Expand video for ${label}`}
             onClick={() => setExpanded(true)}
           />
-          <VideoFrame
-            source={source}
-            title={label}
-            className="pointer-events-none absolute inset-0 h-full w-full border-0 object-cover"
-          />
+          {source.kind === "instagram" ? (
+            <MiniInstagramPreview source={source} title={label} />
+          ) : (
+            <VideoFrame
+              source={source}
+              title={label}
+              className="pointer-events-none absolute inset-0 h-full w-full border-0 object-cover"
+            />
+          )}
+          {!autoplay && source.kind !== "instagram" ? (
+            <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center bg-black/25">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm">
+                <PlayIcon className="ml-0.5 h-5 w-5" />
+              </span>
+            </div>
+          ) : null}
           <button
             type="button"
             aria-label="Close video"
@@ -161,7 +236,9 @@ export function StickyProductVideo({
             onClick={() => setExpanded(false)}
           >
             <motion.div
-              className="relative flex w-full max-w-md flex-col gap-3"
+              className={`relative flex w-full flex-col gap-3 ${
+                source.kind === "instagram" ? "max-w-lg" : "max-w-md"
+              }`}
               initial={reduceMotion ? false : { scale: 0.94, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={reduceMotion ? undefined : { scale: 0.96, opacity: 0 }}
@@ -181,13 +258,34 @@ export function StickyProductVideo({
                   ×
                 </button>
               </div>
-              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl bg-black shadow-2xl">
+              <div
+                className={`relative w-full overflow-hidden rounded-2xl bg-black shadow-2xl ${
+                  source.kind === "instagram"
+                    ? "min-h-[min(72vh,640px)]"
+                    : "aspect-[9/16]"
+                }`}
+              >
                 <VideoFrame
                   source={source}
                   title={label}
+                  interactive
                   className="absolute inset-0 h-full w-full border-0"
                 />
               </div>
+              {source.kind === "instagram" ? (
+                <p className="text-center text-xs text-white/70">
+                  Instagram blocks autoplay on websites — tap play on the reel, or{" "}
+                  <a
+                    href={source.pageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-white"
+                  >
+                    open on Instagram
+                  </a>
+                  .
+                </p>
+              ) : null}
               {productHref ? (
                 <Link
                   href={productHref}

@@ -21,7 +21,6 @@ import { getPublicSiteUrl } from "@/lib/site-url";
 import { GoogleIdentityProvider as GoogleOneTap } from "@/components/auth/google-identity-provider";
 import { NavCollectionsProvider } from "@/app/providers/nav-collections-provider";
 import { HeaderNavMenuProvider } from "@/app/providers/header-nav-menu-provider";
-import { AskTheStoreProvider } from "@/app/providers/ask-the-store-provider";
 import { StoreBrandProvider } from "@/app/providers/store-brand-provider";
 import { StorefrontAppShell } from "@/components/storefront-app-shell";
 import {
@@ -349,19 +348,17 @@ export default async function RootLayout({
           easing="ease"
         />
         <StoreBrandProvider brand={storeBrand}>
-          <AskTheStoreProvider>
-            <NavCollectionsProvider links={collectionLinks}>
-              <HeaderNavMenuProvider items={headerNavMenuItems}>
-                {showGoogleOneTap ? (
-                  <GoogleOneTap>
-                    <StorefrontAppShell>{children}</StorefrontAppShell>
-                  </GoogleOneTap>
-                ) : (
+          <NavCollectionsProvider links={collectionLinks}>
+            <HeaderNavMenuProvider items={headerNavMenuItems}>
+              {showGoogleOneTap ? (
+                <GoogleOneTap>
                   <StorefrontAppShell>{children}</StorefrontAppShell>
-                )}
-              </HeaderNavMenuProvider>
-            </NavCollectionsProvider>
-          </AskTheStoreProvider>
+                </GoogleOneTap>
+              ) : (
+                <StorefrontAppShell>{children}</StorefrontAppShell>
+              )}
+            </HeaderNavMenuProvider>
+          </NavCollectionsProvider>
         </StoreBrandProvider>
       </body>
     </html>

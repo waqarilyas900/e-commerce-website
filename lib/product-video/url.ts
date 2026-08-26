@@ -1,12 +1,13 @@
 export type ProductVideoSource =
   | { kind: "youtube"; id: string; embedUrl: string; pageUrl: string }
   | { kind: "facebook"; embedUrl: string; pageUrl: string }
-  | { kind: "instagram"; embedUrl: string; pageUrl: string }
+  | { kind: "instagram"; embedUrl: string; pageUrl: string; code: string }
   | { kind: "direct"; src: string; pageUrl: string };
 
 function stripQueryAndHash(url: string): string {
   try {
     const u = new URL(url);
+    u.search = "";
     u.hash = "";
     return u.toString();
   } catch {
@@ -65,9 +66,35 @@ function isDirectMediaUrl(raw: string): boolean {
   }
 }
 
+/** Extract Instagram reel/post shortcode from common share URL shapes. */
+export function extractInstagramCode(pathname: string): { kind: "reel" | "p" | "tv"; code: string } | null {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length < 2) return null;
+
+  // /reel/CODE, /p/CODE, /tv/CODE
+  if ((parts[0] === "reel" || parts[0] === "p" || parts[0] === "tv") && parts[1]) {
+    return { kind: parts[0], code: parts[1] };
+  }
+
+  // /share/reel/CODE or /share/p/CODE
+  if (parts[0] === "share" && (parts[1] === "reel" || parts[1] === "p" || parts[1] === "tv") && parts[2]) {
+    return { kind: parts[1], code: parts[2] };
+  }
+
+  // /username/reel/CODE
+  if (parts.length >= 3 && (parts[1] === "reel" || parts[1] === "p" || parts[1] === "tv") && parts[2]) {
+    return { kind: parts[1], code: parts[2] };
+  }
+
+  return null;
+}
+
 /**
  * Normalize admin-pasted YouTube / Facebook / Instagram / direct MP4 URLs
  * into a playable embed (or native video src).
+ *
+ * Note: Instagram/Facebook official embeds do not support muted autoplay;
+ * use YouTube or a direct MP4 for Rad-style looping sticky reels.
  */
 export function parseProductVideoUrl(input: string | null | undefined): ProductVideoSource | null {
   const trimmed = (input ?? "").trim();
@@ -113,22 +140,18 @@ export function parseProductVideoUrl(input: string | null | undefined): ProductV
     };
   }
 
-  if (host === "instagram.com" || host === "www.instagram.com") {
-    const parts = url.pathname.split("/").filter(Boolean);
-    const kind = parts[0];
-    const code = parts[1];
-    if (code && (kind === "reel" || kind === "p" || kind === "tv")) {
+  if (host === "instagram.com" || host === "instagr.am") {
+    const extracted = extractInstagramCode(url.pathname);
+    if (extracted) {
+      const cleanPage = `https://www.instagram.com/${extracted.kind}/${extracted.code}/`;
       return {
         kind: "instagram",
-        pageUrl,
-        embedUrl: `https://www.instagram.com/${kind}/${code}/embed/`,
+        code: extracted.code,
+        pageUrl: cleanPage,
+        // Official embed page (tap-to-play). Autoplay is blocked by Instagram.
+        embedUrl: `https://www.instagram.com/${extracted.kind}/${extracted.code}/embed/`,
       };
     }
-    return {
-      kind: "instagram",
-      pageUrl,
-      embedUrl: pageUrl.endsWith("/") ? `${pageUrl}embed/` : `${pageUrl}/embed/`,
-    };
   }
 
   if (isDirectMediaUrl(url.toString())) {
@@ -136,4 +159,9 @@ export function parseProductVideoUrl(input: string | null | undefined): ProductV
   }
 
   return null;
+}
+
+/** True when the source can muted-autoplay in the sticky mini player. */
+export function productVideoCanAutoplay(source: ProductVideoSource): boolean {
+  return source.kind === "youtube" || source.kind === "direct";
 }

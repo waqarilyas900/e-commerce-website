@@ -11,7 +11,6 @@ import { Footer, Header } from "@/components/storefront";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { DeferredAppShells } from "@/components/ui/deferred-app-shells";
 import { HeaderStickyObserver } from "@/components/ui/header-sticky-observer";
-import { StickyProductVideoProvider } from "@/components/product/sticky-product-video-context";
 
 /** Routes that use their own chrome (or none) — skip storefront header/footer. */
 function shouldShowStorefrontChrome(pathname: string | null): boolean {
@@ -34,20 +33,18 @@ export function StorefrontAppShell({ children }: { children: ReactNode }) {
     <AuthProvider>
       <CartProvider>
         <ProductPreviewProvider>
-          <StickyProductVideoProvider>
-            <HeaderStickyObserver />
-            <div id="PageContainer" className="page-container">
-              <div className="transition-body">
-                {showChrome ? <Header /> : null}
-                {children}
-                {showChrome ? <Footer /> : null}
-              </div>
+          <HeaderStickyObserver />
+          <div id="PageContainer" className="page-container">
+            <div className="transition-body">
+              {showChrome ? <Header /> : null}
+              {children}
+              {showChrome ? <Footer /> : null}
             </div>
-            <CartDrawer />
-            <ProductPreviewSheet />
-            <AppToaster />
-            <DeferredAppShells />
-          </StickyProductVideoProvider>
+          </div>
+          <CartDrawer />
+          <ProductPreviewSheet />
+          <AppToaster />
+          <DeferredAppShells />
         </ProductPreviewProvider>
       </CartProvider>
     </AuthProvider>

@@ -17,14 +17,9 @@ const DiscountNotificationPrompt = dynamic(
   { ssr: false },
 );
 
-const AskTheStore = dynamic(
-  () => import("@/components/ask-the-store/ask-the-store").then((m) => m.AskTheStore),
-  { ssr: false },
-);
-
 /**
  * Mounts heavy "after the page is usable" client widgets only once the browser
- * is idle (discount popup + store AI), so they stay off the LCP / TBT path.
+ * is idle (discount popup), so they stay off the LCP / TBT path.
  */
 export function DeferredAppShells() {
   const pathname = usePathname();
@@ -49,13 +44,7 @@ export function DeferredAppShells() {
 
   if (!ready) return null;
 
-  const hideStoreAi = isCheckoutPath(pathname);
   const hideDiscountPrompt = isCheckoutPath(pathname);
 
-  return (
-    <>
-      {hideDiscountPrompt ? null : <DiscountNotificationPrompt />}
-      {hideStoreAi ? null : <AskTheStore />}
-    </>
-  );
+  return <>{hideDiscountPrompt ? null : <DiscountNotificationPrompt />}</>;
 }
