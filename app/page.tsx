@@ -17,6 +17,7 @@ import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
 import { getHomeCalloutImages } from "@/app/lib/home-callout-images";
 import { getHomeMarketingData } from "@/app/lib/home-marketing";
 import { getHomeRailSections } from "@/app/lib/home-rails";
+import { getCachedHomeReviewHighlights } from "@/lib/cache/home-review-highlights";
 import { getCachedStoreReviewAggregate } from "@/lib/cache/store-review-aggregate";
 import {
   buildPageMetadata,
@@ -51,10 +52,11 @@ export async function generateMetadata(): Promise<Metadata> {
  * + rails so grey skeletons never flash between shell and content.
  */
 export default async function Home() {
-  const [homeMarketing, storeReviews, identityBundle, collectionTiles, railSections, calloutImages] =
+  const [homeMarketing, storeReviews, reviewHighlights, identityBundle, collectionTiles, railSections, calloutImages] =
     await Promise.all([
       getHomeMarketingData(),
       getCachedStoreReviewAggregate(),
+      getCachedHomeReviewHighlights(),
       loadSiteIdentity().then(async (identity) => ({
         identity,
         override: await loadSeoOverrideForRoute("/", identity.locale),
@@ -160,7 +162,7 @@ export default async function Home() {
           />
         ))}
         <WhyShop />
-        <TrustRatingStrip aggregate={storeReviews} />
+        <TrustRatingStrip aggregate={storeReviews} reviews={reviewHighlights} />
       </main>
     </>
   );
