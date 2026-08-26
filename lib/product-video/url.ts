@@ -5,9 +5,11 @@ export type ProductReelItem = {
   posterUrl?: string | null;
 };
 
-export type ProductVideoSource =
-  | { kind: "direct"; src: string }
-  | { kind: "instagram"; embedUrl: string; pageUrl: string; code: string };
+/** Always a playable native media URL for <video> (direct file or same-origin IG proxy). */
+export type ProductVideoSource = {
+  kind: "direct";
+  src: string;
+};
 
 function normalizeIgKind(raw: string): "reel" | "p" | "tv" | null {
   if (raw === "reel" || raw === "reels") return "reel";
@@ -40,11 +42,10 @@ export function extractInstagramCode(
 }
 
 /**
- * Accepts:
- * - Direct store media: .mp4 / .webm / .mov / .m3u8
- * - Instagram reel/post URLs (including /reels/)
- *
- * Rejects YouTube and Facebook (not supported for this player).
+ * Accepts Instagram reel/post URLs or direct MP4/HLS.
+ * Instagram becomes a same-origin stream URL so the player is native video only
+ * (autoplay / muted / loop) with no Instagram chrome.
+ * Rejects YouTube and Facebook.
  */
 export function parseProductVideoSource(
   input: string | null | undefined,
@@ -77,12 +78,9 @@ export function parseProductVideoSource(
   if (host === "instagram.com" || host === "instagr.am") {
     const extracted = extractInstagramCode(url.pathname);
     if (!extracted) return null;
-    const pageUrl = `https://www.instagram.com/${extracted.kind}/${extracted.code}/`;
     return {
-      kind: "instagram",
-      code: extracted.code,
-      pageUrl,
-      embedUrl: `https://www.instagram.com/${extracted.kind}/${extracted.code}/embed/`,
+      kind: "direct",
+      src: `/api/product-video/stream?code=${encodeURIComponent(extracted.code)}`,
     };
   }
 

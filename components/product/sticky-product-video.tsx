@@ -13,7 +13,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   parseProductVideoSource,
   type ProductReelItem,
-  type ProductVideoSource,
 } from "@/lib/product-video/url";
 
 export type StickyProductVideoProps = {
@@ -52,82 +51,15 @@ function MuteIcon({ muted }: { muted: boolean }) {
   );
 }
 
-function PlayIcon({ className }: { className?: string }) {
+function PlayIcon() {
   return (
-    <svg className={className} viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden style={{ marginLeft: 3 }}>
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden style={{ marginLeft: 3 }}>
       <polygon points="7,4 20,12 7,20" />
     </svg>
   );
 }
 
-type ParsedReel = ProductReelItem & { source: ProductVideoSource };
-
-function SlideMedia({
-  source,
-  title,
-  active,
-  muted,
-  paused,
-  posterUrl,
-  videoRef,
-  onTogglePause,
-}: {
-  source: ProductVideoSource;
-  title: string;
-  active: boolean;
-  muted: boolean;
-  paused: boolean;
-  posterUrl?: string | null;
-  videoRef: (el: HTMLVideoElement | null) => void;
-  onTogglePause: () => void;
-}) {
-  if (source.kind === "direct") {
-    return (
-      <>
-        <video
-          ref={videoRef}
-          className="block h-full w-full object-contain"
-          src={source.src}
-          loop
-          playsInline
-          muted={muted}
-          poster={posterUrl || undefined}
-          preload={active ? "auto" : "none"}
-          onClick={onTogglePause}
-        />
-        {paused && active ? (
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-white">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/45">
-              <PlayIcon />
-            </span>
-          </span>
-        ) : null}
-      </>
-    );
-  }
-
-  // Instagram: official embed inside Rad chrome (tap play inside iframe).
-  return (
-    <div className="relative flex h-full w-full items-center justify-center bg-black">
-      {active ? (
-        <iframe
-          title={title}
-          src={source.embedUrl}
-          className="h-full w-full max-w-[min(100%,28.125vh*9/16+0px)] border-0 bg-black"
-          style={{ maxWidth: "min(100%, calc(100dvh * 9 / 16))" }}
-          allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
-          allowFullScreen
-          loading="eager"
-        />
-      ) : posterUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={posterUrl} alt="" className="h-full w-full object-contain" />
-      ) : (
-        <div className="h-full w-full bg-black" />
-      )}
-    </div>
-  );
-}
+type ParsedReel = ProductReelItem & { src: string };
 
 export function StickyProductVideo({
   reels,
@@ -143,7 +75,7 @@ export function StickyProductVideo({
   const parsed: ParsedReel[] = reels
     .map((r) => {
       const source = parseProductVideoSource(r.videoUrl);
-      return source ? { ...r, source } : null;
+      return source ? { ...r, src: source.src } : null;
     })
     .filter((r): r is ParsedReel => Boolean(r));
 
@@ -160,14 +92,13 @@ export function StickyProductVideo({
 
   useEffect(() => {
     if (!mini || expanded || dismissed) return;
-    if (mini.source.kind === "direct") {
-      const el = miniVideoRef.current;
-      if (!el) return;
-      el.muted = true;
-      void el.play().then(() => setMiniReady(true)).catch(() => setMiniReady(true));
-    } else {
-      setMiniReady(true);
-    }
+    const el = miniVideoRef.current;
+    if (!el) return;
+    el.muted = true;
+    void el
+      .play()
+      .then(() => setMiniReady(true))
+      .catch(() => setMiniReady(true));
   }, [mini, expanded, dismissed, safeStart, parsed.length]);
 
   useEffect(() => {
@@ -245,36 +176,17 @@ export function StickyProductVideo({
             aria-label="Open product videos"
             onClick={() => setExpanded(true)}
           />
-          {mini.source.kind === "direct" ? (
-            <video
-              ref={miniVideoRef}
-              className="pointer-events-none block h-full w-full object-cover"
-              src={mini.source.src}
-              muted
-              loop
-              autoPlay
-              playsInline
-              preload="metadata"
-              poster={mini.posterUrl || undefined}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-neutral-950">
-              {mini.posterUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={mini.posterUrl}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
-              <div className="absolute inset-0 flex items-center justify-center text-white">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                  <PlayIcon className="h-5 w-5" />
-                </span>
-              </div>
-            </div>
-          )}
+          <video
+            ref={miniVideoRef}
+            className="pointer-events-none block h-full w-full object-cover"
+            src={mini.src}
+            muted
+            loop
+            autoPlay
+            playsInline
+            preload="metadata"
+            poster={mini.posterUrl || undefined}
+          />
           <button
             type="button"
             aria-label="Hide videos"
@@ -378,18 +290,26 @@ export function StickyProductVideo({
                     minHeight: "100dvh",
                   }}
                 >
-                  <SlideMedia
-                    source={reel.source}
-                    title={reel.productName}
-                    active={expanded && i === activeIndex}
-                    muted={muted}
-                    paused={paused}
-                    posterUrl={reel.posterUrl}
-                    videoRef={(el) => {
+                  <video
+                    ref={(el) => {
                       slideVideoRefs.current[i] = el;
                     }}
-                    onTogglePause={() => setPaused((p) => !p)}
+                    className="block h-full w-full object-contain"
+                    src={reel.src}
+                    loop
+                    playsInline
+                    muted={muted}
+                    poster={reel.posterUrl || undefined}
+                    preload={Math.abs(i - activeIndex) <= 1 ? "auto" : "none"}
+                    onClick={() => setPaused((p) => !p)}
                   />
+                  {paused && i === activeIndex ? (
+                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-white">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/45">
+                        <PlayIcon />
+                      </span>
+                    </span>
+                  ) : null}
                   <div
                     className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2.5 text-white"
                     style={{
