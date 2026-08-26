@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
@@ -41,7 +41,6 @@ function CalloutImg({
 /** Homepage featured band — Rad-style multi-image callout + admin featured copy. */
 export function ActiveWearBlock({ calloutImages = [] }: Props) {
   const { featured } = useStoreBrand();
-  const collageRef = useRef<HTMLDivElement>(null);
   const [collageActive, setCollageActive] = useState(false);
 
   const images = calloutImages.slice(0, 5);
@@ -57,24 +56,25 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
     featured.description.trim().length > 0 ||
     featured.eyebrow.trim().length > 0;
 
+  /**
+   * Activate on the next frames after mount (not after a late IntersectionObserver).
+   * Waiting until mid-viewport used to leave images at opacity:0 then slam them in —
+   * that felt like a second page load when the section is near the top of home.
+   */
   useEffect(() => {
-    const el = collageRef.current;
-    if (!el || !hasCollage) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setCollageActive(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setCollageActive(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.15 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    if (!hasCollage) return;
+    let cancelled = false;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (!cancelled) setCollageActive(true);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
   }, [hasCollage]);
 
   if (!hasImage && !hasCopy) {
@@ -105,7 +105,6 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
             <div className="feature-row__item feature-row__callout-image relative flex w-full min-w-0 shrink-0 justify-center lg:w-1/2 lg:max-w-[50%] lg:overflow-hidden">
               {hasCollage ? (
                 <div
-                  ref={collageRef}
                   className={`callout-images${collageActive ? " is-callout-active" : ""}`}
                   data-aos="collection-callout"
                 >

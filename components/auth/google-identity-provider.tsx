@@ -330,22 +330,23 @@ export function GoogleIdentityProvider({ children }: ProviderProps) {
     [clientId, loadGsiScript, gsiReady, identityInitialized, setCredentialNextPath],
   );
 
-  if (!clientId || !loadGsiScript) {
-    return (
-      <GoogleIdentityContext.Provider value={null}>
-        {children}
-      </GoogleIdentityContext.Provider>
-    );
-  }
-
+  /**
+   * Keep a single stable tree so flipping `loadGsiScript` (after ~4.5s on the
+   * storefront) does not remount the entire app — that felt like a full homepage reload.
+   * `children` stays the first child; Script mounts after so fiber indices do not shift.
+   */
   return (
-    <GoogleIdentityContext.Provider value={ctxValue}>
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onLoad={() => setGsiReady(true)}
-      />
+    <GoogleIdentityContext.Provider
+      value={clientId && loadGsiScript ? ctxValue : null}
+    >
       {children}
+      {clientId && loadGsiScript ? (
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+          onLoad={() => setGsiReady(true)}
+        />
+      ) : null}
     </GoogleIdentityContext.Provider>
   );
 }
