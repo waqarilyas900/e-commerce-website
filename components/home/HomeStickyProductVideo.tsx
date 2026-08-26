@@ -1,18 +1,18 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
 import { dbListActiveProductsWithVideoUrl } from "@/app/lib/db/catalog";
-import { parseProductVideoUrl } from "@/lib/product-video/url";
+import { parseNativeProductVideoUrl } from "@/lib/product-video/url";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
 /**
- * Homepage sticky reel + Rad-style vertical feed of every product with a video_url.
+ * Homepage sticky reel + Rad-style vertical feed of every product with a native video URL.
  */
 export async function HomeStickyProductVideo() {
   noStore();
   const rows = await dbListActiveProductsWithVideoUrl();
   const playable = rows
     .map((r) => {
-      if (!parseProductVideoUrl(r.video_url)) return null;
+      if (!parseNativeProductVideoUrl(r.video_url)) return null;
       const poster = r.poster_url
         ? optimizeSupplierImageUrl(r.poster_url, 600) || r.poster_url
         : null;
