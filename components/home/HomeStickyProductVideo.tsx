@@ -16,7 +16,7 @@ export async function HomeStickyProductVideo() {
     .map((r) => {
       if (!parseProductVideoSource(r.video_url)) return null;
       const poster = r.poster_url
-        ? optimizeSupplierImageUrl(r.poster_url, 600) || r.poster_url
+        ? optimizeSupplierImageUrl(r.poster_url, 720) || r.poster_url
         : null;
       return {
         videoUrl: r.video_url,
