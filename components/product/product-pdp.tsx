@@ -37,7 +37,7 @@ import Link from "next/link";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import type { FaqItem } from "@/lib/seo/jsonld/faq";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
-import { parseNativeProductVideoUrl } from "@/lib/product-video/url";
+import { parseProductVideoSource } from "@/lib/product-video/url";
 
 function sellableQty(v: DbProductVariantRow): number {
   return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
@@ -517,7 +517,7 @@ export function ProductPdp({
       : "border-neutral-800/80 bg-neutral-950/95 text-white shadow-lg backdrop-blur-sm";
 
   const stickyVideoUrl = (product.video_url ?? "").trim();
-  const showStickyVideo = Boolean(parseNativeProductVideoUrl(stickyVideoUrl));
+  const showStickyVideo = Boolean(parseProductVideoSource(stickyVideoUrl));
   const stickyPoster =
     gallery.find((g) => g.kind === "image")?.url || firstImage(product.images) || null;
 

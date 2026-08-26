@@ -11,8 +11,9 @@ import {
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
-  parseNativeProductVideoUrl,
+  parseProductVideoSource,
   type ProductReelItem,
+  type ProductVideoSource,
 } from "@/lib/product-video/url";
 
 export type StickyProductVideoProps = {
@@ -22,8 +23,7 @@ export type StickyProductVideoProps = {
 };
 
 /** Rad: --rvw-edge aligns chrome to the contained 9:16 video column. */
-const FEED_EDGE =
-  "max(16px, calc(50% - 28.125vh + 16px))" as const;
+const FEED_EDGE = "max(16px, calc(50% - 28.125vh + 16px))";
 
 function ExpandHintIcon() {
   return (
@@ -52,15 +52,82 @@ function MuteIcon({ muted }: { muted: boolean }) {
   );
 }
 
-function PlayPauseIcon() {
+function PlayIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden style={{ marginLeft: 3 }}>
+    <svg className={className} viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden style={{ marginLeft: 3 }}>
       <polygon points="7,4 20,12 7,20" />
     </svg>
   );
 }
 
-type ParsedReel = ProductReelItem & { src: string };
+type ParsedReel = ProductReelItem & { source: ProductVideoSource };
+
+function SlideMedia({
+  source,
+  title,
+  active,
+  muted,
+  paused,
+  posterUrl,
+  videoRef,
+  onTogglePause,
+}: {
+  source: ProductVideoSource;
+  title: string;
+  active: boolean;
+  muted: boolean;
+  paused: boolean;
+  posterUrl?: string | null;
+  videoRef: (el: HTMLVideoElement | null) => void;
+  onTogglePause: () => void;
+}) {
+  if (source.kind === "direct") {
+    return (
+      <>
+        <video
+          ref={videoRef}
+          className="block h-full w-full object-contain"
+          src={source.src}
+          loop
+          playsInline
+          muted={muted}
+          poster={posterUrl || undefined}
+          preload={active ? "auto" : "none"}
+          onClick={onTogglePause}
+        />
+        {paused && active ? (
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-white">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/45">
+              <PlayIcon />
+            </span>
+          </span>
+        ) : null}
+      </>
+    );
+  }
+
+  // Instagram: official embed inside Rad chrome (tap play inside iframe).
+  return (
+    <div className="relative flex h-full w-full items-center justify-center bg-black">
+      {active ? (
+        <iframe
+          title={title}
+          src={source.embedUrl}
+          className="h-full w-full max-w-[min(100%,28.125vh*9/16+0px)] border-0 bg-black"
+          style={{ maxWidth: "min(100%, calc(100dvh * 9 / 16))" }}
+          allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
+          allowFullScreen
+          loading="eager"
+        />
+      ) : posterUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={posterUrl} alt="" className="h-full w-full object-contain" />
+      ) : (
+        <div className="h-full w-full bg-black" />
+      )}
+    </div>
+  );
+}
 
 export function StickyProductVideo({
   reels,
@@ -75,8 +142,8 @@ export function StickyProductVideo({
 
   const parsed: ParsedReel[] = reels
     .map((r) => {
-      const src = parseNativeProductVideoUrl(r.videoUrl);
-      return src ? { ...r, src } : null;
+      const source = parseProductVideoSource(r.videoUrl);
+      return source ? { ...r, source } : null;
     })
     .filter((r): r is ParsedReel => Boolean(r));
 
@@ -89,12 +156,19 @@ export function StickyProductVideo({
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [miniReady, setMiniReady] = useState(false);
 
+  const mini = parsed[safeStart] ?? parsed[0];
+
   useEffect(() => {
-    const el = miniVideoRef.current;
-    if (!el || expanded || dismissed) return;
-    el.muted = true;
-    void el.play().then(() => setMiniReady(true)).catch(() => setMiniReady(true));
-  }, [expanded, dismissed, safeStart, parsed.length]);
+    if (!mini || expanded || dismissed) return;
+    if (mini.source.kind === "direct") {
+      const el = miniVideoRef.current;
+      if (!el) return;
+      el.muted = true;
+      void el.play().then(() => setMiniReady(true)).catch(() => setMiniReady(true));
+    } else {
+      setMiniReady(true);
+    }
+  }, [mini, expanded, dismissed, safeStart, parsed.length]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -144,24 +218,17 @@ export function StickyProductVideo({
     if (!scroller) return;
     const h = scroller.clientHeight || 1;
     const idx = Math.round(scroller.scrollTop / h);
-    const next = Math.min(Math.max(0, idx), parsed.length - 1);
-    setActiveIndex(next);
+    setActiveIndex(Math.min(Math.max(0, idx), parsed.length - 1));
     setPaused(false);
     setShowSwipeHint(false);
   }, [parsed.length]);
 
-  const togglePauseActive = () => {
-    setPaused((p) => !p);
-  };
+  if (!parsed.length || dismissed || !mini) return null;
 
-  if (!parsed.length || dismissed) return null;
-
-  const mini = parsed[safeStart] ?? parsed[0]!;
   const counterLabel = `${activeIndex + 1} / ${parsed.length}`;
 
   return (
     <>
-      {/* Mini sticky widget — Rad: 120×213, bottom/right 16px, radius 12px */}
       <div
         className={`pointer-events-none fixed right-4 z-[999996] ${bottomClassName}`}
         data-sticky-product-video
@@ -170,11 +237,7 @@ export function StickyProductVideo({
           className={`pointer-events-auto relative overflow-hidden bg-black shadow-[0_6px_20px_rgba(0,0,0,0.3)] transition-opacity duration-400 ${
             miniReady ? "opacity-100" : "opacity-0"
           }`}
-          style={{
-            width: 120,
-            height: 213,
-            borderRadius: 12,
-          }}
+          style={{ width: 120, height: 213, borderRadius: 12 }}
         >
           <button
             type="button"
@@ -182,17 +245,36 @@ export function StickyProductVideo({
             aria-label="Open product videos"
             onClick={() => setExpanded(true)}
           />
-          <video
-            ref={miniVideoRef}
-            className="pointer-events-none block h-full w-full object-cover"
-            src={mini.src}
-            muted
-            loop
-            autoPlay
-            playsInline
-            preload="metadata"
-            poster={mini.posterUrl || undefined}
-          />
+          {mini.source.kind === "direct" ? (
+            <video
+              ref={miniVideoRef}
+              className="pointer-events-none block h-full w-full object-cover"
+              src={mini.source.src}
+              muted
+              loop
+              autoPlay
+              playsInline
+              preload="metadata"
+              poster={mini.posterUrl || undefined}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-neutral-950">
+              {mini.posterUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={mini.posterUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
+              <div className="absolute inset-0 flex items-center justify-center text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                  <PlayIcon className="h-5 w-5" />
+                </span>
+              </div>
+            </div>
+          )}
           <button
             type="button"
             aria-label="Hide videos"
@@ -266,9 +348,7 @@ export function StickyProductVideo({
             {showSwipeHint && parsed.length > 1 ? (
               <div
                 className="pointer-events-none fixed inset-x-0 z-[2] flex flex-col items-center gap-0.5 text-white"
-                style={{
-                  bottom: "calc(118px + env(safe-area-inset-bottom, 0px))",
-                }}
+                style={{ bottom: "calc(118px + env(safe-area-inset-bottom, 0px))" }}
               >
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M6 15l6-6 6 6" />
@@ -290,7 +370,7 @@ export function StickyProductVideo({
               {parsed.map((reel, i) => (
                 <div
                   key={`${reel.productHref}-${i}`}
-                  className="relative flex h-full min-h-[100dvh] w-full items-center justify-center bg-black bg-center bg-cover"
+                  className="relative flex w-full items-center justify-center bg-black"
                   style={{
                     scrollSnapAlign: "start",
                     scrollSnapStop: "always",
@@ -298,28 +378,20 @@ export function StickyProductVideo({
                     minHeight: "100dvh",
                   }}
                 >
-                  <video
-                    ref={(el) => {
+                  <SlideMedia
+                    source={reel.source}
+                    title={reel.productName}
+                    active={expanded && i === activeIndex}
+                    muted={muted}
+                    paused={paused}
+                    posterUrl={reel.posterUrl}
+                    videoRef={(el) => {
                       slideVideoRefs.current[i] = el;
                     }}
-                    className="block h-full w-full object-contain"
-                    src={reel.src}
-                    loop
-                    playsInline
-                    muted={muted}
-                    poster={reel.posterUrl || undefined}
-                    preload={Math.abs(i - activeIndex) <= 1 ? "auto" : "none"}
-                    onClick={togglePauseActive}
+                    onTogglePause={() => setPaused((p) => !p)}
                   />
-                  {paused && i === activeIndex ? (
-                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-white">
-                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/45">
-                        <PlayPauseIcon />
-                      </span>
-                    </span>
-                  ) : null}
                   <div
-                    className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 text-white"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2.5 text-white"
                     style={{
                       padding: `48px var(--rvw-edge) calc(20px + env(safe-area-inset-bottom, 0px))`,
                       background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0))",
@@ -333,7 +405,7 @@ export function StickyProductVideo({
                     </div>
                     <Link
                       href={reel.productHref}
-                      className="block w-full box-border rounded-lg border-[0.5px] border-white/45 bg-white/[0.22] px-0 py-3 text-center text-[15px] font-semibold text-white backdrop-blur-[8px] transition hover:bg-white/30"
+                      className="pointer-events-auto block w-full box-border rounded-lg border-[0.5px] border-white/45 bg-white/[0.22] px-0 py-3 text-center text-[15px] font-semibold text-white backdrop-blur-[8px] transition hover:bg-white/30"
                       onClick={() => setExpanded(false)}
                     >
                       View product
