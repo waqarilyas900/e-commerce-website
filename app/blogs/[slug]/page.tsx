@@ -15,6 +15,7 @@ import {
   type BlogProductInput,
 } from "@/app/lib/blog/product-blog";
 import {
+  buildStoreStoryGuideArticle,
   buildWelcome10GuideArticle,
   getStaticGuideMeta,
 } from "@/app/lib/blog/guides";
@@ -64,14 +65,19 @@ async function resolveArticle(
   const guide = getStaticGuideMeta(slug);
   if (guide) {
     const imageProducts = await loadGuideImageProducts(guide.imageProductSlugs);
-    const article =
-      slug === "welcome10-voucher-code-rs-100-discount"
-        ? buildWelcome10GuideArticle(storeName, imageProducts)
-        : null;
+    let article: BlogArticle | null = null;
+    let crumbLabel = guide.title;
+    if (slug === "welcome10-voucher-code-rs-100-discount") {
+      article = buildWelcome10GuideArticle(storeName, imageProducts);
+      crumbLabel = "WELCOME10 voucher";
+    } else if (slug === "inside-simplecart-store-real-stock-cod-pakistan") {
+      article = buildStoreStoryGuideArticle(storeName);
+      crumbLabel = "Inside our store";
+    }
     if (!article) return null;
     return {
       article,
-      crumbLabel: "WELCOME10 voucher",
+      crumbLabel,
       productLink: { href: "/collections", label: "Browse collections & shop" },
     };
   }

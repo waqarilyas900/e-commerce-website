@@ -37,6 +37,24 @@ export const STATIC_BLOG_GUIDES: StaticGuideMeta[] = [
       "rechargeable-mosquito-killer-bat",
     ],
   },
+  {
+    slug: "inside-simplecart-store-real-stock-cod-pakistan",
+    title: "How SimpleCart Store Works — Inventory, Packing & COD Delivery in Pakistan",
+    metaTitle: "How SimpleCart Store Works | COD Home Essentials Pakistan",
+    metaDescription:
+      "Learn how SimpleCart Store sources home essentials, manages warehouse inventory, packs orders carefully, and ships with cash on delivery across Pakistan.",
+    publishedAt: "2026-08-26T16:00:00.000Z",
+    keywords: [
+      "SimpleCart Store Pakistan",
+      "buy home essentials online Pakistan",
+      "COD delivery Pakistan online store",
+      "kitchen appliances online Pakistan",
+      "drinkware online shopping Pakistan",
+      "how SimpleCart Store works",
+      "ecommerce warehouse Pakistan",
+    ],
+    imageProductSlugs: [],
+  },
 ];
 
 export function getStaticGuideMeta(slug: string): StaticGuideMeta | undefined {
@@ -194,8 +212,165 @@ export function buildWelcome10GuideArticle(
   };
 }
 
-export function staticGuideListingCard(storeName: string, heroImage?: string | null) {
-  const meta = STATIC_BLOG_GUIDES[0]!;
+const STORE_STORY_SLUG = "inside-simplecart-store-real-stock-cod-pakistan";
+
+const STORE_STORY_IMAGES = {
+  kettleQc: {
+    src: "/story/simplecart-store-01.jpg",
+    alt: "Stainless steel electric kettle prepared for packing at SimpleCart Store",
+  },
+  heaterDrinkware: {
+    src: "/story/simplecart-store-02.jpg",
+    alt: "Carbon heater and drinkware from SimpleCart Store home essentials range",
+  },
+  lifestyleJar: {
+    src: "/story/simplecart-store-03.jpg",
+    alt: "Glass storage jar and lifestyle accessories available at SimpleCart Store",
+  },
+  tumblerPack: {
+    src: "/story/simplecart-store-04.jpg",
+    alt: "Glass tumbler with bamboo lid packed with protective wrap for shipping",
+  },
+  fanHeater: {
+    src: "/story/simplecart-store-05.jpg",
+    alt: "Portable fan heater from SimpleCart Store appliance collection",
+  },
+  warehouseBusy: {
+    src: "/story/simplecart-store-06.jpg",
+    alt: "SimpleCart Store warehouse inventory of household goods for nationwide delivery",
+  },
+  cartonStacks: {
+    src: "/story/simplecart-store-07.jpg",
+    alt: "Cartons of ready-to-dispatch inventory at SimpleCart Store Pakistan",
+  },
+  inventoryAisle: {
+    src: "/story/simplecart-store-08.jpg",
+    alt: "Warehouse aisle with organised product cartons at SimpleCart Store",
+  },
+  kettleWholesale: {
+    src: "/story/simplecart-store-09.jpg",
+    alt: "Electric kettle stock beside wholesale cartons at SimpleCart Store",
+  },
+} as const satisfies Record<string, BlogImage>;
+
+/** Editorial guide: operations, inventory & COD — professional SEO copy. */
+export function buildStoreStoryGuideArticle(storeName: string): BlogArticle {
+  const meta =
+    STATIC_BLOG_GUIDES.find((g) => g.slug === STORE_STORY_SLUG) ?? STATIC_BLOG_GUIDES[1]!;
+  const hero = STORE_STORY_IMAGES.warehouseBusy;
+
+  const sections: BlogSection[] = [];
+  const pushP = (text: string) => sections.push({ type: "paragraph", text });
+  const pushH = (text: string) => sections.push({ type: "heading", text });
+  const pushL = (items: string[]) => sections.push({ type: "list", items });
+  const pushImg = (image: BlogImage) => sections.push({ type: "image", image });
+
+  pushP(
+    `Buying home essentials online should feel clear from the first click to delivery. This guide explains how ${storeName} operates — from warehouse inventory and product checks to careful packing and cash-on-delivery shipping across Pakistan.`,
+  );
+  pushP(
+    `The photographs below were taken in our own stocking and dispatch area. They show the kettles, heaters, drinkware and cartons we manage so listed items can move from shelf to courier without unnecessary delay.`,
+  );
+
+  pushH("Our purpose and mission");
+  pushP(
+    `${storeName} is built for practical everyday shopping. We focus on home, kitchen, drinkware, beauty and small-appliance essentials at transparent PKR prices, with product pages that are easy to compare and checkout that supports cash on delivery nationwide.`,
+  );
+  pushP(
+    `Our mission is selective curation: useful products people actually need, quality review before dispatch, secure packing, and honest communication on shipping timelines — whether you are ordering a kettle for the kitchen or a heater for cooler months.`,
+  );
+
+  pushImg(STORE_STORY_IMAGES.heaterDrinkware);
+
+  pushH("Warehouse inventory behind the catalogue");
+  pushP(
+    `Behind the website is an active inventory space. Shipments arrive in bulk, items are opened and reviewed, and retail-ready units sit with packing materials until an order is confirmed. An “in stock” status is tied to what we hold and can prepare for dispatch.`,
+  );
+  pushP(
+    `That operational model supports clearer delivery windows, free-shipping thresholds where applicable, and reliable COD fulfilment — because we ship from managed inventory, not from unverified promises.`,
+  );
+
+  pushImg(STORE_STORY_IMAGES.cartonStacks);
+  pushImg(STORE_STORY_IMAGES.inventoryAisle);
+
+  pushH("How orders move from shelf to doorstep");
+  pushL([
+    "Source and receive home essentials into our warehouse inventory.",
+    "Inspect products such as kettles, heaters and tumblers before they are offered online.",
+    "Publish clear photos, PKR pricing and availability on SimpleCart Store.",
+    "When you order, pick the item, pack with protection (bubble wrap or carton as needed), and hand over to courier.",
+    "Offer cash on delivery at checkout across Pakistan — pay when the parcel arrives where COD is available.",
+  ]);
+
+  pushImg(STORE_STORY_IMAGES.kettleQc);
+  pushImg(STORE_STORY_IMAGES.tumblerPack);
+
+  pushH("What you will find in our range");
+  pushP(
+    `Our catalogue mirrors what you see in stock: drinkware and tumblers, kitchen tools, small appliances such as electric kettles and heaters, beauty gadgets, lighting and everyday wellness. Breadth matters less than usefulness for Pakistani homes.`,
+  );
+  pushP(
+    `From a glass tumbler prepared for shipping to a portable fan heater still in protective wrap, each category is chosen for daily use — then packed for safe transit.`,
+  );
+
+  pushImg(STORE_STORY_IMAGES.fanHeater);
+  pushImg(STORE_STORY_IMAGES.kettleWholesale);
+  pushImg(STORE_STORY_IMAGES.lifestyleJar);
+
+  pushH("Why process transparency matters for COD shoppers");
+  pushP(
+    `Cash on delivery works when buyers understand how a store fulfils orders. Showing warehouse aisles, product checks and packing steps helps you judge service quality before you place an order.`,
+  );
+  pushP(
+    `For shoppers searching for home essentials online in Pakistan, ${storeName} aims to answer with clear operations: managed inventory, careful packing, and nationwide COD where shown at checkout.`,
+  );
+
+  pushH("Next steps");
+  pushP(
+    `For a shorter overview of who we are, visit About Us. To start shopping, browse collections — new customers can also apply WELCOME10 at checkout when eligible.`,
+  );
+  sections.push({
+    type: "cta",
+    text: "Read our company overview and contact options.",
+    href: "/about",
+    label: "About SimpleCart Store",
+  });
+  sections.push({
+    type: "cta",
+    text: "Explore drinkware, kitchen tools and home appliances ready to order.",
+    href: "/collections",
+    label: "Shop collections",
+  });
+
+  const articleBodyText = sections
+    .map((s) => {
+      if (s.type === "paragraph" || s.type === "heading") return s.text;
+      if (s.type === "list") return s.items.join(" ");
+      if (s.type === "cta") return `${s.text} ${s.label}`;
+      return "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    slug: meta.slug,
+    productSlug: "",
+    title: meta.title,
+    metaTitle: meta.metaTitle,
+    metaDescription: meta.metaDescription,
+    publishedAt: meta.publishedAt,
+    keywords: meta.keywords,
+    hero,
+    sections,
+    articleBodyText,
+  };
+}
+
+export function staticGuideListingCard(
+  meta: StaticGuideMeta,
+  storeName: string,
+  heroImage?: string | null,
+) {
   return {
     slug: meta.slug,
     title: meta.title,

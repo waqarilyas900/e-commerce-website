@@ -14,6 +14,8 @@ import {
   fetchStoreDeliverySettings,
   type StoreDeliverySettingsState,
 } from "@/app/lib/fetch-store-delivery-settings";
+import { computeDeliveryPkr } from "@/app/lib/delivery-pricing";
+import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 import { CartFreeDeliveryProgress } from "@/components/cart/cart-free-delivery-progress";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -199,6 +201,20 @@ export function CartDrawer() {
       ),
     [resolvedLines],
   );
+
+  const deliveryPkr = useMemo(() => {
+    if (resolvedLines.length === 0) return null;
+    return computeDeliveryPkr(merchandiseShippingBasisPkr, {
+      standard_delivery_paisa:
+        deliverySettings?.standardPaisa ?? FALLBACK_STANDARD_DELIVERY_PAISA,
+      free_delivery_thresholds_paisa: deliverySettings?.freeThresholdsPaisa ?? [],
+    });
+  }, [resolvedLines.length, merchandiseShippingBasisPkr, deliverySettings]);
+
+  const estimatedTotalPkr = useMemo(() => {
+    if (deliveryPkr == null) return null;
+    return Math.max(0, subtotal + deliveryPkr);
+  }, [subtotal, deliveryPkr]);
 
   /** “You might also like” only when the cart is empty (Shopify-style). */
   const showEmptyCartRecommendations = lines.length === 0;
@@ -518,14 +534,32 @@ export function CartDrawer() {
                     : { delay: 0.14, duration: 0.4, ease: easeSilk }
                 }
               >
-                <div className="flex items-center justify-between text-xs font-semibold capitalize tracking-[0.2em] text-neutral-900">
-                  <span>Subtotal</span>
-                  <span className="tabular-nums text-neutral-600">
-                    {resolvedLines.length > 0 ? formatPkr(subtotal) : "…"}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm text-neutral-600">
+                    <span>Subtotal</span>
+                    <span className="tabular-nums text-neutral-900">
+                      {resolvedLines.length > 0 ? formatPkr(subtotal) : "…"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-neutral-600">
+                    <span>Shipping</span>
+                    <span className="tabular-nums text-neutral-900">
+                      {deliveryPkr == null
+                        ? "…"
+                        : deliveryPkr <= 0
+                          ? "Free"
+                          : formatPkr(deliveryPkr)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-neutral-100 pt-2 text-xs font-semibold capitalize tracking-[0.2em] text-neutral-900">
+                    <span>Total</span>
+                    <span className="tabular-nums text-neutral-900 normal-case tracking-normal text-base">
+                      {estimatedTotalPkr != null ? formatPkr(estimatedTotalPkr) : "…"}
+                    </span>
+                  </div>
                 </div>
                 <p className="mt-3 text-xs text-neutral-500">
-                  Shipping, taxes, and discount codes calculated at checkout.
+                  Taxes and discount codes calculated at checkout.
                 </p>
                 {resolvedLines.length > 0 ? (
                   <button

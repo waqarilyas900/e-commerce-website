@@ -52,15 +52,29 @@ export default async function BlogsIndexPage() {
     ? orderByRatingAndStockPriority(await getCachedAllActiveProductsForCards())
     : [];
 
-  const welcomeMeta = STATIC_BLOG_GUIDES[0];
+  const welcomeMeta = STATIC_BLOG_GUIDES.find(
+    (g) => g.slug === "welcome10-voucher-code-rs-100-discount",
+  );
+  const storeStoryMeta = STATIC_BLOG_GUIDES.find(
+    (g) => g.slug === "inside-simplecart-store-real-stock-cod-pakistan",
+  );
   let welcomeHero: string | null = null;
   if (hasCatalogDb() && welcomeMeta) {
     const imgs = await getCachedProductsBySlugs(welcomeMeta.imageProductSlugs.slice(0, 1));
     welcomeHero = imgs[0]?.image ?? products[0]?.image ?? null;
   }
-  const guideCards = welcomeMeta
-    ? [staticGuideListingCard(storeName, welcomeHero)]
-    : [];
+  const guideCards = [
+    ...(storeStoryMeta
+      ? [
+          staticGuideListingCard(
+            storeStoryMeta,
+            storeName,
+            "/story/simplecart-store-06.jpg",
+          ),
+        ]
+      : []),
+    ...(welcomeMeta ? [staticGuideListingCard(welcomeMeta, storeName, welcomeHero)] : []),
+  ];
   const productCards = products
     .filter((p) => p.slug && p.image)
     .map((p) => ({
