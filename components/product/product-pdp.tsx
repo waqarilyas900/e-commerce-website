@@ -982,13 +982,8 @@ export function ProductPdp({
                         openDrawer
                         itemName={product.name}
                         ariaLabel="Add to cart"
-                        label={
-                          <>
-                            <span className="hidden min-[380px]:inline">Add to cart</span>
-                            <span className="min-[380px]:hidden">Add</span>
-                          </>
-                        }
-                        className="min-w-0 flex-1 !px-2 !text-[11px] max-[379px]:!text-[10px] sm:!px-5 sm:!text-base"
+                        label="Add to cart"
+                        className="min-w-0 flex-1 !px-2 !text-[12px] leading-none tracking-tight max-[400px]:!text-[11px] max-[360px]:!px-1.5 max-[360px]:!text-[10px] max-[330px]:!text-[9px] sm:!px-5 sm:!text-base sm:tracking-normal"
                       />
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
@@ -1002,13 +997,8 @@ export function ProductPdp({
                         redirectHref="/checkout"
                         itemName={product.name}
                         ariaLabel="Buy now"
-                        label={
-                          <>
-                            <span className="hidden min-[380px]:inline">Buy now</span>
-                            <span className="min-[380px]:hidden">Buy</span>
-                          </>
-                        }
-                        className="min-w-0 flex-1 !px-2 !text-[11px] max-[379px]:!text-[10px] sm:!px-5 sm:!text-base"
+                        label="Buy now"
+                        className="min-w-0 flex-1 !px-2 !text-[12px] leading-none tracking-tight max-[400px]:!text-[11px] max-[360px]:!px-1.5 max-[360px]:!text-[10px] max-[330px]:!text-[9px] sm:!px-5 sm:!text-base sm:tracking-normal"
                       />
                     </div>
                   </div>
@@ -1297,7 +1287,7 @@ export function ProductPdp({
                     </div>
                   ) : null}
                 </div>
-                <div className="flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2">
+                <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
                   {matchedVariant && maxQty > 0 ? (
                     <>
                       <AddToCartVariantButton
@@ -1311,13 +1301,8 @@ export function ProductPdp({
                         openDrawer
                         itemName={product.name}
                         ariaLabel="Add to cart"
-                        label={
-                          <>
-                            <span className="hidden min-[400px]:inline">Add to cart</span>
-                            <span className="min-[400px]:hidden">Add</span>
-                          </>
-                        }
-                        className="min-h-10 min-w-0 !px-2.5 !py-2 !text-[10px] sm:min-h-11 sm:!px-4 sm:!text-xs"
+                        label="Add to cart"
+                        className="min-h-10 !px-2.5 !py-2 !text-[11px] leading-none tracking-tight max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
                       />
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
@@ -1331,13 +1316,8 @@ export function ProductPdp({
                         redirectHref="/checkout"
                         itemName={product.name}
                         ariaLabel="Buy now"
-                        label={
-                          <>
-                            <span className="hidden min-[400px]:inline">Buy now</span>
-                            <span className="min-[400px]:hidden">Buy</span>
-                          </>
-                        }
-                        className="min-h-10 min-w-0 !px-2.5 !py-2 !text-[10px] sm:min-h-11 sm:!px-4 sm:!text-xs"
+                        label="Buy now"
+                        className="min-h-10 !px-2.5 !py-2 !text-[11px] leading-none tracking-tight max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
                       />
                     </>
                   ) : (
