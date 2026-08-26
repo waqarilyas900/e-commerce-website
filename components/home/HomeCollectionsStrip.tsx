@@ -74,6 +74,94 @@ export async function loadHomeCollectionTiles(): Promise<HomeCollectionTile[]> {
   return tiles.filter((t): t is HomeCollectionTile => t != null);
 }
 
+/** Shared image-overlay tiles — used on home strip and `/collections` hub. */
+export function CollectionImageTiles({ tiles }: { tiles: HomeCollectionTile[] }) {
+  if (tiles.length === 0) return null;
+
+  return (
+    <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+      {tiles.map((tile, i) => {
+        const native = useNativeImg(tile.imageUrl);
+        return (
+          <li
+            key={tile.slug}
+            className="home-collection-tile"
+            style={{ ["--tile-i" as string]: i }}
+          >
+            <Link
+              href={tile.href}
+              className="group relative block aspect-[1/1] overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_8px_24px_-12px_rgba(28,29,29,0.35)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-16px_rgba(28,29,29,0.45)] hover:ring-[#E0703A]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E0703A]"
+            >
+              {tile.imageUrl ? (
+                native ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs (Daraz) outside next/image allowlist
+                  <img
+                    src={tile.imageUrl}
+                    alt={`${tile.name} collection`}
+                    className="absolute inset-0 h-full w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.08]"
+                    loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={400}
+                  />
+                ) : (
+                  <Image
+                    src={tile.imageUrl}
+                    alt={`${tile.name} collection`}
+                    fill
+                    className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.08]"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
+                )
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-sm text-neutral-400">
+                  {tile.name}
+                </div>
+              )}
+
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[48%] bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+                aria-hidden
+              />
+
+              <span
+                className="pointer-events-none absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-base text-[#1c1d1d] opacity-0 shadow-sm backdrop-blur-md transition duration-300 group-hover:opacity-100 group-hover:bg-[#E0703A] group-hover:text-white sm:right-4 sm:top-4"
+                aria-hidden
+              >
+                →
+              </span>
+
+              <div className="absolute inset-x-0 bottom-0 z-20 p-2.5 sm:p-4">
+                <span
+                  className="mb-1 block text-[9px] font-semibold uppercase tracking-[0.14em] text-white/80 opacity-0 translate-y-1 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:mb-1.5 sm:text-[10px] sm:tracking-[0.16em]"
+                  aria-hidden
+                >
+                  Shop now
+                </span>
+                <div className="flex items-end justify-between gap-1.5 sm:gap-2">
+                  <span className="text-[13px] font-semibold leading-snug text-white drop-shadow-sm sm:text-[15px]">
+                    {tile.name}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white sm:px-2.5 sm:py-1 sm:text-[10px]">
+                    {tile.count}{" "}
+                    <span className="font-medium normal-case tracking-normal opacity-90">
+                      {tile.count === 1 ? "item" : "items"}
+                    </span>
+                  </span>
+                </div>
+                <span
+                  className="mt-2.5 block h-[2px] w-8 origin-left scale-x-0 bg-[#E0703A] transition duration-300 group-hover:scale-x-100"
+                  aria-hidden
+                />
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 /** Compact collection grid under the featured band — image-first overlay tiles. */
 export function HomeCollectionsStrip({
   tiles,
@@ -117,7 +205,7 @@ export function HomeCollectionsStrip({
             </HomeSectionTitle>
 
             <p className="mx-auto max-w-md text-center text-[13px] leading-snug text-neutral-500 sm:mt-2 sm:text-sm sm:leading-relaxed">
-              Drinkware, kitchen, beauty, and home — curated for everyday Pakistan.
+              Drinkware, kitchen, beauty &amp; home for everyday&nbsp;Pakistan.
             </p>
           </div>
 
@@ -130,87 +218,7 @@ export function HomeCollectionsStrip({
           </Link>
         </div>
 
-        <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-          {tiles.map((tile, i) => {
-            const native = useNativeImg(tile.imageUrl);
-            return (
-              <li
-                key={tile.slug}
-                className="home-collection-tile"
-                style={{ ["--tile-i" as string]: i }}
-              >
-                <Link
-                  href={tile.href}
-                  className="group relative block aspect-[1/1] overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_8px_24px_-12px_rgba(28,29,29,0.35)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-16px_rgba(28,29,29,0.45)] hover:ring-[#E0703A]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E0703A]"
-                >
-                  {tile.imageUrl ? (
-                    native ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs (Daraz) outside next/image allowlist
-                      <img
-                        src={tile.imageUrl}
-                        alt={`${tile.name} collection`}
-                        className="absolute inset-0 h-full w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.08]"
-                        loading="lazy"
-                        decoding="async"
-                        width={400}
-                        height={400}
-                      />
-                    ) : (
-                      <Image
-                        src={tile.imageUrl}
-                        alt={`${tile.name} collection`}
-                        fill
-                        className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.08]"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      />
-                    )
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-sm text-neutral-400">
-                      {tile.name}
-                    </div>
-                  )}
-
-                  {/* Soft bottom scrim only — keeps photo colors clean */}
-                  <div
-                    className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[48%] bg-gradient-to-t from-black/55 via-black/20 to-transparent"
-                    aria-hidden
-                  />
-
-                  <span
-                    className="pointer-events-none absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-base text-[#1c1d1d] opacity-0 shadow-sm backdrop-blur-md transition duration-300 group-hover:opacity-100 group-hover:bg-[#E0703A] group-hover:text-white sm:right-4 sm:top-4"
-                    aria-hidden
-                  >
-                    →
-                  </span>
-
-                  <div className="absolute inset-x-0 bottom-0 z-20 p-2.5 sm:p-4">
-                    <span
-                      className="mb-1 block text-[9px] font-semibold uppercase tracking-[0.14em] text-white/80 opacity-0 translate-y-1 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:mb-1.5 sm:text-[10px] sm:tracking-[0.16em]"
-                      aria-hidden
-                    >
-                      Shop now
-                    </span>
-                    <div className="flex items-end justify-between gap-1.5 sm:gap-2">
-                      <span className="text-[13px] font-semibold leading-snug text-white drop-shadow-sm sm:text-[15px]">
-                        {tile.name}
-                      </span>
-                      <span className="shrink-0 rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white sm:px-2.5 sm:py-1 sm:text-[10px]">
-                        {tile.count}{" "}
-                        <span className="font-medium normal-case tracking-normal opacity-90">
-                          {tile.count === 1 ? "item" : "items"}
-                        </span>
-                      </span>
-                    </div>
-                    <span
-                      className="mt-2.5 block h-[2px] w-8 origin-left scale-x-0 bg-[#E0703A] transition duration-300 group-hover:scale-x-100"
-                      aria-hidden
-                    />
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <CollectionImageTiles tiles={tiles} />
       </ScrollReveal>
     </section>
   );

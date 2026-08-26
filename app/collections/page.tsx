@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ProductCard } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
-  getCachedAllActiveProductsForCards,
-  getCachedListCollections,
-} from "@/lib/cache/catalog-data";
+  CollectionImageTiles,
+  loadHomeCollectionTiles,
+} from "@/components/home/HomeCollectionsStrip";
+import { getCachedAllActiveProductsForCards } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
 import {
@@ -18,10 +18,6 @@ import {
 import { JsonLd, breadcrumbJsonLd } from "@/lib/seo/jsonld";
 import { absoluteUrl } from "@/lib/seo/canonical";
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
-import {
-  collectionDisplayName,
-  normalizeCollectionSlug,
-} from "@/lib/catalog/collection-nav";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -44,15 +40,15 @@ export default async function CollectionsPage() {
     notFound();
   }
 
-  const [collections, allProducts, identity] = await Promise.all([
-    getCachedListCollections(),
+  const [tiles, allProducts, identity] = await Promise.all([
+    loadHomeCollectionTiles(),
     getCachedAllActiveProductsForCards(),
     loadSiteIdentity(),
   ]);
   const override = await loadSeoOverrideForRoute("/collections", identity.locale);
-  const heading = "Shop All Collections";
+  const heading = "Shop collections";
   const intro =
-    "Browse drinkware, kitchen tools, beauty gadgets, appliances and more — curated home essentials.";
+    "Drinkware, kitchen, beauty & home for everyday Pakistan.";
   const canonical = resolveSeoCanonicalOverride(
     override?.canonicalUrl,
     canonicalUrlFor("/collections"),
@@ -64,15 +60,6 @@ export default async function CollectionsPage() {
   ]);
   (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
 
-  const collectionCards = collections.map((c) => {
-    const slug = normalizeCollectionSlug(c.slug);
-    return {
-      ...c,
-      slug,
-      displayName: collectionDisplayName(slug, c.name),
-    };
-  });
-
   const hubLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -83,12 +70,12 @@ export default async function CollectionsPage() {
     breadcrumb: { "@id": breadcrumbId },
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: collectionCards.length,
-      itemListElement: collectionCards.map((c, i) => ({
+      numberOfItems: tiles.length,
+      itemListElement: tiles.map((t, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: absoluteUrl(`/collections/${c.slug}`),
-        name: c.displayName,
+        url: absoluteUrl(t.href),
+        name: t.name,
       })),
     },
   };
@@ -97,49 +84,38 @@ export default async function CollectionsPage() {
     <>
       <JsonLd id="ld-collections-hub" data={hubLd} />
       <JsonLd id="ld-breadcrumb" data={crumbs} />
-      <main
-        id="MainContent"
-        className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
-      >
-        <PageBreadcrumbs items={[{ name: "Home", href: "/" }, { name: "Collections" }]} />
-        <ScrollReveal>
-          <section>
-            <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">{heading}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-neutral-600 sm:text-base">{intro}</p>
-            {collectionCards.length > 0 ? (
-              <ul className="mt-5 grid list-none grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3">
-                {collectionCards.map((c) => (
-                  <li key={c.id}>
-                    <Link
-                      href={`/collections/${c.slug}`}
-                      className="group flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 transition hover:border-neutral-400 hover:bg-white"
-                    >
-                      {c.hero_image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={c.hero_image}
-                          alt={`${c.displayName} collection`}
-                          className="aspect-[4/3] w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="aspect-[4/3] w-full bg-neutral-200" />
-                      )}
-                      <span className="px-3 py-2.5 text-sm font-semibold text-neutral-900 group-hover:underline underline-offset-4">
-                        {c.displayName}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
-        </ScrollReveal>
+      <main id="MainContent" className="main-content">
+        <div className="mx-auto max-w-7xl shell-x pt-4 sm:pt-6">
+          <PageBreadcrumbs items={[{ name: "Home", href: "/" }, { name: "Collections" }]} />
+        </div>
 
-        <ScrollReveal>
-          <section className="mt-10 sm:mt-12">
-            <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">All products</h2>
-            <div className="mt-3 grid grid-cols-2 gap-1 sm:mt-4 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+        <section
+          aria-labelledby="collections-hub-heading"
+          className="relative overflow-hidden border-b border-[#e8e8e1] bg-[linear-gradient(180deg,#f7f5f2_0%,#ffffff_42%,#ffffff_100%)]"
+        >
+          <div
+            className="pointer-events-none absolute -left-24 top-8 h-56 w-56 rounded-full bg-[#E0703A]/[0.07] blur-3xl"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -right-16 bottom-0 h-48 w-48 rounded-full bg-[#1c1d1d]/[0.04] blur-3xl"
+            aria-hidden
+          />
+
+          <ScrollReveal className="relative mx-auto max-w-7xl shell-x pb-8 pt-4 sm:pb-12 sm:pt-6">
+            <h1 id="collections-hub-heading" className="sr-only">
+              {heading}
+            </h1>
+            <CollectionImageTiles tiles={tiles} />
+          </ScrollReveal>
+        </section>
+
+        <ScrollReveal className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
+          <section>
+            <h2 className="text-center text-[1.50rem] font-semibold tracking-tight sm:text-2xl">
+              All products
+            </h2>
+            <div className="mt-5 grid grid-cols-2 gap-1 sm:mt-6 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
               {allProducts.map((product, idx) => (
                 <ProductCard
                   key={product.id}
