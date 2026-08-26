@@ -53,19 +53,10 @@ function ListingFallback() {
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
       </div>
-      <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:hidden">
-        <div className="h-40 max-w-36 animate-pulse rounded-lg bg-neutral-100" />
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+        {Array.from({ length: 8 }).map((_, i) => (
           <ProductCardSkeleton key={i} />
         ))}
-      </div>
-      <div className="hidden gap-2 lg:grid lg:grid-cols-4 lg:gap-2">
-        <div className="h-40 animate-pulse rounded-lg bg-neutral-100" />
-        <div className="grid min-w-0 grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:col-span-3 lg:grid-cols-3 lg:gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <ProductCardSkeleton key={i} />
-          ))}
-        </div>
       </div>
     </div>
   );

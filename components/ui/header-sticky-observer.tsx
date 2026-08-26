@@ -2,15 +2,19 @@
 
 import { useEffect } from "react";
 
+/** Non-home pages: show sticky nav after a short scroll (homepage uses hero bottom). */
 const DEFAULT_STICKY_SCROLL_Y = 320;
 
 export function HeaderStickyObserver() {
   useEffect(() => {
     const getTriggerY = () => {
-      const hero = document.querySelector("#MainContent > section:first-of-type") as HTMLElement | null;
-      return hero
-        ? Math.max(DEFAULT_STICKY_SCROLL_Y, hero.offsetTop + hero.offsetHeight - 80)
-        : DEFAULT_STICKY_SCROLL_Y;
+      // Only the homepage hero — NOT every page's first <section> (collections
+      // wrap the full product grid in a section, which pushed sticky to page end).
+      const hero = document.querySelector(
+        "#shopify-section-template-hero",
+      ) as HTMLElement | null;
+      if (!hero) return DEFAULT_STICKY_SCROLL_Y;
+      return Math.max(DEFAULT_STICKY_SCROLL_Y, hero.offsetTop + hero.offsetHeight - 80);
     };
 
     const onScroll = () => {
