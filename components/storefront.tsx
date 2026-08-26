@@ -405,10 +405,91 @@ const RAIL_COL =
 const RAIL_SNAP = "snap-start snap-always";
 /** Product tile in the home rail (same as `${RAIL_COL} ${RAIL_SNAP} flex flex-col`). */
 const RAIL_ITEM = `${RAIL_COL} ${RAIL_SNAP} flex flex-col`;
-/** Compact “View all” control (centered in column; not full card height). */
-const RAIL_VIEW_ALL_BTN =
-  "flex aspect-square w-[min(7rem,78%)] max-w-[120px] flex-col items-center justify-center rounded-md border border-neutral-200 bg-white px-2 py-2 text-center text-neutral-900 shadow-sm transition hover:border-neutral-300 hover:shadow";
 const RAIL_PREVIEW = 4;
+
+/** Trailing rail tile — blurred product photo + “View all products” (shop-collections style). */
+function ViewAllRailTile({
+  href,
+  title,
+  count,
+  imageUrl,
+}: {
+  href: string;
+  title: string;
+  count: number;
+  imageUrl: string;
+}) {
+  const useNative = Boolean(imageUrl && productImageUseNativeImg(imageUrl));
+  const imgSrc = imageUrl ? optimizeSupplierImageUrl(imageUrl, 400) : "";
+
+  return (
+    <Link
+      href={href}
+      aria-label={`View all ${count} product${count === 1 ? "" : "s"} in ${title}`}
+      className="group relative flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-neutral-900 shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:border-[#E0703A]/50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E0703A]"
+    >
+      <div className="relative min-h-[248px] flex-1 overflow-hidden sm:min-h-64">
+        {imgSrc ? (
+          useNative ? (
+            // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs outside next/image allowlist
+            <img
+              src={imgSrc}
+              alt=""
+              aria-hidden
+              loading="lazy"
+              decoding="async"
+              width={400}
+              height={500}
+              className="absolute inset-0 h-full w-full scale-110 object-cover object-top blur-[2.5px] brightness-[0.72] transition duration-700 ease-out group-hover:scale-[1.16] group-hover:blur-[1.5px] group-hover:brightness-[0.65]"
+            />
+          ) : (
+            <Image
+              src={imageUrl}
+              alt=""
+              aria-hidden
+              fill
+              sizes="(max-width: 767px) 60vw, 300px"
+              className="scale-110 object-cover object-top blur-[2.5px] brightness-[0.72] transition duration-700 ease-out group-hover:scale-[1.16] group-hover:blur-[1.5px] group-hover:brightness-[0.65]"
+            />
+          )
+        ) : (
+          <div className="absolute inset-0 bg-neutral-800" aria-hidden />
+        )}
+
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-black/20"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-[#1c1d1d]/25 backdrop-blur-[1px]"
+          aria-hidden
+        />
+
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 px-3 py-4 text-center">
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-base text-[#1c1d1d] shadow-sm backdrop-blur-md transition duration-300 group-hover:bg-[#E0703A] group-hover:text-white"
+            aria-hidden
+          >
+            →
+          </span>
+          <span className="text-[13px] font-semibold leading-snug tracking-tight text-white drop-shadow-sm sm:text-sm">
+            View all products
+          </span>
+          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white">
+            {count}{" "}
+            <span className="font-medium normal-case tracking-normal opacity-90">
+              {count === 1 ? "product" : "products"}
+            </span>
+          </span>
+          <span
+            className="mt-1 h-[2px] w-8 origin-center scale-x-0 bg-[#E0703A] transition duration-300 group-hover:scale-x-100"
+            aria-hidden
+          />
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 const RAIL_SCROLL_HIDE_MS = 700;
 
@@ -472,6 +553,11 @@ export function ProductSection({
   const railItems = layout === "rail" ? items.slice(0, RAIL_PREVIEW) : items;
 
   if (layout === "rail") {
+    const viewAllImage =
+      railItems.find((p) => (p.image ?? "").trim())?.image?.trim() ??
+      items.find((p) => (p.image ?? "").trim())?.image?.trim() ??
+      "";
+
     return (
       <section className="bg-neutral-100/80">
         <ScrollReveal className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
@@ -501,19 +587,13 @@ export function ProductSection({
                   </div>
                 </li>
               ))}
-              <li
-                className={`${RAIL_COL} ${RAIL_SNAP} flex flex-col items-center justify-center`}
-              >
-                <Link
+              <li className={RAIL_ITEM}>
+                <ViewAllRailTile
                   href={viewAllHref}
-                  aria-label={`View all ${count} product${count === 1 ? "" : "s"} in ${title}`}
-                  className={RAIL_VIEW_ALL_BTN}
-                >
-                  <span className="text-sm font-semibold tracking-tight">View all</span>
-                  <span className="mt-1 text-xs leading-tight text-neutral-500">
-                    {count} product{count === 1 ? "" : "s"}
-                  </span>
-                </Link>
+                  title={title}
+                  count={count}
+                  imageUrl={viewAllImage}
+                />
               </li>
             </RailScrollStrip>
           </div>
