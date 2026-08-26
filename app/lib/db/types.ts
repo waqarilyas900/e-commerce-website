@@ -36,6 +36,8 @@ export type DbProductRow = {
   stock_total: number | null;
   /** Opt-in: line total excluded from standard shipping / free-delivery threshold basis. */
   free_delivery?: boolean;
+  /** Optional promo / reel URL (YouTube, Facebook, Instagram, or direct MP4). */
+  video_url?: string | null;
   created_at?: string;
 };
 

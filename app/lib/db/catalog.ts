@@ -224,7 +224,7 @@ async function primaryDisplaySlugByProductId(
 }
 
 const PRODUCT_SELECT =
-  "id, slug, name, short_description, description, status, images, tags, rating, reviews_count, stock_total, free_delivery, created_at";
+  "id, slug, name, short_description, description, status, images, tags, rating, reviews_count, stock_total, free_delivery, video_url, created_at";
 
 /**
  * Uncached rating / review-count / tags for a product.
@@ -643,6 +643,36 @@ export async function dbGetProductDetailBySlug(
     assets: (assetRows ?? []) as DbProductAssetRow[],
     colorById,
   };
+}
+
+/** Active products that have a sticky promo `video_url` set (for home random reel). */
+export async function dbListActiveProductsWithVideoUrl(): Promise<
+  Array<{ id: string; slug: string; name: string; video_url: string }>
+> {
+  if (!hasCatalogDb()) return [];
+  try {
+    const supabase = catalogClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, slug, name, video_url")
+      .eq("status", "active")
+      .not("video_url", "is", null)
+      .neq("video_url", "");
+    if (error) {
+      logDbCatalogIssue("listProductsWithVideoUrl", error.message);
+      return [];
+    }
+    return (data ?? [])
+      .map((r: { id: string; slug: string; name: string; video_url: string | null }) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        video_url: (r.video_url ?? "").trim(),
+      }))
+      .filter((r) => r.video_url.length > 0);
+  } catch {
+    return [];
+  }
 }
 
 /**

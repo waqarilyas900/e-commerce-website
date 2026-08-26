@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useAskTheStore } from "@/app/providers/ask-the-store-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
+import { useStickyProductVideoPresence } from "@/components/product/sticky-product-video-context";
 import { consumeOpenAiSseStream } from "@/lib/store-ai-sse-client";
 import { AssistantMarkdown } from "./assistant-markdown";
 
@@ -220,9 +221,15 @@ export function AskTheStore() {
   const reduceMotion = useReducedMotion();
   const { storeName } = useStoreBrand();
   const { open, openAskStore, closeAskStore } = useAskTheStore();
+  const { visible: stickyVideoVisible } = useStickyProductVideoPresence();
   /** PDP has its own product UX; hide the floating launcher (chat still works if already open). */
   const isProductDetailPage = pathname.startsWith("/products/");
   const showFloatingUi = open || !isProductDetailPage;
+  /** Sit left of the Rad-style sticky reel so both launchers stay usable on home. */
+  const floatOffsetClass =
+    stickyVideoVisible && !isProductDetailPage
+      ? "bottom-5 right-[9.75rem] sm:right-[10.25rem]"
+      : "bottom-5 right-5";
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Turn[]>([]);
   const [loading, setLoading] = useState(false);
@@ -619,7 +626,7 @@ export function AskTheStore() {
 
       {showFloatingUi ? (
         <div
-          className={`pointer-events-none fixed bottom-5 right-5 flex flex-col-reverse items-end gap-3 ${
+          className={`pointer-events-none fixed flex flex-col-reverse items-end gap-3 ${floatOffsetClass} ${
             open ? "z-221" : "z-150"
           }`}
         >

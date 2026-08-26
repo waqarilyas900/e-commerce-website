@@ -29,6 +29,7 @@ import {
 import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
+import { HomeStickyProductVideo } from "@/components/home/HomeStickyProductVideo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -164,6 +165,7 @@ export default async function Home() {
         <WhyShop />
         <TrustRatingStrip aggregate={storeReviews} reviews={reviewHighlights} />
       </main>
+      <HomeStickyProductVideo />
     </>
   );
 }
