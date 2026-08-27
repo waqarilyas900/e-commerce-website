@@ -29,17 +29,17 @@ export function AccountGate({ children }: Props) {
           pathname + (searchParams.toString() ? `?${searchParams}` : ""),
         );
         router.replace(`/login?next=${next}`);
-        setStatus("redirect");
+        queueMicrotask(() => setStatus("redirect"));
         return;
       }
       if (isCompletingPasswordReset(session)) {
         router.replace("/reset-password");
-        setStatus("redirect");
+        queueMicrotask(() => setStatus("redirect"));
         return;
       }
-      setStatus("ok");
+      queueMicrotask(() => setStatus("ok"));
     } catch {
-      setStatus("misconfigured");
+      queueMicrotask(() => setStatus("misconfigured"));
     }
   }, [authReady, session, user, pathname, router, searchParams]);
 

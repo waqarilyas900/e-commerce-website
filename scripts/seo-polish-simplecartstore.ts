@@ -23,7 +23,6 @@ config({ path: resolve(root, ".env") });
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const BRAND = "SimpleCart Store";
-const BRAND_SHORT = "SimpleCart";
 
 type ProductRow = { id: string; slug: string; name: string };
 

@@ -162,8 +162,12 @@ export async function GET() {
 
   if (pErr) {
     return new NextResponse(`# error: ${pErr.message}\n`, {
-      status: 500,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      status: 503,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Retry-After": "300",
+      },
     });
   }
 

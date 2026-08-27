@@ -263,8 +263,7 @@ export async function GET(): Promise<NextResponse> {
       continue;
     }
     const url = `${base}/products/${encodeURIComponent(slug)}`;
-    const lastMod =
-      productTs.get(slug) ?? (p.createdAt ? new Date(p.createdAt) : lastModified);
+    const lastMod = productTs.get(slug) ?? safeDate(p.createdAt, lastModified);
     const safeImage = safeImageUrl(p.image, base);
     if (!safeImage && p.image) skippedImages += 1;
     byUrl.set(url, {

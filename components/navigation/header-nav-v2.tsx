@@ -46,7 +46,9 @@ function MoreCategoriesMenu({
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
 
   function clearCloseTimer() {
     if (!closeTimerRef.current) return;

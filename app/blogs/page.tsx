@@ -26,7 +26,6 @@ import { JsonLd, breadcrumbJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
   const override = await loadSeoOverrideForRoute("/blogs", identity.locale);
-  const storeName = identity.storeName || identity.siteTitle || "SimpleCart Store";
   return buildPageMetadata({
     pathname: "/blogs",
     identity,

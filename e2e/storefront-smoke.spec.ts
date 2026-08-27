@@ -121,7 +121,7 @@ test.describe("Storefront smoke (Shopify-style paths)", () => {
     await page.locator("#site-header").getByRole("button", { name: /^Cart/i }).click();
     await expect(page.getByRole("heading", { name: /^Cart$/ })).toBeVisible();
 
-    await page.getByRole("link", { name: /^Collections$/i }).first().click();
+    await page.getByRole("link", { name: "Continue shopping" }).click();
     await expect(page).toHaveURL(/\/collections\/?$/);
     await expect(page.getByRole("heading", { name: /^Cart$/ })).toBeVisible({ timeout: 10_000 });
   });

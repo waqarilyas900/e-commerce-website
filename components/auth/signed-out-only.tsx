@@ -31,7 +31,7 @@ export function SignedOutOnly({ children, whenSignedInHref }: Props) {
       router.replace(whenSignedInHref);
       return;
     }
-    setReady(true);
+    queueMicrotask(() => setReady(true));
   }, [authReady, session, user, router, whenSignedInHref]);
 
   if (!authReady || !ready) {

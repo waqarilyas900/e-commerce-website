@@ -7,7 +7,6 @@ import { StarRating } from "@/components/ui/star-rating";
 import { useScrollLock } from "@/lib/scroll-lock";
 import type { ReviewMediaItem } from "@/lib/cache/store-reviews-page";
 
-const ACCENT = "#FBCD0A";
 /** Soft brand orange tints — match site chrome (`#E0703A`). */
 const BRAND_SOFT_BG = "rgba(224, 112, 58, 0.1)";
 const BRAND_AVATAR_BG = "rgba(224, 112, 58, 0.18)";
@@ -81,9 +80,12 @@ export function ReviewMediaGallery({ items, openIndex, onOpen, onClose }: Props)
   useEffect(() => {
     if (!open || openIndex == null) return;
     // Keep active thumb in the visible modal strip
-    if (openIndex < thumbStart) setThumbStart(openIndex);
-    else if (openIndex >= thumbStart + MODAL_THUMB_VISIBLE) {
-      setThumbStart(Math.max(0, openIndex - MODAL_THUMB_VISIBLE + 1));
+    if (openIndex < thumbStart) {
+      queueMicrotask(() => setThumbStart(openIndex));
+    } else if (openIndex >= thumbStart + MODAL_THUMB_VISIBLE) {
+      queueMicrotask(() =>
+        setThumbStart(Math.max(0, openIndex - MODAL_THUMB_VISIBLE + 1)),
+      );
     }
   }, [open, openIndex, thumbStart]);
 

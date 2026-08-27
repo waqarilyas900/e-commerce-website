@@ -224,10 +224,9 @@ export function CustomerReviewsView({
             const count = displayBreakdown.counts[i] ?? 0;
             const active = starFilter === star;
             return (
-              <button
-                key={star}
+              <div key={star} role="listitem">
+                <button
                 type="button"
-                role="listitem"
                 onClick={() =>
                   pushQuery({
                     star: active ? null : String(star),
@@ -258,7 +257,8 @@ export function CustomerReviewsView({
                 <span className="text-right tabular-nums text-neutral-700">
                   {count.toLocaleString("en-US")}
                 </span>
-              </button>
+                </button>
+              </div>
             );
           })}
           {starFilter != null ? (

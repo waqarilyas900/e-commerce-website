@@ -28,7 +28,7 @@ export async function HomeStickyProductVideo() {
     .filter((r): r is NonNullable<typeof r> => Boolean(r));
 
   if (!playable.length) return null;
-  const startIndex = Math.floor(Math.random() * playable.length);
+  const startIndex = 0;
 
   // Resolve Instagram CDN before HTML reaches the browser — first play is much faster.
   const startSrc = parseProductVideoSource(playable[startIndex]?.videoUrl ?? "");

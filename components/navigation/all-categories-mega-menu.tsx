@@ -111,10 +111,14 @@ export function AllCategoriesMegaMenu() {
   const active: NavCollectionLink | undefined =
     links.find((l) => l.slug === activeSlug) ?? links[0];
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
 
   useEffect(() => {
-    if (!activeSlug && links[0]?.slug) setActiveSlug(links[0].slug);
+    if (!activeSlug && links[0]?.slug) {
+      queueMicrotask(() => setActiveSlug(links[0].slug));
+    }
   }, [links, activeSlug]);
 
   function clearCloseTimer() {

@@ -23,7 +23,7 @@ export type HomeCollectionTile = {
 };
 
 /** Supplier CDNs (Daraz etc.) use native img with sized lazcdn URLs. */
-function useNativeImg(src: string): boolean {
+function isNativeImg(src: string): boolean {
   if (!src) return false;
   if (src.startsWith("/") || src.startsWith("data:") || src.startsWith("blob:")) {
     return false;
@@ -81,7 +81,7 @@ export function CollectionImageTiles({ tiles }: { tiles: HomeCollectionTile[] })
   return (
     <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
       {tiles.map((tile, i) => {
-        const native = useNativeImg(tile.imageUrl);
+        const native = isNativeImg(tile.imageUrl);
         return (
           <li
             key={tile.slug}

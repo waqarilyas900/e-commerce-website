@@ -266,7 +266,7 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
                   </p>
                   <ul>
                     {matchedCategories.map((c) => (
-                      <li key={c.slug} role="option">
+                      <li key={c.slug} role="option" aria-selected={false}>
                         <Link
                           href={c.href}
                           className="flex w-full items-center gap-2.5 px-3.5 py-[9px] text-left text-[13px] text-neutral-800 transition-colors hover:bg-[rgba(224,112,58,0.08)] hover:text-[#E0703A] focus-visible:bg-[rgba(224,112,58,0.08)] focus-visible:outline-none"
@@ -317,7 +317,7 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
                   ) : null}
                   <ul>
                     {products.map((p) => (
-                      <li key={p.id} role="option">
+                      <li key={p.id} role="option" aria-selected={false}>
                         <Link
                           href={`/products/${p.slug}`}
                           className="flex w-full items-center gap-3 px-3.5 py-2 text-left transition-colors hover:bg-[rgba(224,112,58,0.08)] focus-visible:bg-[rgba(224,112,58,0.08)] focus-visible:outline-none"

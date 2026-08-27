@@ -14,7 +14,6 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
-import { useCart } from "@/app/providers/cart-provider";
 import { useProductPreview } from "@/app/providers/product-preview-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";

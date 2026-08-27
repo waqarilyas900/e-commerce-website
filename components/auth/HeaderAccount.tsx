@@ -47,7 +47,7 @@ export function HeaderAccountV2() {
   const menuId = "header-account-menu-v2";
 
   useEffect(() => {
-    setDisplaySnapshot(readAuthDisplayCache());
+    queueMicrotask(() => setDisplaySnapshot(readAuthDisplayCache()));
   }, []);
 
   const effectiveUser =
@@ -283,7 +283,7 @@ export function HeaderAccount() {
   const menuId = "header-account-menu";
 
   useEffect(() => {
-    setDisplaySnapshot(readAuthDisplayCache());
+    queueMicrotask(() => setDisplaySnapshot(readAuthDisplayCache()));
   }, []);
 
   const effectiveUser =

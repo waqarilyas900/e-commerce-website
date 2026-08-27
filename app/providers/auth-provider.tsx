@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const supabase = createClient();
       const cached = readAuthDisplayCache();
       if (cached?.nameProfile) {
-        setNameProfile(cached.nameProfile);
+        queueMicrotask(() => setNameProfile(cached.nameProfile));
       }
 
       void supabase.auth.getSession().then(({ data: { session: s } }) => {
