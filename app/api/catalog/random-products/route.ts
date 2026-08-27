@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { dbListAllActiveProductsForCards } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { getCachedAllActiveProductTiles } from "@/lib/cache/catalog-data";
 import { getRequestIp, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 function shufflePick<T>(arr: T[], n: number): T[] {
@@ -33,8 +33,20 @@ export async function GET(req: Request) {
       .map((s) => s.trim())
       .filter(Boolean),
   );
-  const all = await dbListAllActiveProductsForCards();
+  const all = await getCachedAllActiveProductTiles();
   const pool =
     excludeIds.size === 0 ? all : all.filter((p) => p.id && !excludeIds.has(p.id));
-  return NextResponse.json(shufflePick(pool, limit));
+  const responseProducts = shufflePick(pool, limit).map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    image: p.image,
+    price: p.price,
+    compareAtPrice: p.compareAtPrice,
+  }));
+  return NextResponse.json(responseProducts, {
+    headers: {
+      "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+    },
+  });
 }

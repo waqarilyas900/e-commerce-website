@@ -5,7 +5,7 @@ import {
   CollectionImageTiles,
   loadHomeCollectionTiles,
 } from "@/components/home/HomeCollectionsStrip";
-import { getCachedAllActiveProductsForCards } from "@/lib/cache/catalog-data";
+import { getCachedAllActiveProductTiles } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
 import {
@@ -42,7 +42,7 @@ export default async function CollectionsPage() {
 
   const [tiles, allProducts, identity] = await Promise.all([
     loadHomeCollectionTiles(),
-    getCachedAllActiveProductsForCards(),
+    getCachedAllActiveProductTiles(),
     loadSiteIdentity(),
   ]);
   const override = await loadSeoOverrideForRoute("/collections", identity.locale);

@@ -157,8 +157,8 @@ export function mapProductCard(
     id: p.id,
     slug: p.slug,
     name: p.name,
-    shortDescription: p.short_description,
-    description: p.description,
+    shortDescription: p.short_description ?? "",
+    description: p.description ?? "",
     category: collectionSlug,
     collection: collectionSlug,
     price,
@@ -225,6 +225,9 @@ async function primaryDisplaySlugByProductId(
 
 const PRODUCT_SELECT =
   "id, slug, name, short_description, description, status, images, tags, rating, reviews_count, stock_total, free_delivery, video_url, created_at";
+/** Fields needed by product grids and search suggestions, excluding long copy. */
+const PRODUCT_CARD_SELECT =
+  "id, slug, name, status, images, rating, reviews_count, stock_total, created_at";
 
 /**
  * Uncached rating / review-count / tags for a product.
@@ -272,12 +275,14 @@ export async function dbListAllActiveProductsForCards(): Promise<Product[]> {
 
     const plist = products as DbProductRow[];
     const ids = plist.map((p) => p.id);
-    const displaySlug = await primaryDisplaySlugByProductId(supabase, ids);
-
-    const { data: rawVariants } = await supabase
-      .from("product_variants")
-      .select("id, product_id, sku, option_values, price, compare_at_price, size_id, color_id")
-      .in("product_id", ids);
+    const [displaySlug, variantResult] = await Promise.all([
+      primaryDisplaySlugByProductId(supabase, ids),
+      supabase
+        .from("product_variants")
+        .select("id, product_id, sku, option_values, price, compare_at_price")
+        .in("product_id", ids),
+    ]);
+    const { data: rawVariants } = variantResult;
 
     const variants = await mergeInventoryForVariants(
       supabase,
@@ -303,6 +308,59 @@ export async function dbListAllActiveProductsForCards(): Promise<Product[]> {
     // Defensive: callers like /sitemap.xml must never 500 from this helper.
     logDbCatalogIssue(
       "listAllActiveProducts",
+      err instanceof Error ? err.message : String(err),
+    );
+    return [];
+  }
+}
+
+/** Active products with only the fields required by the all-products grid. */
+export async function dbListAllActiveProductTiles(): Promise<Product[]> {
+  if (!hasCatalogDb()) return [];
+  try {
+    const supabase = catalogClient();
+    const { data: products, error: pErr } = await supabase
+      .from("products")
+      .select(PRODUCT_CARD_SELECT)
+      .eq("status", "active");
+
+    if (pErr || !products?.length) {
+      if (pErr) logDbCatalogIssue("listAllActiveProductTiles", pErr.message);
+      return [];
+    }
+
+    const plist = products as DbProductRow[];
+    const ids = plist.map((p) => p.id);
+    const { data: rawVariants, error: vErr } = await supabase
+      .from("product_variants")
+      .select("id, product_id, sku, option_values, price, compare_at_price")
+      .in("product_id", ids);
+
+    if (vErr) {
+      logDbCatalogIssue("variantsForProductTiles", vErr.message);
+      return [];
+    }
+
+    const variants = await mergeInventoryForVariants(
+      supabase,
+      (rawVariants ?? []) as Omit<
+        DbProductVariantRow,
+        "quantity_on_hand" | "quantity_reserved"
+      >[],
+    );
+    const byProduct = new Map<string, DbProductVariantRow[]>();
+    for (const row of variants) {
+      const list = byProduct.get(row.product_id) ?? [];
+      list.push(row);
+      byProduct.set(row.product_id, list);
+    }
+
+    return plist.map((p) =>
+      mapProductCard(p, byProduct.get(p.id) ?? [], "uncategorized"),
+    );
+  } catch (err) {
+    logDbCatalogIssue(
+      "listAllActiveProductTiles",
       err instanceof Error ? err.message : String(err),
     );
     return [];
@@ -708,42 +766,57 @@ export async function dbFindUniqueActiveProductSlugByPrefix(
   return slugs.length === 1 ? slugs[0] : null;
 }
 
-export async function dbSearchProducts(q: string): Promise<Product[]> {
+export async function dbSearchProducts(q: string, limit?: number): Promise<Product[]> {
   const term = q.trim().replace(/[,%]/g, " ");
   if (!term || !hasCatalogDb()) return [];
 
   const supabase = catalogClient();
   const pattern = `%${term}%`;
 
-  const { data: products, error: pErr } = await supabase
+  const maxResults =
+    Number.isFinite(limit) && (limit ?? 0) > 0
+      ? Math.min(12, Math.floor(limit as number))
+      : null;
+  let productQuery = supabase
     .from("products")
-    .select(PRODUCT_SELECT)
+    .select(maxResults ? PRODUCT_CARD_SELECT : PRODUCT_SELECT)
     .eq("status", "active")
     .or(
       `name.ilike.${pattern},description.ilike.${pattern},short_description.ilike.${pattern}`,
     );
+  if (maxResults) productQuery = productQuery.limit(maxResults);
+
+  const { data: products, error: pErr } = await productQuery;
 
   if (pErr || !products?.length) {
     if (pErr) logDbCatalogIssue("search", pErr.message);
     return [];
   }
 
-  const plist = products as DbProductRow[];
+  const plist = products as unknown as DbProductRow[];
   const ids = plist.map((p) => p.id);
-  const displaySlug = await primaryDisplaySlugByProductId(supabase, ids);
+  const displaySlug = maxResults
+    ? new Map<string, string>()
+    : await primaryDisplaySlugByProductId(supabase, ids);
 
   const { data: rawVariants } = await supabase
     .from("product_variants")
-    .select("id, product_id, sku, option_values, price, compare_at_price, size_id, color_id")
+    .select("id, product_id, sku, option_values, price, compare_at_price")
     .in("product_id", ids);
 
-  const variants = await mergeInventoryForVariants(
-    supabase,
-    (rawVariants ?? []) as Omit<
-      DbProductVariantRow,
-      "quantity_on_hand" | "quantity_reserved"
-    >[],
-  );
+  const variants = maxResults
+    ? ((rawVariants ?? []).map((v) => ({
+        ...v,
+        quantity_on_hand: 0,
+        quantity_reserved: 0,
+      })) as DbProductVariantRow[])
+    : await mergeInventoryForVariants(
+        supabase,
+        (rawVariants ?? []) as Omit<
+          DbProductVariantRow,
+          "quantity_on_hand" | "quantity_reserved"
+        >[],
+      );
 
   const byProduct = new Map<string, DbProductVariantRow[]>();
   for (const v of variants) {
@@ -754,7 +827,7 @@ export async function dbSearchProducts(q: string): Promise<Product[]> {
   }
 
   return plist.map((p) => {
-    const slug = displaySlug.get(p.id) ?? "uncategorized";
+    const slug = displaySlug.get(p.id) ?? (maxResults ? "search" : "uncategorized");
     return mapProductCard(p, byProduct.get(p.id) ?? [], slug);
   });
 }

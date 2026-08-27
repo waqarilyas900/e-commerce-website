@@ -158,10 +158,13 @@ export function HeaderSearchBar({ className = "" }: { className?: string }) {
     setLoading(true);
     const timer = window.setTimeout(async () => {
       try {
-        const res = await fetch(`/api/catalog/search?q=${encodeURIComponent(term)}`, {
+        const res = await fetch(
+          `/api/catalog/search?q=${encodeURIComponent(term)}&limit=8`,
+          {
           signal: ac.signal,
           headers: { Accept: "application/json" },
-        });
+          },
+        );
         if (!res.ok) {
           setProducts([]);
           return;

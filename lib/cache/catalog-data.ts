@@ -23,6 +23,7 @@ import {
   dbGetProductDetailBySlug,
   dbListActiveHomePageSectionsWithTags,
   dbListAllActiveProductsForCards,
+  dbListAllActiveProductTiles,
   dbListCollections,
   dbListProductsByCollectionSlug,
   dbListProductsForHomeSectionTags,
@@ -143,6 +144,16 @@ export function getCachedProductsBySlugs(slugs: readonly string[]) {
 export const getCachedAllActiveProductsForCards = unstable_cache(
   async () => dbListAllActiveProductsForCards(),
   ["catalog:all-active-products"],
+  {
+    revalidate: LIST_TTL,
+    tags: [CATALOG_CACHE_TAGS.products],
+  },
+);
+
+/** Lightweight catalog payload for the collections product grid. */
+export const getCachedAllActiveProductTiles = unstable_cache(
+  async () => dbListAllActiveProductTiles(),
+  ["catalog:all-active-product-tiles-v1"],
   {
     revalidate: LIST_TTL,
     tags: [CATALOG_CACHE_TAGS.products],
