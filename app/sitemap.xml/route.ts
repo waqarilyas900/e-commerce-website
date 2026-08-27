@@ -38,6 +38,11 @@ type SitemapEntry = {
   imageLoc?: string;
 };
 
+function safeDate(value: string | Date | null | undefined, fallback: Date): Date {
+  const date = value instanceof Date ? value : new Date(value ?? "");
+  return Number.isFinite(date.getTime()) ? date : fallback;
+}
+
 function xmlEscape(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -103,7 +108,8 @@ async function fetchProductTimestamps(): Promise<Map<string, Date>> {
     if (error || !data) return map;
     for (const r of data as ProductTimestampRow[]) {
       const ts = r.updated_at ?? r.created_at;
-      if (r.slug && ts) map.set(r.slug, new Date(ts));
+      const date = safeDate(ts, new Date(0));
+      if (r.slug && ts && date.getTime() !== 0) map.set(r.slug, date);
     }
   } catch {
     /* graceful fallback */
@@ -121,7 +127,8 @@ async function fetchCollectionTimestamps(): Promise<Map<string, Date>> {
       .select("slug, updated_at");
     if (error || !data) return map;
     for (const r of data as CollectionTimestampRow[]) {
-      if (r.slug && r.updated_at) map.set(r.slug, new Date(r.updated_at));
+      const date = safeDate(r.updated_at, new Date(0));
+      if (r.slug && r.updated_at && date.getTime() !== 0) map.set(r.slug, date);
     }
   } catch {
     /* graceful fallback */
@@ -136,9 +143,10 @@ function renderXml(entries: SitemapEntry[]): string {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
   );
   for (const e of entries) {
+    const lastModified = safeDate(e.lastModified, new Date(0));
     lines.push("  <url>");
     lines.push(`    <loc>${xmlEscape(e.url)}</loc>`);
-    lines.push(`    <lastmod>${xmlEscape(e.lastModified.toISOString())}</lastmod>`);
+    lines.push(`    <lastmod>${xmlEscape(lastModified.toISOString())}</lastmod>`);
     lines.push(`    <changefreq>${xmlEscape(e.changeFrequency)}</changefreq>`);
     lines.push(`    <priority>${e.priority.toFixed(2)}</priority>`);
     if (e.imageLoc) {
@@ -171,7 +179,7 @@ export async function GET(): Promise<NextResponse> {
     },
     ...STATIC_BLOG_GUIDES.map((g) => ({
       url: `${base}/blogs/${encodeURIComponent(g.slug)}`,
-      lastModified: new Date(g.publishedAt),
+      lastModified: safeDate(g.publishedAt, lastModified),
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
@@ -201,19 +209,40 @@ export async function GET(): Promise<NextResponse> {
   let productTs = new Map<string, Date>();
   let collectionTs = new Map<string, Date>();
 
-  try {
-    [products, collections, policies, homeSections, productTs, collectionTs] =
-      await Promise.all([
-        dbListAllActiveProductsForCards(),
-        dbListCollections(),
-        dbListPolicySummaries(),
-        dbListActiveHomePageSectionsWithTags(),
-        fetchProductTimestamps(),
-        fetchCollectionTimestamps(),
-      ]);
-  } catch (err) {
-    console.error("[sitemap] dynamic fetch failed, returning static paths:", err);
-    return new NextResponse(renderXml(staticEntries), { headers });
+  const [
+    productsResult,
+    collectionsResult,
+    policiesResult,
+    homeSectionsResult,
+    productTsResult,
+    collectionTsResult,
+  ] = await Promise.allSettled([
+    dbListAllActiveProductsForCards(),
+    dbListCollections(),
+    dbListPolicySummaries(),
+    dbListActiveHomePageSectionsWithTags(),
+    fetchProductTimestamps(),
+    fetchCollectionTimestamps(),
+  ]);
+
+  products = productsResult.status === "fulfilled" ? productsResult.value : [];
+  collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+  policies = policiesResult.status === "fulfilled" ? policiesResult.value : [];
+  homeSections = homeSectionsResult.status === "fulfilled" ? homeSectionsResult.value : [];
+  productTs = productTsResult.status === "fulfilled" ? productTsResult.value : new Map();
+  collectionTs =
+    collectionTsResult.status === "fulfilled" ? collectionTsResult.value : new Map();
+
+  const rejected = [
+    productsResult,
+    collectionsResult,
+    policiesResult,
+    homeSectionsResult,
+    productTsResult,
+    collectionTsResult,
+  ].filter((result) => result.status === "rejected");
+  if (rejected.length) {
+    console.error(`[sitemap] ${rejected.length} dynamic source(s) failed; serving partial sitemap`);
   }
 
   const byUrl = new Map<string, SitemapEntry>();
