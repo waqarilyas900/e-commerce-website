@@ -20,8 +20,14 @@ export type StoreReviewBreakdown = {
   total: number;
 };
 
+export type StoreReviewRow = HomeReviewHighlight & {
+  verifiedBuyer: boolean;
+  mediaUrls?: string[];
+  productVariant?: string;
+};
+
 export type StoreReviewsPageResult = {
-  reviews: (HomeReviewHighlight & { verifiedBuyer: boolean })[];
+  reviews: StoreReviewRow[];
   total: number;
   page: number;
   pageSize: number;
@@ -77,7 +83,7 @@ function cleanTitle(title: string, body: string): string {
   return t;
 }
 
-function mapRow(row: Record<string, unknown>): (HomeReviewHighlight & { verifiedBuyer: boolean }) | null {
+function mapRow(row: Record<string, unknown>): StoreReviewRow | null {
   const rawP = row.products;
   const p = (Array.isArray(rawP) ? rawP[0] : rawP) as
     | { slug?: string; name?: string; images?: unknown; status?: string }
@@ -94,6 +100,7 @@ function mapRow(row: Record<string, unknown>): (HomeReviewHighlight & { verified
   const body = String(row.body ?? "").trim();
   const title = cleanTitle(String(row.title ?? ""), body);
   if (!body && !title) return null;
+  const mediaUrls = parseReviewMediaUrls(row.media);
   return {
     id: String(row.id),
     rating: Math.max(0, Math.min(5, Number(row.rating ?? 0))),
@@ -105,6 +112,7 @@ function mapRow(row: Record<string, unknown>): (HomeReviewHighlight & { verified
     productName: name,
     productImage: firstImage(p.images),
     verifiedBuyer: Boolean(row.user_id),
+    mediaUrls,
   };
 }
 
@@ -170,6 +178,7 @@ async function loadReviewsPageUncached(
       created_at,
       attributed_display_name,
       user_id,
+      media,
       products!inner (
         slug,
         name,

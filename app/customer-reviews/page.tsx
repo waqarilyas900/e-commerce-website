@@ -120,8 +120,8 @@ export default async function CustomerReviewsPage({ searchParams }: Props) {
             ]}
           />
 
-          <header className="mt-8 text-center">
-            <h1 className="text-[1.75rem] font-black uppercase tracking-tight text-neutral-900 sm:text-[2.05rem]">
+          <header className="mt-4 text-center sm:mt-6">
+            <h1 className="text-2xl font-black uppercase italic tracking-tight text-neutral-950 sm:text-4xl md:text-5xl">
               Customer Reviews
             </h1>
           </header>
