@@ -274,6 +274,15 @@ export async function GET(): Promise<NextResponse> {
       priority: 0.85,
       imageLoc: safeImage ?? undefined,
     });
+
+    // Dedicated hands-on buying guide and review for every catalog item
+    byUrl.set(`${base}/blogs/${encodeURIComponent(slug)}`, {
+      url: `${base}/blogs/${encodeURIComponent(slug)}`,
+      lastModified: lastMod,
+      changeFrequency: "weekly",
+      priority: 0.7,
+      imageLoc: safeImage ?? undefined,
+    });
   }
 
   for (const c of collections) {

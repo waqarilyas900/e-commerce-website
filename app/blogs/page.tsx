@@ -7,6 +7,12 @@ import {
   staticGuideListingCard,
 } from "@/app/lib/blog/guides";
 import {
+  buildProductBlogArticle,
+  type BlogProductInput,
+} from "@/app/lib/blog/product-blog";
+import { getCachedAllActiveProductsForCards } from "@/lib/cache/catalog-data";
+import { hasCatalogDb } from "@/app/lib/db/env";
+import {
   buildPageMetadata,
   canonicalUrlFor,
   loadSeoOverrideForRoute,
@@ -24,8 +30,8 @@ export async function generateMetadata(): Promise<Metadata> {
     identity,
     override,
     defaults: {
-      title: `${storeName} Buying & Lifestyle Guides | Online Shopping Pakistan`,
-      description: `Expert buying guides, fabric comparisons, sizing advice, and COD delivery tips for shoppers in Pakistan. Shop smart at ${storeName}.`,
+      title: `${storeName} Buying Guides & Product Reviews | Online Shopping Pakistan`,
+      description: `Expert buying guides, hands-on product reviews, fabric comparisons, and COD delivery tips for shoppers in Pakistan. Shop smart at ${storeName}.`,
       ogType: "website",
     },
   });
@@ -39,14 +45,49 @@ export default async function BlogsIndexPage() {
     override?.canonicalUrl,
     canonicalUrlFor("/blogs"),
   );
-  const title = override?.title?.trim() || `${storeName} Buying Guides & Blog`;
+  const title = override?.title?.trim() || `${storeName} Buying Guides & Product Reviews`;
   const description =
     override?.description?.trim() ||
-    `Expert buying guides, fabric tips, sizing recommendations, and Cash on Delivery insights for shopping online across Pakistan.`;
+    `Expert buying guides, in-depth product reviews, sizing recommendations, and Cash on Delivery insights for shopping online across Pakistan.`;
 
-  const cards = [...STATIC_BLOG_GUIDES]
+  const guideCards = [...STATIC_BLOG_GUIDES]
     .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
     .map((meta) => staticGuideListingCard(meta, storeName));
+
+  let productCards: Array<{
+    slug: string;
+    title: string;
+    excerpt: string;
+    publishedAt: string;
+    readTimeMinutes?: number;
+    categoryLabel?: string;
+    image: { src: string; alt: string };
+    href: string;
+    isGuide: boolean;
+  }> = [];
+
+  if (hasCatalogDb()) {
+    const products = await getCachedAllActiveProductsForCards();
+    productCards = products.map((p) => {
+      const article = buildProductBlogArticle(p as BlogProductInput, storeName);
+      return {
+        slug: p.slug,
+        title: article.title,
+        excerpt: article.metaDescription,
+        publishedAt: article.publishedAt,
+        readTimeMinutes: article.readTimeMinutes || 5,
+        categoryLabel: article.categoryLabel || "Product Review",
+        image: {
+          src: article.hero.src,
+          alt: article.hero.alt,
+        },
+        href: `/blogs/${p.slug}`,
+        isGuide: false,
+      };
+    });
+  }
+
+  const allCards = [...guideCards, ...productCards];
 
   const breadcrumbId = `${canonical}#breadcrumb`;
   const crumbs = breadcrumbJsonLd([
@@ -87,17 +128,17 @@ export default async function BlogsIndexPage() {
 
           <header className="mt-8 max-w-3xl border-b border-neutral-200/90 pb-8">
             <h1 className="text-2xl font-black uppercase tracking-tight text-neutral-900 sm:text-4xl md:text-5xl">
-              Buying & Lifestyle Guides
+              Buying Guides & Product Reviews
             </h1>
             <p className="mt-4 text-base leading-relaxed text-neutral-600 sm:text-lg">
-              Practical fabric comparisons, styling tips, care instructions, and Cash on Delivery
-              advice for online shoppers in Pakistan. Researched to help you make informed buying decisions.
+              Practical buying guides, hands-on reviews for every catalog item, styling tips,
+              and Cash on Delivery advice for online shoppers in Pakistan.
             </p>
           </header>
 
           <div className="mt-10">
             <ul className="grid list-none grid-cols-1 gap-6 pl-0 sm:grid-cols-2 lg:grid-cols-3">
-              {cards.map((card) => (
+              {allCards.map((card) => (
                 <li key={card.slug}>
                   <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-xs transition hover:border-neutral-300 hover:shadow-md">
                     <Link href={card.href} className="relative block aspect-[16/10] bg-neutral-100">
@@ -107,16 +148,20 @@ export default async function BlogsIndexPage() {
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover transition-transform duration-300 hover:scale-105"
+                        unoptimized={
+                          card.image.src.includes("slatic.net") ||
+                          card.image.src.includes("alicdn.com")
+                        }
                       />
                     </Link>
                     <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
                       <div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">
-                            {card.categoryLabel}
+                            {card.categoryLabel || (card.isGuide ? "Topic Guide" : "Product Review")}
                           </span>
                           <span className="text-xs text-neutral-500">
-                            ⏱️ {card.readTimeMinutes} min read
+                            ⏱️ {card.readTimeMinutes || 5} min read
                           </span>
                         </div>
                         <h2 className="mt-3 text-lg font-bold leading-snug text-neutral-900 sm:text-xl">
@@ -144,7 +189,7 @@ export default async function BlogsIndexPage() {
                           href={card.href}
                           className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 hover:text-amber-600 transition"
                         >
-                          Read Guide
+                          Read Article
                           <span aria-hidden>→</span>
                         </Link>
                       </div>

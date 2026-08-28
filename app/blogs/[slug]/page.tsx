@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { BlogArticleView } from "@/components/blog/blog-article-view";
 import { hasCatalogDb } from "@/app/lib/db/env";
-import { getCachedProductsBySlugs } from "@/lib/cache/catalog-data";
+import {
+  getCachedProductDetailBySlug,
+  getCachedProductsBySlugs,
+} from "@/lib/cache/catalog-data";
+import {
+  buildProductBlogArticle,
+  type BlogArticle,
+  type BlogProductInput,
+} from "@/app/lib/blog/product-blog";
 import {
   getStaticGuideMeta,
   STATIC_BLOG_GUIDES,
@@ -26,10 +34,56 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+async function loadBlogProduct(slug: string): Promise<BlogProductInput | null> {
+  if (!hasCatalogDb()) return null;
+  const [cards, detail] = await Promise.all([
+    getCachedProductsBySlugs([slug]),
+    getCachedProductDetailBySlug(slug),
+  ]);
+  const card = cards[0];
+  if (!card || !detail || detail.product.status !== "active") return null;
+  return {
+    ...card,
+    imagesRaw: detail.product.images,
+  };
+}
+
 async function loadGuideImageProducts(slugs: string[]): Promise<Product[]> {
   if (!hasCatalogDb() || !slugs.length) return [];
   const fromSlugs = await getCachedProductsBySlugs(slugs);
   return fromSlugs.filter((p) => p.image);
+}
+
+async function resolveArticle(
+  slug: string,
+  storeName: string,
+): Promise<{
+  article: BlogArticle;
+  crumbLabel: string;
+  productLink: { href: string; label: string } | null;
+} | null> {
+  const guide = getStaticGuideMeta(slug);
+  if (guide) {
+    const imageProducts = await loadGuideImageProducts(guide.imageProductSlugs);
+    const article = buildSeoGuideArticle(guide.slug, storeName, imageProducts);
+    if (!article) return null;
+    return {
+      article,
+      crumbLabel: seoGuideCrumbLabel(guide.slug),
+      productLink: { href: "/collections", label: "Browse Catalog Collections" },
+    };
+  }
+
+  const product = await loadBlogProduct(slug);
+  if (!product) return null;
+  return {
+    article: buildProductBlogArticle(product, storeName),
+    crumbLabel: product.name,
+    productLink: {
+      href: `/products/${product.slug}`,
+      label: `View ${product.name} Product Page`,
+    },
+  };
 }
 
 export async function generateStaticParams() {
@@ -42,29 +96,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const identity = await loadSiteIdentity();
   const storeName = identity.storeName || identity.siteTitle || "SimpleCart Store";
-  const guide = getStaticGuideMeta(slug);
+  const resolved = await resolveArticle(slug, storeName);
 
-  if (!guide) {
+  if (!resolved) {
     return buildPageMetadata({
       pathname: `/blogs/${slug}`,
       identity,
       override: null,
       defaults: {
-        title: "Buying Guide",
+        title: "Buying Guide & Review",
         description: `Buying and lifestyle guides from ${storeName}.`,
         forceNoindex: true,
       },
     });
   }
 
+  const { article } = resolved;
   return buildPageMetadata({
-    pathname: `/blogs/${guide.slug}`,
+    pathname: `/blogs/${article.slug}`,
     identity,
     override: null,
     defaults: {
-      title: guide.metaTitle,
-      description: guide.metaDescription,
-      keywords: guide.keywords,
+      title: article.metaTitle,
+      description: article.metaDescription,
+      keywords: article.keywords,
       ogType: "article",
     },
   });
@@ -74,26 +129,18 @@ export default async function BlogArticlePage({ params }: Props) {
   const { slug } = await params;
   const identity = await loadSiteIdentity();
   const storeName = identity.storeName || identity.siteTitle || "SimpleCart Store";
-  const guide = getStaticGuideMeta(slug);
+  const resolved = await resolveArticle(slug, storeName);
 
-  // If this is a product slug rather than an editorial guide, 301 redirect to the product page
-  if (!guide) {
-    permanentRedirect(`/products/${slug}`);
-  }
-
-  const imageProducts = await loadGuideImageProducts(guide.imageProductSlugs);
-  const article = buildSeoGuideArticle(guide.slug, storeName, imageProducts);
-
-  if (!article) {
+  if (!resolved) {
     notFound();
   }
 
+  const { article, crumbLabel, productLink } = resolved;
   const canonical = resolveSeoCanonicalOverride(
     null,
-    canonicalUrlFor(`/blogs/${guide.slug}`),
+    canonicalUrlFor(`/blogs/${article.slug}`),
   );
   const breadcrumbId = `${canonical}#breadcrumb`;
-  const crumbLabel = seoGuideCrumbLabel(guide.slug);
 
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
@@ -167,16 +214,21 @@ export default async function BlogArticlePage({ params }: Props) {
           </nav>
 
           <header className="mt-8 border-b border-neutral-100 pb-6">
-            <time
-              dateTime={article.publishedAt}
-              className="text-xs font-bold uppercase tracking-wider text-amber-600 sm:text-sm"
-            >
-              {new Date(article.publishedAt).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </time>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-amber-800">
+                {article.categoryLabel || "Buying Guide"}
+              </span>
+              <time
+                dateTime={article.publishedAt}
+                className="text-xs font-semibold text-neutral-500"
+              >
+                {new Date(article.publishedAt).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </time>
+            </div>
             <h1 className="mt-3 text-2xl font-black leading-tight tracking-tight text-neutral-900 sm:text-4xl md:text-5xl">
               {article.title}
             </h1>
@@ -192,17 +244,17 @@ export default async function BlogArticlePage({ params }: Props) {
             <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
               <div>
                 <h3 className="text-lg font-bold text-neutral-900 sm:text-xl">
-                  Looking for quality products with COD across Pakistan?
+                  Looking to order with Cash on Delivery across Pakistan?
                 </h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Explore our complete verified catalog with fast courier dispatch to your doorstep.
+                  Explore genuine quality products with fast courier dispatch to your doorstep.
                 </p>
               </div>
               <Link
-                href="/collections"
+                href={productLink?.href || "/collections"}
                 className="shrink-0 rounded-xl bg-neutral-900 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
               >
-                Browse Collections
+                {productLink?.label || "Browse Collections"}
               </Link>
             </div>
           </div>
