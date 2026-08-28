@@ -1,5 +1,5 @@
 import type { Product } from "@/app/lib/catalog/types";
-import type { BlogArticle, BlogImage, BlogSection } from "@/app/lib/blog/product-blog";
+import type { BlogImage } from "@/app/lib/blog/product-blog";
 
 export type StaticGuideMeta = {
   slug: string;
@@ -7,89 +7,33 @@ export type StaticGuideMeta = {
   metaTitle: string;
   metaDescription: string;
   publishedAt: string;
+  readTimeMinutes: number;
+  categoryLabel: string;
   keywords: string[];
-  /** Product slugs whose gallery images appear in the article (must be active in catalog). */
+  collectionSlug?: string;
   imageProductSlugs: string[];
 };
 
-/** Editorial / promo blogs that are not 1:1 product guides. */
 export const STATIC_BLOG_GUIDES: StaticGuideMeta[] = [
   {
-    slug: "welcome10-voucher-code-rs-100-discount",
-    title: "WELCOME10 Voucher Code — Rs 100 Welcome Bonus for New Users",
-    metaTitle: "WELCOME10 Voucher Code | Rs 100 Discount Pakistan",
-    metaDescription:
-      "Use voucher code WELCOME10 at SimpleCart Store checkout for a Rs 100 welcome bonus when you are a new user. COD shopping tips for Pakistan.",
-    publishedAt: "2026-08-22T10:00:00.000Z",
-    keywords: [
-      "WELCOME10 voucher code",
-      "SimpleCart Store discount code",
-      "Rs 100 welcome bonus Pakistan",
-      "new user voucher COD",
-      "promo code SimpleCart",
-      "checkout discount Pakistan",
-    ],
-    imageProductSlugs: [
-      "2l-stainless-steel-electric-kettle",
-      "ribbed-glass-sipper-with-straw",
-      "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
-      "led-folding-makeup-mirror",
-      "rechargeable-mosquito-killer-bat",
-    ],
-  },
-  {
-    slug: "inside-simplecart-store-real-stock-cod-pakistan",
-    title: "How SimpleCart Store Works — Inventory, Packing & COD Delivery in Pakistan",
-    metaTitle: "How SimpleCart Store Works | COD Home Essentials Pakistan",
-    metaDescription:
-      "Learn how SimpleCart Store sources home essentials, manages warehouse inventory, packs orders carefully, and ships with cash on delivery across Pakistan.",
-    publishedAt: "2026-08-26T16:00:00.000Z",
-    keywords: [
-      "SimpleCart Store Pakistan",
-      "buy home essentials online Pakistan",
-      "COD delivery Pakistan online store",
-      "kitchen appliances online Pakistan",
-      "drinkware online shopping Pakistan",
-      "how SimpleCart Store works",
-      "ecommerce warehouse Pakistan",
-    ],
-    imageProductSlugs: [],
-  },
-  {
-    slug: "cash-on-delivery-cod-simplecart-pakistan",
-    title: "Cash on Delivery (COD) at SimpleCart Store — How It Works in Pakistan",
-    metaTitle: "Cash on Delivery COD Pakistan | SimpleCart Store",
-    metaDescription:
-      "Learn how cash on delivery works at SimpleCart Store: place your order, receive the parcel, then pay in PKR when it arrives across Pakistan.",
-    publishedAt: "2026-08-26T18:00:00.000Z",
-    keywords: [
-      "cash on delivery Pakistan",
-      "COD online shopping Pakistan",
-      "SimpleCart Store COD",
-      "pay on delivery home essentials",
-      "COD checkout Pakistan",
-    ],
-    imageProductSlugs: [
-      "2l-stainless-steel-electric-kettle",
-      "ribbed-glass-sipper-with-straw",
-      "led-folding-makeup-mirror",
-      "rechargeable-mosquito-killer-bat",
-    ],
-  },
-  {
     slug: "drinkware-buying-guide-pakistan",
-    title: "Drinkware Buying Guide for Pakistan — Sippers, Tumblers & Everyday Bottles",
-    metaTitle: "Drinkware Buying Guide Pakistan | Tumblers & Sippers",
+    title: "Drinkware & Tumbler Buying Guide for Pakistan — Best Sippers, Flasks & Insulated Bottles (2026)",
+    metaTitle: "Best Tumblers & Drinkware Buying Guide Pakistan | SimpleCart",
     metaDescription:
-      "Choose the right sipper, tumbler or bottle for daily use in Pakistan. Practical tips, then shop Drinkware & Tumblers at SimpleCart Store with COD.",
-    publishedAt: "2026-08-26T18:10:00.000Z",
+      "Looking for the best tumbler, glass sipper, or insulated water bottle in Pakistan? Compare 304 stainless steel vs borosilicate glass, thermal retention, and COD prices.",
+    publishedAt: "2026-08-28T16:00:00.000Z",
+    readTimeMinutes: 7,
+    categoryLabel: "Drinkware & Hydration",
     keywords: [
       "drinkware buying guide Pakistan",
       "best tumbler Pakistan",
-      "glass sipper with straw",
-      "water bottle online Pakistan",
-      "drinkware tumblers SimpleCart",
+      "glass sipper with straw price Pakistan",
+      "insulated water bottle Pakistan",
+      "hot and cold thermos flask Pakistan",
+      "car heating cup 12v 24v",
+      "buy tumblers online cash on delivery",
     ],
+    collectionSlug: "drinkware-tumblers",
     imageProductSlugs: [
       "ribbed-glass-sipper-with-straw",
       "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
@@ -98,31 +42,196 @@ export const STATIC_BLOG_GUIDES: StaticGuideMeta[] = [
   },
   {
     slug: "kitchen-essentials-pakistani-homes",
-    title: "Kitchen Essentials for Pakistani Homes — Tools Worth Buying Online",
-    metaTitle: "Kitchen Essentials Pakistan | SimpleCart Store Guide",
+    title: "10 Essential Kitchen Tools & Electric Appliances for Pakistani Homes (2026 Guide)",
+    metaTitle: "10 Essential Kitchen Tools & Appliances Pakistan | SimpleCart",
     metaDescription:
-      "Build a practical Pakistani kitchen with essentials you will actually use — kettles, choppers and everyday tools. Shop Kitchen Essentials with COD.",
-    publishedAt: "2026-08-26T18:20:00.000Z",
+      "Must-have kitchen gadgets for Pakistani cooking: multi-blade choppers, spice grinders, electric kettles, and prep tools. Buy online with Cash on Delivery nationwide.",
+    publishedAt: "2026-08-28T15:30:00.000Z",
+    readTimeMinutes: 8,
+    categoryLabel: "Kitchen & Dining",
     keywords: [
       "kitchen essentials Pakistan",
-      "kitchen tools online Pakistan",
-      "electric kettle Pakistan",
-      "chopper grinder home kitchen",
-      "SimpleCart kitchen essentials",
+      "electric chopper price in Pakistan",
+      "spice grinder machine online Pakistan",
+      "stainless steel electric kettle 2l",
+      "best kitchen gadgets for cooking Pakistan",
+      "kitchen tools online COD",
     ],
+    collectionSlug: "kitchen-essentials",
     imageProductSlugs: [
       "2l-stainless-steel-electric-kettle",
       "ribbed-glass-sipper-with-straw",
+    ],
+  },
+  {
+    slug: "home-appliances-buying-guide-pakistan",
+    title: "Small Home Appliances Buying Guide in Pakistan — Energy Efficiency & Longevity",
+    metaTitle: "Home Appliances Buying Guide Pakistan | SimpleCart Store",
+    metaDescription:
+      "How to choose durable, energy-saving small home appliances in Pakistan: electric kettles, mini stoves, heaters, and humidifiers. Low wattage and voltage protection tips.",
+    publishedAt: "2026-08-28T15:00:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Home Appliances",
+    keywords: [
+      "small home appliances Pakistan",
+      "electric kettle low wattage",
+      "energy efficient appliances Pakistan",
+      "portable electric stove Pakistan",
+      "home electronics cash on delivery",
+    ],
+    collectionSlug: "home-appliances",
+    imageProductSlugs: [
+      "2l-stainless-steel-electric-kettle",
+      "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
+    ],
+  },
+  {
+    slug: "beauty-personal-care-gadgets-guide-pakistan",
+    title: "Top Beauty & Grooming Gadgets in Pakistan — LED Mirrors, Trimmers & Vanity Tools",
+    metaTitle: "Beauty & Grooming Gadgets Guide Pakistan | SimpleCart Store",
+    metaDescription:
+      "Upgrade your daily vanity and grooming routine with LED touch makeup mirrors, rechargeable trimmers, and skin care tools. Tested for Pakistani users with COD delivery.",
+    publishedAt: "2026-08-28T14:30:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Beauty & Personal Care",
+    keywords: [
+      "beauty gadgets Pakistan",
+      "LED makeup mirror with light price Pakistan",
+      "folding cosmetic mirror touch screen",
+      "grooming gadgets online Pakistan",
+      "skincare vanity accessories COD",
+    ],
+    collectionSlug: "beauty-personal-care",
+    imageProductSlugs: [
       "led-folding-makeup-mirror",
     ],
   },
   {
+    slug: "pest-control-mosquito-killer-bats-guide-pakistan",
+    title: "Mosquito Killer Bats & Pest Control in Pakistan — Dengue & Malaria Prevention Guide",
+    metaTitle: "Mosquito Killer Bats & Dengue Prevention Pakistan | SimpleCart",
+    metaDescription:
+      "Protect your family against dengue and seasonal mosquitoes with rechargeable electric bats and insect zappers. Battery longevity, safety mesh, and charging tips.",
+    publishedAt: "2026-08-28T14:00:00.000Z",
+    readTimeMinutes: 5,
+    categoryLabel: "Pest Control & Health",
+    keywords: [
+      "mosquito killer bat price in Pakistan",
+      "rechargeable mosquito racket Pakistan",
+      "dengue prevention tools home Pakistan",
+      "electric insect killer bat COD",
+      "mosquito swatter rechargeable battery",
+    ],
+    collectionSlug: "pest-control",
+    imageProductSlugs: [
+      "rechargeable-mosquito-killer-bat",
+    ],
+  },
+  {
+    slug: "lamps-lighting-home-decor-guide-pakistan",
+    title: "Lamps & Ambient Lighting Guide — Aesthetic Study Lamps, Night Lights & Room Decor",
+    metaTitle: "Lamps & Ambient Lighting Guide Pakistan | SimpleCart Store",
+    metaDescription:
+      "Transform your bedroom, desk, or living area with rechargeable LED desk lamps, soothing ambient night lights, and decorative lamps. Shop online with COD in Pakistan.",
+    publishedAt: "2026-08-28T13:30:00.000Z",
+    readTimeMinutes: 5,
+    categoryLabel: "Lamps & Lighting",
+    keywords: [
+      "lamps and lighting Pakistan",
+      "rechargeable study lamp price Pakistan",
+      "aesthetic bedroom night light",
+      "LED desk lamp touch sensor",
+      "decorative room lights online Pakistan",
+    ],
+    collectionSlug: "lamps-lighting",
+    imageProductSlugs: [],
+  },
+  {
+    slug: "wellness-comfort-massagers-lifestyle-pakistan",
+    title: "Daily Wellness & Posture Comfort — Top Massagers & Ergonomic Living Gadgets",
+    metaTitle: "Wellness & Posture Comfort Products Pakistan | SimpleCart",
+    metaDescription:
+      "Relieve neck stiffness, back pain, and muscle fatigue after long work hours. Explore portable electronic massagers and ergonomic relaxation tools with COD delivery.",
+    publishedAt: "2026-08-28T13:00:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Wellness & Comfort",
+    keywords: [
+      "wellness products Pakistan",
+      "body massager price in Pakistan",
+      "neck back pain relief cushion",
+      "ergonomic lifestyle gadgets COD",
+      "relaxation tools online Pakistan",
+    ],
+    collectionSlug: "wellness-comfort",
+    imageProductSlugs: [],
+  },
+  {
+    slug: "fabric-guide-terry-cotton-lycra-pakistan",
+    title: "Fabric & Material Guide: Terry Cotton vs Lycra Stretch vs Fleece for Pakistani Climate",
+    metaTitle: "Fabric Guide: Terry vs Lycra vs Fleece Pakistan | SimpleCart",
+    metaDescription:
+      "Learn how to choose the right fabric for Pakistani summers and winters. Comprehensive comparison of French Terry, 4-Way Lycra Stretch, and Micro-Fleece.",
+    publishedAt: "2026-08-28T12:00:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Fabric & Materials",
+    keywords: [
+      "fabric guide Pakistan",
+      "terry cotton fabric Pakistan",
+      "lycra 4 way stretch trousers",
+      "fleece vs terry fabric",
+      "breathable summer fabrics Pakistan",
+      "activewear fabric guide",
+    ],
+    collectionSlug: "home-essentials",
+    imageProductSlugs: [],
+  },
+  {
+    slug: "oversized-t-shirts-styling-size-guide-pakistan",
+    title: "The Ultimate Oversized T-Shirt Size & Styling Guide for Pakistan",
+    metaTitle: "Oversized T-Shirts Size & Styling Guide Pakistan | SimpleCart",
+    metaDescription:
+      "How to style oversized drop-shoulder tees and choose the right size according to Pakistani body types. Fit tips, styling ideas, and COD shopping.",
+    publishedAt: "2026-08-28T11:00:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Apparel & Streetwear",
+    keywords: [
+      "oversized t-shirt size guide Pakistan",
+      "how to style oversized t-shirts",
+      "drop shoulder tee fit guide",
+      "men street style Pakistan",
+      "oversize shirts online Pakistan",
+    ],
+    collectionSlug: "home-essentials",
+    imageProductSlugs: [],
+  },
+  {
+    slug: "wash-and-care-guide-garments-pakistan",
+    title: "How to Wash & Care for Garments in Pakistan — Prevent Shrinkage & Color Fading",
+    metaTitle: "Wash & Care Guide for Clothes in Pakistan | SimpleCart",
+    metaDescription:
+      "Expert laundry tips for Pakistani water conditions: protect acid-wash colors, preserve elasticity in stretch fabrics, and prevent shrinkage.",
+    publishedAt: "2026-08-28T10:00:00.000Z",
+    readTimeMinutes: 5,
+    categoryLabel: "Garment Care",
+    keywords: [
+      "how to wash clothes Pakistan",
+      "prevent color fading garments",
+      "wash care tips acid wash",
+      "cotton terry care instructions",
+      "laundry tips Pakistan",
+    ],
+    collectionSlug: "home-essentials",
+    imageProductSlugs: [],
+  },
+  {
     slug: "winter-room-heaters-buying-guide-pakistan",
-    title: "Winter Room Heaters Buying Guide for Pakistan — Stay Warm Safely",
+    title: "Winter Room Heaters Buying Guide for Pakistan — Stay Warm Safely & Save Energy",
     metaTitle: "Room Heaters Buying Guide Pakistan | Winter Comfort",
     metaDescription:
-      "How to choose a room heater for Pakistani winters: room size, safety, power use and placement. Shop heaters in Home Appliances at SimpleCart Store.",
+      "How to choose the right room heater for Pakistani winters: room size, safety, power use, and placement. Shop heaters with COD at SimpleCart Store.",
     publishedAt: "2026-08-26T18:30:00.000Z",
+    readTimeMinutes: 7,
+    categoryLabel: "Seasonal Winter Care",
     keywords: [
       "room heater Pakistan",
       "winter heater buying guide",
@@ -130,86 +239,129 @@ export const STATIC_BLOG_GUIDES: StaticGuideMeta[] = [
       "fan heater Pakistan",
       "home appliances heaters SimpleCart",
     ],
+    collectionSlug: "home-appliances",
     imageProductSlugs: [
       "2l-stainless-steel-electric-kettle",
       "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
-    ],
-  },
-  {
-    slug: "how-to-place-track-order-simplecart",
-    title: "How to Place an Order at SimpleCart Store — Checkout, COD & What Happens Next",
-    metaTitle: "How to Place an Order | SimpleCart Store Pakistan",
-    metaDescription:
-      "Step-by-step: browse, add to cart, apply WELCOME10 if eligible, checkout with COD, and know what happens after you place an order at SimpleCart Store.",
-    publishedAt: "2026-08-26T18:40:00.000Z",
-    keywords: [
-      "how to order SimpleCart Store",
-      "checkout COD Pakistan",
-      "track order online shopping Pakistan",
-      "how to buy SimpleCart",
-      "place order cash on delivery",
-    ],
-    imageProductSlugs: [
-      "2l-stainless-steel-electric-kettle",
-      "ribbed-glass-sipper-with-straw",
-      "led-folding-makeup-mirror",
-      "rechargeable-mosquito-killer-bat",
     ],
   },
   {
     slug: "gift-ideas-under-budget-pakistan",
-    title: "Gift Ideas Under Budget in Pakistan — Useful Home & Beauty Picks",
-    metaTitle: "Budget Gift Ideas Pakistan | SimpleCart Store",
+    title: "25 Practical & Trendy Gift Ideas Under Rs 1,500, Rs 3,000 & Rs 5,000 in Pakistan",
+    metaTitle: "Budget Gift Ideas Under Rs 3000 Pakistan | SimpleCart Store",
     metaDescription:
-      "Practical gift ideas under a clear budget for family and friends in Pakistan — drinkware, kitchen helpers, beauty gadgets. Order online with COD.",
+      "Thoughtful, high-utility gift ideas under Rs 1,500, Rs 3,000, and Rs 5,000 for birthdays, anniversaries, family, and colleagues in Pakistan with nationwide COD.",
     publishedAt: "2026-08-26T18:50:00.000Z",
+    readTimeMinutes: 7,
+    categoryLabel: "Gifting & Ideas",
     keywords: [
       "gift ideas Pakistan",
-      "budget gifts online Pakistan",
-      "home gift ideas COD",
-      "useful gifts drinkware kitchen",
-      "SimpleCart gift ideas",
+      "budget gifts under 3000 Pakistan",
+      "gifts under 1500 PKR online",
+      "useful lifestyle gifts COD Pakistan",
+      "birthday gift ideas online shopping",
     ],
+    collectionSlug: "home-essentials",
     imageProductSlugs: [
       "ribbed-glass-sipper-with-straw",
       "led-folding-makeup-mirror",
-      "2l-stainless-steel-electric-kettle",
-      "rechargeable-mosquito-killer-bat",
-      "450ml-car-heating-cup-12v-24v-portable-electric-kettle-smart-touch-screen-therma",
     ],
   },
   {
-    slug: "returns-trust-why-buy-simplecart",
-    title: "Why Buy from SimpleCart Store — Trust, Packing & Purchase Protection",
-    metaTitle: "Why Buy SimpleCart Store | Trust & Purchase Protection",
+    slug: "cash-on-delivery-cod-simplecart-pakistan",
+    title: "Cash on Delivery (COD) Online Shopping in Pakistan — The Ultimate Safe Buyer's Guide",
+    metaTitle: "Cash on Delivery (COD) Shopping Guide Pakistan | SimpleCart Store",
     metaDescription:
-      "Why shoppers choose SimpleCart Store: managed inventory, careful packing, COD across Pakistan, and purchase protection if something goes wrong.",
-    publishedAt: "2026-08-26T19:00:00.000Z",
+      "Everything you need to know about Cash on Delivery (COD) in Pakistan: order confirmation, delivery timelines, courier tracking, and return protection.",
+    publishedAt: "2026-08-26T18:00:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Shopping & Delivery",
     keywords: [
-      "why buy SimpleCart Store",
-      "trusted online store Pakistan",
-      "purchase protection COD",
-      "returns help SimpleCart",
-      "shop with confidence Pakistan",
+      "cash on delivery Pakistan",
+      "COD online shopping Pakistan",
+      "how COD works Pakistan",
+      "safe online shopping Pakistan",
+      "courier delivery COD Pakistan",
     ],
-    imageProductSlugs: [
-      "2l-stainless-steel-electric-kettle",
-      "ribbed-glass-sipper-with-straw",
-      "led-folding-makeup-mirror",
+    collectionSlug: "home-essentials",
+    imageProductSlugs: [],
+  },
+  {
+    slug: "online-shopping-scams-safe-buying-guide-pakistan",
+    title: "How to Avoid Online Shopping Scams in Pakistan — 7 Golden Rules for COD Shoppers",
+    metaTitle: "How to Avoid Online Shopping Scams in Pakistan | SimpleCart",
+    metaDescription:
+      "Protect your hard-earned money from fake online pages and fraud parcels. Learn 7 golden rules for safe cash-on-delivery shopping in Pakistan.",
+    publishedAt: "2026-08-28T09:00:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Consumer Protection",
+    keywords: [
+      "avoid online shopping scams Pakistan",
+      "fake parcel fraud prevention COD",
+      "safe online shopping tips Pakistan",
+      "verified online store check Pakistan",
+      "purchase protection policy",
     ],
+    collectionSlug: "home-essentials",
+    imageProductSlugs: [],
+  },
+  {
+    slug: "welcome10-voucher-code-rs-100-discount",
+    title: "SimpleCart Voucher Codes & Discounts: How to Save More on Every Order",
+    metaTitle: "WELCOME10 Voucher Code | Rs 100 Discount Pakistan",
+    metaDescription:
+      "Use voucher code WELCOME10 at SimpleCart Store checkout for a Rs 100 welcome bonus when you shop online in Pakistan with Cash on Delivery.",
+    publishedAt: "2026-08-22T10:00:00.000Z",
+    readTimeMinutes: 4,
+    categoryLabel: "Deals & Discounts",
+    keywords: [
+      "WELCOME10 voucher code",
+      "SimpleCart Store discount code",
+      "Rs 100 welcome bonus Pakistan",
+      "new user voucher COD",
+      "checkout discount Pakistan",
+    ],
+    collectionSlug: "home-essentials",
+    imageProductSlugs: [],
+  },
+  {
+    slug: "inside-simplecart-store-real-stock-cod-pakistan",
+    title: "Inside SimpleCart Store — Real Warehouse Inventory, Quality Check & Fast Courier Dispatch",
+    metaTitle: "How SimpleCart Store Works | Real Stock & COD Pakistan",
+    metaDescription:
+      "See how SimpleCart Store operates: real in-hand inventory, rigorous quality checks, protective parcel packing, and fast COD delivery across Pakistan.",
+    publishedAt: "2026-08-26T16:00:00.000Z",
+    readTimeMinutes: 6,
+    categoryLabel: "Behind the Scenes",
+    keywords: [
+      "SimpleCart Store Pakistan",
+      "trusted online shopping Pakistan",
+      "COD delivery Pakistan online store",
+      "how SimpleCart Store works",
+      "ecommerce warehouse Pakistan",
+    ],
+    collectionSlug: "home-essentials",
+    imageProductSlugs: [],
   },
 ];
 
-/** Optional listing hero overrides (story photos) when product images are unavailable. */
 export const STATIC_GUIDE_LISTING_HERO: Record<string, string> = {
-  "inside-simplecart-store-real-stock-cod-pakistan": "/story/simplecart-store-06.jpg",
-  "cash-on-delivery-cod-simplecart-pakistan": "/story/simplecart-store-04.jpg",
-  "winter-room-heaters-buying-guide-pakistan": "/story/simplecart-store-05.jpg",
-  "returns-trust-why-buy-simplecart": "/story/simplecart-store-08.jpg",
   "drinkware-buying-guide-pakistan": "/story/simplecart-store-03.jpg",
   "kitchen-essentials-pakistani-homes": "/story/simplecart-store-01.jpg",
-  "how-to-place-track-order-simplecart": "/story/simplecart-store-07.jpg",
+  "home-appliances-buying-guide-pakistan": "/story/simplecart-store-05.jpg",
+  "beauty-personal-care-gadgets-guide-pakistan": "/story/simplecart-store-02.jpg",
+  "pest-control-mosquito-killer-bats-guide-pakistan": "/story/simplecart-store-08.jpg",
+  "lamps-lighting-home-decor-guide-pakistan": "/story/simplecart-store-03.jpg",
+  "wellness-comfort-massagers-lifestyle-pakistan": "/story/simplecart-store-02.jpg",
+  "fabric-guide-terry-cotton-lycra-pakistan": "/story/simplecart-store-06.jpg",
+  "oversized-t-shirts-styling-size-guide-pakistan": "/story/simplecart-store-07.jpg",
+  "wash-and-care-guide-garments-pakistan": "/story/simplecart-store-08.jpg",
+  "winter-room-heaters-buying-guide-pakistan": "/story/simplecart-store-05.jpg",
   "gift-ideas-under-budget-pakistan": "/story/simplecart-store-02.jpg",
+  "cash-on-delivery-cod-simplecart-pakistan": "/story/simplecart-store-04.jpg",
+  "online-shopping-scams-safe-buying-guide-pakistan": "/story/simplecart-store-04.jpg",
+  "welcome10-voucher-code-rs-100-discount": "/story/simplecart-store-04.jpg",
+  "inside-simplecart-store-real-stock-cod-pakistan": "/story/simplecart-store-06.jpg",
 };
 
 export function getStaticGuideMeta(slug: string): StaticGuideMeta | undefined {
@@ -231,315 +383,27 @@ export function pickGuideImages(products: Product[], storeName: string): BlogIma
   return out;
 }
 
-function pickImages(products: Product[], storeName: string): BlogImage[] {
-  return pickGuideImages(products, storeName);
-}
-
-export function buildWelcome10GuideArticle(
-  storeName: string,
-  imageProducts: Product[],
-): BlogArticle {
-  const meta = STATIC_BLOG_GUIDES[0]!;
-  const images = pickImages(imageProducts, storeName);
-  const hero =
-    images[0] ??
-    ({
-      src: "/brand/logo.svg",
-      alt: `${storeName} WELCOME10 voucher`,
-    } satisfies BlogImage);
-
-  const img = (i: number): BlogImage | null => images[i] ?? null;
-
-  const sections: BlogSection[] = [];
-  const pushP = (text: string) => sections.push({ type: "paragraph", text });
-  const pushH = (text: string) => sections.push({ type: "heading", text });
-  const pushL = (items: string[]) => sections.push({ type: "list", items });
-  const pushImg = (image: BlogImage | null) => {
-    if (image) sections.push({ type: "image", image });
-  };
-
-  pushP(
-    `New to ${storeName}? Your first order can start with a welcome bonus. Apply voucher code WELCOME10 at checkout and get Rs 100 off — a simple discount designed for new users shopping home, kitchen and beauty essentials online in Pakistan.`,
-  );
-  pushP(
-    `This guide explains what WELCOME10 is, who can use it, and the exact steps to apply it so you do not miss the Rs 100 saving before you place a cash-on-delivery (COD) order.`,
-  );
-
-  pushH("What is the WELCOME10 voucher code?");
-  pushP(
-    `WELCOME10 is ${storeName}'s new-user welcome voucher. When an eligible new customer applies the code at checkout, the system grants a Rs 100 discount on the order. It is meant as a welcome bonus — thank-you savings for joining and placing your first shop with us.`,
-  );
-  pushP(
-    `Search phrases like “WELCOME10 voucher code”, “SimpleCart Store discount Pakistan”, and “Rs 100 welcome bonus” all point to this same offer. Bookmark this page, then open any product you like and head to checkout when you are ready.`,
-  );
-
-  pushImg(img(1));
-
-  pushH("Who can use WELCOME10?");
-  pushL([
-    "New users signing up or checking out for the first time on SimpleCart Store",
-    "Shoppers who want a clear Rs 100 welcome bonus before paying COD",
-    "Anyone building a first cart of drinkware, kitchen tools, appliances or beauty essentials",
-  ]);
-  pushP(
-    `If the code does not apply, the checkout screen will show a clear message (for example if the voucher was already used, needs sign-in, or the cart does not meet the voucher rules). Sign in when prompted — vouchers often require an account so the welcome bonus stays fair for real new customers.`,
-  );
-
-  pushImg(img(2));
-
-  pushH("How to apply WELCOME10 for Rs 100 off");
-  pushL([
-    "Browse collections or search for products you need — add items to your cart.",
-    "Go to checkout and enter your delivery details for Pakistan.",
-    "In the voucher / discount field, type WELCOME10 exactly (all caps, no spaces).",
-    "Tap Apply — you should see Rs 100 deducted when the code is accepted.",
-    "Place the order. Pay with cash on delivery where COD is shown at checkout.",
-  ]);
-  sections.push({
-    type: "cta",
-    text: "Ready to claim your Rs 100 welcome bonus? Start shopping and apply WELCOME10 at checkout.",
-    href: "/collections",
-    label: "Shop collections",
-  });
-
-  pushImg(img(3));
-
-  pushH("Tips so WELCOME10 works first time");
-  pushL([
-    "Type the code carefully: WELCOME10 — avoid extra spaces or lowercase mistakes.",
-    "Sign in if checkout asks you to — new-user vouchers are usually tied to your account.",
-    "Confirm the discount line shows Rs 100 before you place the order.",
-    "Keep browsing if you want to add another item; re-check the voucher total before paying.",
-  ]);
-
-  pushH("Why a welcome voucher helps Pakistani shoppers");
-  pushP(
-    `Online shopping in Pakistan works best when pricing is transparent in PKR and COD is available. A Rs 100 welcome bonus lowers the barrier on a first order so you can try ${storeName} with less hesitation — then reorder favourites once you know the quality and delivery experience.`,
-  );
-  pushP(
-    `Pair WELCOME10 with products you already planned to buy. The photos in this article are real items from our live catalogue so you can jump from this guide straight into shopping.`,
-  );
-
-  pushImg(img(4));
-
-  pushH("Frequently asked questions");
-  pushP(
-    `How much discount is WELCOME10? It gives a Rs 100 welcome bonus / discount when successfully applied at checkout for eligible new users.`,
-  );
-  pushP(
-    `Do I need an account? Often yes — sign in when checkout asks, so the voucher can verify new-user eligibility.`,
-  );
-  pushP(
-    `Can I use WELCOME10 with COD? Yes. Apply the voucher before placing the order; COD is available across Pakistan where shown at checkout.`,
-  );
-  pushP(
-    `What if the code fails? Read the on-screen message, confirm spelling (WELCOME10), sign in, and ensure your cart meets any minimum rules. Contact support if it still fails.`,
-  );
-
-  pushH("Final takeaway");
-  pushP(
-    `For new customers, WELCOME10 is the fastest way to unlock a Rs 100 welcome discount at ${storeName}. Add products to cart, apply the code at checkout, confirm the saving, then complete your COD order with confidence.`,
-  );
-  sections.push({
-    type: "cta",
-    text: "Explore bestsellers and apply WELCOME10 before you pay.",
-    href: "/",
-    label: "Go to homepage",
-  });
-
-  const articleBodyText = sections
-    .map((s) => {
-      if (s.type === "paragraph" || s.type === "heading") return s.text;
-      if (s.type === "list") return s.items.join(" ");
-      if (s.type === "cta") return `${s.text} ${s.label}`;
-      return "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
-
-  return {
-    slug: meta.slug,
-    productSlug: "",
-    title: meta.title,
-    metaTitle: meta.metaTitle,
-    metaDescription: meta.metaDescription,
-    publishedAt: meta.publishedAt,
-    keywords: meta.keywords,
-    hero,
-    sections,
-    articleBodyText,
-  };
-}
-
-const STORE_STORY_SLUG = "inside-simplecart-store-real-stock-cod-pakistan";
-
-const STORE_STORY_IMAGES = {
-  kettleQc: {
-    src: "/story/simplecart-store-01.jpg",
-    alt: "Stainless steel electric kettle prepared for packing at SimpleCart Store",
-  },
-  heaterDrinkware: {
-    src: "/story/simplecart-store-02.jpg",
-    alt: "Carbon heater and drinkware from SimpleCart Store home essentials range",
-  },
-  lifestyleJar: {
-    src: "/story/simplecart-store-03.jpg",
-    alt: "Glass storage jar and lifestyle accessories available at SimpleCart Store",
-  },
-  tumblerPack: {
-    src: "/story/simplecart-store-04.jpg",
-    alt: "Glass tumbler with bamboo lid packed with protective wrap for shipping",
-  },
-  fanHeater: {
-    src: "/story/simplecart-store-05.jpg",
-    alt: "Portable fan heater from SimpleCart Store appliance collection",
-  },
-  warehouseBusy: {
-    src: "/story/simplecart-store-06.jpg",
-    alt: "SimpleCart Store warehouse inventory of household goods for nationwide delivery",
-  },
-  cartonStacks: {
-    src: "/story/simplecart-store-07.jpg",
-    alt: "Cartons of ready-to-dispatch inventory at SimpleCart Store Pakistan",
-  },
-  inventoryAisle: {
-    src: "/story/simplecart-store-08.jpg",
-    alt: "Warehouse aisle with organised product cartons at SimpleCart Store",
-  },
-  kettleWholesale: {
-    src: "/story/simplecart-store-09.jpg",
-    alt: "Electric kettle stock beside wholesale cartons at SimpleCart Store",
-  },
-} as const satisfies Record<string, BlogImage>;
-
-/** Editorial guide: operations, inventory & COD — professional SEO copy. */
-export function buildStoreStoryGuideArticle(storeName: string): BlogArticle {
-  const meta =
-    STATIC_BLOG_GUIDES.find((g) => g.slug === STORE_STORY_SLUG) ?? STATIC_BLOG_GUIDES[1]!;
-  const hero = STORE_STORY_IMAGES.warehouseBusy;
-
-  const sections: BlogSection[] = [];
-  const pushP = (text: string) => sections.push({ type: "paragraph", text });
-  const pushH = (text: string) => sections.push({ type: "heading", text });
-  const pushL = (items: string[]) => sections.push({ type: "list", items });
-  const pushImg = (image: BlogImage) => sections.push({ type: "image", image });
-
-  pushP(
-    `Buying home essentials online should feel clear from the first click to delivery. This guide explains how ${storeName} operates — from warehouse inventory and product checks to careful packing and cash-on-delivery shipping across Pakistan.`,
-  );
-  pushP(
-    `The photographs below were taken in our own stocking and dispatch area. They show the kettles, heaters, drinkware and cartons we manage so listed items can move from shelf to courier without unnecessary delay.`,
-  );
-
-  pushH("Our purpose and mission");
-  pushP(
-    `${storeName} is built for practical everyday shopping. We focus on home, kitchen, drinkware, beauty and small-appliance essentials at transparent PKR prices, with product pages that are easy to compare and checkout that supports cash on delivery nationwide.`,
-  );
-  pushP(
-    `Our mission is selective curation: useful products people actually need, quality review before dispatch, secure packing, and honest communication on shipping timelines — whether you are ordering a kettle for the kitchen or a heater for cooler months.`,
-  );
-
-  pushImg(STORE_STORY_IMAGES.heaterDrinkware);
-
-  pushH("Warehouse inventory behind the catalogue");
-  pushP(
-    `Behind the website is an active inventory space. Shipments arrive in bulk, items are opened and reviewed, and retail-ready units sit with packing materials until an order is confirmed. An “in stock” status is tied to what we hold and can prepare for dispatch.`,
-  );
-  pushP(
-    `That operational model supports clearer delivery windows, free-shipping thresholds where applicable, and reliable COD fulfilment — because we ship from managed inventory, not from unverified promises.`,
-  );
-
-  pushImg(STORE_STORY_IMAGES.cartonStacks);
-  pushImg(STORE_STORY_IMAGES.inventoryAisle);
-
-  pushH("How orders move from shelf to doorstep");
-  pushL([
-    "Source and receive home essentials into our warehouse inventory.",
-    "Inspect products such as kettles, heaters and tumblers before they are offered online.",
-    "Publish clear photos, PKR pricing and availability on SimpleCart Store.",
-    "When you order, pick the item, pack with protection (bubble wrap or carton as needed), and hand over to courier.",
-    "Offer cash on delivery at checkout across Pakistan — pay when the parcel arrives where COD is available.",
-  ]);
-
-  pushImg(STORE_STORY_IMAGES.kettleQc);
-  pushImg(STORE_STORY_IMAGES.tumblerPack);
-
-  pushH("What you will find in our range");
-  pushP(
-    `Our catalogue mirrors what you see in stock: drinkware and tumblers, kitchen tools, small appliances such as electric kettles and heaters, beauty gadgets, lighting and everyday wellness. Breadth matters less than usefulness for Pakistani homes.`,
-  );
-  pushP(
-    `From a glass tumbler prepared for shipping to a portable fan heater still in protective wrap, each category is chosen for daily use — then packed for safe transit.`,
-  );
-
-  pushImg(STORE_STORY_IMAGES.fanHeater);
-  pushImg(STORE_STORY_IMAGES.kettleWholesale);
-  pushImg(STORE_STORY_IMAGES.lifestyleJar);
-
-  pushH("Why process transparency matters for COD shoppers");
-  pushP(
-    `Cash on delivery works when buyers understand how a store fulfils orders. Showing warehouse aisles, product checks and packing steps helps you judge service quality before you place an order.`,
-  );
-  pushP(
-    `For shoppers searching for home essentials online in Pakistan, ${storeName} aims to answer with clear operations: managed inventory, careful packing, and nationwide COD where shown at checkout.`,
-  );
-
-  pushH("Next steps");
-  pushP(
-    `For a shorter overview of who we are, visit About Us. To start shopping, browse collections — new customers can also apply WELCOME10 at checkout when eligible.`,
-  );
-  sections.push({
-    type: "cta",
-    text: "Read our company overview and contact options.",
-    href: "/about",
-    label: "About SimpleCart Store",
-  });
-  sections.push({
-    type: "cta",
-    text: "Explore drinkware, kitchen tools and home appliances ready to order.",
-    href: "/collections",
-    label: "Shop collections",
-  });
-
-  const articleBodyText = sections
-    .map((s) => {
-      if (s.type === "paragraph" || s.type === "heading") return s.text;
-      if (s.type === "list") return s.items.join(" ");
-      if (s.type === "cta") return `${s.text} ${s.label}`;
-      return "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
-
-  return {
-    slug: meta.slug,
-    productSlug: "",
-    title: meta.title,
-    metaTitle: meta.metaTitle,
-    metaDescription: meta.metaDescription,
-    publishedAt: meta.publishedAt,
-    keywords: meta.keywords,
-    hero,
-    sections,
-    articleBodyText,
-  };
-}
-
 export function staticGuideListingCard(
   meta: StaticGuideMeta,
   storeName: string,
-  heroImage?: string | null,
+  heroImageOverride?: string | null,
 ) {
+  const heroSrc =
+    heroImageOverride ||
+    STATIC_GUIDE_LISTING_HERO[meta.slug] ||
+    "/story/simplecart-store-01.jpg";
   return {
     slug: meta.slug,
     title: meta.title,
-    description: meta.metaDescription,
+    excerpt: meta.metaDescription,
+    publishedAt: meta.publishedAt,
+    readTimeMinutes: meta.readTimeMinutes,
+    categoryLabel: meta.categoryLabel,
     image: {
-      src: heroImage?.trim() || "/brand/logo.svg",
-      alt: `${meta.title} — ${storeName}`,
+      src: heroSrc,
+      alt: `${meta.title} — ${storeName} guide`,
     },
     href: `/blogs/${meta.slug}`,
-    productHref: "/collections" as string | null,
     isGuide: true as const,
   };
 }

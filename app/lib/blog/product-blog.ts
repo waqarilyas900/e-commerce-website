@@ -8,7 +8,11 @@ export type BlogImage = {
 export type BlogSection =
   | { type: "paragraph"; text: string }
   | { type: "heading"; text: string }
+  | { type: "subheading"; text: string }
   | { type: "list"; items: string[] }
+  | { type: "numbered-list"; items: string[] }
+  | { type: "callout"; title: string; text: string; tone?: "info" | "tip" | "warning" }
+  | { type: "table"; headers: string[]; rows: string[][] }
   | { type: "image"; image: BlogImage }
   | { type: "cta"; text: string; href: string; label: string };
 
@@ -19,6 +23,8 @@ export type BlogArticle = {
   metaTitle: string;
   metaDescription: string;
   publishedAt: string;
+  readTimeMinutes?: number;
+  categoryLabel?: string;
   keywords: string[];
   hero: BlogImage;
   sections: BlogSection[];

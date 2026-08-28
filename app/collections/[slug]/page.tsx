@@ -28,14 +28,15 @@ import {
   JsonLd,
   applyJsonLdOverrides,
   breadcrumbJsonLd,
+  collectionFaqItems,
   collectionJsonLd,
   faqPageJsonLd,
-  storeFaqItems,
 } from "@/lib/seo/jsonld";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import { RelatedCollections } from "@/components/seo/related-collections";
+import { CollectionSeoContent } from "@/components/collections/collection-seo-content";
 import {
   collectionDisplayName,
   normalizeCollectionSlug,
@@ -210,7 +211,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
     { name: displayName, url: canonical },
   ]);
   (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
-  const faqItems = storeFaqItems();
+  const faqItems = collectionFaqItems(displayName);
   const faqLd = faqPageJsonLd({ url: canonical, items: faqItems });
 
   return (
@@ -248,6 +249,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
             />
           </Suspense>
         </section>
+        <CollectionSeoContent slug={slug} />
         <RelatedCollections items={relatedCollections} />
         <StoreFaqSection items={faqItems} />
       </main>

@@ -7,7 +7,7 @@ import {
   dbListCollections,
 } from "@/app/lib/db/catalog";
 import { dbListPolicySummaries } from "@/app/lib/policy-pages-db";
-import { STATIC_BLOG_GUIDES } from "@/app/lib/blog/guides";
+import { STATIC_BLOG_GUIDES, STATIC_GUIDE_LISTING_HERO } from "@/app/lib/blog/guides";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -180,8 +180,9 @@ export async function GET(): Promise<NextResponse> {
     ...STATIC_BLOG_GUIDES.map((g) => ({
       url: `${base}/blogs/${encodeURIComponent(g.slug)}`,
       lastModified: safeDate(g.publishedAt, lastModified),
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+      imageLoc: safeImageUrl(STATIC_GUIDE_LISTING_HERO[g.slug], base) ?? undefined,
     })),
     {
       url: `${base}/purchase-protection`,
@@ -271,15 +272,6 @@ export async function GET(): Promise<NextResponse> {
       lastModified: lastMod,
       changeFrequency: "weekly",
       priority: 0.85,
-      imageLoc: safeImage ?? undefined,
-    });
-
-    // One SEO blog guide per active product (same images + deep link to PDP).
-    byUrl.set(`${base}/blogs/${encodeURIComponent(slug)}`, {
-      url: `${base}/blogs/${encodeURIComponent(slug)}`,
-      lastModified: lastMod,
-      changeFrequency: "weekly",
-      priority: 0.65,
       imageLoc: safeImage ?? undefined,
     });
   }

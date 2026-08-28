@@ -1,23 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { BlogArticleView } from "@/components/blog/blog-article-view";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { getCachedProductsBySlugs } from "@/lib/cache/catalog-data";
 import {
-  getCachedAllActiveProductsForCards,
-  getCachedProductDetailBySlug,
-  getCachedProductsBySlugs,
-} from "@/lib/cache/catalog-data";
-import {
-  buildProductBlogArticle,
-  type BlogArticle,
-  type BlogProductInput,
-} from "@/app/lib/blog/product-blog";
-import {
-  buildStoreStoryGuideArticle,
-  buildWelcome10GuideArticle,
   getStaticGuideMeta,
+  STATIC_BLOG_GUIDES,
 } from "@/app/lib/blog/guides";
 import {
   buildSeoGuideArticle,
@@ -36,129 +26,108 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-async function loadBlogProduct(slug: string): Promise<BlogProductInput | null> {
-  if (!hasCatalogDb()) return null;
-  const [cards, detail] = await Promise.all([
-    getCachedProductsBySlugs([slug]),
-    getCachedProductDetailBySlug(slug),
-  ]);
-  const card = cards[0];
-  if (!card || !detail || detail.product.status !== "active") return null;
-  return {
-    ...card,
-    imagesRaw: detail.product.images,
-  };
-}
-
 async function loadGuideImageProducts(slugs: string[]): Promise<Product[]> {
-  if (!hasCatalogDb()) return [];
+  if (!hasCatalogDb() || !slugs.length) return [];
   const fromSlugs = await getCachedProductsBySlugs(slugs);
-  const bySlug = new Map(fromSlugs.map((p) => [p.slug, p]));
-  const ordered = slugs.map((s) => bySlug.get(s)).filter(Boolean) as Product[];
-  if (ordered.length >= 3) return ordered.filter((p) => p.image);
-  const fill = (await getCachedAllActiveProductsForCards())
-    .filter((p) => p.image && !ordered.some((o) => o.slug === p.slug))
-    .slice(0, 5 - ordered.length);
-  return [...ordered, ...fill].filter((p) => p.image);
+  return fromSlugs.filter((p) => p.image);
 }
 
-async function resolveArticle(
-  slug: string,
-  storeName: string,
-): Promise<{ article: BlogArticle; crumbLabel: string; productLink: { href: string; label: string } | null } | null> {
-  const guide = getStaticGuideMeta(slug);
-  if (guide) {
-    const imageProducts = await loadGuideImageProducts(guide.imageProductSlugs);
-    let article: BlogArticle | null = null;
-    let crumbLabel = guide.title;
-    if (slug === "welcome10-voucher-code-rs-100-discount") {
-      article = buildWelcome10GuideArticle(storeName, imageProducts);
-      crumbLabel = "WELCOME10 voucher";
-    } else if (slug === "inside-simplecart-store-real-stock-cod-pakistan") {
-      article = buildStoreStoryGuideArticle(storeName);
-      crumbLabel = "Inside our store";
-    } else {
-      article = buildSeoGuideArticle(slug, storeName, imageProducts);
-      if (article) crumbLabel = seoGuideCrumbLabel(slug);
-    }
-    if (!article) return null;
-    return {
-      article,
-      crumbLabel,
-      productLink: { href: "/collections", label: "Browse collections & shop" },
-    };
-  }
-
-  const product = await loadBlogProduct(slug);
-  if (!product) return null;
-  return {
-    article: buildProductBlogArticle(product, storeName),
-    crumbLabel: product.name,
-    productLink: {
-      href: `/products/${product.slug}`,
-      label: `View ${product.name} product page`,
-    },
-  };
+export async function generateStaticParams() {
+  return STATIC_BLOG_GUIDES.map((g) => ({
+    slug: g.slug,
+  }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const identity = await loadSiteIdentity();
   const storeName = identity.storeName || identity.siteTitle || "SimpleCart Store";
-  const resolved = await resolveArticle(slug, storeName);
-  if (!resolved) {
+  const guide = getStaticGuideMeta(slug);
+
+  if (!guide) {
     return buildPageMetadata({
       pathname: `/blogs/${slug}`,
       identity,
       override: null,
       defaults: {
-        title: "Blog guide",
-        description: `Buying guide from ${storeName}.`,
+        title: "Buying Guide",
+        description: `Buying and lifestyle guides from ${storeName}.`,
         forceNoindex: true,
       },
     });
   }
-  const { article } = resolved;
+
   return buildPageMetadata({
-    pathname: `/blogs/${slug}`,
+    pathname: `/blogs/${guide.slug}`,
     identity,
     override: null,
     defaults: {
-      title: article.metaTitle,
-      description: article.metaDescription,
+      title: guide.metaTitle,
+      description: guide.metaDescription,
+      keywords: guide.keywords,
       ogType: "article",
-      publishedISO: article.publishedAt,
-      lastModifiedISO: article.publishedAt,
-      articleTags: article.keywords.slice(0, 8),
-      authors: [storeName],
-      section: "SimpleCart Blogs",
-      images: article.hero.src
-        ? [{ url: article.hero.src, alt: article.hero.alt }]
-        : undefined,
-      keywords: article.keywords,
     },
   });
 }
 
-export default async function BlogPostPage({ params }: Props) {
+export default async function BlogArticlePage({ params }: Props) {
   const { slug } = await params;
-  if (!hasCatalogDb()) notFound();
-
   const identity = await loadSiteIdentity();
   const storeName = identity.storeName || identity.siteTitle || "SimpleCart Store";
-  const resolved = await resolveArticle(slug, storeName);
-  if (!resolved) notFound();
+  const guide = getStaticGuideMeta(slug);
 
-  const { article, crumbLabel, productLink } = resolved;
-  const isGuide = Boolean(getStaticGuideMeta(slug));
-  const canonical = resolveSeoCanonicalOverride(null, canonicalUrlFor(`/blogs/${slug}`));
+  // If this is a product slug rather than an editorial guide, 301 redirect to the product page
+  if (!guide) {
+    permanentRedirect(`/products/${slug}`);
+  }
+
+  const imageProducts = await loadGuideImageProducts(guide.imageProductSlugs);
+  const article = buildSeoGuideArticle(guide.slug, storeName, imageProducts);
+
+  if (!article) {
+    notFound();
+  }
+
+  const canonical = resolveSeoCanonicalOverride(
+    null,
+    canonicalUrlFor(`/blogs/${guide.slug}`),
+  );
   const breadcrumbId = `${canonical}#breadcrumb`;
+  const crumbLabel = seoGuideCrumbLabel(guide.slug);
+
   const crumbs = breadcrumbJsonLd([
     { name: "Home", url: "/" },
-    { name: "SimpleCart Blogs", url: canonicalUrlFor("/blogs") },
-    { name: article.title, url: canonical },
+    { name: "Blogs & Guides", url: "/blogs" },
+    { name: crumbLabel, url: canonical },
   ]);
   (crumbs as { "@id"?: string })["@id"] = breadcrumbId;
+
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": `${canonical}#article`,
+    headline: article.title,
+    description: article.metaDescription,
+    datePublished: article.publishedAt,
+    dateModified: article.publishedAt,
+    mainEntityOfPage: canonical,
+    author: {
+      "@type": "Organization",
+      name: storeName,
+      url: canonicalUrlFor("/"),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: storeName,
+      logo: {
+        "@type": "ImageObject",
+        url: canonicalUrlFor("/brand/logo.svg"),
+      },
+    },
+    image: article.hero.src.startsWith("http")
+      ? article.hero.src
+      : canonicalUrlFor(article.hero.src),
+  };
 
   const pageLd = webPageJsonLd({
     url: canonical,
@@ -166,94 +135,77 @@ export default async function BlogPostPage({ params }: Props) {
     description: article.metaDescription,
     identity,
     breadcrumbId,
-    asArticle: true,
-    articleBodyText: article.articleBodyText,
-    authors: [storeName],
-    datePublishedISO: article.publishedAt,
-    dateModifiedISO: article.publishedAt,
-    primaryImageUrl: article.hero.src,
   });
-
-  const related = isGuide
-    ? (await getCachedAllActiveProductsForCards())
-        .filter((p) => p.image)
-        .slice(0, 4)
-    : (await getCachedAllActiveProductsForCards())
-        .filter((p) => {
-          // productSlug on product blogs matches the URL slug
-          return p.slug !== slug && p.image;
-        })
-        .slice(0, 4);
 
   return (
     <>
-      <JsonLd id="ld-blog-post" data={pageLd} />
-      <JsonLd id="ld-blog-post-breadcrumb" data={crumbs} />
+      <JsonLd id="ld-blog-page" data={pageLd} />
+      <JsonLd id="ld-blog-breadcrumb" data={crumbs} />
+      <JsonLd id="ld-blog-article" data={articleLd} />
       <main
         id="MainContent"
-        className="main-content bg-linear-to-b from-neutral-50 to-white pb-12 pt-4 sm:pb-16 sm:pt-6 md:pb-20 md:pt-8"
+        className="main-content bg-white pb-16 pt-4 sm:pb-24 sm:pt-6 md:pt-8"
       >
-        <div className="mx-auto max-w-3xl shell-x">
+        <div className="mx-auto max-w-4xl shell-x">
           <nav
-            className="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-neutral-500"
+            className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-neutral-500"
             aria-label="Breadcrumb"
           >
             <Link href="/" className="transition hover:text-neutral-900">
               Home
             </Link>
-            <span className="px-0.5 text-neutral-300" aria-hidden>
+            <span className="text-neutral-300" aria-hidden>
               /
             </span>
             <Link href="/blogs" className="transition hover:text-neutral-900">
-              SimpleCart Blogs
+              Blogs & Guides
             </Link>
-            <span className="px-0.5 text-neutral-300" aria-hidden>
+            <span className="text-neutral-300" aria-hidden>
               /
             </span>
-            <span className="line-clamp-1 font-medium text-neutral-900">{crumbLabel}</span>
+            <span className="truncate font-medium text-neutral-900">{crumbLabel}</span>
           </nav>
 
-          <header className="mt-8 border-b border-neutral-200/90 pb-8">
-            <p className="text-sm font-medium text-neutral-500">SimpleCart Blogs</p>
-            <h1 className="mt-2 text-[1.50rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-4xl sm:leading-tight">
+          <header className="mt-8 border-b border-neutral-100 pb-6">
+            <time
+              dateTime={article.publishedAt}
+              className="text-xs font-bold uppercase tracking-wider text-amber-600 sm:text-sm"
+            >
+              {new Date(article.publishedAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </time>
+            <h1 className="mt-3 text-2xl font-black leading-tight tracking-tight text-neutral-900 sm:text-4xl md:text-5xl">
               {article.title}
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-neutral-600 sm:text-[1.05rem]">
+            <p className="mt-4 text-base leading-relaxed text-neutral-600 sm:text-lg">
               {article.metaDescription}
             </p>
-            {productLink ? (
-              <p className="mt-3 text-sm text-neutral-500">
-                <Link
-                  href={productLink.href}
-                  className="font-semibold text-neutral-900 underline underline-offset-2"
-                >
-                  {productLink.label}
-                </Link>
-              </p>
-            ) : null}
           </header>
 
           <BlogArticleView article={article} />
 
-          {related.length > 0 ? (
-            <section className="border-t border-neutral-200/90 pt-10">
-              <h2 className="text-xl font-semibold text-neutral-900">
-                {isGuide ? "Shop these products" : "Related guides"}
-              </h2>
-              <ul className="mt-4 list-none space-y-2 pl-0">
-                {related.map((p) => (
-                  <li key={p.slug}>
-                    <Link
-                      href={isGuide ? `/products/${p.slug}` : `/blogs/${p.slug}`}
-                      className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
-                    >
-                      {isGuide ? p.name : `${p.name} buying guide`}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          {/* Footer Backlink / CTA */}
+          <div className="mt-12 rounded-2xl border border-neutral-200/90 bg-neutral-50 p-6 sm:p-8">
+            <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+              <div>
+                <h3 className="text-lg font-bold text-neutral-900 sm:text-xl">
+                  Looking for quality products with COD across Pakistan?
+                </h3>
+                <p className="mt-1 text-sm text-neutral-600">
+                  Explore our complete verified catalog with fast courier dispatch to your doorstep.
+                </p>
+              </div>
+              <Link
+                href="/collections"
+                className="shrink-0 rounded-xl bg-neutral-900 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
+              >
+                Browse Collections
+              </Link>
+            </div>
+          </div>
         </div>
       </main>
     </>

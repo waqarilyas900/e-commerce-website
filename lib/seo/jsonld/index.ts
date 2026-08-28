@@ -9,6 +9,7 @@ export { webPageJsonLd, type WebPageJsonLdInput } from "./webpage";
 export {
   faqPageJsonLd,
   storeFaqItems,
+  collectionFaqItems,
   type FaqItem,
   type StoreFaqExtras,
 } from "./faq";

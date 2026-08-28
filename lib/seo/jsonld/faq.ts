@@ -36,6 +36,28 @@ export type StoreFaqExtras = {
   material?: string | null;
 };
 
+export function collectionFaqItems(collectionName: string): FaqItem[] {
+  const name = collectionName.trim();
+  return [
+    {
+      question: `Can I order items from ${name} with Cash on Delivery (COD)?`,
+      answer: `Yes, Cash on Delivery (COD) is available nationwide across Pakistan for all products in our ${name} collection. You pay in cash when the courier hands over the parcel.`,
+    },
+    {
+      question: `How long does delivery take for ${name} orders in Pakistan?`,
+      answer: `Orders are packed and dispatched within 24–48 business hours. Delivery typically takes 2–4 business days in major cities (Karachi, Lahore, Islamabad, Rawalpindi) and 4–7 business days in other cities and towns.`,
+    },
+    {
+      question: `Are all products in ${name} brand new with warranty/return protection?`,
+      answer: `Yes, all items are genuine, verified, and quality-checked before packing. If you receive a damaged or incorrect item, you can request a return or replacement within 7 days under our Purchase Protection Policy.`,
+    },
+    {
+      question: `How do I track my order after purchasing from ${name}?`,
+      answer: `Once your parcel is dispatched, a real-time tracking number is sent to your SMS and WhatsApp so you can monitor your courier status from our warehouse to your doorstep.`,
+    },
+  ];
+}
+
 /** Shared storefront FAQs (COD / delivery / returns) — product extras optional. */
 export function storeFaqItems(
   productNameOrExtras?: string | StoreFaqExtras,

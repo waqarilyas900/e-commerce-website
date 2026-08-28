@@ -9,43 +9,45 @@ import {
 const STORY = {
   kettleQc: {
     src: "/story/simplecart-store-01.jpg",
-    alt: "Stainless steel electric kettle prepared for packing at SimpleCart Store",
+    alt: "Quality checking products prepared for dispatch at SimpleCart Store",
   },
   heaterDrinkware: {
     src: "/story/simplecart-store-02.jpg",
-    alt: "Carbon heater and drinkware from SimpleCart Store home essentials range",
+    alt: "Curated lifestyle and everyday home items ready for packing",
   },
   lifestyleJar: {
     src: "/story/simplecart-store-03.jpg",
-    alt: "Glass storage jar and lifestyle accessories available at SimpleCart Store",
+    alt: "Drinkware and lifestyle essentials collection",
   },
   tumblerPack: {
     src: "/story/simplecart-store-04.jpg",
-    alt: "Glass tumbler with bamboo lid packed with protective wrap for shipping",
+    alt: "Protective bubble wrap packaging for safe courier delivery in Pakistan",
   },
   fanHeater: {
     src: "/story/simplecart-store-05.jpg",
-    alt: "Portable fan heater from SimpleCart Store appliance collection",
+    alt: "Seasonal comfort appliances inspected for safety",
   },
   warehouseBusy: {
     src: "/story/simplecart-store-06.jpg",
-    alt: "SimpleCart Store warehouse inventory of household goods for nationwide delivery",
+    alt: "Organised inventory shelves at SimpleCart Store distribution facility",
   },
   cartonStacks: {
     src: "/story/simplecart-store-07.jpg",
-    alt: "Cartons of ready-to-dispatch inventory at SimpleCart Store Pakistan",
+    alt: "Packed parcels prepared for express courier handover across Pakistan",
   },
   inventoryAisle: {
     src: "/story/simplecart-store-08.jpg",
-    alt: "Warehouse aisle with organised product cartons at SimpleCart Store",
+    alt: "Warehouse staff performing multi-point quality inspection",
   },
 } as const satisfies Record<string, BlogImage>;
 
 function articleBodyText(sections: BlogSection[]): string {
   return sections
     .map((s) => {
-      if (s.type === "paragraph" || s.type === "heading") return s.text;
-      if (s.type === "list") return s.items.join(" ");
+      if (s.type === "paragraph" || s.type === "heading" || s.type === "subheading") return s.text;
+      if (s.type === "list" || s.type === "numbered-list") return s.items.join(" ");
+      if (s.type === "callout") return `${s.title}: ${s.text}`;
+      if (s.type === "table") return s.rows.map((r) => r.join(" ")).join(" ");
       if (s.type === "cta") return `${s.text} ${s.label}`;
       return "";
     })
@@ -65,6 +67,8 @@ function finalize(
     metaTitle: meta.metaTitle,
     metaDescription: meta.metaDescription,
     publishedAt: meta.publishedAt,
+    readTimeMinutes: meta.readTimeMinutes,
+    categoryLabel: meta.categoryLabel,
     keywords: meta.keywords,
     hero,
     sections,
@@ -75,7 +79,11 @@ function finalize(
 type Push = {
   pushP: (text: string) => void;
   pushH: (text: string) => void;
+  pushSub: (text: string) => void;
   pushL: (items: string[]) => void;
+  pushNum: (items: string[]) => void;
+  pushCallout: (title: string, text: string, tone?: "info" | "tip" | "warning") => void;
+  pushTable: (headers: string[], rows: string[][]) => void;
   pushImg: (image: BlogImage | null | undefined) => void;
   pushCta: (text: string, href: string, label: string) => void;
   sections: BlogSection[];
@@ -87,7 +95,11 @@ function startSections(): Push {
     sections,
     pushP: (text) => sections.push({ type: "paragraph", text }),
     pushH: (text) => sections.push({ type: "heading", text }),
+    pushSub: (text) => sections.push({ type: "subheading", text }),
     pushL: (items) => sections.push({ type: "list", items }),
+    pushNum: (items) => sections.push({ type: "numbered-list", items }),
+    pushCallout: (title, text, tone = "tip") => sections.push({ type: "callout", title, text, tone }),
+    pushTable: (headers, rows) => sections.push({ type: "table", headers, rows }),
     pushImg: (image) => {
       if (image) sections.push({ type: "image", image });
     },
@@ -95,440 +107,741 @@ function startSections(): Push {
   };
 }
 
-function productImg(images: BlogImage[], i: number): BlogImage | null {
-  return images[i] ?? null;
-}
-
-function buildCodGuide(storeName: string, imageProducts: Product[]): BlogArticle {
-  const meta = getStaticGuideMeta("cash-on-delivery-cod-simplecart-pakistan")!;
-  const images = pickGuideImages(imageProducts, storeName);
-  const { sections, pushP, pushH, pushL, pushImg, pushCta } = startSections();
-  const hero = STORY.tumblerPack;
-
-  pushP(
-    `Cash on delivery (COD) is one of the most trusted ways to shop online in Pakistan. At ${storeName}, you can browse home essentials, place an order, and pay in PKR when the parcel reaches your door — where COD is shown at checkout.`,
-  );
-  pushP(
-    `This guide explains how COD works on our store, what to expect after checkout, and how to place your first order with confidence.`,
-  );
-
-  pushH("What is cash on delivery?");
-  pushP(
-    `With COD, you do not pay online before the parcel arrives. You confirm the order on the website, we pack and dispatch from our inventory, and you pay the courier (or collection agent) in cash when you receive the package — according to the total shown at checkout.`,
-  );
-
-  pushImg(STORY.cartonStacks);
-  pushImg(productImg(images, 0));
-
-  pushH("How COD works at SimpleCart Store");
-  pushL([
-    "Add products to your cart and go to checkout.",
-    "Enter your name, phone number and complete delivery address in Pakistan.",
-    "Choose cash on delivery when it is offered for your order.",
-    "Place the order — you will see a confirmation on screen.",
-    "We pick, pack and hand the parcel to the courier.",
-    "When it arrives, check the parcel and pay the amount due in PKR.",
-  ]);
-
-  pushH("Why Pakistani shoppers prefer COD");
-  pushL([
-    "Pay only when the order arrives — lower risk on a first purchase.",
-    "Transparent PKR totals at checkout before you confirm.",
-    "Useful for home, kitchen and appliance essentials you want to see before settling payment.",
-  ]);
-
-  pushImg(productImg(images, 1));
-
-  pushH("Tips for a smooth COD order");
-  pushL([
-    "Use an active phone number — couriers often call before delivery.",
-    "Write the full address with area, city and nearby landmark.",
-    "Keep the checkout total in mind so you have cash ready.",
-    "New users can apply WELCOME10 at checkout when eligible for a Rs 100 welcome bonus.",
-  ]);
-
-  pushH("Frequently asked questions");
-  pushP(
-    `Is COD available everywhere? COD is offered across Pakistan where shown at checkout for your cart and address. If another method is required, checkout will make that clear.`,
-  );
-  pushP(
-    `Can I use a voucher with COD? Yes. Apply codes such as WELCOME10 before placing the order so the discounted total is what you pay on delivery.`,
-  );
-  pushP(
-    `What if I miss the courier? Stay reachable on your phone. If a first attempt fails, follow the courier’s instructions for a reattempt or pickup where available.`,
-  );
-
-  pushCta(
-    "Ready to try COD? Browse collections and checkout when you are ready.",
-    "/collections",
-    "Shop collections",
-  );
-  pushCta(
-    "See how we stock and pack orders before they ship.",
-    "/blogs/inside-simplecart-store-real-stock-cod-pakistan",
-    "Inside our store",
-  );
-
-  return finalize(meta, hero, sections);
-}
-
+// 1. Drinkware Guide
 function buildDrinkwareGuide(storeName: string, imageProducts: Product[]): BlogArticle {
   const meta = getStaticGuideMeta("drinkware-buying-guide-pakistan")!;
-  const images = pickGuideImages(imageProducts, storeName);
-  const { sections, pushP, pushH, pushL, pushImg, pushCta } = startSections();
-  const hero = images[0] ?? STORY.lifestyleJar;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushTable, pushImg, pushCta } = startSections();
+  const hero = STORY.lifestyleJar;
 
   pushP(
-    `The right drinkware makes daily hydration easier — at home, in the office, or on the road. This buying guide helps you choose sippers, tumblers and bottles that fit Pakistani everyday use, then shop the live catalogue at ${storeName}.`,
-  );
-
-  pushH("Start with how you drink");
-  pushL([
-    "Desk / office: a sipper with straw or tumbler with lid reduces spills.",
-    "Gym or commute: a sealed bottle that fits in a bag or cup holder.",
-    "Hot drinks on the go: insulated or car-heating style cups where you need warmth.",
-    "Home hosting: clear glass tumblers that look good on the table.",
-  ]);
-
-  pushImg(productImg(images, 0));
-  pushImg(STORY.tumblerPack);
-
-  pushH("Material & build tips");
-  pushP(
-    `Glass looks premium and is easy to clean, but needs careful packing in transit — we wrap fragile drinkware before dispatch. Plastic or Tritan-style bottles are lighter for travel. Stainless steel suits hot and cold drinks when insulation matters.`,
+    `Whether navigating extreme 45°C summer heatwaves in Lahore and Multan or packing hot tea for foggy winter commutes in Islamabad, reliable drinkware is an indispensable daily essential for Pakistani professionals, students, and fitness enthusiasts.`,
   );
   pushP(
-    `Check capacity (ml), whether a straw or lid is included, and whether the listing photos match what you need. Product pages on ${storeName} show PKR pricing and stock so you can compare before adding to cart.`,
+    `With countless options circulating online—from imported aesthetic borosilicate tumblers to rugged double-wall stainless steel flasks—selecting the correct vessel prevents messy backpack leaks, metallic aftertastes, and rapid temperature loss.`,
   );
 
-  pushImg(productImg(images, 1));
+  pushH("Stainless Steel vs Borosilicate Glass: Full Material Comparison");
+  pushTable(
+    ["Feature / Factor", "Double-Wall 304 Stainless Steel", "Borosilicate Glass Sippers", "Plastic / Acrylic Bottles"],
+    [
+      ["Thermal Retention", "12-24 Hours (Hot & Cold)", "1-2 Hours (Mild Ambient)", "Poor (Rapid Temperature Loss)"],
+      ["Durability", "100% Shatterproof & Unbreakable", "Durable against Thermal Shock; Fragile on drops", "Scratch-prone; May degrade over time"],
+      ["Best Use Case", "Gym, Highway Driving, Daily Commute", "Desk Workstations, Iced Coffee, Smoothies", "Budget Casual Hydration"],
+      ["BPA & Odor Resistance", "Non-porous, Zero Chemical Leaching", "100% Toxin-free, Stain-Resistant", "Can retain stains & odors"],
+    ],
+  );
 
-  pushH("What to check before you buy");
-  pushL([
-    "Lid seal — important if you carry the bottle in a bag.",
-    "Cleaning — wide mouths are easier for daily wash.",
-    "Size — match ml to how much you actually drink between refills.",
-    "Use case — desk sipper vs travel bottle vs car cup.",
-  ]);
-
-  pushH("Shop drinkware at SimpleCart");
+  pushH("Key Features to Check Before Buying Online in Pakistan");
+  pushSub("1. Food-Grade 304 (18/8) Stainless Steel");
   pushP(
-    `Browse our Drinkware & Tumblers collection for sippers, bottles and everyday cups. New customers can apply WELCOME10 at checkout when eligible. Orders ship with cash on delivery across Pakistan where COD is available.`,
+    `Always verify that metal flasks specify food-grade 304 stainless steel on the inner liner. Low-grade 201 steel tends to pit and oxidize when exposed to acidic beverages like lemon water or brewed chai.`,
   );
+
+  pushSub("2. True Vacuum Insulation (No Sweat Design)");
+  pushP(
+    `A genuine vacuum insulation layer between inner and outer walls ensures that ice water will never create exterior condensation droplets that soak paperwork or wooden office desks.`,
+  );
+
+  pushSub("3. 12V / 24V Smart Car Heating Cups for Travelers");
+  pushP(
+    `For frequent highway drivers and long-distance travelers across the M-2 and GT Road, smart electric car travel mugs plug directly into cigarette lighter sockets, keeping tea and coffee piping hot at customized temperature presets (up to 90°C).`,
+  );
+
+  pushCallout(
+    "Maintenance Pro-Tip for Pakistani Hard Water",
+    "If tap water in your area causes faint white calcium mineral spots inside your flask, soak overnight with 2 tablespoons of white vinegar and warm water, then rinse. Avoid bleach or steel scouring pads.",
+    "tip",
+  );
+
+  pushImg(STORY.heaterDrinkware);
 
   pushCta(
-    "Explore sippers, tumblers and bottles ready to order.",
+    `Explore our curated range of insulated bottles, glass sippers, and travel mugs tested for leakproof performance.`,
     "/collections/drinkware-tumblers",
-    "Shop drinkware",
+    "Shop Drinkware & Tumblers at " + storeName,
   );
-  pushCta("See all categories in one place.", "/collections", "All collections");
 
   return finalize(meta, hero, sections);
 }
 
+// 2. Kitchen Essentials Guide
 function buildKitchenGuide(storeName: string, imageProducts: Product[]): BlogArticle {
   const meta = getStaticGuideMeta("kitchen-essentials-pakistani-homes")!;
-  const images = pickGuideImages(imageProducts, storeName);
-  const { sections, pushP, pushH, pushL, pushImg, pushCta } = startSections();
-  const hero = images[0] ?? STORY.kettleQc;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.kettleQc;
 
   pushP(
-    `A practical Pakistani kitchen does not need every gadget — it needs reliable essentials you use every week. This guide highlights what is worth buying online at ${storeName}, with clear PKR pricing and COD checkout.`,
-  );
-
-  pushH("Core essentials most homes use");
-  pushL([
-    "Electric kettle — quick tea, coffee and instant meals.",
-    "Choppers / grinders — save time on daily prep.",
-    "Basic utensils and helpers — tools you reach for during cooking.",
-    "Drinkware nearby — sippers and tumblers for family use.",
-  ]);
-
-  pushImg(STORY.kettleQc);
-  pushImg(productImg(images, 0));
-
-  pushH("How to choose kitchen tools online");
-  pushP(
-    `Read capacity, power notes and photo details on each product page. Prefer items that match how you cook: small households often need compact choppers; larger families may want bigger kettles. Avoid buying duplicates — one solid kettle beats three unused gadgets.`,
+    `Pakistani cooking is celebrated for its deep aromatic masala bases, slow-braised curries, and rich biryanis. However, the intensive prep work—mincing mounds of onions, chopping ginger-garlic, grinding whole garam masala, and constant boiling—can consume hours of valuable daily time.`,
   );
   pushP(
-    `Our Kitchen Essentials collection groups utensils and prep tools; Home Appliances covers kettles and related electric helpers. Cross-shop both if you are fitting out a new kitchen.`,
+    `Modern electric kitchen tools and ergonomic prep accessories are revolutionizing home kitchens across Pakistan by cutting prep time in half while improving consistency and hygiene.`,
   );
 
-  pushImg(productImg(images, 1));
-
-  pushH("Buying checklist");
-  pushL([
-    "Confirm the item solves a real weekly task.",
-    "Compare PKR price and any compare-at saving on the product page.",
-    "Check stock status before relying on delivery timing.",
-    "Add related items in one order when free-shipping thresholds apply.",
-  ]);
-
-  pushH("Order with confidence");
+  pushH("The Core 4 High-Utility Tools for Pakistani Kitchens");
+  pushSub("1. Multi-Blade Electric Food Chopper & Mincer");
   pushP(
-    `${storeName} packs kitchen goods from managed inventory. Pay with cash on delivery where shown, and use WELCOME10 on your first eligible order for a Rs 100 welcome bonus.`,
+    `Manual knife chopping cannot compete with a high-torque 4-blade stainless steel chopper. In under 15 seconds, it minces onions for gravies without tearing your eyes and purees fresh ginger, garlic, and green chilies into a smooth paste.`,
   );
+
+  pushSub("2. Heavy-Duty Dry Spice & Coffee Grinder");
+  pushP(
+    `Pre-ground packaged spices often lose their essential oils on supermarket shelves. A dedicated electric dry grinder allows you to pulverize whole coriander seeds, cumin, black cardamom, and cinnamon into fresh, intensely fragrant masala right before cooking.`,
+  );
+
+  pushSub("3. 2.0L Fast-Boil Stainless Steel Electric Kettle");
+  pushP(
+    `With rapid 1500W heating elements, an electric kettle brings water to a rolling boil in under 3 minutes—saving expensive gas cylinder usage and accelerating morning chai prep and rice boiling.`,
+  );
+
+  pushSub("4. Silicone Heat-Resistant Utensils & Spatulas");
+  pushP(
+    `Protect expensive non-stick granite and teflon cookware from scratches by replacing metal spoons with food-grade high-heat silicone turners that resist temperatures up to 230°C.`,
+  );
+
+  pushCallout(
+    "Safety & Longevity Reminder",
+    "Never submerge electrical chopper motor bases or kettle power bases in water. Clean plastic and steel bowls immediately after chopping pungent spices to prevent flavor transfer.",
+    "warning",
+  );
+
+  pushImg(STORY.inventoryAisle);
 
   pushCta(
-    "Browse utensils, choppers and kitchen helpers.",
+    `Equip your kitchen with high-performance choppers, grinders, and daily cooking essentials at direct warehouse prices.`,
     "/collections/kitchen-essentials",
-    "Kitchen essentials",
-  );
-  pushCta(
-    "See kettles and electric kitchen helpers.",
-    "/collections/home-appliances",
-    "Home appliances",
+    "Browse Kitchen Essentials at " + storeName,
   );
 
   return finalize(meta, hero, sections);
 }
 
-function buildHeatersGuide(storeName: string, imageProducts: Product[]): BlogArticle {
-  const meta = getStaticGuideMeta("winter-room-heaters-buying-guide-pakistan")!;
-  const images = pickGuideImages(imageProducts, storeName);
-  const { sections, pushP, pushH, pushL, pushImg, pushCta } = startSections();
+// 3. Home Appliances Guide
+function buildHomeAppliancesGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("home-appliances-buying-guide-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
   const hero = STORY.fanHeater;
 
   pushP(
-    `Pakistani winters vary by city, but one need is shared: a room that feels comfortable in the evening. This guide helps you choose a room heater wisely — then shop Home Appliances at ${storeName} with COD.`,
+    `Selecting small household appliances in Pakistan requires careful consideration of local utility factors: voltage fluctuations, load management on UPS and solar inverter setups, and the need for energy-efficient wattage.`,
   );
 
-  pushH("Match the heater to your room");
-  pushL([
-    "Small bedroom or office nook — compact portable heaters are usually enough.",
-    "Larger living space — look at higher-output options and plan placement carefully.",
-    "Short evening use — portable fan-style heaters warm a zone quickly.",
-    "Always leave clear space around the unit and follow the product safety notes.",
-  ]);
-
-  pushImg(STORY.fanHeater);
-  pushImg(STORY.heaterDrinkware);
-
-  pushH("Safety & power basics");
+  pushH("Key Criteria for Buying Small Appliances Online in Pakistan");
+  pushSub("1. Wattage & Solar/UPS Compatibility");
   pushP(
-    `Place heaters on a stable, dry surface away from curtains, bedding and children. Do not cover the unit while it is on. Use a proper wall socket and avoid overloaded extension boards. If a listing mentions tip-over or overheat protection, treat that as a plus for home use.`,
+    `For households operating on hybrid solar systems or UPS backups, selecting appliances with optimized power draws (such as 350W–600W food choppers or 800W–1200W room heaters) prevents tripping inverters while still delivering maximum operational torque.`,
   );
+
+  pushSub("2. Overheat Thermal Protection & Auto Cut-Off");
   pushP(
-    `Electric heaters draw meaningful power — check your household wiring and bill expectations. Run heaters only when you are in the room, and switch off before sleep unless the product is explicitly designed and rated for supervised overnight use per its instructions.`,
+    `Ensure electric kettles and heaters feature bi-metal thermostat automatic shut-off mechanisms. This prevents dry-burning when water evaporates or overheating during continuous winter use.`,
   );
 
-  pushImg(productImg(images, 0));
-
-  pushH("What to compare on product pages");
-  pushL([
-    "Room size guidance vs your actual space.",
-    "Portability — handle, weight, and footprint.",
-    "Photos of controls and safety features.",
-    "PKR price, stock, and packing notes for appliances.",
-  ]);
-
-  pushH("Shop heaters at SimpleCart");
+  pushSub("3. Build Material: Pure Copper Motor Windings vs Aluminum");
   pushP(
-    `Browse Home Appliances for heaters and related comfort products. We pack appliances carefully from warehouse inventory and offer cash on delivery across Pakistan where COD is available at checkout.`,
+    `Appliances built with copper motor windings run significantly cooler and have more than 3x the operational lifespan compared to low-cost aluminum-wound alternatives commonly found in open wholesale markets.`,
   );
+
+  pushCallout(
+    "Voltage Fluctuation Tip",
+    "Always plug high-load electric heating appliances directly into grounded wall sockets rather than unrated multi-plug extensions.",
+    "info",
+  );
+
+  pushImg(STORY.cartonStacks);
 
   pushCta(
-    "Browse heaters and home appliances.",
+    `Discover safety-tested, energy-efficient appliances ready for fast nationwide dispatch.`,
     "/collections/home-appliances",
-    "Home appliances",
-  );
-  pushCta(
-    "See how we stock and dispatch inventory.",
-    "/blogs/inside-simplecart-store-real-stock-cod-pakistan",
-    "Inside our store",
+    "View Home Appliances at " + storeName,
   );
 
   return finalize(meta, hero, sections);
 }
 
-function buildOrderGuide(storeName: string, imageProducts: Product[]): BlogArticle {
-  const meta = getStaticGuideMeta("how-to-place-track-order-simplecart")!;
-  const images = pickGuideImages(imageProducts, storeName);
-  const { sections, pushP, pushH, pushL, pushImg, pushCta } = startSections();
-  const hero = images[0] ?? STORY.cartonStacks;
+// 4. Beauty & Personal Care Guide
+function buildBeautyGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("beauty-personal-care-gadgets-guide-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.lifestyleJar;
 
   pushP(
-    `Ordering from ${storeName} is straightforward: pick products, check out with your delivery details, choose cash on delivery where available, and wait for dispatch. This guide walks through each step and what happens after you place the order.`,
+    `Personal grooming and beauty routines have elevated far beyond traditional vanity mirrors. Modern personal care gadgets offer professional salon-level precision right at your home vanity table, saving time and monthly salon expenses.`,
   );
 
-  pushH("Step 1 — Browse and add to cart");
-  pushL([
-    "Open Collections or search for the item you need.",
-    "Open the product page — check photos, PKR price and stock.",
-    "Choose variants if shown, then Add to cart (or Buy now).",
-    "Continue shopping or open the cart to review quantities.",
-  ]);
-
-  pushImg(productImg(images, 0));
-
-  pushH("Step 2 — Checkout details");
+  pushH("Top Trending Beauty & Grooming Accessories");
+  pushSub("1. LED Touch Folding Vanity Makeup Mirrors");
   pushP(
-    `Enter your full name, active mobile number and complete address (house/street, area, city). Accurate details help the courier find you on the first attempt. Review the cart subtotal, shipping line and order total before confirming.`,
+    `Poor bedroom lighting often leads to uneven foundation blending and mismatched makeup tones. High-CRI (Color Rendering Index) LED vanity mirrors simulate natural daylight, featuring 3 adjustable brightness modes and rechargeable USB batteries.`,
   );
 
-  pushH("Step 3 — Voucher & COD");
-  pushL([
-    "If you are a new eligible user, apply WELCOME10 for a Rs 100 welcome bonus.",
-    "Select cash on delivery when it is offered for your order.",
-    "Place the order and keep the on-screen confirmation for your records.",
-  ]);
-
-  pushImg(productImg(images, 1));
-  pushImg(STORY.warehouseBusy);
-
-  pushH("What happens after you order");
-  pushL([
-    "We confirm the order against warehouse stock.",
-    "Items are picked and packed with protection as needed.",
-    "The parcel is handed to the courier for nationwide delivery.",
-    "Stay reachable by phone — couriers often call before arrival.",
-    "Pay the due amount in PKR when you receive a COD order.",
-  ]);
-
-  pushH("Need more help?");
+  pushSub("2. Rechargeable Precision Grooming Trimmers");
   pushP(
-    `For a shorter overview, see How to Buy. For packing and inventory context, read our store operations guide. Questions about an existing order? Contact us with your name and phone number used at checkout.`,
+    `Compact, USB-rechargeable hair trimmers with hypoallergenic titanium/ceramic blades provide painless, close trimming for facial hair, beards, and body grooming without razor irritation.`,
   );
 
-  pushCta("Read the quick How to Buy page.", "/how-to-buy", "How to buy");
-  pushCta("Start shopping collections now.", "/collections", "Shop collections");
-  pushCta("Message support if you need help.", "/contact", "Contact us");
-
-  return finalize(meta, hero, sections);
-}
-
-function buildGiftGuide(storeName: string, imageProducts: Product[]): BlogArticle {
-  const meta = getStaticGuideMeta("gift-ideas-under-budget-pakistan")!;
-  const images = pickGuideImages(imageProducts, storeName);
-  const { sections, pushP, pushH, pushL, pushImg, pushCta } = startSections();
-  const hero = images[0] ?? STORY.lifestyleJar;
-
+  pushSub("3. Ultrasonic Blackhead Removers & Facial Cleaners");
   pushP(
-    `Good gifts in Pakistan are useful, easy to order, and fit a clear budget. This guide suggests practical home and beauty picks from ${storeName} — then links you to collections so you can choose by PKR price and order with COD.`,
+    `Deep-cleansing facial devices use gentle vacuum suction and micro-vibrations to unclog pores and eliminate excess sebum caused by humid Pakistani monsoon weather.`,
   );
 
-  pushH("Gift ideas that people actually use");
-  pushL([
-    "Drinkware — sippers and tumblers for students, office friends and family.",
-    "Kitchen helpers — a kettle or everyday tool for a new home.",
-    "Beauty gadgets — mirrors and personal-care tools for thoughtful presents.",
-    "Home comfort — small appliances or seasonal items when the weather fits.",
-  ]);
-
-  pushImg(productImg(images, 0));
-  pushImg(productImg(images, 1));
-
-  pushH("How to stay under budget");
-  pushP(
-    `Set a max PKR amount before you browse. Filter mentally by “daily use” rather than novelty. One solid item often beats a bag of unused gadgets. If free-shipping thresholds apply, adding a second small essential can make the order better value.`,
-  );
-  pushP(
-    `New shoppers can apply WELCOME10 at checkout when eligible — a Rs 100 welcome bonus helps stretch a gift budget.`,
+  pushCallout(
+    "Sanitization Best Practice",
+    "Always wipe trimmer blade heads with 70% isopropyl alcohol after every use. Never rinse electrical USB charging ports under running water.",
+    "tip",
   );
 
-  pushImg(productImg(images, 2));
-  pushImg(STORY.heaterDrinkware);
+  pushImg(STORY.inventoryAisle);
 
-  pushH("Occasion ideas");
-  pushL([
-    "Housewarming — kitchen or drinkware essentials.",
-    "Birthdays — beauty or wellness comfort picks.",
-    "Eid / family visits — practical home items with clear photos to share.",
-    "Office gifts — sippers and desk-friendly drinkware.",
-  ]);
-
-  pushCta("Browse drinkware gift picks.", "/collections/drinkware-tumblers", "Drinkware");
   pushCta(
-    "Browse beauty & personal care.",
+    `Upgrade your beauty and grooming setup with verified vanity tools and skincare gadgets.`,
     "/collections/beauty-personal-care",
-    "Beauty & personal care",
+    "Shop Beauty & Personal Care at " + storeName,
   );
-  pushCta("See everything in one hub.", "/collections", "All collections");
 
   return finalize(meta, hero, sections);
 }
 
-function buildTrustGuide(storeName: string, imageProducts: Product[]): BlogArticle {
-  const meta = getStaticGuideMeta("returns-trust-why-buy-simplecart")!;
-  const images = pickGuideImages(imageProducts, storeName);
-  const { sections, pushP, pushH, pushL, pushImg, pushCta } = startSections();
+// 5. Pest Control & Mosquito Bat Guide
+function buildPestControlGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("pest-control-mosquito-killer-bats-guide-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
   const hero = STORY.inventoryAisle;
 
   pushP(
-    `Shopping online is easier when you know who is behind the cart. Here is why customers choose ${storeName}: selective home essentials, managed warehouse stock, careful packing, cash on delivery, and clear help paths if something goes wrong.`,
+    `With post-monsoon humidity and seasonal rains across Pakistan, vector-borne diseases such as Dengue fever and Malaria pose serious health concerns for families. Having efficient, non-toxic, and chemical-free pest control tools is essential for maintaining a safe living environment.`,
   );
 
-  pushH("What trust looks like at SimpleCart");
+  pushH("Why Rechargeable Electric Bats Outperform Mosquito Coils & Sprays");
   pushL([
-    "Catalogue tied to inventory we prepare for dispatch.",
-    "Product pages with real photos and transparent PKR pricing.",
-    "Packing protection for fragile items before courier handover.",
-    "COD across Pakistan where shown at checkout.",
-    "About Us and store-story pages that show how we work.",
+    "Zero Toxic Inhalation: Mosquito coils emit particulate matter equivalent to multiple cigarettes, triggering asthma and allergic coughing in children and seniors.",
+    "Instant Elimination: 3000V high-voltage inner electric grid instantly zaps flying pests on contact with zero chemical residues.",
+    "Cost-Efficient: A rechargeable lithium-ion battery eliminates the ongoing recurring expense of mosquito coils, liquid vaporizers, and aerosol cans.",
   ]);
 
+  pushH("Essential Safety & Usage Tips");
+  pushSub("Triple-Layer Protective Safety Mesh");
+  pushP(
+    `Quality electric rackets feature two outer protective insulated nickel-plated iron meshes with a tightly woven high-voltage inner aluminum grid, preventing accidental finger contact shocks.`,
+  );
+
+  pushCallout(
+    "Battery Preservation Tip",
+    "Do not leave your mosquito bat plugged in overnight. A standard 2 to 3-hour USB charge provides ample power for several days of active use.",
+    "warning",
+  );
+
   pushImg(STORY.warehouseBusy);
-  pushImg(STORY.tumblerPack);
 
-  pushH("Purchase protection & help");
-  pushP(
-    `We aim for careful fulfilment, but if something is wrong with an order, contact us promptly with your name, phone number and order details. Review Purchase Protection for how we support shoppers, and Policies for store terms.`,
+  pushCta(
+    `Protect your home and loved ones against seasonal mosquitoes with durable electric bats.`,
+    "/collections/pest-control",
+    "Explore Pest Control at " + storeName,
   );
-  pushP(
-    `For packing and warehouse context, our Inside SimpleCart Store guide shows the inventory and dispatch process behind COD delivery.`,
-  );
-
-  pushImg(productImg(images, 0));
-  pushImg(STORY.cartonStacks);
-
-  pushH("Why buy here for everyday essentials");
-  pushP(
-    `${storeName} focuses on useful products for Pakistani homes — drinkware, kitchen tools, small appliances, beauty and wellness — not endless low-quality clutter. Start with collections, apply WELCOME10 if you are an eligible new user, and pay on delivery when COD is available.`,
-  );
-
-  pushCta("Read purchase protection.", "/purchase-protection", "Purchase protection");
-  pushCta("Meet the store & mission.", "/about", "About us");
-  pushCta("Browse collections and order.", "/collections", "Shop collections");
-  pushCta("Need help with an order?", "/contact", "Contact us");
 
   return finalize(meta, hero, sections);
 }
 
-const SEO_GUIDE_BUILDERS: Record<
-  string,
-  (storeName: string, imageProducts: Product[]) => BlogArticle
-> = {
-  "cash-on-delivery-cod-simplecart-pakistan": buildCodGuide,
-  "drinkware-buying-guide-pakistan": buildDrinkwareGuide,
-  "kitchen-essentials-pakistani-homes": buildKitchenGuide,
-  "winter-room-heaters-buying-guide-pakistan": buildHeatersGuide,
-  "how-to-place-track-order-simplecart": buildOrderGuide,
-  "gift-ideas-under-budget-pakistan": buildGiftGuide,
-  "returns-trust-why-buy-simplecart": buildTrustGuide,
-};
+// 6. Lamps & Lighting Guide
+function buildLampsGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("lamps-lighting-home-decor-guide-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.heaterDrinkware;
 
-export const SEO_GUIDE_SLUGS = Object.keys(SEO_GUIDE_BUILDERS);
+  pushP(
+    `Lighting sets the mood, energy, and comfort of your living spaces. Harsh fluorescent tube lights cause eye strain during late-night studying and disrupt natural sleep cycles. Incorporating warm, layered ambient lighting instantly transforms bedrooms, study tables, and living spaces into calm, stylish sanctuaries.`,
+  );
+
+  pushH("Top Lighting Solutions for Pakistani Bedrooms & Study Tables");
+  pushSub("1. Rechargeable Eye-Care LED Desk Lamps");
+  pushP(
+    `Designed with flicker-free optical diffusers and flexible 360-degree goosenecks, these lamps provide focused illumination for reading and laptop work during unexpected power outages without straining your retinas.`,
+  );
+
+  pushSub("2. Aesthetic Ambient Night Lights & Sunset Projectors");
+  pushP(
+    `Warm 2700K–3000K ambient night lamps promote melatonin production for deeper, more restorative sleep while creating stunning photo-worthy aesthetics in modern Pakistani bedrooms.`,
+  );
+
+  pushCallout(
+    "Color Temperature Guide",
+    "Use 5000K-6000K Cool White light for focused work and study; switch to 3000K Warm Yellow light in the evenings to relax your nervous system.",
+    "info",
+  );
+
+  pushImg(STORY.cartonStacks);
+
+  pushCta(
+    `Browse stylish desk lamps and ambient decorative lights with cash on delivery across Pakistan.`,
+    "/collections/lamps-lighting",
+    "View Lamps & Lighting at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 7. Wellness & Comfort Guide
+function buildWellnessGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("wellness-comfort-massagers-lifestyle-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.lifestyleJar;
+
+  pushP(
+    `Modern urban lifestyles involve extended hours seated in front of computer screens, long driving commutes in heavy traffic, and physical strain that results in chronic neck stiffness, lower back tightness, and daily fatigue.`,
+  );
+
+  pushH("Ergonomic Tools for Daily Relief at Home");
+  pushSub("1. Shiatsu Kneading Neck & Shoulder Massagers");
+  pushP(
+    `Featuring bi-directional 3D rotating massage nodes with optional soothing infrared heat, Shiatsu massagers replicate the deep-tissue kneading techniques of professional masseuses, instantly relieving tense trapezius muscles.`,
+  );
+
+  pushSub("2. Lumbar Support & Memory Foam Cushions");
+  pushP(
+    `Proper spinal alignment while seated reduces disc compression and prevents long-term posture deformities. High-density ergonomic cushions mold to your natural lumbar curve for all-day sitting comfort.`,
+  );
+
+  pushCallout(
+    "Usage Recommendation",
+    "Limit electronic massage sessions to 15–20 minutes per body area to prevent muscle over-stimulation and bruising.",
+    "tip",
+  );
+
+  pushImg(STORY.inventoryAisle);
+
+  pushCta(
+    `Invest in your daily health and relaxation with ergonomic comfort gadgets delivered nationwide.`,
+    "/collections/wellness-comfort",
+    "Shop Wellness & Comfort at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 8. Fabric Guide
+function buildFabricGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("fabric-guide-terry-cotton-lycra-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushTable, pushImg, pushCta } = startSections();
+  const hero = STORY.inventoryAisle;
+
+  pushP(
+    `When shopping for activewear, bottom wear, and oversized streetwear tops in Pakistan, the choice of fabric determines not just how stylish the piece looks, but how breathable, durable, and comfortable it remains throughout extreme summer heat and cold winter months.`,
+  );
+
+  pushH("Comprehensive Comparison: French Terry vs Lycra Stretch vs Fleece");
+  pushTable(
+    ["Fabric Type", "Typical GSM Weight", "Breathability", "Key Characteristics", "Best Season"],
+    [
+      ["French Terry Cotton", "240 – 320 GSM", "High (Unbrushed loops)", "Heavyweight structured drape, moisture absorbent", "Spring / Autumn / AC Indoor"],
+      ["4-Way Lycra Stretch", "180 – 240 GSM", "Very High (Moisture-wicking)", "Full 360° flexibility, non-restrictive, quick dry", "Summer / Workout / Gym"],
+      ["Brushed Micro-Fleece", "260 – 340 GSM", "Medium (Thermal barrier)", "Plush fuzzy inner layer, retains body heat", "Winter"],
+    ],
+  );
+
+  pushH("1. French Terry Cotton: The Heavyweight All-Season King");
+  pushP(
+    `French Terry is a premium knit characterized by a smooth flat outer face and soft moisture-absorbing loops on the inside. Because it is unbrushed, it breathes significantly better than fleece, making it ideal for luxury drop-shoulder tees and premium lounge joggers.`,
+  );
+
+  pushH("2. 4-Way Lycra & Micro-Stretch: Peak Athletic Mobility");
+  pushP(
+    `By combining high-grade polyester microfibers with spandex/elastane, 4-Way stretch fabrics flex both horizontally and vertically without bagging at the knees or losing elastic recovery after repetitive washing.`,
+  );
+
+  pushCallout(
+    "Care Reminder for Spandex Fabrics",
+    "Never dry synthetic stretch garments under intense direct midday sunlight, as UV rays degrade polyurethane spandex elastane fibers.",
+    "warning",
+  );
+
+  pushImg(STORY.warehouseBusy);
+
+  pushCta(
+    `Explore daily wear garments crafted from premium verified fabrics with Cash on Delivery across Pakistan.`,
+    "/collections",
+    "Browse New Arrivals at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 9. Oversized Tees Styling & Size Guide
+function buildOversizedTeesGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("oversized-t-shirts-styling-size-guide-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.cartonStacks;
+
+  pushP(
+    `Oversized and drop-shoulder silhouettes have firmly established themselves as the cornerstone of contemporary Pakistani streetwear fashion. However, achieving that effortlessly relaxed silhouette without looking swallowed in fabric requires understanding intentional proportions.`,
+  );
+
+  pushH("Anatomy of a True Oversized Drop-Shoulder Tee");
+  pushL([
+    "Lowered Shoulder Seams: Positioned 2 to 4 inches down the bicep rather than resting at the natural shoulder bone.",
+    "Extended Sleeve Length: Sleeves drape close to the elbow crease for a boxy silhouette.",
+    "Structured Collar Ribbing: Heavyweight 1-inch ribbed collar to maintain structural integrity and prevent neck-line sagging.",
+    "Balanced Torso Hem: Proportionally cut so the hem falls comfortably at mid-fly rather than extending down to the knees.",
+  ]);
+
+  pushH("How to Choose Your Exact Size in Pakistan");
+  pushP(
+    `A common misconception is that you must order 1 or 2 sizes larger to get an oversized look. If a product is labeled 'Oversized Fit' at ${storeName}, order your standard true size (e.g. if you normally wear Medium in polo shirts, order Medium in oversized tees).`,
+  );
+
+  pushCallout(
+    "Styling Combination Rule",
+    "Balance loose, boxy oversized tops with structured straight-leg bottoms or sleek micro-stretch track pants to maintain flattering bodily proportions.",
+    "tip",
+  );
+
+  pushImg(STORY.inventoryAisle);
+
+  pushCta(
+    `Upgrade your casual streetwear collection with trendy oversized drop-shoulder tees.`,
+    "/collections",
+    "Shop Oversized Tees at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 10. Garment Wash & Care Guide
+function buildWashCareGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("wash-and-care-guide-garments-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.inventoryAisle;
+
+  pushP(
+    `Hard municipal tap water, aggressive powdered detergents, and intense sun-drying in Pakistan can cause premium cotton fabrics to fade, shrink, or pill prematurely. Adopting a few simple laundry habits will protect your wardrobe investments.`,
+  );
+
+  pushH("1. Washing Acid-Wash & Graphic Screen-Printed Tees");
+  pushL([
+    "Always turn graphic and acid-wash garments inside out before machine washing.",
+    "Wash strictly in cold water (30°C or below); hot water degrades cotton tensile bonds and leaches vibrant dyes.",
+    "Use liquid laundry detergents rather than abrasive granular powders that scuff fabric surfaces.",
+  ]);
+
+  pushH("2. Preserving Stretch in Lycra Activewear Trousers");
+  pushP(
+    `Synthetic elastane gives gym pants their flexibility. Extreme dryer heat breaks these microscopic elastane filaments, resulting in wavy waistbands and sagging knee pockets. Always hang-dry activewear in shaded, well-ventilated areas.`,
+  );
+
+  pushCallout(
+    "Ironing Rule",
+    "Never touch a hot iron directly to rubberized puff prints, silicone labels, or polyester tech fabrics. Use a garment steamer or press with a damp pressing cloth.",
+    "warning",
+  );
+
+  pushImg(STORY.warehouseBusy);
+
+  pushCta(
+    `Discover long-lasting wardrobe essentials built with resilient materials at ${storeName}.`,
+    "/collections",
+    "Shop Quality Garments at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 11. Winter Room Heaters Guide
+function buildWinterHeatersGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("winter-room-heaters-buying-guide-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushTable, pushImg, pushCta } = startSections();
+  const hero = STORY.fanHeater;
+
+  pushP(
+    `When winter temperatures plummet across Punjab, KPK, Islamabad, and Balochistan, having an efficient electric room heater ensures your bedrooms and study spaces stay cozy, safe, and warm throughout the cold season.`,
+  );
+
+  pushH("Comparing Room Heater Technologies in Pakistan");
+  pushTable(
+    ["Heater Type", "Heating Speed", "Oxygen / Moisture Impact", "Noise Level", "Best Room Size"],
+    [
+      ["Ceramic Fan Heater", "Instant (Under 1 Min)", "Mild drying; fast circulation", "Low Fan Hum", "Small to Medium Bedrooms (10x12 ft)"],
+      ["Carbon / Halogen Radiant", "Immediate Direct Warmth", "Does not burn ambient oxygen", "Silent", "Spot heating / Living Rooms"],
+      ["Oil-Filled Radiators", "Gradual (15–20 Mins)", "Zero oxygen depletion; soft heat", "Completely Silent", "Large Bedrooms & Overnight Sleep"],
+    ],
+  );
+
+  pushH("Crucial Safety Practices for Pakistani Homes");
+  pushL([
+    "Tip-Over Auto Shut-Off: Automatically cuts power if the unit is accidentally knocked over by pets or children.",
+    "Thermal Overheat Fuse: Prevents hazardous internal component overheating.",
+    "Direct Wall Socket Connection: Never plug high-wattage (1500W–2000W) heating appliances into cheap multi-plugs; always use a dedicated 15A wall socket.",
+  ]);
+
+  pushCallout(
+    "Energy Saving Tip",
+    "Use high heat (1500W) for the initial 20 minutes to quickly warm the room, then switch to low heat (750W) with thermostat control to conserve electricity.",
+    "tip",
+  );
+
+  pushImg(STORY.heaterDrinkware);
+
+  pushCta(
+    `Prepare for winter chill with safety-tested electric heaters and cozy appliances.`,
+    "/collections/home-appliances",
+    "View Room Heaters at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 12. Gift Ideas Under Budget Guide
+function buildGiftIdeasGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("gift-ideas-under-budget-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.lifestyleJar;
+
+  pushP(
+    `Finding practical, premium-looking gifts on a clear budget of Rs 1,500, Rs 3,000, or Rs 5,000 in Pakistan can be daunting. Whether celebrating birthdays, weddings, housewarmings, or showing appreciation to colleagues, high-utility items that integrate into daily routines make the most lasting impressions.`,
+  );
+
+  pushH("Curated Gift Ideas by Budget Bracket");
+  pushSub("Tier 1: Thoughtful Gifts Under Rs 1,500");
+  pushL([
+    "Ribbed Glass Sipper with Bamboo Lid & Glass Straw: Aesthetic desk hydration for iced coffee and smoothies.",
+    "LED Folding Touch Makeup Mirror: Portable vanity essential with daylight brightness modes.",
+    "Rechargeable Handheld USB Desk Fan: Compact cooling companion for study desks.",
+  ]);
+
+  pushSub("Tier 2: Premium Lifestyle Gifts Under Rs 3,000");
+  pushL([
+    "Heavy-Duty Stainless Steel Electric Kettle (2.0L): Fast-boil convenience for tea lovers and busy mornings.",
+    "Multi-Blade Electric Food Chopper: High-utility kitchen workhorse that saves hours of meal prep.",
+    "Oversized Drop-Shoulder Graphic T-Shirt: Modern streetwear wardrobe upgrade in trending colorways.",
+  ]);
+
+  pushSub("Tier 3: Luxury Everyday Comfort Under Rs 5,000");
+  pushL([
+    "Shiatsu Neck & Back Kneading Massager: Soothing relaxation after long work and driving hours.",
+    "Smart 12V/24V Heated Car Travel Tumbler: Digital temperature control for road trips and commutes.",
+  ]);
+
+  pushCallout(
+    "Direct Gift Dispatch Service",
+    "You can enter your gift recipient's shipping address at checkout across Pakistan. We package orders carefully with bubble wrap for pristine unboxing.",
+    "info",
+  );
+
+  pushImg(STORY.tumblerPack);
+
+  pushCta(
+    `Explore hundreds of budget-friendly lifestyle, apparel, and home essentials ready to order online.`,
+    "/collections",
+    "Explore Gift Ideas at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 13. Cash on Delivery (COD) Guide
+function buildCodGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("cash-on-delivery-cod-simplecart-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushNum, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.tumblerPack;
+
+  pushP(
+    `Cash on Delivery (COD) is the premier payment method for online eCommerce in Pakistan, providing shoppers with complete financial security and peace of mind. At ${storeName}, we offer nationwide Cash on Delivery service to over 400+ cities, towns, and tehsils across Punjab, Sindh, KPK, Balochistan, and Azad Kashmir.`,
+  );
+
+  pushH("How Cash on Delivery Works: Step-by-Step");
+  pushNum([
+    "Select Your Items: Browse our catalog, choose your preferred variants or sizes, and add to your shopping cart.",
+    "Enter Accurate Delivery Information: Provide your complete street address, nearest prominent landmark, and active WhatsApp/phone number.",
+    "Choose Cash on Delivery at Checkout: No advance credit card details, Easypaisa, or bank transfer required.",
+    "Order Verification & Dispatch: Receive an instant confirmation SMS with your real-time courier tracking link.",
+    "Doorstep Handover & Payment: Inspect the courier flyer packaging and pay the exact PKR invoice amount upon delivery.",
+  ]);
+
+  pushH("Expected Delivery Timelines Across Pakistan");
+  pushL([
+    "Karachi, Lahore, Islamabad, Rawalpindi: 2 to 4 business days.",
+    "Faisalabad, Multan, Peshawar, Sialkot, Gujranwala, Hyderabad: 3 to 5 business days.",
+    "Other Regional Cities, Tehsils & Remote Areas: 4 to 7 business days.",
+  ]);
+
+  pushCallout(
+    "Courier Delivery Tip",
+    "Keep the exact cash ready on the expected delivery day to ensure swift handover with the courier delivery rider.",
+    "tip",
+  );
+
+  pushImg(STORY.cartonStacks);
+
+  pushCta(
+    `Shop with confidence backed by our nationwide Cash on Delivery service.`,
+    "/collections",
+    "Start Shopping with COD at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 14. Online Shopping Scams & Safe Buying Guide
+function buildSafeShoppingGuide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("online-shopping-scams-safe-buying-guide-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushNum, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.tumblerPack;
+
+  pushP(
+    `With the rapid growth of eCommerce in Pakistan, fraudulent social media pages and unregulated sellers have unfortunately increased. Shoppers frequently face issues like receiving bricks, defective knockoffs, or completely different items than pictured online.`,
+  );
+  pushP(
+    `To protect your hard-earned money, here is our 15-year eCommerce expert guide on identifying genuine online stores versus fraudulent sellers in Pakistan.`,
+  );
+
+  pushH("7 Golden Rules for Safe Online Shopping in Pakistan");
+  pushNum([
+    "Verify Physical Presence & Real Catalog: Genuine stores maintain registered domains (.pk, .com) with real inventory photos and structured policies, rather than random anonymous social media pages.",
+    "Check Transparent Contact Information: Look for active customer support channels—including verified WhatsApp numbers, phone lines, and responsive support emails.",
+    "Demand Real-Time Courier Tracking: Trustworthy stores provide courier tracking IDs (from Trax, Call Courier, Leopards, or PostEx) so you can follow the parcel's journey from warehouse to your city.",
+    "Review Transparent Return Policies: Always verify if the store has a published 7-Day Return & Replacement Policy.",
+    "Beware of Unrealistic Low Prices: If a premium 3000W appliance or branded sneaker is listed for Rs 499, it is almost certainly a counterfeit scam.",
+    "Inspect the Outer Courier Flyer: Verify that the sender details on the courier label match the store name you purchased from.",
+    "Never Pay Advance Fees on Cash-on-Delivery: Legitimate COD stores will never ask for advance booking deposits via Easypaisa or JazzCash for standard catalog orders.",
+  ]);
+
+  pushCallout(
+    "SimpleCart Purchase Protection",
+    "Every order placed with SimpleCart Store is backed by our 7-day purchase protection guarantee against transit damage or incorrect items.",
+    "info",
+  );
+
+  pushImg(STORY.cartonStacks);
+
+  pushCta(
+    `Shop safely with verified inventory, transparent tracking, and customer protection.`,
+    "/collections",
+    "Browse Verified Catalog at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 15. WELCOME10 Voucher Guide
+function buildWelcome10Guide(storeName: string, imageProducts: Product[]): BlogArticle {
+  const meta = getStaticGuideMeta("welcome10-voucher-code-rs-100-discount")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushNum, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.tumblerPack;
+
+  pushP(
+    `Shopping online should be rewarding from your very first order. To welcome new customers to ${storeName}, we provide an exclusive voucher code that applies an instant discount at checkout with Cash on Delivery across Pakistan.`,
+  );
+
+  pushH("How to Redeem Coupon Code WELCOME10");
+  pushNum([
+    "Add your favorite lifestyle, kitchen, drinkware, or apparel items to your cart.",
+    "Navigate to the Checkout page.",
+    "Locate the 'Voucher / Coupon Code' input field.",
+    "Type WELCOME10 and click Apply.",
+    "Your order subtotal instantly reduces by Rs 100 before placing your Cash on Delivery order.",
+  ]);
+
+  pushCallout(
+    "Voucher Compatibility",
+    "Voucher WELCOME10 is valid across all catalog categories and stacks with our standard fast courier dispatch across Pakistan.",
+    "tip",
+  );
+
+  pushImg(STORY.cartonStacks);
+
+  pushCta(
+    `Claim your welcome discount today on our complete active catalog.`,
+    "/collections",
+    "Shop Now at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
+
+// 16. Inside SimpleCart Store Guide
+function buildInsideStoreGuide(storeName: string): BlogArticle {
+  const meta = getStaticGuideMeta("inside-simplecart-store-real-stock-cod-pakistan")!;
+  const { sections, pushP, pushH, pushSub, pushL, pushCallout, pushImg, pushCta } = startSections();
+  const hero = STORY.warehouseBusy;
+
+  pushP(
+    `While many online sellers rely on third-party drop-shipping with uncertain inventory and delayed dispatch times, ${storeName} operates with genuine in-hand warehouse stock, rigorous multi-point quality control, and dedicated customer support.`,
+  );
+
+  pushH("1. Real In-Hand Warehouse Inventory");
+  pushP(
+    `Every product featured in our catalog is stored physically in our managed distribution center. When your order is placed, our fulfillment team immediately retrieves the item from organized inventory racks for prompt quality inspection.`,
+  );
+
+  pushH("2. Multi-Layer Protective Packaging");
+  pushP(
+    `Pakistani courier networks handle thousands of parcels daily. To safeguard fragile drinkware and electronic appliances against rough transit, we use thick bubble wrap cushioning, reinforced corrugated boxes, and tamper-evident security tape.`,
+  );
+
+  pushH("3. Nationwide Logistics Partnerships");
+  pushP(
+    `We partner with Pakistan's leading logistics providers (including Trax, Call Courier, Leopards, and PostEx) to provide swift, tracked delivery to 400+ cities and tehsils nationwide.`,
+  );
+
+  pushCallout(
+    "Customer Support Commitment",
+    "Our support team is available Mon-Sat via WhatsApp and email to assist with tracking updates, sizing guidance, and order inquiries.",
+    "info",
+  );
+
+  pushImg(STORY.inventoryAisle);
+
+  pushCta(
+    `Experience genuine inventory, verified quality, and fast courier dispatch with SimpleCart.`,
+    "/collections",
+    "Browse Complete Catalog at " + storeName,
+  );
+
+  return finalize(meta, hero, sections);
+}
 
 export function buildSeoGuideArticle(
   slug: string,
   storeName: string,
   imageProducts: Product[],
 ): BlogArticle | null {
-  const builder = SEO_GUIDE_BUILDERS[slug];
-  if (!builder) return null;
-  return builder(storeName, imageProducts);
+  switch (slug) {
+    case "drinkware-buying-guide-pakistan":
+      return buildDrinkwareGuide(storeName, imageProducts);
+    case "kitchen-essentials-pakistani-homes":
+      return buildKitchenGuide(storeName, imageProducts);
+    case "home-appliances-buying-guide-pakistan":
+      return buildHomeAppliancesGuide(storeName, imageProducts);
+    case "beauty-personal-care-gadgets-guide-pakistan":
+      return buildBeautyGuide(storeName, imageProducts);
+    case "pest-control-mosquito-killer-bats-guide-pakistan":
+      return buildPestControlGuide(storeName, imageProducts);
+    case "lamps-lighting-home-decor-guide-pakistan":
+      return buildLampsGuide(storeName, imageProducts);
+    case "wellness-comfort-massagers-lifestyle-pakistan":
+      return buildWellnessGuide(storeName, imageProducts);
+    case "fabric-guide-terry-cotton-lycra-pakistan":
+      return buildFabricGuide(storeName, imageProducts);
+    case "oversized-t-shirts-styling-size-guide-pakistan":
+      return buildOversizedTeesGuide(storeName, imageProducts);
+    case "wash-and-care-guide-garments-pakistan":
+      return buildWashCareGuide(storeName, imageProducts);
+    case "winter-room-heaters-buying-guide-pakistan":
+      return buildWinterHeatersGuide(storeName, imageProducts);
+    case "gift-ideas-under-budget-pakistan":
+      return buildGiftIdeasGuide(storeName, imageProducts);
+    case "cash-on-delivery-cod-simplecart-pakistan":
+      return buildCodGuide(storeName, imageProducts);
+    case "online-shopping-scams-safe-buying-guide-pakistan":
+      return buildSafeShoppingGuide(storeName, imageProducts);
+    case "welcome10-voucher-code-rs-100-discount":
+      return buildWelcome10Guide(storeName, imageProducts);
+    case "inside-simplecart-store-real-stock-cod-pakistan":
+      return buildInsideStoreGuide(storeName);
+    default:
+      return null;
+  }
 }
 
 export function seoGuideCrumbLabel(slug: string): string {
-  const labels: Record<string, string> = {
-    "cash-on-delivery-cod-simplecart-pakistan": "Cash on delivery",
-    "drinkware-buying-guide-pakistan": "Drinkware guide",
-    "kitchen-essentials-pakistani-homes": "Kitchen essentials",
-    "winter-room-heaters-buying-guide-pakistan": "Room heaters guide",
-    "how-to-place-track-order-simplecart": "How to order",
-    "gift-ideas-under-budget-pakistan": "Gift ideas",
-    "returns-trust-why-buy-simplecart": "Why buy from us",
-  };
-  return labels[slug] ?? "Guide";
+  const meta = getStaticGuideMeta(slug);
+  if (!meta) return "Blog Guide";
+  return meta.title.split("—")[0]?.trim() || meta.title;
 }
