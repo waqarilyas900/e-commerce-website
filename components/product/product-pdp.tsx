@@ -37,6 +37,7 @@ import Link from "next/link";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import type { FaqItem } from "@/lib/seo/jsonld/faq";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
+import { OpenParcelPDPBadge } from "@/components/trust/open-parcel-trust";
 import { parseProductVideoSource } from "@/lib/product-video/url";
 
 function sellableQty(v: DbProductVariantRow): number {
@@ -1060,6 +1061,8 @@ export function ProductPdp({
               This product has no purchasable variants.
             </p>
           )}
+
+          <OpenParcelPDPBadge />
 
           {safeDescriptionHtml || product.short_description?.trim() ? (
             <div className="space-y-3">

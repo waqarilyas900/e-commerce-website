@@ -17,6 +17,7 @@ import {
 import { computeDeliveryPkr } from "@/app/lib/delivery-pricing";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 import { CartFreeDeliveryProgress } from "@/components/cart/cart-free-delivery-progress";
+import { OpenParcelCartPill } from "@/components/trust/open-parcel-trust";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
@@ -558,7 +559,8 @@ export function CartDrawer() {
                     </span>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-neutral-500">
+                <OpenParcelCartPill />
+                <p className="mt-2 text-xs text-neutral-500">
                   Taxes and discount codes calculated at checkout.
                 </p>
                 {resolvedLines.length > 0 ? (

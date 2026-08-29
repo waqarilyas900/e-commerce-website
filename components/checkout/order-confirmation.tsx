@@ -250,9 +250,9 @@ export function OrderConfirmation({
                 3
               </span>
               <span>
-                <span className="font-semibold text-emerald-950">Pay on arrival</span>
+                <span className="font-semibold text-emerald-950">Open Parcel & Pay on arrival</span>
                 <span className="mt-0.5 block text-emerald-900/85">
-                  Have the exact amount ready for the courier. Your cart is already cleared.
+                  Open and check your parcel in front of the courier rider. Pay cash only once you are 100% satisfied.
                 </span>
               </span>
             </li>

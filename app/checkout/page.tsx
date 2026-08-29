@@ -29,6 +29,7 @@ import { useAuth } from "@/app/providers/auth-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { SiteLogoMark } from "@/components/site-logo";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
+import { OpenParcelCheckoutNotice } from "@/components/trust/open-parcel-trust";
 
 type SignInModalReason = "save-address" | "voucher" | "general";
 
@@ -1002,11 +1003,17 @@ export default function CheckoutPage() {
               <p className="mt-1 text-xs text-neutral-500">
                 All transactions are secure and encrypted.
               </p>
-              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3">
-                <p className="text-sm font-semibold text-neutral-900">Cash on Delivery (COD)</p>
+              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-neutral-900">Cash on Delivery (COD)</p>
+                  <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+                    Open Parcel Allowed
+                  </span>
+                </div>
                 <p className="mt-1 text-xs text-neutral-600">
-                  Pay when your order arrives at your delivery address.
+                  Pay with cash when your parcel arrives at your doorstep across Pakistan.
                 </p>
+                <OpenParcelCheckoutNotice />
               </div>
             </section>
 
