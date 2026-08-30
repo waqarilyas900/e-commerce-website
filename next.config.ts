@@ -96,6 +96,9 @@ const commonProductImageHosts: {
   // Shein CDN
   { protocol: "https", hostname: "img.ltwebstatic.com", pathname: "/**" },
   { protocol: "https", hostname: "*.ltwebstatic.com", pathname: "/**" },
+  // Shopify CDN
+  { protocol: "https", hostname: "cdn.shopify.com", pathname: "/**" },
+  { protocol: "https", hostname: "*.shopify.com", pathname: "/**" },
 ];
 
 // Note: the ProductCard on storefront grids falls back to plain `<img>` for
