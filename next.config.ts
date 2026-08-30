@@ -93,6 +93,9 @@ const commonProductImageHosts: {
   { protocol: "https", hostname: "*.daraz.pk", pathname: "/**" },
   { protocol: "https", hostname: "img.drz.lazcdn.com", pathname: "/**" },
   { protocol: "https", hostname: "*.lazcdn.com", pathname: "/**" },
+  // Shein CDN
+  { protocol: "https", hostname: "img.ltwebstatic.com", pathname: "/**" },
+  { protocol: "https", hostname: "*.ltwebstatic.com", pathname: "/**" },
 ];
 
 // Note: the ProductCard on storefront grids falls back to plain `<img>` for
