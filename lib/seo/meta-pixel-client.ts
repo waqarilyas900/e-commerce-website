@@ -350,11 +350,26 @@ export function metaContentsSingleItem(args: {
   return [line];
 }
 
+export function resolveVariantTrackingId(
+  variant?: { sku?: string | null; id?: string | null } | null,
+  fallbackId?: string,
+): string {
+  const sku = (variant?.sku || "").trim();
+  if (sku) return sku;
+  const id = (variant?.id || fallbackId || "").trim();
+  return id;
+}
+
 export function metaContentsFromCartLines(
-  lines: Array<{ line: { variantId: string; quantity: number }; unitPrice: number }>,
+  lines: Array<{
+    line: { variantId: string; quantity: number };
+    unitPrice: number;
+    sku?: string;
+    trackingId?: string;
+  }>,
 ): MetaContentLine[] {
-  return lines.map(({ line, unitPrice }) => ({
-    id: line.variantId.trim(),
+  return lines.map(({ line, unitPrice, sku, trackingId }) => ({
+    id: (trackingId || sku || line.variantId).trim(),
     quantity: Math.max(1, Math.floor(line.quantity)),
     item_price: toPkrValue(unitPrice),
   }));

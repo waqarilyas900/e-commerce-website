@@ -300,8 +300,11 @@ export default function CheckoutPage() {
     const dedupeKey = `${cartFingerprint}|${Math.round(grandTotal * 100)}`;
     if (sentInitiateCheckoutRef.current.has(dedupeKey)) return;
     sentInitiateCheckoutRef.current.add(dedupeKey);
+    const trackingIds = resolvedLines.map(
+      (l) => (l.trackingId || l.sku || l.line.variantId).trim(),
+    );
     trackMetaPixel("InitiateCheckout", {
-      content_ids: resolvedLines.map(({ line }) => line.variantId),
+      content_ids: trackingIds,
       contents: metaContentsFromCartLines(resolvedLines),
       content_type: "product",
       num_items: resolvedLines.reduce((sum, { line }) => sum + line.quantity, 0),
@@ -780,13 +783,16 @@ export default function CheckoutPage() {
         /* private mode / quota */
       }
       try {
+        const trackingIds = resolvedLines.map(
+          (l) => (l.trackingId || l.sku || l.line.variantId).trim(),
+        );
         sessionStorage.setItem(
           CHECKOUT_PENDING_PURCHASE_EVENT_KEY,
           JSON.stringify({
             orderNumber: data.order_number,
             totalCents: data.total_cents,
             currency: STORE_CURRENCY_CODE,
-            contentIds: resolvedLines.map(({ line }) => line.variantId),
+            contentIds: trackingIds,
             contents: metaContentsFromCartLines(resolvedLines),
             numItems: resolvedLines.reduce((sum, { line }) => sum + line.quantity, 0),
           }),

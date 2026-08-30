@@ -14,6 +14,7 @@ import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import {
   defaultMetaCurrency,
   metaContentsSingleItem,
+  resolveVariantTrackingId,
   toPkrValue,
   trackMetaPixel,
 } from "@/lib/seo/meta-pixel-client";
@@ -263,11 +264,14 @@ export function ProductPreviewSheet() {
                           try {
                             await delayMs(ADD_TO_CART_BUTTON_MS);
                             const variantId = product.defaultVariantId!;
+                            const trackingId =
+                              (product.defaultVariantSku || "").trim() ||
+                              resolveVariantTrackingId({ id: variantId }, variantId);
                             addVariant(variantId, product.id, qty);
                             trackMetaPixel("AddToCart", {
-                              content_ids: [variantId],
+                              content_ids: [trackingId],
                               contents: metaContentsSingleItem({
-                                id: variantId,
+                                id: trackingId,
                                 quantity: qty,
                                 item_price: product.price,
                               }),

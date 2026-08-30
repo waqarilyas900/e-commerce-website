@@ -36,6 +36,8 @@ export type ResolvedCartLine = {
     freeDelivery: boolean;
   };
   variantLabel: string;
+  sku?: string;
+  trackingId?: string;
 };
 
 type CartContextValue = {
@@ -189,7 +191,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         /** Two queries avoid nested `products()` embeds returning null under RLS / PostgREST. */
         const { data: variantRows, error: vErr } = await supabase
           .from("product_variants")
-          .select("id, price, option_values, product_id")
+          .select("id, price, option_values, product_id, sku")
           .in("id", ids);
 
         if (vErr || !variantRows?.length || cancelled) {
@@ -242,6 +244,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
               price: Number(row.price),
               option_values: (row.option_values ?? {}) as Record<string, string>,
               productId: row.product_id as string,
+              sku: String(row.sku ?? "").trim(),
             },
           ]),
         );
@@ -253,6 +256,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const pr =
             byProductId.get(vr.productId) ?? byProductId.get(line.productId);
           if (!pr) continue;
+          const sku = vr.sku || undefined;
+          const trackingId = (vr.sku || "").trim() || line.variantId;
           resolved.push({
             line,
             unitPrice: vr.price,
@@ -264,6 +269,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
               freeDelivery: Boolean(pr.free_delivery),
             },
             variantLabel: formatVariantLabel(vr.option_values),
+            sku,
+            trackingId,
           });
         }
 

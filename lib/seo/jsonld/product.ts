@@ -275,7 +275,7 @@ function buildAdditionalProperty(
 }
 
 export function productJsonLd(input: ProductJsonLdInput): Record<string, unknown> {
-  const { product, identity, url, brandName, gtin, mpn, reviewsAreSynthetic, seoOverride } = input;
+  const { product, identity, url, brandName, gtin, mpn, reviewsAreSynthetic, seoOverride, variants } = input;
   const ovTitle = seoOverride?.title?.trim();
   const ovDesc = seoOverride?.description?.trim();
   const baseDescription =
@@ -291,6 +291,9 @@ export function productJsonLd(input: ProductJsonLdInput): Record<string, unknown
     (Array.isArray(product.tags) ? product.tags.find((t) => t && t.trim()) : undefined) ||
     undefined;
 
+  const preferredSku =
+    variants.find((v) => (v.sku || "").trim())?.sku?.trim() || product.id;
+
   const node: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -299,7 +302,7 @@ export function productJsonLd(input: ProductJsonLdInput): Record<string, unknown
     name: product.name?.trim() || ovTitle || "Product",
     description: description || undefined,
     image: images.length ? images : undefined,
-    sku: product.id,
+    sku: preferredSku,
     url,
     inLanguage,
     category,

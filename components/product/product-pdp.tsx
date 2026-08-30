@@ -31,7 +31,7 @@ import type {
 } from "@/app/lib/db/types";
 import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { useCart } from "@/app/providers/cart-provider";
-import { metaContentsSingleItem, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
+import { metaContentsSingleItem, resolveVariantTrackingId, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import Link from "next/link";
 import { StoreFaqSection } from "@/components/seo/store-faq";
@@ -329,13 +329,14 @@ export function ProductPdp({
   useEffect(() => {
     const variantForTracking = matchedVariant ?? priceVariant;
     if (!variantForTracking) return;
-    const dedupeKey = `${product.id}:${variantForTracking.id}`;
+    const trackingId = resolveVariantTrackingId(variantForTracking, product.id);
+    const dedupeKey = `${product.id}:${trackingId}`;
     if (viewedVariantKeysRef.current.has(dedupeKey)) return;
     viewedVariantKeysRef.current.add(dedupeKey);
     trackMetaPixel("ViewContent", {
-      content_ids: [variantForTracking.id],
+      content_ids: [trackingId],
       contents: metaContentsSingleItem({
-        id: variantForTracking.id,
+        id: trackingId,
         quantity: 1,
         item_price: variantForTracking.price,
       }),
@@ -923,7 +924,8 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
-                        contentId={matchedVariant.id}
+                        contentId={resolveVariantTrackingId(matchedVariant, matchedVariant.id)}
+                        sku={matchedVariant.sku}
                         quantity={quantity}
                         unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
@@ -937,7 +939,8 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
-                        contentId={matchedVariant.id}
+                        contentId={resolveVariantTrackingId(matchedVariant, matchedVariant.id)}
+                        sku={matchedVariant.sku}
                         quantity={quantity}
                         unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
@@ -1244,7 +1247,8 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
-                        contentId={matchedVariant.id}
+                        contentId={resolveVariantTrackingId(matchedVariant, matchedVariant.id)}
+                        sku={matchedVariant.sku}
                         quantity={quantity}
                         unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}
@@ -1258,7 +1262,8 @@ export function ProductPdp({
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
                         productId={product.id}
-                        contentId={matchedVariant.id}
+                        contentId={resolveVariantTrackingId(matchedVariant, matchedVariant.id)}
+                        sku={matchedVariant.sku}
                         quantity={quantity}
                         unitPricePkr={Number(matchedVariant.price)}
                         maxQuantity={maxQty}

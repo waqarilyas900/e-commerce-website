@@ -20,6 +20,8 @@ export type Product = {
   tags: string[];
   /** Set when loaded from DB; cheapest variant for quick add on PLP. */
   defaultVariantId?: string;
+  /** Set when loaded from DB; cheapest variant SKU for aligned Meta/GA4 tracking. */
+  defaultVariantSku?: string;
   /** From DB variants + inventory; omitted in static catalog (treated as in stock). */
   inStock?: boolean;
   /** ISO timestamp from DB when available (for collection sorting). */

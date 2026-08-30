@@ -6,6 +6,7 @@ import { useCart } from "@/app/providers/cart-provider";
 import {
   defaultMetaCurrency,
   metaContentsSingleItem,
+  resolveVariantTrackingId,
   toPkrValue,
   trackMetaPixel,
 } from "@/lib/seo/meta-pixel-client";
@@ -31,7 +32,9 @@ type Props = {
   redirectHref?: string;
   /** Optional unit price for Meta AddToCart value. */
   unitPricePkr?: number;
-  /** Optional content identifier override (falls back to `variantId`). */
+  /** Optional SKU for matching catalog items. */
+  sku?: string;
+  /** Optional content identifier override (falls back to `sku` or `variantId`). */
   contentId?: string;
 };
 
@@ -48,6 +51,7 @@ export function AddToCartVariantButton({
   itemName,
   redirectHref,
   unitPricePkr,
+  sku,
   contentId,
 }: Props) {
   const router = useRouter();
@@ -69,7 +73,7 @@ export function AddToCartVariantButton({
         try {
           await delayMs(ADD_TO_CART_BUTTON_MS);
           addVariant(variantId, productId, q);
-          const cid = contentId || variantId;
+          const cid = contentId || resolveVariantTrackingId({ sku, id: variantId }, variantId);
           const trackedValue = toPkrValue((unitPricePkr ?? 0) * q);
           trackMetaPixel("AddToCart", {
             content_ids: [cid],

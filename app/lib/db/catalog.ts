@@ -112,6 +112,12 @@ function pickDefaultVariantId(variants: DbProductVariantRow[]): string | undefin
   return sorted[0].id;
 }
 
+function pickDefaultVariantSku(variants: DbProductVariantRow[]): string | undefined {
+  if (!variants.length) return undefined;
+  const sorted = [...variants].sort((a, b) => Number(a.price) - Number(b.price));
+  return (sorted[0].sku || "").trim() || sorted[0].id;
+}
+
 function productInStockFromVariants(variants: DbProductVariantRow[]): boolean {
   if (!variants.length) return false;
   return variants.some((v) => v.quantity_on_hand - v.quantity_reserved > 0);
@@ -168,6 +174,7 @@ export function mapProductCard(
     image: firstImage(p.images),
     tags: p.tags ?? [],
     defaultVariantId: pickDefaultVariantId(variants),
+    defaultVariantSku: pickDefaultVariantSku(variants),
     inStock: productInStockFromVariants(variants),
     createdAt: p.created_at ? String(p.created_at) : undefined,
   };

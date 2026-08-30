@@ -18,7 +18,7 @@ function searchContentIdsFromProducts(list: Product[]): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
   for (const p of list.slice(0, 10)) {
-    const id = p.defaultVariantId?.trim();
+    const id = (p.defaultVariantSku || "").trim() || p.defaultVariantId?.trim();
     if (!id || seen.has(id)) continue;
     seen.add(id);
     out.push(id);
