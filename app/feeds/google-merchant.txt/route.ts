@@ -13,6 +13,7 @@ export const revalidate = 3600;
 
 const COLUMNS = [
   "id",
+  "item_group_id",
   "title",
   "description",
   "link",
@@ -295,6 +296,7 @@ export async function GET() {
 
     const row: Record<(typeof COLUMNS)[number], string> = {
       id: sku,
+      item_group_id: p.id,
       title: title.slice(0, 150),
       description: description.slice(0, 5000),
       link,
