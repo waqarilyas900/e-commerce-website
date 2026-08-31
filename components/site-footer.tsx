@@ -9,7 +9,6 @@ import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
 import { SocialIconLinks } from "@/components/social-icon-links";
 import { SiteLogoFull } from "@/components/site-logo";
 import { FOOTER_COLLECTION_LINKS } from "@/lib/catalog/collection-nav";
-import { StorefrontTrustBar } from "@/components/trust/open-parcel-trust";
 
 const easeFooter: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -304,7 +303,6 @@ export function Footer() {
 
   return (
     <div id="shopify-section-footer" className="shopify-section shopify-section-footer">
-      <StorefrontTrustBar />
       <footer
         className="site-footer bg-black text-white"
         data-section-id="sections--footer"
