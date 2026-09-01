@@ -24,6 +24,21 @@ export type CartLine = {
   quantity: number;
 };
 
+/** Catalog snapshot from PDP/PLP — skips network resolve when adding to cart. */
+export type CartLineSeed = {
+  unitPrice: number;
+  product: {
+    id: string;
+    slug: string;
+    name: string;
+    image: string;
+    freeDelivery: boolean;
+  };
+  variantLabel: string;
+  sku?: string;
+  trackingId?: string;
+};
+
 export type ResolvedCartLine = {
   line: CartLine;
   unitPrice: number;
@@ -48,7 +63,12 @@ type CartContextValue = {
   itemCount: number;
   subtotal: number;
   resolvedLines: ResolvedCartLine[];
-  addVariant: (variantId: string, productId: string, quantity?: number) => void;
+  addVariant: (
+    variantId: string,
+    productId: string,
+    quantity?: number,
+    seed?: CartLineSeed,
+  ) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
   clearCart: () => void;
@@ -76,6 +96,41 @@ function formatVariantLabel(option_values: Record<string, string>): string {
 
 function isUuid(value: string): boolean {
   return UUID_RE.test(value);
+}
+
+function buildResolvedFromSeed(line: CartLine, seed: CartLineSeed): ResolvedCartLine {
+  const sku = seed.sku?.trim() || undefined;
+  return {
+    line,
+    unitPrice: seed.unitPrice,
+    product: seed.product,
+    variantLabel: seed.variantLabel,
+    sku,
+    trackingId: seed.trackingId?.trim() || sku || line.variantId,
+  };
+}
+
+function mergeResolvedFromCache(
+  lines: CartLine[],
+  cache: ResolvedCartLine[],
+): ResolvedCartLine[] {
+  const byVariant = new Map(cache.map((r) => [r.line.variantId, r]));
+  const merged: ResolvedCartLine[] = [];
+  for (const line of lines) {
+    const hit = byVariant.get(line.variantId);
+    if (!hit) continue;
+    merged.push({
+      ...hit,
+      line: { ...hit.line, quantity: line.quantity, productId: line.productId },
+    });
+  }
+  return merged;
+}
+
+function allLinesResolved(lines: CartLine[], resolved: ResolvedCartLine[]): boolean {
+  if (lines.length === 0) return true;
+  const byId = new Map(resolved.map((r) => [r.line.variantId, r]));
+  return lines.every((l) => byId.has(l.variantId));
 }
 
 function readStorage(): CartLine[] {
@@ -148,6 +203,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   linesRef.current = lines;
   resolvedRef.current = resolvedLines;
 
+  const applySeed = useCallback((line: CartLine, seed: CartLineSeed) => {
+    const resolved = buildResolvedFromSeed(line, seed);
+    setResolvedLines((prev) => {
+      const idx = prev.findIndex((r) => r.line.variantId === line.variantId);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = resolved;
+        return next;
+      }
+      return [...prev, resolved];
+    });
+    setIsResolvingCart(false);
+    flushCartResolutionWaiters(resolutionWaiters);
+  }, []);
+
   useEffect(() => {
     queueMicrotask(() => {
       try {
@@ -180,35 +250,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const cached = mergeResolvedFromCache(lines, resolvedRef.current);
+    const missingVariantIds = lines
+      .map((l) => l.variantId)
+      .filter((id) => !cached.some((r) => r.line.variantId === id));
+
+    if (missingVariantIds.length === 0 && cached.length === lines.length) {
+      setResolvedLines(cached);
+      setIsResolvingCart(false);
+      flushCartResolutionWaiters(resolutionWaiters);
+      return;
+    }
+
     let cancelled = false;
     setIsResolvingCart(true);
 
     void (async () => {
       try {
         const supabase = createClient();
-        const ids = [...new Set(lines.map((l) => l.variantId))];
+        const idsToFetch = [...new Set(missingVariantIds)];
 
-        /** Two queries avoid nested `products()` embeds returning null under RLS / PostgREST. */
         const { data: variantRows, error: vErr } = await supabase
           .from("product_variants")
           .select("id, price, option_values, product_id, sku")
-          .in("id", ids);
+          .in("id", idsToFetch);
 
-        if (vErr || !variantRows?.length || cancelled) {
+        if (vErr || cancelled) {
           if (vErr) console.error("[cart] resolve variants", vErr.message);
-          if (!cancelled) setResolvedLines([]);
+          if (!cancelled && cached.length > 0) {
+            setResolvedLines(cached);
+          } else if (!cancelled) {
+            setResolvedLines([]);
+          }
           return;
         }
 
         const pidSet = new Set<string>();
-        for (const row of variantRows) {
+        for (const row of variantRows ?? []) {
           const pid = row.product_id as string | null | undefined;
           if (pid) pidSet.add(pid);
         }
         for (const line of lines) {
           if (line.productId) pidSet.add(line.productId);
         }
-        const productIds = [...pidSet];
+        const cachedProductIds = new Set(cached.map((r) => r.product.id));
+        const productIds = [...pidSet].filter((id) => !cachedProductIds.has(id));
 
         const { data: productRows, error: pErr } =
           productIds.length > 0
@@ -220,41 +306,71 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         if (pErr || cancelled) {
           if (pErr) console.error("[cart] resolve products", pErr.message);
-          if (!cancelled) setResolvedLines([]);
+          if (!cancelled && cached.length > 0) {
+            setResolvedLines(cached);
+          } else if (!cancelled) {
+            setResolvedLines([]);
+          }
           return;
         }
 
-        const byProductId = new Map(
-          (productRows ?? []).map((p) => [
-            p.id as string,
-            p as {
-              id: string;
-              slug: string;
-              name: string;
-              images: unknown;
-              free_delivery?: boolean | null;
-            },
-          ]),
-        );
+        const productMap = new Map<
+          string,
+          { id: string; slug: string; name: string; images: unknown; free_delivery?: boolean | null }
+        >();
+        for (const r of cached) {
+          productMap.set(r.product.id, {
+            id: r.product.id,
+            slug: r.product.slug,
+            name: r.product.name,
+            images: r.product.image ? [r.product.image] : [],
+            free_delivery: r.product.freeDelivery,
+          });
+        }
+        for (const p of productRows ?? []) {
+          productMap.set(p.id as string, p as {
+            id: string;
+            slug: string;
+            name: string;
+            images: unknown;
+            free_delivery?: boolean | null;
+          });
+        }
 
-        const byVariantId = new Map(
-          variantRows.map((row) => [
-            row.id as string,
-            {
-              price: Number(row.price),
-              option_values: (row.option_values ?? {}) as Record<string, string>,
-              productId: row.product_id as string,
-              sku: String(row.sku ?? "").trim(),
-            },
-          ]),
-        );
+        const variantMeta = new Map<
+          string,
+          {
+            price: number;
+            option_values: Record<string, string>;
+            productId: string;
+            sku: string;
+          }
+        >();
+        for (const row of variantRows ?? []) {
+          variantMeta.set(row.id as string, {
+            price: Number(row.price),
+            option_values: (row.option_values ?? {}) as Record<string, string>,
+            productId: row.product_id as string,
+            sku: String(row.sku ?? "").trim(),
+          });
+        }
 
         const resolved: ResolvedCartLine[] = [];
         for (const line of lines) {
-          const vr = byVariantId.get(line.variantId);
+          if (!missingVariantIds.includes(line.variantId)) {
+            const hit = cached.find((r) => r.line.variantId === line.variantId);
+            if (hit) {
+              resolved.push({
+                ...hit,
+                line: { ...hit.line, quantity: line.quantity, productId: line.productId },
+              });
+            }
+            continue;
+          }
+
+          const vr = variantMeta.get(line.variantId);
           if (!vr) continue;
-          const pr =
-            byProductId.get(vr.productId) ?? byProductId.get(line.productId);
+          const pr = productMap.get(vr.productId) ?? productMap.get(line.productId);
           if (!pr) continue;
           const sku = vr.sku || undefined;
           const trackingId = (vr.sku || "").trim() || line.variantId;
@@ -277,7 +393,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setResolvedLines(resolved);
       } catch (e) {
         console.error("[cart] resolve", e);
-        if (!cancelled) setResolvedLines([]);
+        if (!cancelled) {
+          const fallback = mergeResolvedFromCache(lines, resolvedRef.current);
+          setResolvedLines(fallback);
+        }
       } finally {
         if (!cancelled) {
           setIsResolvingCart(false);
@@ -291,7 +410,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   }, [lines, ready]);
 
-  /** Covers fast resolve finishing before a `waitForCartResolution` waiter is queued. */
   useEffect(() => {
     if (resolvedLines.length > 0) {
       flushCartResolutionWaiters(resolutionWaiters);
@@ -299,16 +417,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [resolvedLines]);
 
   const waitForCartResolution = useCallback(async () => {
-    await new Promise<void>((r) => queueMicrotask(() => r()));
-    await new Promise<void>((r) => requestAnimationFrame(() => r()));
     if (!hasCatalogDb()) return;
     if (linesRef.current.length === 0) return;
-    if (resolvedRef.current.length > 0) return;
+    if (allLinesResolved(linesRef.current, resolvedRef.current)) return;
     await Promise.race([
       new Promise<void>((resolve) => {
         resolutionWaiters.current.push(resolve);
       }),
-      new Promise<void>((resolve) => setTimeout(resolve, 12_000)),
+      new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
     ]);
   }, []);
 
@@ -317,7 +433,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addVariant = useCallback(
-    (variantId: string, productId: string, quantity = 1) => {
+    (variantId: string, productId: string, quantity = 1, seed?: CartLineSeed) => {
       if (!isUuid(variantId)) {
         if (process.env.NODE_ENV === "development") {
           console.warn("[cart] addVariant ignored invalid variant id", variantId);
@@ -325,20 +441,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
       const q = Math.max(1, Math.min(99, Math.floor(quantity)));
-      setLinesSafe((prev) => {
-        const i = prev.findIndex((l) => l.variantId === variantId);
-        if (i >= 0) {
-          const next = [...prev];
-          next[i] = {
-            ...next[i],
-            quantity: Math.min(99, next[i].quantity + q),
+      const prev = linesRef.current;
+      const i = prev.findIndex((l) => l.variantId === variantId);
+      const nextLine: CartLine =
+        i >= 0
+          ? {
+              ...prev[i],
+              quantity: Math.min(99, prev[i].quantity + q),
+            }
+          : { variantId, productId, quantity: q };
+
+      setLinesSafe((p) => {
+        const j = p.findIndex((l) => l.variantId === variantId);
+        if (j >= 0) {
+          const next = [...p];
+          next[j] = {
+            ...next[j],
+            quantity: Math.min(99, next[j].quantity + q),
           };
           return next;
         }
-        return [...prev, { variantId, productId, quantity: q }];
+        return [...p, { variantId, productId, quantity: q }];
       });
+
+      if (seed) {
+        applySeed(nextLine, seed);
+      }
     },
-    [setLinesSafe],
+    [applySeed, setLinesSafe],
   );
 
   const updateQuantity = useCallback(
@@ -346,6 +476,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const q = Math.floor(quantity);
       if (q < 1) {
         setLinesSafe((prev) => prev.filter((l) => l.variantId !== variantId));
+        setResolvedLines((prev) => prev.filter((r) => r.line.variantId !== variantId));
         return;
       }
       setLinesSafe((prev) => {
@@ -355,6 +486,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         next[i] = { ...next[i], quantity: Math.min(99, q) };
         return next;
       });
+      setResolvedLines((prev) =>
+        prev.map((r) =>
+          r.line.variantId === variantId
+            ? { ...r, line: { ...r.line, quantity: Math.min(99, q) } }
+            : r,
+        ),
+      );
     },
     [setLinesSafe],
   );
@@ -362,18 +500,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeItem = useCallback(
     (variantId: string) => {
       setLinesSafe((prev) => prev.filter((l) => l.variantId !== variantId));
+      setResolvedLines((prev) => prev.filter((r) => r.line.variantId !== variantId));
     },
     [setLinesSafe],
   );
 
   const clearCart = useCallback(() => {
     setLines([]);
+    setResolvedLines([]);
   }, []);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
-  /** Use raw line quantities until Supabase resolves variants (avoids 0 badge / “empty” flash). */
   const itemCount = useMemo(() => {
     if (resolvedLines.length > 0) {
       return resolvedLines.reduce((n, { line }) => n + line.quantity, 0);

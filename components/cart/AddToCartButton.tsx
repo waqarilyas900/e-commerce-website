@@ -13,6 +13,7 @@ import {
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { toastAddedToCart } from "@/lib/cart-toast";
 import { ADD_TO_CART_BUTTON_MS, delayMs } from "@/lib/cart-add-feedback";
+import { cartSeedFromProduct } from "@/lib/cart-line-seed";
 import type { Product } from "@/app/lib/catalog/types";
 
 type Props = {
@@ -62,12 +63,13 @@ export function AddToCartButton({
         if (adding) return;
         setAdding(true);
         try {
-          await delayMs(ADD_TO_CART_BUTTON_MS);
+          const seed = cartSeedFromProduct(product);
+          if (!seed) await delayMs(ADD_TO_CART_BUTTON_MS);
           const variantId = product.defaultVariantId!;
           const trackingId =
             (product.defaultVariantSku || "").trim() ||
             resolveVariantTrackingId({ id: variantId }, variantId);
-          addVariant(variantId, product.id, q);
+          addVariant(variantId, product.id, q, seed);
           trackMetaPixel("AddToCart", {
             content_ids: [trackingId],
             contents: metaContentsSingleItem({

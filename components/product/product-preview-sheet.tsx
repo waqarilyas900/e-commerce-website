@@ -20,6 +20,7 @@ import {
 } from "@/lib/seo/meta-pixel-client";
 import { toastAddedToCart } from "@/lib/cart-toast";
 import { ADD_TO_CART_BUTTON_MS, delayMs } from "@/lib/cart-add-feedback";
+import { cartSeedFromProduct } from "@/lib/cart-line-seed";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
@@ -262,12 +263,13 @@ export function ProductPreviewSheet() {
                           if (adding) return;
                           setAdding(true);
                           try {
-                            await delayMs(ADD_TO_CART_BUTTON_MS);
+                            const seed = cartSeedFromProduct(product);
+                            if (!seed) await delayMs(ADD_TO_CART_BUTTON_MS);
                             const variantId = product.defaultVariantId!;
                             const trackingId =
                               (product.defaultVariantSku || "").trim() ||
                               resolveVariantTrackingId({ id: variantId }, variantId);
-                            addVariant(variantId, product.id, qty);
+                            addVariant(variantId, product.id, qty, seed);
                             trackMetaPixel("AddToCart", {
                               content_ids: [trackingId],
                               contents: metaContentsSingleItem({

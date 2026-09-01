@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { useCart } from "@/app/providers/cart-provider";
+import { useCart, type CartLineSeed } from "@/app/providers/cart-provider";
 import {
   defaultMetaCurrency,
   metaContentsSingleItem,
@@ -36,6 +36,8 @@ type Props = {
   sku?: string;
   /** Optional content identifier override (falls back to `sku` or `variantId`). */
   contentId?: string;
+  /** PDP catalog snapshot — instant cart resolve + fast Buy now. */
+  seed?: CartLineSeed;
 };
 
 export function AddToCartVariantButton({
@@ -53,11 +55,16 @@ export function AddToCartVariantButton({
   unitPricePkr,
   sku,
   contentId,
+  seed,
 }: Props) {
   const router = useRouter();
   const { addVariant, openCart, waitForCartResolution } = useCart();
   const [adding, setAdding] = useState(false);
   const q = Math.min(maxQuantity, Math.max(1, Math.floor(quantity)));
+
+  useEffect(() => {
+    if (redirectHref) router.prefetch(redirectHref);
+  }, [redirectHref, router]);
 
   return (
     <PrimaryActionButton
@@ -71,8 +78,8 @@ export function AddToCartVariantButton({
         if (disabled || adding) return;
         setAdding(true);
         try {
-          await delayMs(ADD_TO_CART_BUTTON_MS);
-          addVariant(variantId, productId, q);
+          if (!seed) await delayMs(ADD_TO_CART_BUTTON_MS);
+          addVariant(variantId, productId, q, seed);
           const cid = contentId || resolveVariantTrackingId({ sku, id: variantId }, variantId);
           const trackedValue = toPkrValue((unitPricePkr ?? 0) * q);
           trackMetaPixel("AddToCart", {
@@ -98,7 +105,7 @@ export function AddToCartVariantButton({
             quantity: q,
           });
           if (redirectHref) {
-            await waitForCartResolution();
+            if (!seed) await waitForCartResolution();
             router.push(redirectHref);
           } else if (openDrawer) {
             openCart();

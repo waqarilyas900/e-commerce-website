@@ -32,8 +32,10 @@ import type {
 import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
 import { useCart } from "@/app/providers/cart-provider";
 import { metaContentsSingleItem, resolveVariantTrackingId, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
+import { cartSeedFromPdp } from "@/lib/cart-line-seed";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import type { FaqItem } from "@/lib/seo/jsonld/faq";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
@@ -319,6 +321,28 @@ export function ProductPdp({
     () => findVariantExact(variants, keys, selection),
     [variants, keys, selection],
   );
+
+  const cartSeed = useMemo(
+    () =>
+      matchedVariant
+        ? cartSeedFromPdp({
+            product: {
+              id: product.id,
+              slug: product.slug,
+              name: product.name,
+              images: product.images,
+              free_delivery: product.free_delivery,
+            },
+            variant: matchedVariant,
+          })
+        : undefined,
+    [matchedVariant, product.free_delivery, product.id, product.images, product.name, product.slug],
+  );
+
+  const router = useRouter();
+  useEffect(() => {
+    router.prefetch("/checkout");
+  }, [router]);
 
   const priceVariant = matchedVariant ?? variants[0];
 
@@ -932,6 +956,7 @@ export function ProductPdp({
                         disabled={maxQty < 1}
                         openDrawer
                         itemName={product.name}
+                        seed={cartSeed}
                         ariaLabel="Add to cart"
                         label="Add to cart"
                         className="min-w-0 flex-1 !px-2 !text-[12px] leading-none tracking-tight max-[400px]:!text-[11px] max-[360px]:!px-1.5 max-[360px]:!text-[10px] max-[330px]:!text-[9px] sm:!px-5 sm:!text-base sm:tracking-normal"
@@ -948,6 +973,7 @@ export function ProductPdp({
                         openDrawer={false}
                         redirectHref="/checkout"
                         itemName={product.name}
+                        seed={cartSeed}
                         ariaLabel="Buy now"
                         label="Buy now"
                         className="min-w-0 flex-1 !px-2 !text-[12px] leading-none tracking-tight max-[400px]:!text-[11px] max-[360px]:!px-1.5 max-[360px]:!text-[10px] max-[330px]:!text-[9px] sm:!px-5 sm:!text-base sm:tracking-normal"
@@ -1255,6 +1281,7 @@ export function ProductPdp({
                         disabled={maxQty < 1}
                         openDrawer
                         itemName={product.name}
+                        seed={cartSeed}
                         ariaLabel="Add to cart"
                         label="Add to cart"
                         className="min-h-10 !px-2.5 !py-2 !text-[11px] leading-none tracking-tight max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
@@ -1271,6 +1298,7 @@ export function ProductPdp({
                         openDrawer={false}
                         redirectHref="/checkout"
                         itemName={product.name}
+                        seed={cartSeed}
                         ariaLabel="Buy now"
                         label="Buy now"
                         className="min-h-10 !px-2.5 !py-2 !text-[11px] leading-none tracking-tight max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
