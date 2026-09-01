@@ -789,7 +789,7 @@ export async function dbSearchProducts(q: string, limit?: number): Promise<Produ
     .select(maxResults ? PRODUCT_CARD_SELECT : PRODUCT_SELECT)
     .eq("status", "active")
     .or(
-      `name.ilike.${pattern},description.ilike.${pattern},short_description.ilike.${pattern}`,
+      `name.ilike.${pattern},description.ilike.${pattern},short_description.ilike.${pattern},search_keywords.ilike.${pattern}`,
     );
   if (maxResults) productQuery = productQuery.limit(maxResults);
 
