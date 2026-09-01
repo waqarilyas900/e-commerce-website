@@ -9,7 +9,11 @@ import { useScrollLock } from "@/lib/scroll-lock";
 import { formatPkr } from "@/app/lib/format-currency";
 import type { Product } from "@/app/lib/catalog/types";
 import { hasCatalogDb } from "@/app/lib/db/env";
-import { fetchCheapestVariantForProductSlug } from "@/app/lib/cart/fetch-cheapest-variant-client";
+import { cartSeedFromProduct } from "@/lib/cart-line-seed";
+import {
+  getCachedCartDrawerRecommendations,
+  loadCartDrawerRecommendations,
+} from "@/lib/cart-drawer-recommendations";
 import {
   fetchStoreDeliverySettings,
   type StoreDeliverySettingsState,
@@ -45,23 +49,8 @@ function CartLineRemoveIcon({ className }: { className?: string }) {
 
 function DrawerRecoTile({ product }: { product: Product }) {
   const { addVariant, closeCart } = useCart();
-  const [quick, setQuick] = useState<
-    { variantId: string; productId: string } | null | undefined
-  >(undefined);
-
-  useEffect(() => {
-    if (!hasCatalogDb()) {
-      queueMicrotask(() => setQuick(null));
-      return;
-    }
-    let cancelled = false;
-    void fetchCheapestVariantForProductSlug(product.slug).then((r) => {
-      if (!cancelled) setQuick(r ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [product.slug]);
+  const seed = cartSeedFromProduct(product);
+  const canQuickAdd = Boolean(product.defaultVariantId);
 
   return (
     <div className="col-span-6 flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
@@ -87,17 +76,14 @@ function DrawerRecoTile({ product }: { product: Product }) {
             <span className="font-semibold text-neutral-900">{formatPkr(product.price)}</span>
           )}
         </div>
-        {quick === undefined ? (
-          <div
-            className="mt-auto h-8 w-full animate-pulse rounded-md bg-neutral-200"
-            aria-hidden
-          />
-        ) : quick ? (
+        {canQuickAdd && product.defaultVariantId ? (
           <motion.button
             type="button"
             whileTap={{ scale: 0.98 }}
             className="btn mt-auto w-full !rounded-none border border-neutral-900 bg-neutral-950 text-white hover:bg-neutral-800"
-            onClick={() => addVariant(quick.variantId, quick.productId, 1)}
+            onClick={() =>
+              addVariant(product.defaultVariantId!, product.id, 1, seed)
+            }
           >
             Add to cart
           </motion.button>
@@ -170,8 +156,12 @@ export function CartDrawer() {
   } = useCart();
   const [checkoutNavigating, setCheckoutNavigating] = useState(false);
   const prefersReducedMotion = useReducedMotion();
-  const [recommended, setRecommended] = useState<Product[]>([]);
-  const [recoLoading, setRecoLoading] = useState(false);
+  const [recommended, setRecommended] = useState<Product[]>(
+    () => getCachedCartDrawerRecommendations() ?? [],
+  );
+  const [recoLoading, setRecoLoading] = useState(
+    () => !getCachedCartDrawerRecommendations() && hasCatalogDb(),
+  );
   const [deliverySettings, setDeliverySettings] = useState<StoreDeliverySettingsState | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
   /** Ignore the opening click so the backdrop does not instantly close the drawer. */
@@ -245,46 +235,21 @@ export function CartDrawer() {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) {
-      queueMicrotask(() => setRecoLoading(false));
-      return;
-    }
-    if (!showEmptyCartRecommendations) {
-      queueMicrotask(() => {
-        setRecommended([]);
-        setRecoLoading(false);
-      });
-      return;
-    }
     if (!hasCatalogDb()) {
-      queueMicrotask(() => {
-        setRecommended([]);
-        setRecoLoading(false);
-      });
+      setRecoLoading(false);
       return;
     }
-    let cancelled = false;
-    queueMicrotask(() => {
-      setRecoLoading(true);
-      setRecommended([]);
+    const hit = getCachedCartDrawerRecommendations();
+    if (hit) {
+      setRecommended(hit);
+      setRecoLoading(false);
+      return;
+    }
+    void loadCartDrawerRecommendations().then((data) => {
+      setRecommended(data);
+      setRecoLoading(false);
     });
-    void fetch("/api/catalog/random-products?limit=2")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: Product[]) => {
-        if (!cancelled && Array.isArray(data)) {
-          setRecommended(data);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setRecommended([]);
-      })
-      .finally(() => {
-        if (!cancelled) setRecoLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, showEmptyCartRecommendations]);
+  }, []);
 
   return (
     <AnimatePresence>

@@ -43,6 +43,8 @@ export async function GET(req: Request) {
     image: p.image,
     price: p.price,
     compareAtPrice: p.compareAtPrice,
+    defaultVariantId: p.defaultVariantId,
+    defaultVariantSku: p.defaultVariantSku,
   }));
   return NextResponse.json(responseProducts, {
     headers: {
