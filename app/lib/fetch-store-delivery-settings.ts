@@ -12,6 +12,18 @@ const DELIVERY_SETTINGS_CACHE_MS = 5 * 60 * 1000;
 let deliverySettingsCache: StoreDeliverySettingsState | null | undefined;
 let deliverySettingsCachedAt = 0;
 
+/** Synchronous read of the in-memory delivery settings cache (if still fresh). */
+export function getCachedStoreDeliverySettings(): StoreDeliverySettingsState | null | undefined {
+  const now = Date.now();
+  if (
+    deliverySettingsCache !== undefined &&
+    now - deliverySettingsCachedAt < DELIVERY_SETTINGS_CACHE_MS
+  ) {
+    return deliverySettingsCache;
+  }
+  return undefined;
+}
+
 /**
  * Loads standard delivery fee and free-delivery thresholds (paisa) from Supabase.
  * Returns `null` if offline, RLS blocks, or row missing — callers should fall back to constants.

@@ -16,6 +16,7 @@ import {
 } from "@/lib/cart-drawer-recommendations";
 import {
   fetchStoreDeliverySettings,
+  getCachedStoreDeliverySettings,
   type StoreDeliverySettingsState,
 } from "@/app/lib/fetch-store-delivery-settings";
 import { computeDeliveryPkr } from "@/app/lib/delivery-pricing";
@@ -162,8 +163,12 @@ export function CartDrawer() {
   const [recoLoading, setRecoLoading] = useState(
     () => !getCachedCartDrawerRecommendations() && hasCatalogDb(),
   );
-  const [deliverySettings, setDeliverySettings] = useState<StoreDeliverySettingsState | null>(null);
-  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [deliverySettings, setDeliverySettings] = useState<StoreDeliverySettingsState | null>(
+    () => getCachedStoreDeliverySettings() ?? null,
+  );
+  const [deliveryLoading, setDeliveryLoading] = useState(
+    () => getCachedStoreDeliverySettings() === undefined && hasCatalogDb(),
+  );
   /** Ignore the opening click so the backdrop does not instantly close the drawer. */
   const [backdropArmed, setBackdropArmed] = useState(false);
   const openGenRef = useRef(0);
@@ -213,17 +218,18 @@ export function CartDrawer() {
   useScrollLock(isOpen);
 
   useEffect(() => {
-    if (!isOpen) return;
     if (!hasCatalogDb()) {
-      queueMicrotask(() => {
-        setDeliverySettings(null);
-        setDeliveryLoading(false);
-      });
+      setDeliverySettings(null);
+      setDeliveryLoading(false);
+      return;
+    }
+    const hit = getCachedStoreDeliverySettings();
+    if (hit !== undefined) {
+      setDeliverySettings(hit);
+      setDeliveryLoading(false);
       return;
     }
     let cancelled = false;
-    /** Keep previous settings while refetching so the free-shipping bar does not reset / animate from empty each open. */
-    queueMicrotask(() => setDeliveryLoading(true));
     void fetchStoreDeliverySettings().then((s) => {
       if (cancelled) return;
       setDeliverySettings(s);
@@ -232,7 +238,7 @@ export function CartDrawer() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, []);
 
   useEffect(() => {
     if (!hasCatalogDb()) {

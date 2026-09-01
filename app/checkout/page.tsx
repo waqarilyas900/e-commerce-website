@@ -23,7 +23,6 @@ import { CheckoutTemplateFields } from "@/components/checkout/checkout-template-
 import { SignInModal } from "@/components/auth/sign-in-modal";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { isCompletingPasswordReset } from "@/lib/auth/password-recovery-session";
-import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/app/providers/cart-provider";
 import { useAuth } from "@/app/providers/auth-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
@@ -661,29 +660,16 @@ export default function CheckoutPage() {
     async function fillCheckoutIdentity() {
       try {
         const m = readNames((activeUser.user_metadata ?? {}) as Record<string, unknown>);
-        const supabase = createClient();
-        const { data: row } = await supabase
-          .from("users")
-          .select("first_name,last_name,phone")
-          .eq("auth_id", activeUser.id)
-          .maybeSingle();
         if (cancelled) return;
         const profileFirst = (nameProfile?.first_name ?? "").trim();
         const profileLast = (nameProfile?.last_name ?? "").trim();
+        const profilePhone = (nameProfile?.phone ?? "").trim();
         setFormValues((prev) => ({
           ...prev,
           email: activeUser.email ?? prev.email,
-          first_name:
-            (row?.first_name ?? "").trim() ||
-            profileFirst ||
-            m.first ||
-            prev.first_name,
-          last_name:
-            (row?.last_name ?? "").trim() ||
-            profileLast ||
-            m.last ||
-            prev.last_name,
-          phone: (row?.phone ?? "").trim() || prev.phone,
+          first_name: profileFirst || m.first || prev.first_name,
+          last_name: profileLast || m.last || prev.last_name,
+          phone: profilePhone || prev.phone,
         }));
       } catch {
         /* ignore */

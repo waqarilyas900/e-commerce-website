@@ -133,48 +133,114 @@ function allLinesResolved(lines: CartLine[], resolved: ResolvedCartLine[]): bool
   return lines.every((l) => byId.has(l.variantId));
 }
 
-function readStorage(): CartLine[] {
-  if (typeof window === "undefined") return [];
+function readStorage(): { lines: CartLine[]; resolved: ResolvedCartLine[] } {
+  if (typeof window === "undefined") return { lines: [], resolved: [] };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw == null) return [];
+    if (raw == null) return { lines: [], resolved: [] };
     const trimmed = raw.trim();
-    if (trimmed === "") return [];
+    if (trimmed === "") return { lines: [], resolved: [] };
     const parsed: unknown = JSON.parse(trimmed);
-    if (!Array.isArray(parsed)) return [];
-    const lines: CartLine[] = [];
-    for (const row of parsed) {
-      if (
-        row &&
-        typeof row === "object" &&
-        "variantId" in row &&
-        "productId" in row &&
-        "quantity" in row &&
-        typeof (row as CartLine).variantId === "string" &&
-        typeof (row as CartLine).productId === "string" &&
-        typeof (row as CartLine).quantity === "number"
-      ) {
-        if (!isUuid((row as CartLine).variantId)) continue;
-        const q = Math.floor((row as CartLine).quantity);
-        if (q > 0) {
-          lines.push({
-            variantId: (row as CartLine).variantId,
-            productId: (row as CartLine).productId,
-            quantity: q,
-          });
+
+    const parseLines = (rows: unknown[]): CartLine[] => {
+      const lines: CartLine[] = [];
+      for (const row of rows) {
+        if (
+          row &&
+          typeof row === "object" &&
+          "variantId" in row &&
+          "productId" in row &&
+          "quantity" in row &&
+          typeof (row as CartLine).variantId === "string" &&
+          typeof (row as CartLine).productId === "string" &&
+          typeof (row as CartLine).quantity === "number"
+        ) {
+          if (!isUuid((row as CartLine).variantId)) continue;
+          const q = Math.floor((row as CartLine).quantity);
+          if (q > 0) {
+            lines.push({
+              variantId: (row as CartLine).variantId,
+              productId: (row as CartLine).productId,
+              quantity: q,
+            });
+          }
         }
       }
+      return lines;
+    };
+
+    const parseResolved = (rows: unknown[]): ResolvedCartLine[] => {
+      const resolved: ResolvedCartLine[] = [];
+      for (const row of rows) {
+        if (!row || typeof row !== "object") continue;
+        const r = row as ResolvedCartLine;
+        if (
+          !r.line ||
+          typeof r.line.variantId !== "string" ||
+          !isUuid(r.line.variantId) ||
+          typeof r.unitPrice !== "number" ||
+          !r.product ||
+          typeof r.product.id !== "string" ||
+          typeof r.product.slug !== "string" ||
+          typeof r.product.name !== "string"
+        ) {
+          continue;
+        }
+        resolved.push({
+          line: {
+            variantId: r.line.variantId,
+            productId: r.line.productId,
+            quantity: Math.floor(r.line.quantity),
+          },
+          unitPrice: r.unitPrice,
+          product: {
+            id: r.product.id,
+            slug: r.product.slug,
+            name: r.product.name,
+            image: typeof r.product.image === "string" ? r.product.image : "",
+            freeDelivery: Boolean(r.product.freeDelivery),
+          },
+          variantLabel: typeof r.variantLabel === "string" ? r.variantLabel : "",
+          sku: typeof r.sku === "string" ? r.sku : undefined,
+          trackingId: typeof r.trackingId === "string" ? r.trackingId : undefined,
+        });
+      }
+      return resolved;
+    };
+
+    if (Array.isArray(parsed)) {
+      return { lines: parseLines(parsed), resolved: [] };
     }
-    return lines;
+
+    if (parsed && typeof parsed === "object" && "lines" in parsed) {
+      const envelope = parsed as { lines?: unknown; resolved?: unknown };
+      const lines = Array.isArray(envelope.lines) ? parseLines(envelope.lines) : [];
+      const resolved = Array.isArray(envelope.resolved)
+        ? parseResolved(envelope.resolved)
+        : [];
+      return { lines, resolved: mergeResolvedFromCache(lines, resolved) };
+    }
+
+    return { lines: [], resolved: [] };
   } catch {
-    return [];
+    return { lines: [], resolved: [] };
   }
 }
 
-function writeStorage(lines: CartLine[]) {
+function writeStorage(lines: CartLine[], resolved: ResolvedCartLine[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+    if (lines.length === 0) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        lines,
+        resolved: mergeResolvedFromCache(lines, resolved),
+      }),
+    );
   } catch {
     /* ignore quota */
   }
@@ -229,18 +295,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
         /* ignore */
       }
       const stored = readStorage();
-      if (stored.length > 0 && hasCatalogDb()) {
+      const hydrated = mergeResolvedFromCache(stored.lines, stored.resolved);
+      if (hydrated.length > 0) {
+        setResolvedLines(hydrated);
+      }
+      if (
+        stored.lines.length > 0 &&
+        hasCatalogDb() &&
+        !allLinesResolved(stored.lines, hydrated)
+      ) {
         setIsResolvingCart(true);
       }
-      setLines(stored);
+      setLines(stored.lines);
       setReady(true);
     });
   }, []);
 
   useEffect(() => {
     if (!ready) return;
-    writeStorage(lines);
-  }, [lines, ready]);
+    writeStorage(lines, resolvedLines);
+  }, [lines, resolvedLines, ready]);
 
   useEffect(() => {
     if (!ready || !hasCatalogDb() || lines.length === 0) {
@@ -262,8 +336,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const hasDisplaySnapshot = allLinesResolved(lines, cached);
+
     let cancelled = false;
-    setIsResolvingCart(true);
+    if (!hasDisplaySnapshot) {
+      setIsResolvingCart(true);
+    }
 
     void (async () => {
       try {
@@ -508,6 +586,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setLines([]);
     setResolvedLines([]);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
   }, []);
 
   const openCart = useCallback(() => setIsOpen(true), []);

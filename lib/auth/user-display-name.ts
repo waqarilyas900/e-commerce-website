@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 export type UserNameProfile = {
   first_name?: string | null;
   last_name?: string | null;
+  phone?: string | null;
 };
 
 function readMetaString(meta: Record<string, unknown>, key: string): string {

@@ -6,7 +6,7 @@ export async function loadUserNameProfile(authId: string): Promise<UserNameProfi
     const supabase = createClient();
     const { data } = await supabase
       .from("users")
-      .select("first_name, last_name")
+      .select("first_name, last_name, phone")
       .eq("auth_id", authId)
       .maybeSingle();
     return data ?? null;
