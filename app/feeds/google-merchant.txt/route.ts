@@ -321,10 +321,11 @@ export async function GET() {
 
   const body = `${lines.join("\n")}\n`;
   return new NextResponse(body, {
-    headers: {
-      "Content-Type": "text/tab-separated-values; charset=utf-8",
-      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
-      "X-Content-Type-Options": "nosniff",
-    },
+      headers: {
+        "Content-Type": "text/tab-separated-values; charset=utf-8",
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Allow-Origin": "*",
+      },
   });
 }
