@@ -26,6 +26,10 @@ import { OpenParcelCartPill } from "@/components/trust/open-parcel-trust";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
+/** Snappy cart drawer — ~2× faster than the previous silk timings. */
+const DRAWER_FADE_S = 0.2;
+const DRAWER_SLIDE_S = 0.2;
+const DRAWER_CONTENT_S = 0.18;
 
 function CartLineRemoveIcon({ className }: { className?: string }) {
   return (
@@ -266,7 +270,7 @@ export function CartDrawer() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={
-            prefersReducedMotion ? { duration: 0.12 } : { duration: 0.45, ease: easeSilk }
+            prefersReducedMotion ? { duration: 0.12 } : { duration: DRAWER_FADE_S, ease: easeSilk }
           }
         >
           <motion.button
@@ -277,7 +281,7 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={
-              prefersReducedMotion ? { duration: 0.12 } : { duration: 0.5, ease: easeSilk }
+              prefersReducedMotion ? { duration: 0.12 } : { duration: DRAWER_FADE_S, ease: easeSilk }
             }
             className={`absolute inset-0 bg-black/25 backdrop-blur-[2px] ${backdropArmed ? "" : "pointer-events-none"}`}
           />
@@ -298,28 +302,28 @@ export function CartDrawer() {
                 : {
                     x: {
                       type: "tween",
-                      duration: 0.42,
+                      duration: DRAWER_SLIDE_S,
                       ease: easeSoftIn,
                     },
                     opacity: {
-                      duration: 0.25,
+                      duration: DRAWER_CONTENT_S,
                       ease: easeSoftIn,
                     },
                   },
             }}
             transition={
               prefersReducedMotion
-                ? { duration: 0.18 }
+                ? { duration: 0.12 }
                 : {
                     x: {
                       type: "spring",
-                      stiffness: 200,
-                      damping: 36,
-                      mass: 0.95,
+                      stiffness: 320,
+                      damping: 32,
+                      mass: 0.85,
                       restDelta: 0.5,
                       restSpeed: 0.5,
                     },
-                    opacity: { duration: 0.4, ease: easeSilk },
+                    opacity: { duration: DRAWER_CONTENT_S, ease: easeSilk },
                   }
             }
           >
@@ -330,7 +334,7 @@ export function CartDrawer() {
               transition={
                 prefersReducedMotion
                   ? { duration: 0.1 }
-                  : { delay: 0.06, duration: 0.35, ease: easeSilk }
+                  : { delay: 0.02, duration: DRAWER_CONTENT_S, ease: easeSilk }
               }
             >
               <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">Cart</h2>
@@ -363,8 +367,8 @@ export function CartDrawer() {
                 hidden: {},
                 visible: {
                   transition: {
-                    staggerChildren: prefersReducedMotion ? 0 : 0.06,
-                    delayChildren: prefersReducedMotion ? 0 : 0.1,
+                    staggerChildren: prefersReducedMotion ? 0 : 0.02,
+                    delayChildren: prefersReducedMotion ? 0 : 0.03,
                   },
                 },
               }}
@@ -404,7 +408,7 @@ export function CartDrawer() {
                             y: 0,
                             scale: 1,
                             transition: {
-                              duration: prefersReducedMotion ? 0.1 : 0.4,
+                              duration: prefersReducedMotion ? 0.1 : DRAWER_CONTENT_S,
                               ease: easeSilk,
                             },
                           },
@@ -503,7 +507,7 @@ export function CartDrawer() {
                 transition={
                   prefersReducedMotion
                     ? { duration: 0.1 }
-                    : { delay: 0.14, duration: 0.4, ease: easeSilk }
+                    : { delay: 0.05, duration: DRAWER_CONTENT_S, ease: easeSilk }
                 }
               >
                 <div className="space-y-2">
