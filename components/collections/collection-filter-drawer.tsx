@@ -225,7 +225,7 @@ export function CollectionFilterDrawer({
                       setAvailability("out_of_stock");
                       runApply({ availability: "out_of_stock", min: minVal, max: maxVal });
                     }}
-                    label="Out of stock"
+                    label="Out of stock (all variants)"
                   />
                 </div>
               </fieldset>

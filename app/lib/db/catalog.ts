@@ -106,21 +106,44 @@ function cardDisplayCompareAt(
   return Math.max(...vals);
 }
 
+function variantSellableQty(v: DbProductVariantRow): number {
+  return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
+}
+
+function totalSellableQty(variants: DbProductVariantRow[]): number {
+  return variants.reduce((sum, v) => sum + variantSellableQty(v), 0);
+}
+
+/** In stock when any variant has sellable units (on hand minus reserved). */
+export function resolveProductInStock(
+  p: Pick<DbProductRow, "stock_total">,
+  variants: DbProductVariantRow[],
+): boolean {
+  if (!variants.length) {
+    return (p.stock_total ?? 0) > 0;
+  }
+  return totalSellableQty(variants) > 0;
+}
+
+/** Prefer in-stock SKUs for card defaults; fall back to cheapest when fully OOS. */
+function sortVariantsForDefaultPick(variants: DbProductVariantRow[]): DbProductVariantRow[] {
+  return [...variants].sort((a, b) => {
+    const aRank = variantSellableQty(a) > 0 ? 0 : 1;
+    const bRank = variantSellableQty(b) > 0 ? 0 : 1;
+    if (aRank !== bRank) return aRank - bRank;
+    return Number(a.price) - Number(b.price);
+  });
+}
+
 function pickDefaultVariantId(variants: DbProductVariantRow[]): string | undefined {
   if (!variants.length) return undefined;
-  const sorted = [...variants].sort((a, b) => Number(a.price) - Number(b.price));
-  return sorted[0].id;
+  return sortVariantsForDefaultPick(variants)[0]!.id;
 }
 
 function pickDefaultVariantSku(variants: DbProductVariantRow[]): string | undefined {
   if (!variants.length) return undefined;
-  const sorted = [...variants].sort((a, b) => Number(a.price) - Number(b.price));
-  return (sorted[0].sku || "").trim() || sorted[0].id;
-}
-
-function productInStockFromVariants(variants: DbProductVariantRow[]): boolean {
-  if (!variants.length) return false;
-  return variants.some((v) => v.quantity_on_hand - v.quantity_reserved > 0);
+  const v = sortVariantsForDefaultPick(variants)[0]!;
+  return (v.sku || "").trim() || v.id;
 }
 
 async function mergeInventoryForVariants(
@@ -175,7 +198,7 @@ export function mapProductCard(
     tags: p.tags ?? [],
     defaultVariantId: pickDefaultVariantId(variants),
     defaultVariantSku: pickDefaultVariantSku(variants),
-    inStock: productInStockFromVariants(variants),
+    inStock: resolveProductInStock(p, variants),
     createdAt: p.created_at ? String(p.created_at) : undefined,
   };
 }

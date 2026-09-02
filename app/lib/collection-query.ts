@@ -58,7 +58,7 @@ export function parseCollectionSearchParams(
 }
 
 function isInStock(p: Product): boolean {
-  return p.inStock !== false;
+  return p.inStock === true;
 }
 
 function isOutOfStock(p: Product): boolean {
