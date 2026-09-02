@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ProductPdp } from "@/components/product/product-pdp";
+import { RecentlyViewedSection } from "@/components/product/recently-viewed-section";
 import { CustomerReviews } from "@/components/product/customer-reviews";
 import { ProductCard } from "@/components/storefront";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
@@ -327,6 +328,7 @@ export default async function ProductPage({ params }: Props) {
             currentSlug={slug}
           />
         </Suspense>
+        <RecentlyViewedSection excludeSlug={slug} />
       </main>
     </>
   );

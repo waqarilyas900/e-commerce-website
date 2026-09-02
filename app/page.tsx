@@ -30,6 +30,7 @@ import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
 import { HomeStickyProductVideo } from "@/components/home/HomeStickyProductVideo";
+import { RecentlyViewedSection } from "@/components/product/recently-viewed-section";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -162,6 +163,7 @@ export default async function Home() {
             totalProductCount={rail.totalProductCount}
           />
         ))}
+        <RecentlyViewedSection className="mx-auto max-w-7xl shell-x" />
         <WhyShop />
         <TrustRatingStrip aggregate={storeReviews} reviews={reviewHighlights} />
       </main>

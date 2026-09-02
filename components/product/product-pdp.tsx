@@ -41,6 +41,8 @@ import type { FaqItem } from "@/lib/seo/jsonld/faq";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
 import { OpenParcelPDPBadge } from "@/components/trust/open-parcel-trust";
 import { parseProductVideoSource } from "@/lib/product-video/url";
+import { formatPurchaseStockMessage, isLowStock } from "@/lib/low-stock";
+import { recordRecentlyViewed } from "@/lib/recently-viewed";
 
 function sellableQty(v: DbProductVariantRow): number {
   return Math.max(0, (v.quantity_on_hand ?? 0) - (v.quantity_reserved ?? 0));
@@ -260,6 +262,10 @@ export function ProductPdp({
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    recordRecentlyViewed(productSlug);
+  }, [productSlug]);
 
   useEffect(() => {
     let cancelled = false;
@@ -529,7 +535,9 @@ export function ProductPdp({
     (!matchedVariant && selectionComplete);
 
   const purchaseStockMessage =
-    matchedVariant && maxQty > 0 ? `${maxQty} in stock` : "Out of stock";
+    matchedVariant && maxQty > 0
+      ? formatPurchaseStockMessage(maxQty)
+      : "Out of stock";
   const purchaseDiscountPct =
     matchedVariant &&
     priceVariant.compare_at_price != null &&
@@ -539,7 +547,9 @@ export function ProductPdp({
 
   const purchaseStockBadgeClass =
     matchedVariant && maxQty > 0
-      ? "border-emerald-200/90 bg-emerald-50 text-emerald-950 shadow-sm"
+      ? isLowStock(maxQty)
+        ? "border-amber-200/90 bg-amber-50 text-amber-950 shadow-sm"
+        : "border-emerald-200/90 bg-emerald-50 text-emerald-950 shadow-sm"
       : "border-neutral-800/80 bg-neutral-950/95 text-white shadow-lg backdrop-blur-sm";
 
   const stickyVideoUrl = (product.video_url ?? "").trim();
