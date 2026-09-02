@@ -326,7 +326,7 @@ export default async function RootLayout({
               height={1}
               width={1}
               style={{ display: "none" }}
-              alt=""
+              alt="Meta Pixel"
               src={`https://www.facebook.com/tr?id=${encodeURIComponent(metaPixelId)}&ev=PageView&noscript=1`}
             />
           </noscript>

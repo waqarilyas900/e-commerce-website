@@ -23,6 +23,7 @@ import {
   loadSeoOverrideForSubject,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
+  collectionMetadataTitle,
 } from "@/lib/seo";
 import {
   JsonLd,
@@ -96,6 +97,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   }
 
   const override = await loadSeoOverrideForSubject("collection", collection.id, identity.locale);
+  const displayName = collectionDisplayName(slug, collection.name);
 
   return buildPageMetadata({
     pathname,
@@ -103,10 +105,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     identity,
     override,
     defaults: {
-      title: collection.name,
+      title: collectionMetadataTitle(slug, displayName),
       description: collection.description,
       images: collection.hero_image
-        ? [{ url: collection.hero_image, alt: collection.name }]
+        ? [{ url: collection.hero_image, alt: displayName }]
         : [],
     },
   });

@@ -85,11 +85,31 @@ function CategoryGlyph({ slug }: { slug: string }) {
   );
 }
 
-function Thumb({ src, alt, className }: { src: string; alt: string; className?: string }) {
+function Thumb({
+  src,
+  alt,
+  className,
+  width = 56,
+  height = 56,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+}) {
   if (!src) return <div className={`bg-neutral-100 ${className ?? ""}`} aria-hidden />;
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} className={className} loading="lazy" decoding="async" />
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      width={width}
+      height={height}
+      loading="lazy"
+      decoding="async"
+    />
   );
 }
 
@@ -228,8 +248,10 @@ export function AllCategoriesMegaMenu() {
                               <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-md bg-neutral-50">
                                 <Thumb
                                   src={l.imageUrl}
-                                  alt=""
+                                  alt={l.name}
                                   className="h-full w-full object-cover"
+                                  width={28}
+                                  height={28}
                                 />
                               </span>
                             ) : (
@@ -282,8 +304,10 @@ export function AllCategoriesMegaMenu() {
                                 <span className="relative aspect-square overflow-hidden rounded-md bg-neutral-50 ring-1 ring-neutral-100">
                                   <Thumb
                                     src={p.image}
-                                    alt=""
+                                    alt={p.name}
                                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                                    width={80}
+                                    height={80}
                                   />
                                 </span>
                                 <span className="line-clamp-2 text-[11px] leading-snug text-neutral-700 transition-colors group-hover:text-[#E0703A]">
@@ -304,8 +328,10 @@ export function AllCategoriesMegaMenu() {
                             {active.imageUrl ? (
                               <Thumb
                                 src={active.imageUrl}
-                                alt=""
+                                alt={active.name}
                                 className="h-14 w-14 rounded-md object-cover"
+                                width={56}
+                                height={56}
                               />
                             ) : null}
                             <span className="text-sm font-medium text-neutral-900">

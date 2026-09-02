@@ -25,6 +25,7 @@ import {
   loadSeoOverrideForRoute,
   loadSiteIdentity,
   resolveSeoCanonicalOverride,
+  HOME_METADATA_TITLE,
 } from "@/lib/seo";
 import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
@@ -40,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
     identity,
     override,
     defaults: {
-      title: identity.siteTitle || identity.storeName || "Store",
+      title: HOME_METADATA_TITLE,
       description:
         identity.siteDescription ||
         `Shop home, kitchen and beauty essentials from ${identity.storeName || identity.siteTitle || "our shop"} with delivery across Pakistan.`,

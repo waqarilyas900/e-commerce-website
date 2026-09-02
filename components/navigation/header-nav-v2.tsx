@@ -363,7 +363,9 @@ function CartHoverButton() {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={product.image}
-                            alt=""
+                            alt={product.name}
+                            width={48}
+                            height={48}
                             className="h-full w-full object-cover"
                             loading="lazy"
                             decoding="async"

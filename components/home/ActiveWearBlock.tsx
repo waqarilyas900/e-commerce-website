@@ -18,11 +18,15 @@ function CalloutImg({
   alt,
   className,
   sizes,
+  width,
+  height,
 }: {
   src: string;
   alt: string;
   className: string;
   sizes: string;
+  width: number;
+  height: number;
 }) {
   const optimized = optimizeSupplierImageUrl(src, 720);
   return (
@@ -32,11 +36,21 @@ function CalloutImg({
       alt={alt}
       className={className}
       sizes={sizes}
+      width={width}
+      height={height}
       loading="lazy"
       decoding="async"
     />
   );
 }
+
+const CALLOUT_SLOT_SIZE: Record<number, { width: number; height: number }> = {
+  1: { width: 380, height: 380 },
+  2: { width: 245, height: 245 },
+  3: { width: 220, height: 220 },
+  4: { width: 270, height: 270 },
+  5: { width: 135, height: 135 },
+};
 
 /** Homepage featured band — Rad-style multi-image callout + admin featured copy. */
 export function ActiveWearBlock({ calloutImages = [] }: Props) {
@@ -111,12 +125,15 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
                   <div className="callout-image-centered">
                     {slots.map((img, i) => {
                       const n = i + 1;
+                      const dims = CALLOUT_SLOT_SIZE[n] ?? CALLOUT_SLOT_SIZE[1]!;
                       return (
                         <CalloutImg
                           key={`${img.src}-${n}`}
                           src={img.src}
                           alt={img.alt}
                           className={`callout-image callout-image--${n}`}
+                          width={dims.width}
+                          height={dims.height}
                           sizes={
                             n === 1
                               ? "(min-width: 590px) 380px, 195px"
@@ -139,6 +156,8 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
                     src={slots[0]!.src}
                     alt={slots[0]!.alt}
                     className="h-full w-full object-cover object-center"
+                    width={420}
+                    height={420}
                     sizes="(max-width: 768px) 90vw, 420px"
                   />
                 </div>

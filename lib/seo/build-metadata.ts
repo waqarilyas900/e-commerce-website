@@ -21,6 +21,7 @@ import {
   stripHtml,
   suffixTitle,
 } from "./text";
+import { resolveMetadataBaseTitle } from "./page-titles";
 import type { SeoImage, SeoOverride, SiteIdentity } from "./types";
 import { resolveSiteName } from "@/lib/site-brand-env";
 import { getPublicSiteUrl } from "@/lib/site-url";
@@ -262,7 +263,7 @@ export function buildPageMetadata(input: BuildMetadataInput): Metadata {
   const overrideTitle = override?.title.trim();
   const overrideDescription = override?.description.trim();
 
-  const baseTitle = overrideTitle || defaults.title;
+  const baseTitle = resolveMetadataBaseTitle(overrideTitle, defaults.title, site);
   const titleFinal = clampSeoTitle(suffixTitle(baseTitle, site));
 
   const descSource =

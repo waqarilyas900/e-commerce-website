@@ -433,8 +433,7 @@ function ViewAllRailTile({
             // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs outside next/image allowlist
             <img
               src={imgSrc}
-              alt=""
-              aria-hidden
+              alt={`${title} collection preview`}
               loading="lazy"
               decoding="async"
               width={400}
@@ -444,8 +443,7 @@ function ViewAllRailTile({
           ) : (
             <Image
               src={imageUrl}
-              alt=""
-              aria-hidden
+              alt={`${title} collection preview`}
               fill
               sizes="(max-width: 767px) 60vw, 300px"
               className="scale-110 object-cover object-top blur-[2.5px] brightness-[0.72] transition duration-700 ease-out group-hover:scale-[1.16] group-hover:blur-[1.5px] group-hover:brightness-[0.65]"

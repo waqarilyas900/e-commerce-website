@@ -152,7 +152,9 @@ function SearchSuggestionsBody({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={p.image}
-                        alt=""
+                        alt={p.name}
+                        width={48}
+                        height={48}
                         className="h-full w-full object-cover"
                         loading="lazy"
                         decoding="async"

@@ -157,7 +157,7 @@ export function HeaderAccountV2() {
         {effectiveUser && photo ? (
           <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photo} alt="" width={32} height={32} className="h-full w-full object-cover" />
+            <img src={photo} alt="Your profile photo" width={32} height={32} className="h-full w-full object-cover" />
           </span>
         ) : effectiveUser ? (
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-neutral-900 text-[10px] font-semibold text-white">
@@ -391,7 +391,7 @@ export function HeaderAccount() {
             {photo ? (
               <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 sm:h-9 sm:w-9">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo} alt="" width={36} height={36} className="h-full w-full object-cover" />
+                <img src={photo} alt="Your profile photo" width={36} height={36} className="h-full w-full object-cover" />
               </span>
             ) : (
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-900 text-[10px] font-semibold text-white sm:h-9 sm:w-9 sm:text-[11px]">

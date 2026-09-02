@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     identity,
     override,
     defaults: {
-      title: "Shop Collections",
+      title: "Shop All Collections in Pakistan",
       description:
         identity.siteDescription ||
         `Browse drinkware, kitchen tools, beauty gadgets and home essentials across the full catalog at ${identity.storeName || identity.siteTitle || "our shop"}.`,
