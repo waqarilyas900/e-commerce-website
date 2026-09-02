@@ -51,7 +51,7 @@ import { voucherErrorMessage } from "@/app/lib/voucher-user-messages";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 import { metaContentsFromCartLines, toPkrValue, trackMetaPixel } from "@/lib/seo/meta-pixel-client";
 import type { SavedAddress } from "@/app/lib/saved-addresses";
-import { pakistanCheckoutPhoneError } from "@/app/lib/validate-pakistan-phone";
+import { pakistanCheckoutPhoneError, isValidPakistanCheckoutPhone } from "@/app/lib/validate-pakistan-phone";
 
 const CHECKOUT_TEMPLATE = PAKISTAN_STANDARD_CHECKOUT;
 
@@ -170,6 +170,7 @@ export default function CheckoutPage() {
   }, []);
 
   const [formError, setFormError] = useState<string | null>(null);
+  const [duplicatePhoneWarning, setDuplicatePhoneWarning] = useState<string | null>(null);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
   const [signInModalReason, setSignInModalReason] = useState<SignInModalReason>("general");
   const [savedAddressDeleteId, setSavedAddressDeleteId] = useState<string | null>(null);
@@ -679,6 +680,49 @@ export default function CheckoutPage() {
     };
   }, [authReady, session, user, nameProfile, router]);
 
+  useEffect(() => {
+    const phone = formValues.phone?.trim() ?? "";
+    if (!phone || !isValidPakistanCheckoutPhone(phone)) {
+      setDuplicatePhoneWarning(null);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch("/api/checkout/recent-phone-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone }),
+          });
+          const data = (await res.json()) as {
+            recent?: boolean;
+            order_number?: string;
+          };
+          if (cancelled) return;
+          if (data.recent) {
+            const ref = data.order_number?.trim();
+            setDuplicatePhoneWarning(
+              ref
+                ? `Aap ne kal bhi order kiya tha (#${ref}) — duplicate? Agar galti se dobara ho raha hai to cancel kar dein.`
+                : "Aap ne kal bhi order kiya tha — duplicate? Agar galti se dobara ho raha hai to cancel kar dein.",
+            );
+          } else {
+            setDuplicatePhoneWarning(null);
+          }
+        } catch {
+          if (!cancelled) setDuplicatePhoneWarning(null);
+        }
+      })();
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [formValues.phone]);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const phoneError = pakistanCheckoutPhoneError(formValues.phone);
@@ -940,7 +984,10 @@ export default function CheckoutPage() {
                       }
                     }
                   }
-                  if (id === "phone") setFormError(null);
+                  if (id === "phone") {
+                    setFormError(null);
+                    setDuplicatePhoneWarning(null);
+                  }
                   setSaveAddressErrors((prev) => {
                     if (!prev[id]) return prev;
                     const next = { ...prev };
@@ -951,6 +998,7 @@ export default function CheckoutPage() {
                 inputClassName={inputClass}
                 rootClassName="mt-0 space-y-4"
                 phoneError={formError}
+                duplicatePhoneWarning={duplicatePhoneWarning}
                 signedIn={signedIn}
                 onRequestSignIn={() => openSignInModal("general")}
                 saveForNextTime={saveForNextTime}

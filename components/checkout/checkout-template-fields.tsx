@@ -16,6 +16,8 @@ type Props = {
   /** Root stack spacing (default matches checkout: mt-8 between sections). */
   rootClassName?: string;
   phoneError?: string | null;
+  /** Soft hint when this phone placed an order in the last 24 hours. */
+  duplicatePhoneWarning?: string | null;
   signedIn?: boolean;
   onRequestSignIn?: () => void;
   saveForNextTime?: boolean;
@@ -37,6 +39,7 @@ export function CheckoutTemplateFields({
   inputClassName,
   rootClassName = "mt-8 space-y-8",
   phoneError,
+  duplicatePhoneWarning,
   signedIn = false,
   onRequestSignIn,
   saveForNextTime = false,
@@ -144,6 +147,14 @@ export function CheckoutTemplateFields({
                     {phoneError ? (
                       <p className="mt-2 text-xs text-red-600" role="alert">
                         {phoneError}
+                      </p>
+                    ) : null}
+                    {!phoneError && duplicatePhoneWarning ? (
+                      <p
+                        className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+                        role="status"
+                      >
+                        {duplicatePhoneWarning}
                       </p>
                     ) : null}
                   </div>

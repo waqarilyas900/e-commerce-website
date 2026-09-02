@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { SearchNoResultsFallback } from "@/components/search/search-no-results-fallback";
 import { SearchResultsSkeleton } from "@/components/search/search-results-skeleton";
 import type { Product } from "@/app/lib/catalog/types";
 import { trackMetaPixel } from "@/lib/seo/meta-pixel-client";
@@ -129,12 +129,7 @@ export function SearchPageInteractive({ initialQuery, initialProducts }: Props) 
       ) : activeQuery.length === 0 ? (
         <p className="mt-6 text-sm text-neutral-600 sm:mt-8">Enter a term to search the catalog.</p>
       ) : products.length === 0 ? (
-        <p className="mt-6 text-sm text-neutral-600 sm:mt-8">
-          No products matched &ldquo;{activeQuery}&rdquo;.{" "}
-          <Link href="/collections" className="font-medium text-neutral-900 underline">
-            Browse collections
-          </Link>
-        </p>
+        <SearchNoResultsFallback query={activeQuery} />
       ) : (
         <ScrollReveal delay={0.05}>
           <p className="mt-4 text-sm text-neutral-600 sm:mt-5">

@@ -27,7 +27,8 @@
     "catalog:organize": "tsx scripts/organize-catalog-collections.ts",
     "cron:restock": "node scripts/run-restock-cron.mjs",
     "cron:restock:deploy": "node scripts/push-restock-edge.mjs",
-    "cron:review-request": "node scripts/run-review-request-cron.mjs"
+    "cron:review-request": "node scripts/run-review-request-cron.mjs",
+    "cron:price-drop": "node scripts/run-price-drop-cron.mjs"
   },
   "dependencies": {
     "@supabase/auth-js": "^2.104.1",
