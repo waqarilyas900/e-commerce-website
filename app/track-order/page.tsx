@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
+import { buildRoutePageMetadata } from "@/lib/seo";
 import { TrackOrderPageClient } from "@/components/account/track-order-page-client";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildRoutePageMetadata("/track-order", {
+    title: "Track Order",
+    description:
+      "Track your SimpleCart Store order status with your order number and phone. Delivery updates for shoppers across Pakistan.",
+  });
+}
 
 export default function TrackOrderPage() {
   return (

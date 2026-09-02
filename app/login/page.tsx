@@ -1,8 +1,17 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 
+import { buildRoutePageMetadata } from "@/lib/seo";
 import { LoginForm } from "./login-form";
 import { LoginSignedOutGate } from "./login-signed-out-gate";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildRoutePageMetadata("/login", {
+    title: "Sign In",
+    forceNoindex: true,
+  });
+}
 
 function LoginMain() {
   return (

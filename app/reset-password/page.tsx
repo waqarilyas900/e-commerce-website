@@ -1,6 +1,15 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
+import { buildRoutePageMetadata } from "@/lib/seo";
 import { ResetPasswordForm } from "./reset-password-form";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildRoutePageMetadata("/reset-password", {
+    title: "New Password",
+    forceNoindex: true,
+  });
+}
 
 export default function ResetPasswordPage() {
   return (

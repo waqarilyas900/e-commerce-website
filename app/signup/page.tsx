@@ -1,6 +1,15 @@
 import { SignedOutOnly } from "@/components/auth/signed-out-only";
+import type { Metadata } from "next";
 
+import { buildRoutePageMetadata } from "@/lib/seo";
 import { SignupForm } from "./signup-form";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildRoutePageMetadata("/signup", {
+    title: "Create Account",
+    forceNoindex: true,
+  });
+}
 
 export default function SignupPage() {
   return (

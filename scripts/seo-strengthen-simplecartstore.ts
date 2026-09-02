@@ -36,6 +36,11 @@ function firstImage(images: unknown): string {
   return typeof hit === "string" ? hit.trim() : "";
 }
 
+function isBrandOnlyTitle(title: string): boolean {
+  const key = title.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return !key || ["simplecartstore", "simplecart", "outflint", "outflintstore"].includes(key);
+}
+
 type RouteDef = {
   key: string;
   title: string;
@@ -345,8 +350,9 @@ async function main() {
       .eq("locale", "en")
       .maybeSingle();
 
+    const existingTitle = existing?.title?.trim() ?? "";
     const payload = {
-      title: existing?.title?.trim() || title,
+      title: existingTitle && !isBrandOnlyTitle(existingTitle) ? existingTitle : title,
       description: existing?.description?.trim() || description,
       keywords,
       og_image_url: existing?.og_image_url?.trim() || img,

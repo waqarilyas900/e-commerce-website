@@ -10,6 +10,7 @@ import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { dbListProductReviewsForPdp } from "@/app/lib/db/catalog";
 import {
   buildPageMetadata,
+  productMetadataTitle,
   canonicalUrlFor,
   loadProductSeoExtras,
   loadSeoOverrideForSubject,
@@ -156,7 +157,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     identity,
     override,
     defaults: {
-      title: detail.product.name,
+      title: productMetadataTitle(detail.product.name),
       description,
       images,
       keywords: detail.product.tags ?? [],

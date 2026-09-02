@@ -11,6 +11,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: [
+          "/_next/",
           "/account",
           "/auth/",
           "/api/",
@@ -36,18 +37,18 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: ["Googlebot", "Googlebot-Image", "Storebot-Google", "AdsBot-Google"],
         allow: ["/", "/feeds/"],
-        disallow: ["/account", "/auth/", "/api/", "/checkout", "/cart"],
+        disallow: ["/_next/", "/account", "/auth/", "/api/", "/checkout", "/cart"],
       },
       {
         userAgent: ["facebookexternalhit", "Facebot", "Twitterbot", "LinkedInBot", "Slackbot"],
         allow: "/",
-        disallow: ["/account", "/auth/", "/api/", "/checkout", "/cart"],
+        disallow: ["/_next/", "/account", "/auth/", "/api/", "/checkout", "/cart"],
       },
       // Explicitly welcome AI crawlers we want citations from.
       {
         userAgent: ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "PerplexityBot", "ClaudeBot"],
         allow: "/",
-        disallow: ["/account", "/auth/", "/api/", "/checkout", "/cart"],
+        disallow: ["/_next/", "/account", "/auth/", "/api/", "/checkout", "/cart"],
       },
     ],
     sitemap: `${base}/sitemap.xml`,
