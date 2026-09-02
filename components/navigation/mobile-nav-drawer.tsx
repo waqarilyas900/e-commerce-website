@@ -315,16 +315,25 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                       <p className="truncate text-[10px] text-neutral-500">{authUser.email}</p>
                     </div>
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void signOut();
-                      onClose();
-                    }}
-                    className="rounded-md px-2 py-1 text-[11px] font-semibold text-neutral-500 transition hover:bg-red-50 hover:text-red-600"
-                  >
-                    Sign out
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Link
+                      href="/account/wishlist"
+                      onClick={onClose}
+                      className="rounded-md px-2 py-1 text-[11px] font-semibold text-neutral-600 transition hover:bg-neutral-200/70 hover:text-neutral-900"
+                    >
+                      Wishlist
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void signOut();
+                        onClose();
+                      }}
+                      className="rounded-md px-2 py-1 text-[11px] font-semibold text-neutral-500 transition hover:bg-red-50 hover:text-red-600"
+                    >
+                      Sign out
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-2">

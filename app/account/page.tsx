@@ -33,6 +33,17 @@ export default function AccountPage() {
             </span>
           </Link>
         </li>
+        <li>
+          <Link
+            href="/account/wishlist"
+            className="block rounded-xl border border-neutral-200 bg-white p-5 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+          >
+            <span className="text-sm font-normal text-neutral-900">Wishlist</span>
+            <span className="mt-1 block text-sm text-neutral-600">
+              Saved products — add to cart when they&apos;re in stock
+            </span>
+          </Link>
+        </li>
       </ul>
     </>
   );

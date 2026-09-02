@@ -233,6 +233,9 @@ export function HeaderAccountV2() {
               <Link href="/login?next=/account/orders" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 My Orders
               </Link>
+              <Link href="/login?next=/account/wishlist" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                Wishlist
+              </Link>
               <Link href="/contact" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Help Center
               </Link>
@@ -245,6 +248,9 @@ export function HeaderAccountV2() {
               </div>
               <Link href="/account/orders" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 My Orders
+              </Link>
+              <Link href="/account/wishlist" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                Wishlist
               </Link>
               <Link href="/account/profile" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Profile
@@ -409,6 +415,9 @@ export function HeaderAccount() {
               </Link>
               <Link href="/account/orders" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Order history
+              </Link>
+              <Link href="/account/wishlist" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                Wishlist
               </Link>
               <div className="my-1 border-t border-neutral-100" role="separator" />
               <button

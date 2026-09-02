@@ -138,10 +138,12 @@ export async function GET(req: Request) {
 }
 
 type PostBody = {
-  productId: string;
+  productId?: string;
   inWishlist: boolean;
   /** When set, row is tied to this SKU */
   productVariantId?: string | null;
+  /** Wishlist page remove: delete by primary key (must belong to user) */
+  wishlistItemId?: string | null;
   /** When no variant: full option map + keys (server recomputes fingerprint) */
   requestedOptionValues?: Record<string, string> | null;
   dimensionKeys?: string[];
@@ -170,6 +172,23 @@ export async function POST(req: Request) {
     body = (await req.json()) as PostBody;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const wishlistItemId =
+    typeof body.wishlistItemId === "string" && body.wishlistItemId.trim()
+      ? body.wishlistItemId.trim()
+      : null;
+
+  if (body.inWishlist === false && wishlistItemId) {
+    const { error } = await supabase
+      .from("wishlist_items")
+      .delete()
+      .eq("id", wishlistItemId)
+      .eq("user_id", userId);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ ok: true });
   }
 
   const productId = typeof body.productId === "string" ? body.productId.trim() : "";

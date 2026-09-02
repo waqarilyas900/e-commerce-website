@@ -8,8 +8,16 @@ export function toastWishlistAdded(productName?: string, options?: { restockNoti
         ? `${productName} — we’ll email you when this option is back in stock.`
         : "We’ll email you when this option is back in stock."
       : productName
-        ? `${productName} is saved — open your account when you’re ready.`
-        : "Saved to your wishlist.",
+        ? `${productName} is saved — view it under Account → Wishlist.`
+        : "Saved — view it under Account → Wishlist.",
+    action: {
+      label: "View wishlist",
+      onClick: () => {
+        if (typeof window !== "undefined") {
+          window.location.href = "/account/wishlist";
+        }
+      },
+    },
     duration: restock ? 4200 : 3800,
   });
 }
