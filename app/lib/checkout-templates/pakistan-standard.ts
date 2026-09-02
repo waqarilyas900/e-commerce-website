@@ -1,3 +1,4 @@
+import { PAKISTAN_PROVINCE_OPTIONS } from "@/app/lib/checkout-templates/pakistan-provinces";
 import type { CheckoutTemplateDef } from "@/app/lib/checkout-templates/types";
 
 /** Full COD + Pakistan address flow — default for this storefront. */
@@ -57,10 +58,18 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
         {
           id: "shipping_city",
           label: "City",
-          type: "text",
+          type: "city",
           autoComplete: "address-level2",
           required: true,
           colSpan: 1,
+        },
+        {
+          id: "shipping_province",
+          label: "Province",
+          type: "select",
+          required: true,
+          colSpan: 1,
+          options: PAKISTAN_PROVINCE_OPTIONS,
         },
         {
           id: "shipping_postal_code",
@@ -68,7 +77,7 @@ export const PAKISTAN_STANDARD_CHECKOUT: CheckoutTemplateDef = {
           type: "text",
           autoComplete: "postal-code",
           required: false,
-          colSpan: 1,
+          colSpan: 2,
         },
         {
           id: "phone",

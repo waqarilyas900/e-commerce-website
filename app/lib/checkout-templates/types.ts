@@ -9,7 +9,8 @@ export type CheckoutFieldType =
   | "phone"
   | "textarea"
   | "select"
-  | "country";
+  | "country"
+  | "city";
 
 export type CheckoutSelectOption = { value: string; label: string };
 

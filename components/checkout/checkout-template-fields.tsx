@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ProfilePhoneField } from "@/components/account/profile-phone-field";
+import { CheckoutCityCombobox } from "@/components/checkout/checkout-city-combobox";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Radio } from "@/components/ui/radio";
 import type { CheckoutTemplateDef } from "@/app/lib/checkout-templates/types";
@@ -170,9 +171,31 @@ export function CheckoutTemplateFields({
                 );
               }
 
+              if (field.type === "city") {
+                return (
+                  <div key={field.id} className={span}>
+                    <CheckoutCityCombobox
+                      id={`co-${field.id}`}
+                      value={v}
+                      onChange={(next) => onChange(field.id, next)}
+                      onProvinceSuggest={(province) => onChange("shipping_province", province)}
+                      inputClassName={inputClassName}
+                      required={
+                        signedIn ? field.required : field.id === "email" ? false : field.required
+                      }
+                      placeholder={resolvedPlaceholder}
+                      error={saveAddressErrors[field.id]}
+                    />
+                  </div>
+                );
+              }
+
               if (field.type === "select") {
                 return (
                   <div key={field.id} className={span}>
+                    <label htmlFor={`co-${field.id}`} className="sr-only">
+                      {field.label}
+                    </label>
                     <select
                       id={`co-${field.id}`}
                       required={signedIn ? field.required : field.id === "email" ? false : field.required}

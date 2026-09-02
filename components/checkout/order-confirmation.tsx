@@ -270,6 +270,15 @@ export function OrderConfirmation({
           >
             Continue shopping
           </Link>
+          {orderNumber ? (
+            <Link
+              href={`/track-order?order=${encodeURIComponent(orderNumber)}`}
+              replace
+              className="inline-flex items-center justify-center rounded-full border-2 border-emerald-600 bg-emerald-50 px-8 py-3.5 text-sm font-semibold text-emerald-950 transition hover:border-emerald-700 hover:bg-emerald-100"
+            >
+              Track this order
+            </Link>
+          ) : null}
           {signedIn ? (
             <Link
               href="/account/orders"

@@ -19,6 +19,8 @@ const footerSectionHeadingClass =
 /** Always shown in Customer care; not editable from admin. Footer-only (not header). */
 const CONTACT_US_HREF = "/contact";
 const CONTACT_US_LABEL = "Contact us";
+const TRACK_ORDER_HREF = "/track-order";
+const TRACK_ORDER_LABEL = "Track order";
 const ABOUT_US_HREF = "/about";
 const ABOUT_US_LABEL = "About us";
 const HOW_TO_BUY_HREF = "/how-to-buy";
@@ -34,6 +36,7 @@ const TERMS_LABEL = "Terms & Conditions";
 
 const HARDCODED_CUSTOMER_CARE_PATHS = [
   CONTACT_US_HREF,
+  TRACK_ORDER_HREF,
   ABOUT_US_HREF,
   HOW_TO_BUY_HREF,
   BLOGS_HREF,
@@ -173,6 +176,7 @@ function PolicyNavLink({ href, children }: { href: string; children: React.React
 function PolicyLinksList({ policyRows }: { policyRows: { label: string; href: string }[] }) {
   const hardcoded = [
     { key: "__contact-us", href: CONTACT_US_HREF, label: CONTACT_US_LABEL },
+    { key: "__track-order", href: TRACK_ORDER_HREF, label: TRACK_ORDER_LABEL },
     { key: "__about-us", href: ABOUT_US_HREF, label: ABOUT_US_LABEL },
     { key: "__how-to-buy", href: HOW_TO_BUY_HREF, label: HOW_TO_BUY_LABEL },
     { key: "__blogs", href: BLOGS_HREF, label: BLOGS_LABEL },
