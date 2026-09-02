@@ -28,8 +28,6 @@ import { useAuth } from "@/app/providers/auth-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { SiteLogoMark } from "@/components/site-logo";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
-import { OpenParcelCheckoutNotice } from "@/components/trust/open-parcel-trust";
-
 type SignInModalReason = "save-address" | "voucher" | "general";
 
 const SIGN_IN_MODAL_COPY: Record<SignInModalReason, { title: string; description: string }> = {
@@ -969,10 +967,10 @@ export default function CheckoutPage() {
             </div>
 
             <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
-              <h2 className="text-base font-semibold text-neutral-900">Shipping method</h2>
+              <h2 className="text-base font-semibold text-neutral-900">Shipping method COD</h2>
               <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-sm">
                 <span className="text-sm leading-tight text-neutral-800">
-                  Standard delivery — ships in 3–5 business days
+                  Cash on Delivery (COD)
                 </span>
                 <span className="shrink-0 tabular-nums font-semibold text-neutral-900">
                   {deliveryPkr <= 0 ? "Free" : formatPkr(deliveryPkr)}
@@ -988,25 +986,6 @@ export default function CheckoutPage() {
               <p className="mt-3 text-xs text-neutral-600">
                 Estimated delivery: 3–5 business days after confirmation.
               </p>
-            </section>
-
-            <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
-              <h2 className="text-base font-semibold text-neutral-900">Payment</h2>
-              <p className="mt-1 text-xs text-neutral-500">
-                All transactions are secure and encrypted.
-              </p>
-              <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-bold text-neutral-900">Cash on Delivery (COD)</p>
-                  <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
-                    Open Parcel Allowed
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-neutral-600">
-                  Pay with cash when your parcel arrives at your doorstep across Pakistan.
-                </p>
-                <OpenParcelCheckoutNotice />
-              </div>
             </section>
 
               {signedIn ? (
