@@ -13,6 +13,7 @@ import {
 } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { hasCatalogDb } from "@/app/lib/db/env";
+import { normalizeCompareAtPrice } from "@/lib/cart-savings";
 
 const STORAGE_KEY = "storefront-cart-v2";
 const UUID_RE =
@@ -27,6 +28,8 @@ export type CartLine = {
 /** Catalog snapshot from PDP/PLP — skips network resolve when adding to cart. */
 export type CartLineSeed = {
   unitPrice: number;
+  /** Variant compare-at when on sale; omitted when not discounted. */
+  compareAtPrice?: number;
   product: {
     id: string;
     slug: string;
@@ -42,6 +45,8 @@ export type CartLineSeed = {
 export type ResolvedCartLine = {
   line: CartLine;
   unitPrice: number;
+  /** Compare-at unit price when the variant is on sale. */
+  compareAtPrice?: number;
   product: {
     id: string;
     slug: string;
@@ -103,6 +108,7 @@ function buildResolvedFromSeed(line: CartLine, seed: CartLineSeed): ResolvedCart
   return {
     line,
     unitPrice: seed.unitPrice,
+    compareAtPrice: normalizeCompareAtPrice(seed.unitPrice, seed.compareAtPrice),
     product: seed.product,
     variantLabel: seed.variantLabel,
     sku,
@@ -193,6 +199,10 @@ function readStorage(): { lines: CartLine[]; resolved: ResolvedCartLine[] } {
             quantity: Math.floor(r.line.quantity),
           },
           unitPrice: r.unitPrice,
+          compareAtPrice:
+            r.compareAtPrice != null && Number.isFinite(r.compareAtPrice)
+              ? normalizeCompareAtPrice(r.unitPrice, r.compareAtPrice)
+              : undefined,
           product: {
             id: r.product.id,
             slug: r.product.slug,
@@ -329,7 +339,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .map((l) => l.variantId)
       .filter((id) => !cached.some((r) => r.line.variantId === id));
 
-    if (missingVariantIds.length === 0 && cached.length === lines.length) {
+    const needsCompareAtBackfill = cached.some((r) => r.compareAtPrice == null);
+
+    if (
+      missingVariantIds.length === 0 &&
+      cached.length === lines.length &&
+      !needsCompareAtBackfill
+    ) {
       setResolvedLines(cached);
       setIsResolvingCart(false);
       flushCartResolutionWaiters(resolutionWaiters);
@@ -346,11 +362,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const supabase = createClient();
-        const idsToFetch = [...new Set(missingVariantIds)];
+        const idsToFetch = [
+          ...new Set(
+            needsCompareAtBackfill
+              ? lines.map((l) => l.variantId)
+              : missingVariantIds,
+          ),
+        ];
 
         const { data: variantRows, error: vErr } = await supabase
           .from("product_variants")
-          .select("id, price, option_values, product_id, sku")
+          .select("id, price, compare_at_price, option_values, product_id, sku")
           .in("id", idsToFetch);
 
         if (vErr || cancelled) {
@@ -419,6 +441,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           string,
           {
             price: number;
+            compare_at_price: number | null;
             option_values: Record<string, string>;
             productId: string;
             sku: string;
@@ -427,6 +450,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         for (const row of variantRows ?? []) {
           variantMeta.set(row.id as string, {
             price: Number(row.price),
+            compare_at_price:
+              row.compare_at_price != null ? Number(row.compare_at_price) : null,
             option_values: (row.option_values ?? {}) as Record<string, string>,
             productId: row.product_id as string,
             sku: String(row.sku ?? "").trim(),
@@ -438,8 +463,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (!missingVariantIds.includes(line.variantId)) {
             const hit = cached.find((r) => r.line.variantId === line.variantId);
             if (hit) {
+              const vr = variantMeta.get(line.variantId);
+              const compareAtPrice =
+                hit.compareAtPrice ??
+                (vr
+                  ? normalizeCompareAtPrice(hit.unitPrice, vr.compare_at_price)
+                  : undefined);
               resolved.push({
                 ...hit,
+                compareAtPrice,
                 line: { ...hit.line, quantity: line.quantity, productId: line.productId },
               });
             }
@@ -455,6 +487,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           resolved.push({
             line,
             unitPrice: vr.price,
+            compareAtPrice: normalizeCompareAtPrice(vr.price, vr.compare_at_price),
             product: {
               id: pr.id,
               slug: pr.slug,

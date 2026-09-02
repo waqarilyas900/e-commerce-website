@@ -28,12 +28,18 @@ export function cartSeedFromPdp(params: {
     id: string;
     sku?: string | null;
     price: number | string;
+    compare_at_price?: number | string | null;
     option_values?: Record<string, string> | null;
   };
 }): CartLineSeed {
   const sku = String(params.variant.sku ?? "").trim();
+  const unitPrice = Number(params.variant.price);
+  const compareAtRaw = params.variant.compare_at_price;
+  const compareAtPrice =
+    compareAtRaw != null && compareAtRaw !== "" ? Number(compareAtRaw) : undefined;
   return {
-    unitPrice: Number(params.variant.price),
+    unitPrice,
+    compareAtPrice,
     product: {
       id: params.product.id,
       slug: params.product.slug,
@@ -53,6 +59,7 @@ export function cartSeedFromProduct(product: Product): CartLineSeed | undefined 
   const sku = (product.defaultVariantSku ?? "").trim();
   return {
     unitPrice: product.price,
+    compareAtPrice: product.compareAtPrice,
     product: {
       id: product.id,
       slug: product.slug,

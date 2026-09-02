@@ -23,6 +23,8 @@ import { computeDeliveryPkr } from "@/app/lib/delivery-pricing";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 import { CartFreeDeliveryProgress } from "@/components/cart/cart-free-delivery-progress";
 import { OpenParcelCartPill } from "@/components/trust/open-parcel-trust";
+import { CartSavingsRow } from "@/components/cart/cart-savings-row";
+import { computeCompareAtSavingsPkr } from "@/lib/cart-savings";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
@@ -216,6 +218,11 @@ export function CartDrawer() {
     return Math.max(0, subtotal + deliveryPkr);
   }, [subtotal, deliveryPkr]);
 
+  const compareAtSavingsPkr = useMemo(
+    () => computeCompareAtSavingsPkr(resolvedLines),
+    [resolvedLines],
+  );
+
   /** “You might also like” only when the cart is empty (Shopify-style). */
   const showEmptyCartRecommendations = lines.length === 0;
 
@@ -397,7 +404,7 @@ export function CartDrawer() {
                       ))}
                     </div>
                   ) : (
-                    resolvedLines.map(({ line, product, unitPrice, variantLabel }) => (
+                    resolvedLines.map(({ line, product, unitPrice, compareAtPrice, variantLabel }) => (
                       <motion.article
                         key={line.variantId}
                         className="flex gap-4"
@@ -469,9 +476,16 @@ export function CartDrawer() {
                                 +
                               </motion.button>
                             </div>
-                            <p className="shrink-0 text-sm font-medium tabular-nums">
-                              {formatPkr(unitPrice * line.quantity)}
-                            </p>
+                            <div className="text-right">
+                              {compareAtPrice && compareAtPrice > unitPrice ? (
+                                <p className="text-[11px] tabular-nums text-neutral-400 line-through">
+                                  {formatPkr(compareAtPrice * line.quantity)}
+                                </p>
+                              ) : null}
+                              <p className="shrink-0 text-sm font-medium tabular-nums">
+                                {formatPkr(unitPrice * line.quantity)}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </motion.article>
@@ -517,6 +531,7 @@ export function CartDrawer() {
                       {resolvedLines.length > 0 ? formatPkr(subtotal) : "…"}
                     </span>
                   </div>
+                  <CartSavingsRow savingsPkr={compareAtSavingsPkr} />
                   <div className="flex items-center justify-between text-sm text-neutral-600">
                     <span>Shipping</span>
                     <span className="tabular-nums text-neutral-900">

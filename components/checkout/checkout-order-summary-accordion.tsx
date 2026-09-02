@@ -7,6 +7,8 @@ import { formatPkr } from "@/app/lib/format-currency";
 import type { ResolvedCartLine } from "@/app/providers/cart-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { ModalShell } from "@/components/ui/modal-shell";
+import { CartSavingsRow } from "@/components/cart/cart-savings-row";
+import { computeCompareAtSavingsPkr } from "@/lib/cart-savings";
 
 const easeCheckout: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -85,6 +87,7 @@ function CheckoutOrderSummaryBody({
   const showNotice = Boolean(discountNotice);
   const inputError = showNotice && discountNoticeIsError;
   const [shippingPolicyOpen, setShippingPolicyOpen] = useState(false);
+  const compareAtSavingsPkr = computeCompareAtSavingsPkr(lines);
 
   const freeThreshold =
     freeShippingThresholdPkr != null && freeShippingThresholdPkr > 0
@@ -101,8 +104,12 @@ function CheckoutOrderSummaryBody({
         {cartLoading ? (
           <li className="py-6 text-center text-sm text-neutral-500">Loading your cart…</li>
         ) : (
-        lines.map(({ line, product, unitPrice, variantLabel }) => {
+        lines.map(({ line, product, unitPrice, compareAtPrice, variantLabel }) => {
           const lineTotal = unitPrice * line.quantity;
+          const lineCompareTotal =
+            compareAtPrice && compareAtPrice > unitPrice
+              ? compareAtPrice * line.quantity
+              : null;
           return (
             <li key={line.variantId} className="flex gap-3 text-sm">
               <div className="relative h-16 w-16 shrink-0">
@@ -124,9 +131,16 @@ function CheckoutOrderSummaryBody({
                   <p className="mt-0.5 text-xs text-neutral-500">{variantLabel}</p>
                 ) : null}
               </div>
-              <p className="shrink-0 self-start tabular-nums font-semibold text-neutral-900">
-                {formatPkr(lineTotal)}
-              </p>
+              <div className="shrink-0 self-start text-right">
+                {lineCompareTotal != null ? (
+                  <p className="text-[11px] tabular-nums text-neutral-400 line-through">
+                    {formatPkr(lineCompareTotal)}
+                  </p>
+                ) : null}
+                <p className="tabular-nums font-semibold text-neutral-900">
+                  {formatPkr(lineTotal)}
+                </p>
+              </div>
             </li>
           );
         })
@@ -186,6 +200,7 @@ function CheckoutOrderSummaryBody({
           <span>Subtotal</span>
           <span className="tabular-nums">{formatPkr(subtotal)}</span>
         </div>
+        <CartSavingsRow savingsPkr={compareAtSavingsPkr} />
         <div className="flex justify-between gap-4 text-neutral-700">
           <span className="inline-flex items-center gap-1.5">
             Shipping
