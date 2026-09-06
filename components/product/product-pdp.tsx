@@ -39,7 +39,11 @@ import { useRouter } from "next/navigation";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import type { FaqItem } from "@/lib/seo/jsonld/faq";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
-import { OpenParcelPDPBadge } from "@/components/trust/open-parcel-trust";
+import {
+  OpenParcelPDPBadge,
+  OpenParcelPriceTrustLine,
+  OpenParcelStickyHint,
+} from "@/components/trust/open-parcel-trust";
 import { parseProductVideoSource } from "@/lib/product-video/url";
 import { formatPurchaseStockMessage, isLowStock } from "@/lib/low-stock";
 import { recordRecentlyViewed } from "@/lib/recently-viewed";
@@ -872,39 +876,43 @@ export function ProductPdp({
 
           {variants.length > 0 && priceVariant ? (
             <div ref={purchaseBlockRef} className="space-y-4">
-              <div className="flex flex-wrap items-baseline gap-2">
-                {matchedVariant ? (
-                  priceVariant.compare_at_price != null &&
-                  priceVariant.compare_at_price > priceVariant.price ? (
-                    <>
-                      <span className="text-lg text-neutral-500 line-through">
-                        {formatPkr(Number(priceVariant.compare_at_price))}
-                      </span>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  {matchedVariant ? (
+                    priceVariant.compare_at_price != null &&
+                    priceVariant.compare_at_price > priceVariant.price ? (
+                      <>
+                        <span className="text-lg text-neutral-500 line-through">
+                          {formatPkr(Number(priceVariant.compare_at_price))}
+                        </span>
+                        <p className="text-2xl font-semibold">
+                          {formatPkr(Number(priceVariant.price))}
+                        </p>
+                        {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
+                          <span className="inline-flex items-center rounded-none bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
+                            {purchaseDiscountPct}% OFF
+                          </span>
+                        ) : null}
+                      </>
+                    ) : (
                       <p className="text-2xl font-semibold">
                         {formatPkr(Number(priceVariant.price))}
                       </p>
-                      {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
-                        <span className="inline-flex items-center rounded-none bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
-                          {purchaseDiscountPct}% OFF
-                        </span>
-                      ) : null}
-                    </>
+                    )
                   ) : (
-                    <p className="text-2xl font-semibold">
-                      {formatPkr(Number(priceVariant.price))}
-                    </p>
-                  )
-                ) : (
-                  <div className="space-y-1">
-                    <p className="text-2xl font-semibold text-neutral-900">
-                      {formatPkr(Number(priceVariant.price))}
-                    </p>
-                    <p className="text-sm text-neutral-500">
-                      Select all options to see stock and add to cart.
-                    </p>
-                  </div>
-                )}
+                    <div className="space-y-1">
+                      <p className="text-2xl font-semibold text-neutral-900">
+                        {formatPkr(Number(priceVariant.price))}
+                      </p>
+                      <p className="text-sm text-neutral-500">
+                        Select all options to see stock and add to cart.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <OpenParcelPriceTrustLine />
               </div>
+              <OpenParcelPDPBadge />
               <div
                 role="status"
                 aria-live="polite"
@@ -1101,8 +1109,6 @@ export function ProductPdp({
             </p>
           )}
 
-          <OpenParcelPDPBadge />
-
           {safeDescriptionHtml || product.short_description?.trim() ? (
             <div className="space-y-3">
               {product.short_description?.trim() ? (
@@ -1276,6 +1282,7 @@ export function ProductPdp({
                       )}
                     </div>
                   ) : null}
+                  <OpenParcelStickyHint />
                 </div>
                 <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
                   {matchedVariant && maxQty > 0 ? (

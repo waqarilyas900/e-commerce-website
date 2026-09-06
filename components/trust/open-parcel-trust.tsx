@@ -81,11 +81,44 @@ function RefreshIcon({ className = "w-5 h-5 text-neutral-900" }: { className?: s
 }
 
 /**
+ * Compact line under PDP price — matches ad promise (COD + open parcel) above the fold.
+ */
+export function OpenParcelPriceTrustLine() {
+  return (
+    <div
+      className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-emerald-950 sm:text-[13px]"
+      role="note"
+    >
+      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-emerald-900">
+        <CashDeliveryIcon className="h-3.5 w-3.5 shrink-0 text-emerald-700" />
+        Cash on Delivery
+      </span>
+      <span className="text-neutral-400" aria-hidden>
+        ·
+      </span>
+      <span className="inline-flex items-center gap-1 text-neutral-800">
+        <PackageCheckIcon className="h-3.5 w-3.5 shrink-0 text-emerald-700" />
+        Pehle parcel check, phir payment
+      </span>
+    </div>
+  );
+}
+
+/** Tiny COD / open-parcel hint for the mobile sticky purchase bar. */
+export function OpenParcelStickyHint() {
+  return (
+    <p className="mt-0.5 truncate text-[10px] font-medium leading-tight text-emerald-800 max-[360px]:hidden sm:text-[11px]">
+      COD · Pehle check, phir pay
+    </p>
+  );
+}
+
+/**
  * Product Detail Page (PDP) Trust & Open Parcel Guarantee Box
  */
 export function OpenParcelPDPBadge() {
   return (
-    <div className="my-5 rounded-xl border-2 border-emerald-600/30 bg-emerald-50/40 p-4 sm:p-5">
+    <div className="rounded-xl border-2 border-emerald-600/30 bg-emerald-50/40 p-4 sm:p-5">
       <div className="flex items-start gap-3.5">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
           <PackageCheckIcon className="h-5 w-5 text-white" />
@@ -131,7 +164,8 @@ export function OpenParcelCartPill() {
     <div className="my-3 flex items-center gap-2.5 rounded-lg border border-emerald-600/25 bg-emerald-50/60 px-3 py-2 text-xs text-neutral-800">
       <PackageCheckIcon className="h-4 w-4 shrink-0 text-emerald-700" />
       <p className="leading-snug">
-        <strong className="font-semibold text-emerald-950">Open Parcel Allowed:</strong> Pehle parcel check karein, phir cash payment dein.
+        <strong className="font-semibold text-emerald-950">COD · Open Parcel:</strong>{" "}
+        Pehle parcel check karein, phir cash payment dein.
       </p>
     </div>
   );
@@ -146,10 +180,10 @@ export function OpenParcelCheckoutNotice() {
       <PackageCheckIcon className="h-5 w-5 shrink-0 text-emerald-700" />
       <div className="space-y-0.5">
         <p className="font-bold text-emerald-950 text-xs sm:text-sm">
-          Open Parcel Delivery Guaranteed
+          Cash on Delivery · Open Parcel Guaranteed
         </p>
         <p className="leading-relaxed text-neutral-700">
-          Aapka parcel safe packing mein aayega. Courier rider ke samne parcel khol kar check karein aur tassalli ke baad payment karein.
+          Courier rider ke samne parcel khol kar check karein — tassalli ke baad cash payment karein.
         </p>
       </div>
     </div>
