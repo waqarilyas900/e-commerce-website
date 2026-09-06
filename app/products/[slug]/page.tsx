@@ -32,11 +32,10 @@ import {
 import { PageBreadcrumbs } from "@/components/seo/page-breadcrumbs";
 import {
   findUniqueActiveProductSlugByPrefix,
-  getCachedListCollections,
   getCachedProductDetailBySlug,
+  getCachedProductReviewAggregates,
   getCachedProductsByCollectionSlug,
 } from "@/lib/cache/catalog-data";
-import { dbGetProductReviewAggregates } from "@/app/lib/db/catalog";
 import { hasCatalogDb } from "@/app/lib/db/env";
 
 /**
@@ -191,18 +190,18 @@ export default async function ProductPage({ params }: Props) {
   // Critical-path data (above-the-fold buy box + structured data) — block on
   // these. Related products and reviews are streamed in via Suspense below
   // so the user sees the buy box before those slower joins finish.
+  // Skip loading the full collections list + collection SEO on the critical path;
+  // breadcrumb/H1 use the collection name already on the product detail row.
   const productId = detail.product.id;
   const identityPromise = loadSiteIdentity();
-  const [aggregates, identity, seoExtras, collections, seoOverride] =
-    await Promise.all([
-      dbGetProductReviewAggregates(productId),
-      identityPromise,
-      loadProductSeoExtras(productId),
-      getCachedListCollections(),
-      identityPromise.then((id) =>
-        loadSeoOverrideForSubject("product", productId, id.locale),
-      ),
-    ]);
+  const [aggregates, identity, seoExtras, seoOverride] = await Promise.all([
+    getCachedProductReviewAggregates(productId),
+    identityPromise,
+    loadProductSeoExtras(productId),
+    identityPromise.then((id) =>
+      loadSeoOverrideForSubject("product", productId, id.locale),
+    ),
+  ]);
   if (aggregates) {
     detail = {
       ...detail,
@@ -219,17 +218,8 @@ export default async function ProductPage({ params }: Props) {
     detail.collectionSlug.trim() !== "" &&
     detail.collectionSlug.toLowerCase() !== "uncategorized";
 
-  const parentCollection = hasRealCollection
-    ? collections.find((c) => c.slug === detail.collectionSlug) ?? null
-    : null;
-  const collectionSeo = parentCollection
-    ? await loadSeoOverrideForSubject("collection", parentCollection.id, identity.locale)
-    : null;
   const collectionLabel = hasRealCollection
-    ? seoHeadingFromMetaTitle(
-        collectionSeo?.title,
-        detail.collectionName || detail.collectionSlug,
-      )
+    ? (detail.collectionName || detail.collectionSlug).trim()
     : "";
   const pdpHeading = seoHeadingFromMetaTitle(seoOverride?.title, detail.product.name);
 

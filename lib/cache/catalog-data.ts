@@ -21,6 +21,7 @@ import { unstable_cache } from "next/cache";
 import {
   dbFindUniqueActiveProductSlugByPrefix,
   dbGetProductDetailBySlug,
+  dbGetProductReviewAggregates,
   dbListActiveHomePageSectionsWithTags,
   dbListAllActiveProductsForCards,
   dbListAllActiveProductTiles,
@@ -72,17 +73,32 @@ const HOME_SECTIONS_TTL = 60 * 5;
 /**
  * Memoized PDP detail. Shared across every render of `/products/<slug>` until
  * the per-slug or global products tag is busted. This is the single biggest
- * latency win for the storefront because the underlying helper does up to six
- * sequential queries (product → collections → variants → inventory → colors →
- * assets → option definitions) — caching turns ~600 ms into ~5 ms.
+ * latency win for the storefront because the underlying helper fans out several
+ * Supabase reads after the product row (then inventory + colors) — caching turns
+ * a multi-hundred-ms miss into ~5 ms on hit.
  */
 export function getCachedProductDetailBySlug(slug: string) {
   return unstable_cache(
     async () => dbGetProductDetailBySlug(slug),
-    ["catalog:product-detail-v7", slug],
+    // v8: parallelized product-detail queries (see dbGetProductDetailBySlug).
+    ["catalog:product-detail-v8", slug],
     {
       revalidate: PRODUCT_DETAIL_TTL,
       tags: [CATALOG_CACHE_TAGS.product(slug), CATALOG_CACHE_TAGS.products],
+    },
+  )();
+}
+
+const REVIEW_AGGREGATE_TTL = 60; // 1 minute — fresher than full product detail
+
+/** Short-TTL rating/count for PDP stars (avoids an uncached round-trip on every click). */
+export function getCachedProductReviewAggregates(productId: string) {
+  return unstable_cache(
+    async () => dbGetProductReviewAggregates(productId),
+    ["catalog:product-review-aggregates-v1", productId],
+    {
+      revalidate: REVIEW_AGGREGATE_TTL,
+      tags: [CATALOG_CACHE_TAGS.products, CATALOG_CACHE_TAGS.storeReviewAggregate],
     },
   )();
 }

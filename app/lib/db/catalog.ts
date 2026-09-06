@@ -260,9 +260,9 @@ const PRODUCT_CARD_SELECT =
   "id, slug, name, status, images, rating, reviews_count, stock_total, created_at";
 
 /**
- * Uncached rating / review-count / tags for a product.
- * Used on the PDP so Daraz (or admin) aggregate updates show immediately even
- * when the heavier product-detail cache still holds an older snapshot.
+ * Rating / review-count / tags for a product.
+ * Prefer `getCachedProductReviewAggregates` on the storefront (short TTL) so
+ * PDP clicks are not blocked on an uncached round-trip every time.
  */
 export async function dbGetProductReviewAggregates(productId: string): Promise<{
   rating: number | null;
@@ -628,47 +628,69 @@ export async function dbGetProductDetailBySlug(
 
   const row = p as DbProductRow;
 
-  let collectionSlug = "uncategorized";
-  let collectionName = "";
-  const { data: pcl } = await supabase
-    .from("product_collections")
-    .select("collection_id")
-    .eq("product_id", row.id);
-  const pcIds = (pcl ?? []).map((x: { collection_id: string }) => x.collection_id);
-  if (pcIds.length) {
-    const { data: cdata } = await supabase
-      .from("collections")
-      .select("slug, name, sort_order")
-      .in("id", pcIds);
-    const sorted = [...(cdata ?? [])] as {
-      slug: string;
-      name: string;
-      sort_order: number;
-    }[];
-    sorted.sort((a, b) => a.sort_order - b.sort_order);
-    if (sorted[0]?.slug) {
-      collectionSlug = sorted[0].slug;
-      collectionName = (sorted[0].name || "").trim() || sorted[0].slug;
-    }
+  // Fan out independent reads after the product row is known (was sequential ~600ms).
+  const [pclResult, variantsResult, assetsResult, optsResult] = await Promise.all([
+    supabase.from("product_collections").select("collection_id").eq("product_id", row.id),
+    supabase
+      .from("product_variants")
+      .select("id, product_id, sku, option_values, price, compare_at_price, size_id, color_id")
+      .eq("product_id", row.id),
+    supabase
+      .from("product_assets")
+      .select("id, product_id, url, kind, sort_order, alt_text")
+      .eq("product_id", row.id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_option_definitions")
+      .select("option_key, label, presentation, sort_order")
+      .eq("product_id", row.id)
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  if (variantsResult.error) {
+    logDbCatalogIssue("productVariants", variantsResult.error.message);
+    throw new Error(`productVariants: ${variantsResult.error.message}`);
+  }
+  if (assetsResult.error) {
+    logDbCatalogIssue("productAssets", assetsResult.error.message);
+  }
+  if (optsResult.error) {
+    logDbCatalogIssue("productOptionDefinitions", optsResult.error.message);
   }
 
-  const { data: rawVariants, error: vErr } = await supabase
-    .from("product_variants")
-    .select("id, product_id, sku, option_values, price, compare_at_price, size_id, color_id")
-    .eq("product_id", row.id);
-
-  if (vErr) {
-    logDbCatalogIssue("productVariants", vErr.message);
-    throw new Error(`productVariants: ${vErr.message}`);
-  }
-
-  const merged = await mergeInventoryForVariants(
-    supabase,
-    (rawVariants ?? []) as Omit<
-      DbProductVariantRow,
-      "quantity_on_hand" | "quantity_reserved"
-    >[],
+  const pcIds = (pclResult.data ?? []).map(
+    (x: { collection_id: string }) => x.collection_id,
   );
+
+  const [collectionResolved, merged] = await Promise.all([
+    (async (): Promise<{ slug: string; name: string }> => {
+      if (!pcIds.length) return { slug: "uncategorized", name: "" };
+      const { data: cdata } = await supabase
+        .from("collections")
+        .select("slug, name, sort_order")
+        .in("id", pcIds);
+      const sorted = [...(cdata ?? [])] as {
+        slug: string;
+        name: string;
+        sort_order: number;
+      }[];
+      sorted.sort((a, b) => a.sort_order - b.sort_order);
+      if (sorted[0]?.slug) {
+        return {
+          slug: sorted[0].slug,
+          name: (sorted[0].name || "").trim() || sorted[0].slug,
+        };
+      }
+      return { slug: "uncategorized", name: "" };
+    })(),
+    mergeInventoryForVariants(
+      supabase,
+      (variantsResult.data ?? []) as Omit<
+        DbProductVariantRow,
+        "quantity_on_hand" | "quantity_reserved"
+      >[],
+    ),
+  ]);
 
   const colorIds = [
     ...new Set(
@@ -693,30 +715,10 @@ export async function dbGetProductDetailBySlug(
     }
   }
 
-  const { data: assetRows, error: aErr } = await supabase
-    .from("product_assets")
-    .select("id, product_id, url, kind, sort_order, alt_text")
-    .eq("product_id", row.id)
-    .order("sort_order", { ascending: true });
-
-  if (aErr) {
-    logDbCatalogIssue("productAssets", aErr.message);
-  }
-
-  const { data: optRows, error: optErr } = await supabase
-    .from("product_option_definitions")
-    .select("option_key, label, presentation, sort_order")
-    .eq("product_id", row.id)
-    .order("sort_order", { ascending: true });
-
-  if (optErr) {
-    logDbCatalogIssue("productOptionDefinitions", optErr.message);
-  }
-
   return {
     product: row,
     optionDefinitions: optionDefinitionsFromDbRows(
-      optRows as
+      optsResult.data as
         | {
             option_key: string;
             label: string;
@@ -725,10 +727,10 @@ export async function dbGetProductDetailBySlug(
           }[]
         | null,
     ),
-    collectionSlug,
-    collectionName,
+    collectionSlug: collectionResolved.slug,
+    collectionName: collectionResolved.name,
     variants: merged,
-    assets: (assetRows ?? []) as DbProductAssetRow[],
+    assets: (assetsResult.data ?? []) as DbProductAssetRow[],
     colorById,
   };
 }
