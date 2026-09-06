@@ -47,38 +47,70 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
   return list.length;
 }
 
+/**
+ * Build home rails from `home_page_sections`.
+ * Prefer tag-matched products; if tags return nothing, fill from the same-slug collection
+ * so the homepage never shows empty “0 products” category rails.
+ */
+async function loadRailsFromHomeSections(
+  sections: Awaited<ReturnType<typeof getCachedActiveHomePageSectionsWithTags>>,
+): Promise<HomeRailSection[]> {
+  if (sections.length === 0) return [];
+
+  const [taggedLists, collectionLists] = await Promise.all([
+    Promise.all(
+      sections.map((s) =>
+        s.tagIds.length > 0
+          ? getCachedProductsForHomeSectionTags(s.tagIds, s.slug)
+          : Promise.resolve([] as Product[]),
+      ),
+    ),
+    Promise.all(
+      sections.map((s) => {
+        const slug = normalizeCollectionSlug(s.slug);
+        return getCachedProductsByCollectionSlug(slug);
+      }),
+    ),
+  ]);
+
+  const out: HomeRailSection[] = [];
+  for (let i = 0; i < sections.length; i++) {
+    const s = sections[i]!;
+    const tagged = taggedLists[i] ?? [];
+    const fromCollection = collectionLists[i] ?? [];
+    const useCollection = tagged.length === 0 && fromCollection.length > 0;
+    const source = useCollection ? fromCollection : tagged;
+    if (source.length === 0) continue;
+
+    const items = orderByRatingAndStockPriority(source).slice(0, HOME_RAIL_PREVIEW);
+    if (items.length === 0) continue;
+
+    const slug = normalizeCollectionSlug(s.slug);
+    const title = collectionDisplayName(slug, s.name);
+    const viewAllHref = useCollection ? collectionHref(slug) : `/s/${s.slug}`;
+    const totalProductCount = useCollection ? fromCollection.length : tagged.length;
+
+    out.push({
+      title,
+      viewAllHref,
+      productSlugs: items.map((p) => p.slug),
+      items,
+      totalProductCount,
+    });
+  }
+  return out;
+}
+
 async function loadHomeRails(): Promise<HomeRailSection[]> {
   if (!hasCatalogDb()) {
     return [];
   }
 
   const configuredSections = await getCachedActiveHomePageSectionsWithTags();
-  const sectionsWithTags = configuredSections.filter((s) => s.tagIds.length > 0);
-  if (sectionsWithTags.length > 0) {
-    // Fetch every section's products in parallel, then dedupe in rail order.
-    const rawLists = await Promise.all(
-      sectionsWithTags.map((s) =>
-        getCachedProductsForHomeSectionTags(s.tagIds, s.slug),
-      ),
-    );
-    const usedProductIds = new Set<string>();
-    const out: HomeRailSection[] = [];
-    for (let i = 0; i < sectionsWithTags.length; i++) {
-      const s = sectionsWithTags[i]!;
-      const raw = rawLists[i] ?? [];
-      const available = raw.filter((p) => !usedProductIds.has(p.id));
-      const items = orderByRatingAndStockPriority(available);
-      for (const p of items.slice(0, HOME_RAIL_PREVIEW)) {
-        usedProductIds.add(p.id);
-      }
-      const rail: HomeCategoryRail = {
-        title: s.name,
-        viewAllHref: `/s/${s.slug}`,
-        productSlugs: items.map((p) => p.slug),
-      };
-      out.push({ ...rail, items, totalProductCount: raw.length });
-    }
-    return out;
+  // Prefer sections that have tags OR a matching collection slug — not only tagged ones.
+  if (configuredSections.length > 0) {
+    const fromSections = await loadRailsFromHomeSections(configuredSections);
+    if (fromSections.length > 0) return fromSections;
   }
 
   const rails = await dbGetHomeRailsConfig();
@@ -147,6 +179,8 @@ async function loadHomeRails(): Promise<HomeRailSection[]> {
         usedProductIds.add(p.id);
       }
     }
+
+    if (items.length === 0) continue;
 
     const count =
       collectionProducts.length > 0 ? collectionProducts.length : totalProductCount;
