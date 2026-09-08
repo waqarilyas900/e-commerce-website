@@ -382,20 +382,43 @@ export function CartDrawer() {
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain overscroll-y-contain">
                   {lines.length === 0 ? (
-                    <motion.p
-                      className="text-sm text-neutral-600"
+                    <motion.div
+                      className="space-y-4"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
-                      Your cart is empty.{" "}
+                      <p className="text-sm text-neutral-600">Your cart is empty.</p>
                       <Link
                         href="/collections"
-                        className="font-medium text-neutral-900 underline"
+                        className="btn inline-flex items-center justify-center rounded-none bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white"
                         onClick={closeCart}
                       >
-                        Continue shopping
+                        Browse collections
                       </Link>
-                    </motion.p>
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href="/collections"
+                          onClick={closeCart}
+                          className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                        >
+                          All collections
+                        </Link>
+                        <Link
+                          href="/how-to-buy"
+                          onClick={closeCart}
+                          className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                        >
+                          How to order
+                        </Link>
+                        <Link
+                          href="/track-order"
+                          onClick={closeCart}
+                          className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                        >
+                          Track order
+                        </Link>
+                      </div>
+                    </motion.div>
                   ) : resolvedLines.length === 0 ? (
                     <div className="space-y-5">
                       {lines.map((l) => (
@@ -549,7 +572,7 @@ export function CartDrawer() {
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-neutral-500">
-                  Taxes and discount codes calculated at checkout.
+                  Shipping confirmed at checkout. Pay cash on delivery.
                 </p>
                 {resolvedLines.length > 0 ? (
                   <button
@@ -571,6 +594,11 @@ export function CartDrawer() {
                   >
                     {checkoutNavigating ? "Loading…" : "Check out"}
                   </button>
+                ) : null}
+                {resolvedLines.length > 0 ? (
+                  <p className="mt-2 text-center text-[11px] font-medium text-neutral-600">
+                    No online payment — cash on delivery
+                  </p>
                 ) : null}
               </motion.div>
             ) : null}

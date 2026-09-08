@@ -346,7 +346,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                     <span>Sign In / Register</span>
                   </Link>
                   <Link
-                    href="/account/orders"
+                    href="/track-order"
                     onClick={onClose}
                     className="rounded-full bg-neutral-200/60 px-2.5 py-1 text-[11px] font-medium text-neutral-700 transition hover:bg-neutral-300/70"
                   >
@@ -473,7 +473,18 @@ export function MobileNavDrawer({ open, onClose }: Props) {
               </div>
 
               {/* Direct Call & WhatsApp Action Buttons */}
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 space-y-2">
+                <Link
+                  href="/how-to-buy"
+                  onClick={onClose}
+                  className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-neutral-900 shadow-2xs transition hover:bg-neutral-50"
+                >
+                  <span>How to order (COD)</span>
+                  <span className="text-neutral-400" aria-hidden>
+                    ›
+                  </span>
+                </Link>
+                <div className="grid grid-cols-2 gap-2">
                 <a
                   href={telUrl}
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-neutral-300/80 bg-white py-2.5 text-xs font-bold text-neutral-900 shadow-2xs transition hover:bg-neutral-100 hover:border-neutral-400 active:scale-98"
@@ -490,6 +501,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
                   <WhatsAppIcon className="h-4 w-4" />
                   <span>WhatsApp</span>
                 </a>
+                </div>
               </div>
             </div>
 

@@ -533,10 +533,15 @@ export function ProductPdp({
     (Boolean(matchedVariant) && maxQty < 1) ||
     (!matchedVariant && selectionComplete);
 
-  const purchaseStockMessage =
-    matchedVariant && maxQty > 0
+  const purchaseStockMessage = matchedVariant
+    ? maxQty > 0
       ? formatPurchaseStockMessage(maxQty)
-      : "Out of stock";
+      : "Out of stock"
+    : selectionComplete
+      ? "Out of stock"
+      : keys.length > 0
+        ? "Select options to check stock"
+        : "Out of stock";
   const purchaseDiscountPct =
     matchedVariant &&
     priceVariant.compare_at_price != null &&
@@ -549,7 +554,9 @@ export function ProductPdp({
       ? isLowStock(maxQty)
         ? "border-amber-200/90 bg-amber-50 text-amber-950 shadow-sm"
         : "border-emerald-200/90 bg-emerald-50 text-emerald-950 shadow-sm"
-      : "border-neutral-800/80 bg-neutral-950/95 text-white shadow-lg backdrop-blur-sm";
+      : !matchedVariant && keys.length > 0 && !selectionComplete
+        ? "border-neutral-200 bg-neutral-50 text-neutral-800 shadow-sm"
+        : "border-neutral-800/80 bg-neutral-950/95 text-white shadow-lg backdrop-blur-sm";
 
   const stickyVideoUrl = (product.video_url ?? "").trim();
   const showStickyVideo = Boolean(parseProductVideoSource(stickyVideoUrl));
@@ -985,9 +992,9 @@ export function ProductPdp({
                         redirectHref="/checkout"
                         itemName={product.name}
                         seed={cartSeed}
-                        ariaLabel="Buy now"
-                        label="Buy now"
-                        className="min-w-0 flex-1 !px-2 !text-[12px] leading-none tracking-tight max-[400px]:!text-[11px] max-[360px]:!px-1.5 max-[360px]:!text-[10px] max-[330px]:!text-[9px] sm:!px-5 sm:!text-base sm:tracking-normal"
+                        ariaLabel="Order now"
+                        label="Order now"
+                        className="min-w-0 flex-1 !border-2 !border-neutral-900 !bg-white !px-2 !text-[12px] !text-neutral-900 leading-none tracking-tight hover:!bg-neutral-50 max-[400px]:!text-[11px] max-[360px]:!px-1.5 max-[360px]:!text-[10px] max-[330px]:!text-[9px] sm:!px-5 sm:!text-base sm:tracking-normal"
                       />
                     </div>
                   </div>
@@ -1308,9 +1315,9 @@ export function ProductPdp({
                         redirectHref="/checkout"
                         itemName={product.name}
                         seed={cartSeed}
-                        ariaLabel="Buy now"
-                        label="Buy now"
-                        className="min-h-10 !px-2.5 !py-2 !text-[11px] leading-none tracking-tight max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
+                        ariaLabel="Order now"
+                        label="Order now"
+                        className="min-h-10 !border-2 !border-neutral-900 !bg-white !px-2.5 !py-2 !text-[11px] !text-neutral-900 leading-none tracking-tight hover:!bg-neutral-50 max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
                       />
                     </>
                   ) : (

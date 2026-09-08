@@ -238,6 +238,9 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
               {collection.description.trim()}
             </p>
           ) : null}
+          <p className="mx-auto mt-2 text-xs font-medium text-neutral-500 sm:text-sm">
+            Cash on delivery available at checkout
+          </p>
         </header>
 
         <section>

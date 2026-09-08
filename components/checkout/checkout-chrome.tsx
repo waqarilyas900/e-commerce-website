@@ -56,18 +56,18 @@ export function CheckoutChrome({ children, mode = "checkout" }: Props) {
       ) : null}
 
       {!isComplete ? (
-        <div className="hidden border-b border-neutral-200 bg-white sm:block md:hidden">
+        <div className="border-b border-neutral-200 bg-white">
           <div className="mx-auto max-w-7xl shell-x py-2.5 sm:py-3">
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-xs text-neutral-700 sm:text-sm">
               <span className="font-medium text-neutral-900">Delivery across Pakistan</span>
-              <span className="hidden text-neutral-300 sm:inline" aria-hidden>
+              <span className="text-neutral-300" aria-hidden>
                 ·
               </span>
               <span>Cash on delivery</span>
               <span className="hidden text-neutral-300 sm:inline" aria-hidden>
                 ·
               </span>
-              <span>Easy return policy — see order confirmation email</span>
+              <span className="hidden sm:inline">Easy returns — see order confirmation</span>
             </div>
           </div>
         </div>

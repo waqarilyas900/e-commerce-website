@@ -67,14 +67,23 @@ export default async function AccountOrdersPage() {
             </div>
             <p className="mt-5 text-base font-semibold text-neutral-900">No orders yet</p>
             <p className="mt-2 text-sm text-neutral-600">
-              When you check out while signed in, your orders will appear in this list.
+              When you check out while signed in, your orders will appear here. Guest order?
+              Track it with your order number and phone.
             </p>
-            <Link
-              href="/collections"
-              className="mt-8 inline-flex rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
-            >
-              Start shopping
-            </Link>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/track-order"
+                className="inline-flex rounded-full border-2 border-neutral-900 bg-white px-8 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+              >
+                Track order
+              </Link>
+              <Link
+                href="/collections"
+                className="inline-flex rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              >
+                Start shopping
+              </Link>
+            </div>
           </div>
         </div>
       ) : (

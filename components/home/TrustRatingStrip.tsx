@@ -21,15 +21,16 @@ function formatReviewDate(iso: string): string {
 }
 
 /**
- * Rad Store homepage reviews — static split grid (no swiper/arrows).
- * Desktop: dark rating panel + 3-col cards (5 reviews + “more” tile).
- * Mobile: rating panel only (grid hidden), matching radstore.pk.
+ * Homepage reviews — dark rating panel + cards.
+ * Mobile: rating panel + horizontal peek of 2 reviews.
+ * Desktop: rating panel + 3-col grid.
  */
 export function TrustRatingStrip({ aggregate, reviews }: Props) {
   const { averageRating, totalReviews } = aggregate;
   const ratingLabel = averageRating.toFixed(1);
   const reviewsFmt = new Intl.NumberFormat("en-US").format(totalReviews);
   const visible = reviews.slice(0, 5);
+  const mobilePeek = reviews.slice(0, 2);
   const moreCount = Math.max(0, totalReviews - visible.length);
   const moreFmt = new Intl.NumberFormat("en-US").format(moreCount);
   const allReviewsHref = "/customer-reviews";
@@ -45,7 +46,6 @@ export function TrustRatingStrip({ aggregate, reviews }: Props) {
         </h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(260px,360px)_minmax(0,1fr)] md:items-stretch">
-          {/* Left — rad-reviews-split__stat */}
           <div className="flex flex-col items-center justify-center rounded bg-[#111] px-8 py-12 text-center sm:px-8 sm:py-12">
             <p
               className="mb-4 block text-xs font-bold uppercase tracking-[0.2em]"
@@ -70,7 +70,25 @@ export function TrustRatingStrip({ aggregate, reviews }: Props) {
             </Link>
           </div>
 
-          {/* Right — static 3-col grid, no carousel (md+ only, like Rad) */}
+          {/* Mobile: horizontal peek */}
+          {mobilePeek.length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto pb-1 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {mobilePeek.map((review) => (
+                <div key={review.id} className="w-[min(280px,85vw)] shrink-0">
+                  <ReviewCard review={review} />
+                </div>
+              ))}
+              <Link
+                href={allReviewsHref}
+                className="flex w-[140px] shrink-0 flex-col items-center justify-center gap-1 rounded border border-[#e8e8e1] bg-[#f7f7f7] p-4 text-center transition hover:bg-[#ebebeb]"
+              >
+                <span className="text-sm font-bold text-[#111]">See all</span>
+                <span className="text-xs text-[#555]">reviews</span>
+              </Link>
+            </div>
+          ) : null}
+
+          {/* Desktop grid */}
           <div className="hidden min-w-0 md:grid md:grid-cols-3 md:grid-rows-2 md:gap-4">
             {visible.length === 0 ? (
               <div className="col-span-3 flex min-h-[200px] items-center justify-center rounded border border-[#e8e8e1] bg-neutral-50 px-6 text-center text-sm text-neutral-600">
@@ -102,7 +120,7 @@ export function TrustRatingStrip({ aggregate, reviews }: Props) {
 function ReviewCard({ review }: { review: HomeReviewHighlight }) {
   const dateLabel = formatReviewDate(review.createdAt);
   return (
-    <article className="flex min-h-0 flex-col justify-center rounded border border-[#e8e8e1] bg-white p-5 text-[13px] leading-snug text-neutral-800">
+    <article className="flex h-full min-h-0 flex-col justify-center rounded border border-[#e8e8e1] bg-white p-5 text-[13px] leading-snug text-neutral-800">
       <div style={{ color: ACCENT }}>
         <StarRating value={review.rating} size={14} className="!text-[#f5b400]" />
       </div>

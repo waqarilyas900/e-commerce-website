@@ -190,83 +190,19 @@ function MoreCategoriesMenu({
 }
 
 function LocaleCurrencyChip() {
-  const [open, setOpen] = useState(false);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function clearClose() {
-    if (!closeTimerRef.current) return;
-    clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = null;
-  }
-
-  useEffect(() => () => clearClose(), []);
-
   return (
     <div
-      className="relative hidden lg:block"
-      onMouseEnter={() => {
-        clearClose();
-        setOpen(true);
-      }}
-      onMouseLeave={() => {
-        clearClose();
-        closeTimerRef.current = setTimeout(() => setOpen(false), 160);
-      }}
+      className="hidden items-center gap-1.5 rounded-md px-1.5 py-1 text-[12px] font-medium text-neutral-700 lg:inline-flex"
+      title="We ship cash on delivery across Pakistan · English · PKR"
     >
-      <button
-        type="button"
-        className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12px] font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-900"
-        aria-expanded={open}
-        aria-haspopup="true"
-        title="Ship to Pakistan · English · PKR"
-      >
-        <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-[10px] leading-none">
-          🇵🇰
-        </span>
-        <span className="leading-tight">
-          <span className="text-neutral-500">EN/</span>
-          <span className="text-neutral-900">PKR</span>
-        </span>
-        <svg
-          viewBox="0 0 24 24"
-          className={`h-3 w-3 text-neutral-500 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          aria-hidden
-        >
-          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 2 }}
-            transition={{ duration: 0.14, ease: menuEase }}
-            className="absolute right-0 top-[calc(100%+6px)] z-[180] w-[220px] overflow-hidden rounded-lg border border-neutral-200 bg-white p-3 shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
-              Shopping preferences
-            </p>
-            <ul className="mt-2 space-y-2 text-[13px] text-neutral-800">
-              <li className="flex items-center justify-between gap-2">
-                <span className="text-neutral-500">Ship to</span>
-                <span className="font-medium">Pakistan</span>
-              </li>
-              <li className="flex items-center justify-between gap-2">
-                <span className="text-neutral-500">Language</span>
-                <span className="font-medium">English</span>
-              </li>
-              <li className="flex items-center justify-between gap-2">
-                <span className="text-neutral-500">Currency</span>
-                <span className="font-medium">PKR</span>
-              </li>
-            </ul>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-[10px] leading-none">
+        🇵🇰
+      </span>
+      <span className="leading-tight text-neutral-900">Pakistan · PKR</span>
+      <span className="text-neutral-300" aria-hidden>
+        ·
+      </span>
+      <span className="text-neutral-600">COD</span>
     </div>
   );
 }

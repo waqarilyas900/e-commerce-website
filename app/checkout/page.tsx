@@ -1032,7 +1032,7 @@ export default function CheckoutPage() {
             </div>
 
             <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
-              <h2 className="text-base font-semibold text-neutral-900">Shipping method COD</h2>
+              <h2 className="text-base font-semibold text-neutral-900">Payment: Cash on delivery</h2>
               <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-sm">
                 <span className="text-sm leading-tight text-neutral-800">
                   Cash on Delivery (COD)
@@ -1043,13 +1043,11 @@ export default function CheckoutPage() {
               </div>
               {freeDeliveryGapPkr != null && freeDeliveryGapPkr > 0 ? (
                 <p className="mt-2 text-xs text-emerald-800">
-                  Add {formatPkr(freeDeliveryGapPkr)} more from items that pay standard delivery to
-                  unlock free standard delivery on this order (free-delivery products don&apos;t
-                  count toward this total).
+                  Add {formatPkr(freeDeliveryGapPkr)} more for free delivery.
                 </p>
               ) : null}
               <p className="mt-3 text-xs text-neutral-600">
-                Estimated delivery: 3–5 business days after confirmation.
+                Delivery: usually 3–5 business days after confirmation.
               </p>
             </section>
 

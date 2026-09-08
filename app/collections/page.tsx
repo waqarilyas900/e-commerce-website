@@ -103,9 +103,20 @@ export default async function CollectionsPage() {
           />
 
           <ScrollReveal className="relative mx-auto max-w-7xl shell-x pb-8 pt-4 sm:pb-12 sm:pt-6">
-            <h1 id="collections-hub-heading" className="sr-only">
-              {heading}
-            </h1>
+            <div className="mb-5 max-w-2xl sm:mb-7">
+              <h1
+                id="collections-hub-heading"
+                className="text-[1.50rem] font-semibold tracking-tight text-neutral-900 sm:text-3xl"
+              >
+                {heading}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-600 sm:text-base">
+                {intro}
+              </p>
+              <p className="mt-1.5 text-xs font-medium text-neutral-500 sm:text-sm">
+                Cash on delivery available at checkout
+              </p>
+            </div>
             <CollectionImageTiles tiles={tiles} />
           </ScrollReveal>
         </section>

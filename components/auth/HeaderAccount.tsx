@@ -230,11 +230,17 @@ export function HeaderAccountV2() {
                 </p>
               </div>
               <div className="my-1 border-t border-neutral-100" role="separator" />
+              <Link href="/track-order" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                Track order
+              </Link>
               <Link href="/login?next=/account/orders" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 My Orders
               </Link>
               <Link href="/login?next=/account/wishlist" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Wishlist
+              </Link>
+              <Link href="/how-to-buy" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                How to order
               </Link>
               <Link href="/contact" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Help Center
@@ -246,6 +252,9 @@ export function HeaderAccountV2() {
                 <p className="truncate text-[13px] font-semibold text-neutral-900">{name}</p>
                 <p className="truncate text-[11px] text-neutral-500">{effectiveUser.email}</p>
               </div>
+              <Link href="/track-order" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                Track order
+              </Link>
               <Link href="/account/orders" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 My Orders
               </Link>
@@ -257,6 +266,9 @@ export function HeaderAccountV2() {
               </Link>
               <Link href="/account" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Account settings
+              </Link>
+              <Link href="/how-to-buy" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                How to order
               </Link>
               <Link href="/contact" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Help Center
@@ -412,6 +424,9 @@ export function HeaderAccount() {
             >
               <Link href="/account/profile" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Profile
+              </Link>
+              <Link href="/track-order" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
+                Track order
               </Link>
               <Link href="/account/orders" role="menuitem" className={menuLinkClass} onClick={closeMenu}>
                 Order history

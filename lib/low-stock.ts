@@ -8,9 +8,7 @@ export function isLowStock(maxQty: number): boolean {
 export function formatPurchaseStockMessage(maxQty: number): string {
   if (maxQty < 1) return "Out of stock";
   if (isLowStock(maxQty)) {
-    return maxQty === 1
-      ? "Hurry — only 1 left in stock"
-      : `Hurry — only ${maxQty} left in stock`;
+    return maxQty === 1 ? "Low stock — order soon" : "Low stock — order soon";
   }
-  return `${maxQty} in stock`;
+  return "In stock";
 }
