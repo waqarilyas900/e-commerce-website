@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   CHECKOUT_PENDING_CART_CLEAR_KEY,
   CHECKOUT_PENDING_PURCHASE_EVENT_KEY,
+  CHECKOUT_THANK_YOU_ITEMS_KEY,
   CHECKOUT_THANK_YOU_META_KEY,
 } from "@/app/lib/checkout-thank-you";
 // Alternate layout: import `GUEST_MINIMAL_CHECKOUT` from `@/app/lib/checkout-templates` and assign below.
@@ -801,6 +802,22 @@ export default function CheckoutPage() {
             country: SHIPPING_COUNTRY_CODE,
             signedIn,
           }),
+        );
+      } catch {
+        /* private mode / quota */
+      }
+      try {
+        sessionStorage.setItem(
+          CHECKOUT_THANK_YOU_ITEMS_KEY,
+          JSON.stringify(
+            resolvedLines.map(({ line, product, unitPrice, variantLabel }) => ({
+              name: product.name,
+              image: product.image || "",
+              quantity: line.quantity,
+              unitPrice,
+              ...(variantLabel?.trim() ? { variantLabel: variantLabel.trim() } : {}),
+            })),
+          ),
         );
       } catch {
         /* private mode / quota */

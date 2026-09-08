@@ -10,7 +10,7 @@ type OrderRow = {
   status: string;
   total_cents: number;
   created_at: string;
-  order_items: { id: string }[] | null;
+  order_items: { id: string; primary_image_url_snapshot: string | null }[] | null;
 };
 
 export default async function AccountOrdersPage() {
@@ -24,7 +24,7 @@ export default async function AccountOrdersPage() {
 
   const { data: orders, error } = await supabase
     .from("orders")
-    .select("id, order_number, status, total_cents, created_at, order_items(id)")
+    .select("id, order_number, status, total_cents, created_at, order_items(id, primary_image_url_snapshot)")
     .order("created_at", { ascending: false });
 
   const list = (orders ?? []) as OrderRow[];
@@ -115,6 +115,9 @@ export default async function AccountOrdersPage() {
                 });
                 const totalRupees = o.total_cents / 100;
                 const itemCount = o.order_items?.length ?? 0;
+                const thumb =
+                  o.order_items?.find((i) => i.primary_image_url_snapshot?.trim())
+                    ?.primary_image_url_snapshot?.trim() || "";
 
                 return (
                   <li key={o.id}>
@@ -123,22 +126,36 @@ export default async function AccountOrdersPage() {
                       className="group flex flex-col gap-4 px-4 py-5 transition-colors hover:bg-neutral-50/90 sm:px-6 lg:grid lg:grid-cols-12 lg:items-center lg:gap-4 lg:px-8 lg:py-5"
                     >
                       <div className="min-w-0 lg:col-span-4">
-                        <div className="flex flex-wrap items-center gap-2 lg:flex-col lg:items-start lg:gap-1.5">
-                          <span className="font-mono text-[15px] font-semibold tracking-tight text-neutral-900">
-                            {ref}
-                          </span>
-                          <span className="text-xs text-neutral-500 lg:hidden">
-                            {dateStr}
-                            {itemCount > 0
-                              ? ` · ${itemCount} ${itemCount === 1 ? "item" : "items"}`
-                              : ""}
-                          </span>
+                        <div className="flex items-start gap-3">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50">
+                            {thumb ? (
+                              // eslint-disable-next-line @next/next/no-img-element -- remote storage URLs
+                              <img
+                                src={thumb}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : null}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2 lg:flex-col lg:items-start lg:gap-1.5">
+                              <span className="font-mono text-[15px] font-semibold tracking-tight text-neutral-900">
+                                {ref}
+                              </span>
+                              <span className="text-xs text-neutral-500 lg:hidden">
+                                {dateStr}
+                                {itemCount > 0
+                                  ? ` · ${itemCount} ${itemCount === 1 ? "item" : "items"}`
+                                  : ""}
+                              </span>
+                            </div>
+                            <p className="mt-1 hidden text-xs text-neutral-500 lg:block">
+                              {itemCount > 0
+                                ? `${itemCount} ${itemCount === 1 ? "item" : "items"}`
+                                : "—"}
+                            </p>
+                          </div>
                         </div>
-                        <p className="mt-1 hidden text-xs text-neutral-500 lg:block">
-                          {itemCount > 0
-                            ? `${itemCount} ${itemCount === 1 ? "item" : "items"}`
-                            : "—"}
-                        </p>
                       </div>
 
                       <div className="hidden text-sm text-neutral-700 lg:col-span-3 lg:block">

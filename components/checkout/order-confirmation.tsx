@@ -5,6 +5,7 @@ import { motion, useReducedMotion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatPkr, STORE_CURRENCY_CODE } from "@/app/lib/format-currency";
+import type { CheckoutThankYouItem } from "@/app/lib/checkout-thank-you";
 
 type Props = {
   orderNumber: string | null;
@@ -12,6 +13,8 @@ type Props = {
   signedIn: boolean;
   /** Customer email for reassurance line */
   customerEmail?: string;
+  /** Products ordered (from checkout session) */
+  items?: CheckoutThankYouItem[];
 };
 
 const CONFETTI_COLORS = [
@@ -78,6 +81,7 @@ export function OrderConfirmation({
   orderTotalCents,
   signedIn,
   customerEmail,
+  items = [],
 }: Props) {
   const reduceMotion = useReducedMotion();
   const confettiDone = useRef(false);
@@ -190,6 +194,53 @@ export function OrderConfirmation({
           </div>
 
           <div className="space-y-0 divide-y divide-neutral-100 px-6 sm:px-8">
+            {items.length > 0 ? (
+              <div className="py-5">
+                <p className="text-sm font-medium text-neutral-900">Your items</p>
+                <ul className="mt-3 space-y-3">
+                  {items.map((line, idx) => {
+                    const img = line.image?.trim() || "";
+                    return (
+                      <li
+                        key={`${line.name}-${idx}`}
+                        className="flex items-start gap-3"
+                      >
+                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50">
+                          {img ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- cart/session URLs may be remote CDN
+                            <img
+                              src={img}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-neutral-900 line-clamp-2">
+                            {line.name}
+                          </p>
+                          {line.variantLabel ? (
+                            <p className="mt-0.5 text-xs text-neutral-500">
+                              {line.variantLabel}
+                            </p>
+                          ) : null}
+                          <p className="mt-1 text-xs text-neutral-600">
+                            Qty {line.quantity}
+                            {Number.isFinite(line.unitPrice) ? (
+                              <>
+                                {" "}
+                                · {formatPkr(line.unitPrice * line.quantity)}
+                              </>
+                            ) : null}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
+
             {totalRupees != null ? (
               <div className="flex items-center justify-between gap-4 py-5">
                 <div>
@@ -250,9 +301,9 @@ export function OrderConfirmation({
                 3
               </span>
               <span>
-                <span className="font-semibold text-emerald-950">Open Parcel & Pay on arrival</span>
+                <span className="font-semibold text-emerald-950">Pay cash on delivery</span>
                 <span className="mt-0.5 block text-emerald-900/85">
-                  Open and check your parcel in front of the courier rider. Pay cash only once you are 100% satisfied.
+                  Pay the courier in cash when your order arrives. Nationwide COD.
                 </span>
               </span>
             </li>

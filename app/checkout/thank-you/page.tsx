@@ -7,7 +7,9 @@ import { OrderConfirmation } from "@/components/checkout/order-confirmation";
 import {
   CHECKOUT_PENDING_CART_CLEAR_KEY,
   CHECKOUT_PENDING_PURCHASE_EVENT_KEY,
+  CHECKOUT_THANK_YOU_ITEMS_KEY,
   CHECKOUT_THANK_YOU_META_KEY,
+  type CheckoutThankYouItem,
 } from "@/app/lib/checkout-thank-you";
 import { useCart } from "@/app/providers/cart-provider";
 import { createClient } from "@/lib/supabase/client";
@@ -58,6 +60,7 @@ function CheckoutThankYouInner() {
     country?: string;
     signedIn: boolean;
   } | null>(null);
+  const [orderItems, setOrderItems] = useState<CheckoutThankYouItem[]>([]);
 
   useEffect(() => {
     if (!paramsValid || cartClearDone.current) return;
@@ -181,6 +184,41 @@ function CheckoutThankYouInner() {
       } catch {
         /* ignore */
       }
+      try {
+        const rawItems = sessionStorage.getItem(CHECKOUT_THANK_YOU_ITEMS_KEY);
+        if (rawItems) {
+          const parsed = JSON.parse(rawItems) as unknown;
+          if (Array.isArray(parsed)) {
+            const cleaned: CheckoutThankYouItem[] = [];
+            for (const row of parsed) {
+              if (!row || typeof row !== "object") continue;
+              const r = row as Record<string, unknown>;
+              if (typeof r.name !== "string" || !r.name.trim()) continue;
+              const quantity =
+                typeof r.quantity === "number" && Number.isFinite(r.quantity) && r.quantity > 0
+                  ? Math.round(r.quantity)
+                  : 1;
+              const unitPrice =
+                typeof r.unitPrice === "number" && Number.isFinite(r.unitPrice)
+                  ? r.unitPrice
+                  : 0;
+              cleaned.push({
+                name: r.name.trim(),
+                image: typeof r.image === "string" ? r.image : "",
+                quantity,
+                unitPrice,
+                ...(typeof r.variantLabel === "string" && r.variantLabel.trim()
+                  ? { variantLabel: r.variantLabel.trim() }
+                  : {}),
+              });
+            }
+            if (!cancelled) setOrderItems(cleaned);
+          }
+          sessionStorage.removeItem(CHECKOUT_THANK_YOU_ITEMS_KEY);
+        }
+      } catch {
+        /* ignore */
+      }
       const supabase = createClient();
       const {
         data: { user },
@@ -232,6 +270,7 @@ function CheckoutThankYouInner() {
           orderTotalCents={totalCents}
           signedIn={meta.signedIn}
           customerEmail={meta.email?.trim() || undefined}
+          items={orderItems}
         />
       </main>
     </CheckoutChrome>
