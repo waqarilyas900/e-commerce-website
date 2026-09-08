@@ -22,7 +22,6 @@ import {
 import { computeDeliveryPkr } from "@/app/lib/delivery-pricing";
 import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 import { CartFreeDeliveryProgress } from "@/components/cart/cart-free-delivery-progress";
-import { CodCartPill } from "@/components/trust/open-parcel-trust";
 import { CartSavingsRow } from "@/components/cart/cart-savings-row";
 import { computeCompareAtSavingsPkr } from "@/lib/cart-savings";
 
@@ -549,7 +548,6 @@ export function CartDrawer() {
                     </span>
                   </div>
                 </div>
-                <CodCartPill />
                 <p className="mt-2 text-xs text-neutral-500">
                   Taxes and discount codes calculated at checkout.
                 </p>

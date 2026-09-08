@@ -150,7 +150,7 @@ const COLLECTION_SEO_DATA: Record<string, CollectionSeoData> = {
       },
       {
         heading: "7-Day Purchase Protection & COD Convenience",
-        body: "Shop with total confidence: Cash on Delivery nationwide plus our hassle-free 7-day replacement guarantee.",
+        body: "Shop with total confidence with our hassle-free 7-day replacement guarantee.",
       },
     ],
     relatedGuideSlug: "inside-simplecart-store-real-stock-cod-pakistan",

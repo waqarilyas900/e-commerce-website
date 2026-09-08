@@ -101,8 +101,7 @@ export default async function PurchaseProtectionPage() {
             </h2>
             <p>
               Prices, stock status, and shipping fees (if any) are shown before you place
-              an order. Cash on delivery is available where offered so you can pay when
-              the parcel arrives.
+              an order. Available payment methods are listed at checkout.
             </p>
 
             <h2 className="pt-2 text-lg font-semibold text-neutral-900">

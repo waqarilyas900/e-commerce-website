@@ -39,11 +39,6 @@ import { useRouter } from "next/navigation";
 import { StoreFaqSection } from "@/components/seo/store-faq";
 import type { FaqItem } from "@/lib/seo/jsonld/faq";
 import { StickyProductVideo } from "@/components/product/sticky-product-video";
-import {
-  CodPdpBadge,
-  CodPriceTrustLine,
-  CodStickyHint,
-} from "@/components/trust/open-parcel-trust";
 import { parseProductVideoSource } from "@/lib/product-video/url";
 import { formatPurchaseStockMessage, isLowStock } from "@/lib/low-stock";
 import { recordRecentlyViewed } from "@/lib/recently-viewed";
@@ -936,9 +931,7 @@ export function ProductPdp({
                     </div>
                   )}
                 </div>
-                <CodPriceTrustLine />
               </div>
-              <CodPdpBadge />
               {productWhatsAppHref ? (
                 <a
                   href={productWhatsAppHref}
@@ -1326,7 +1319,6 @@ export function ProductPdp({
                       )}
                     </div>
                   ) : null}
-                  <CodStickyHint />
                 </div>
                 <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
                   {matchedVariant && maxQty > 0 ? (

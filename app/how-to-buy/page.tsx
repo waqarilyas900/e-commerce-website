@@ -107,9 +107,9 @@ export default async function HowToBuyPage() {
                 shipping fee shown before you place the order.
               </li>
               <li>
-                <strong className="font-semibold text-neutral-900">Pay</strong> — Cash on
-                delivery (COD) is available across Pakistan where shown at checkout. Pay
-                when your parcel arrives.
+                <strong className="font-semibold text-neutral-900">Place your order</strong> —
+                Confirm your details at checkout and submit. Payment method options are shown
+                before you place the order.
               </li>
               <li>
                 <strong className="font-semibold text-neutral-900">Receive</strong> — We

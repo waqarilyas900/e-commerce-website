@@ -41,7 +41,7 @@ export function collectionFaqItems(collectionName: string): FaqItem[] {
   return [
     {
       question: `Can I order items from ${name} with Cash on Delivery (COD)?`,
-      answer: `Yes, Cash on Delivery (COD) is available nationwide across Pakistan for all products in our ${name} collection. You pay in cash when the courier hands over the parcel.`,
+      answer: `Yes, Cash on Delivery (COD) is available nationwide across Pakistan for all products in our ${name} collection.`,
     },
     {
       question: `How long does delivery take for ${name} orders in Pakistan?`,
@@ -73,7 +73,7 @@ export function storeFaqItems(
     {
       question: "Do you offer cash on delivery (COD) in Pakistan?",
       answer:
-        "Yes. SimpleCart Store offers cash on delivery across Pakistan. You pay when your order arrives — shipping fees (if any) are shown at checkout before you place the order.",
+        "Yes. SimpleCart Store offers cash on delivery across Pakistan. Shipping fees (if any) are shown at checkout before you place the order.",
     },
     {
       question: "How long does delivery take?",

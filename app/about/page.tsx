@@ -163,7 +163,7 @@ export default async function AboutPage() {
               <li>Inspect items such as kettles, heaters and tumblers before listing.</li>
               <li>Publish clear photos, PKR prices and availability online.</li>
               <li>Pick, pack securely, and hand over to courier when you order.</li>
-              <li>Offer COD across Pakistan so you can pay when the parcel arrives.</li>
+              <li>Offer nationwide delivery across Pakistan.</li>
             </ol>
             <p>
               Orders are typically packed within 1–2 business days. Delivery usually

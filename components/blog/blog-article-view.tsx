@@ -172,9 +172,6 @@ export function BlogArticleView({ article }: { article: BlogArticle }) {
         <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-900">
           ✍️ Verified Buying Guide
         </span>
-        <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-neutral-700">
-          📦 Fast COD in Pakistan
-        </span>
       </div>
 
       <BlogImageBlock src={article.hero.src} alt={article.hero.alt} priority />

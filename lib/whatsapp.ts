@@ -43,7 +43,7 @@ export function buildProductWhatsAppMessage(
   if (ctx.imageUrl?.trim()) {
     lines.push(`Photo: ${ctx.imageUrl.trim()}`);
   }
-  lines.push("", "Please confirm availability and COD.");
+  lines.push("", "Please confirm availability.");
   return lines.join("\n");
 }
 

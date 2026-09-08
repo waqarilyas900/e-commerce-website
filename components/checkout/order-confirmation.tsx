@@ -166,7 +166,7 @@ export function OrderConfirmation({
           className="mx-auto mt-3 max-w-md text-center text-base leading-relaxed text-neutral-600"
         >
           Thank you for shopping with us. We&apos;re preparing your package and will keep you
-          updated. Pay cash when your order arrives.
+          updated.
         </motion.p>
 
         <motion.div
@@ -301,9 +301,9 @@ export function OrderConfirmation({
                 3
               </span>
               <span>
-                <span className="font-semibold text-emerald-950">Pay cash on delivery</span>
+                <span className="font-semibold text-emerald-950">Delivered to you</span>
                 <span className="mt-0.5 block text-emerald-900/85">
-                  Pay the courier in cash when your order arrives. Nationwide COD.
+                  Your order arrives at the address you provided at checkout.
                 </span>
               </span>
             </li>
