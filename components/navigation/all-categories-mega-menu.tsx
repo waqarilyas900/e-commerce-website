@@ -123,7 +123,7 @@ export function AllCategoriesMegaMenu() {
   const [activeSlug, setActiveSlug] = useState("");
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLAnchorElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
@@ -225,6 +225,20 @@ export function AllCategoriesMegaMenu() {
                 <div className="flex overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
                   <div className="w-[232px] shrink-0 border-r border-neutral-100 py-1.5">
                     <div className="max-h-[min(70dvh,440px)] overflow-y-auto overscroll-contain">
+                      <HoverPrefetchLink
+                        href="/collections"
+                        role="menuitem"
+                        className="mb-1 flex w-full items-center gap-2.5 border-b border-neutral-100 px-3.5 py-[9px] text-left text-[13px] font-semibold text-neutral-900 transition-colors hover:bg-[rgba(224,112,58,0.06)] hover:text-[#E0703A]"
+                        onClick={() => {
+                          clearCloseTimer();
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="min-w-0 flex-1 truncate">All collections</span>
+                        <span className="shrink-0 text-[11px] text-neutral-400" aria-hidden>
+                          ›
+                        </span>
+                      </HoverPrefetchLink>
                       {links.map((l) => {
                         const isActive = active?.slug === l.slug;
                         return (
@@ -352,9 +366,9 @@ export function AllCategoriesMegaMenu() {
 
   return (
     <div className="relative shrink-0" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
-      <button
+      <Link
         ref={triggerRef}
-        type="button"
+        href="/collections"
         className={`inline-flex h-[30px] items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-neutral-900 transition-colors ${
           open ? "bg-neutral-200" : "bg-[#f5f5f5] hover:bg-neutral-200/90"
         }`}
@@ -363,8 +377,7 @@ export function AllCategoriesMegaMenu() {
         aria-controls={menuId}
         onClick={() => {
           clearCloseTimer();
-          if (open) setOpen(false);
-          else openMenu();
+          setOpen(false);
         }}
       >
         <svg
@@ -378,7 +391,7 @@ export function AllCategoriesMegaMenu() {
           <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
         </svg>
         All Categories
-      </button>
+      </Link>
       {panel}
     </div>
   );
