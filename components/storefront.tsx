@@ -296,7 +296,7 @@ export function ProductCard({
           <div
             className={
               rail
-                ? "relative h-[248px] w-full overflow-hidden bg-neutral-100 sm:h-64"
+                ? "relative aspect-square w-full overflow-hidden bg-neutral-100"
                 : "relative aspect-4/5 w-full overflow-hidden bg-neutral-50 sm:aspect-auto sm:h-64 md:h-72 lg:h-80"
             }
           >
@@ -320,7 +320,7 @@ export function ProductCard({
                   fill
                   sizes={
                     rail
-                      ? "(max-width: 767px) 60vw, 300px"
+                      ? "(max-width: 767px) 40vw, 300px"
                       : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 340px"
                   }
                   style={productImgFitStyle}
@@ -360,7 +360,13 @@ export function ProductCard({
       </div>
 
       {/* Tight, even stack: image → title → stars → price (no forced title min-height gap). */}
-      <div className="flex min-h-0 flex-1 flex-col gap-1 px-2 pb-2 pt-1.5 text-[13px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm">
+      <div
+        className={
+          rail
+            ? "flex min-h-0 flex-1 flex-col gap-0.5 px-1.5 pb-1.5 pt-1 text-[12px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm"
+            : "flex min-h-0 flex-1 flex-col gap-1 px-2 pb-2 pt-1.5 text-[13px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm"
+        }
+      >
         <div className="flex flex-col gap-0">
           <HoverPrefetchLink
             href={`/products/${product.slug}`}
@@ -396,15 +402,15 @@ export function ProductCard({
 }
 
 /**
- * ~1 full card + peek of next (reference store). Visible ≈ W + gap + W/2 → W = (viewport pad − gap) / 1.5
- * ul bleeds with `-mx-2` / `px-2` to match `.shell-x`; gap-1 → 0.25rem
+ * Mobile: ~2.15 cards + peek (shorter section). sm+: wider tiles for tablet rail.
+ * Desktop home uses the grid branch, not these widths.
  */
 const RAIL_COL =
-  "w-[calc((100vw-1.25rem)/1.5)] min-w-[172px] max-w-[232px] shrink-0 sm:w-[200px] sm:max-w-none md:w-[220px]";
+  "w-[calc((100vw-1rem)/2.15)] min-w-[128px] max-w-[152px] shrink-0 sm:w-[168px] sm:max-w-[180px]";
 const RAIL_SNAP = "snap-start snap-always";
 /** Product tile in the home rail (same as `${RAIL_COL} ${RAIL_SNAP} flex flex-col`). */
 const RAIL_ITEM = `${RAIL_COL} ${RAIL_SNAP} flex flex-col`;
-const RAIL_PREVIEW = 4;
+const RAIL_PREVIEW = 6;
 
 /** Trailing rail tile — blurred product photo + “View all products” (shop-collections style). */
 function ViewAllRailTile({
@@ -427,7 +433,7 @@ function ViewAllRailTile({
       aria-label={`View all ${count} product${count === 1 ? "" : "s"} in ${title}`}
       className="group relative flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-neutral-900 shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:border-[#E0703A]/50 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E0703A]"
     >
-      <div className="relative min-h-[248px] flex-1 overflow-hidden sm:min-h-64">
+      <div className="relative aspect-square w-full overflow-hidden">
         {imgSrc ? (
           useNative ? (
             // eslint-disable-next-line @next/next/no-img-element -- supplier CDNs outside next/image allowlist
@@ -445,7 +451,7 @@ function ViewAllRailTile({
               src={imageUrl}
               alt={`${title} collection preview`}
               fill
-              sizes="(max-width: 767px) 60vw, 300px"
+              sizes="(max-width: 767px) 40vw, 300px"
               className="scale-110 object-cover object-top blur-[2.5px] brightness-[0.72] transition duration-700 ease-out group-hover:scale-[1.16] group-hover:blur-[1.5px] group-hover:brightness-[0.65]"
             />
           )
@@ -462,26 +468,22 @@ function ViewAllRailTile({
           aria-hidden
         />
 
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 px-3 py-4 text-center">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 px-2 py-3 text-center">
           <span
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-base text-[#1c1d1d] shadow-sm backdrop-blur-md transition duration-300 group-hover:bg-[#E0703A] group-hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-sm text-[#1c1d1d] shadow-sm backdrop-blur-md transition duration-300 group-hover:bg-[#E0703A] group-hover:text-white"
             aria-hidden
           >
             →
           </span>
-          <span className="text-[13px] font-semibold leading-snug tracking-tight text-white drop-shadow-sm sm:text-sm">
-            View all products
+          <span className="text-[11px] font-semibold leading-snug tracking-tight text-white drop-shadow-sm">
+            View all
           </span>
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white">
+          <span className="rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#1c1d1d] shadow-sm backdrop-blur-md transition group-hover:bg-[#E0703A] group-hover:text-white">
             {count}{" "}
             <span className="font-medium normal-case tracking-normal opacity-90">
               {count === 1 ? "product" : "products"}
             </span>
           </span>
-          <span
-            className="mt-1 h-[2px] w-8 origin-center scale-x-0 bg-[#E0703A] transition duration-300 group-hover:scale-x-100"
-            aria-hidden
-          />
         </div>
       </div>
     </Link>
@@ -557,14 +559,16 @@ export function ProductSection({
 
     return (
       <section className="bg-neutral-100/80">
-        <ScrollReveal className="mx-auto max-w-7xl shell-x py-5 sm:py-6">
-          <div className="relative mb-5 flex items-end justify-center">
-            <RiseUpTitle className="text-center">
-              <h2 className={homeRailTitleClass}>{title}</h2>
+        <ScrollReveal className="mx-auto max-w-7xl shell-x py-3.5 sm:py-6">
+          <div className="relative mb-3 flex items-end justify-between gap-3 sm:mb-5 sm:justify-center">
+            <RiseUpTitle className="min-w-0 text-left sm:text-center">
+              <h2 className={`${homeRailTitleClass} !text-[1.05rem] sm:!text-[clamp(1.35rem,2.4vw,1.75rem)]`}>
+                {title}
+              </h2>
             </RiseUpTitle>
             <Link
               href={viewAllHref}
-              className="absolute right-0 top-1/2 hidden -translate-y-1/2 text-sm font-semibold text-neutral-900 md:inline"
+              className="shrink-0 text-[12px] font-semibold text-neutral-900 sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2 sm:text-sm"
             >
               View all
             </Link>

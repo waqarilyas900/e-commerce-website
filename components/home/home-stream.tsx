@@ -38,11 +38,23 @@ export function HomeDeferredSkeleton() {
       {Array.from({ length: 2 }).map((_, section) => (
         <section
           key={section}
-          className="border-b border-[#e8e8e1] bg-white py-8 sm:py-10"
+          className="border-b border-[#e8e8e1] bg-neutral-100/80 py-3.5 sm:py-6"
         >
           <div className="mx-auto max-w-7xl shell-x">
-            <div className="mb-4 h-7 w-56 animate-pulse rounded bg-neutral-100 sm:mb-5" />
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+            <div className="mb-3 h-6 w-48 animate-pulse rounded bg-neutral-100 sm:mb-5 sm:h-7 sm:w-56" />
+            <div className="flex gap-1 overflow-hidden md:hidden">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-[calc((100vw-1rem)/2.15)] max-w-[152px] shrink-0 animate-pulse"
+                >
+                  <div className="aspect-square rounded-md bg-neutral-200/80" />
+                  <div className="mt-1.5 h-3 w-4/5 rounded bg-neutral-100" />
+                  <div className="mt-1 h-3 w-1/2 rounded bg-neutral-100" />
+                </div>
+              ))}
+            </div>
+            <div className="hidden gap-2 md:grid md:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <ProductCardSkeleton key={i} variant="rail" showAddToCart={false} />
               ))}
