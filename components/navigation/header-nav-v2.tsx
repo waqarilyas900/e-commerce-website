@@ -8,7 +8,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { HeaderAccount, HeaderAccountV2 } from "@/components/auth/HeaderAccount";
 import { HeaderSearchBar } from "@/components/navigation/header-search-bar";
 import { HeaderMobileSearch } from "@/components/navigation/header-mobile-search";
-import { AllCategoriesMegaMenu } from "@/components/navigation/all-categories-mega-menu";
+import {
+  AllCategoriesMegaMenu,
+  CategoriesMegaMenuProvider,
+  useCategoriesMegaMenu,
+} from "@/components/navigation/all-categories-mega-menu";
 import { MobileNavDrawer } from "@/components/navigation/mobile-nav-drawer";
 import { SiteLogoMark } from "@/components/site-logo";
 import { SaleBoltIcon } from "@/components/icons/sale-bolt-icon";
@@ -27,6 +31,94 @@ const CLOSE_MENUS = "storefront:close-mega-menus";
 
 const stripHover =
   "inline-flex shrink-0 items-center whitespace-nowrap px-3 py-[7px] text-[13px] font-medium text-neutral-800 transition-colors hover:text-[#E0703A]";
+
+/** Top strip category names — open the shared mega menu on that collection. */
+function DesktopCategoryStrip({
+  headerNavItems,
+  visibleCollections,
+  pathname,
+}: {
+  headerNavItems: ReturnType<typeof useHeaderNavMenuItems>;
+  visibleCollections: ReturnType<typeof useNavCollections>;
+  pathname: string;
+}) {
+  const { openForSlug, scheduleClose, menuId } = useCategoriesMegaMenu();
+
+  return (
+    <nav
+      className="flex min-w-0 flex-1 items-center gap-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      aria-label="Department links"
+    >
+      {headerNavItems.map((item) => {
+        const isSale = item.slug === "sale" || /sale|deal/i.test(item.label);
+        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return (
+          <HoverPrefetchLink
+            key={item.id}
+            href={item.href}
+            prefetch
+            aria-haspopup={isSale ? undefined : "true"}
+            aria-controls={isSale ? undefined : menuId}
+            className={
+              isSale || active
+                ? "inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold transition-colors hover:opacity-90"
+                : stripHover
+            }
+            style={isSale || active ? { color: NAV2_ACCENT } : undefined}
+            aria-current={active ? "page" : undefined}
+            onMouseEnter={() => {
+              if (isSale) return;
+              openForSlug(item.slug);
+            }}
+            onMouseLeave={() => {
+              if (isSale) return;
+              scheduleClose();
+            }}
+            onFocus={() => {
+              if (isSale) return;
+              openForSlug(item.slug);
+            }}
+            onBlur={() => {
+              if (isSale) return;
+              scheduleClose();
+            }}
+          >
+            {isSale ? (
+              <SaleBoltIcon className="h-[14px] w-[14px] shrink-0" aria-hidden />
+            ) : null}
+            {item.label}
+          </HoverPrefetchLink>
+        );
+      })}
+      {visibleCollections.map((c) => {
+        const href = `/collections/${c.slug}`;
+        const active = pathname === href || pathname.startsWith(`${href}/`);
+        return (
+          <HoverPrefetchLink
+            key={c.slug}
+            href={href}
+            prefetch
+            aria-haspopup="true"
+            aria-controls={menuId}
+            className={
+              active
+                ? "inline-flex shrink-0 items-center whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold"
+                : stripHover
+            }
+            style={active ? { color: NAV2_ACCENT } : undefined}
+            aria-current={active ? "page" : undefined}
+            onMouseEnter={() => openForSlug(c.slug)}
+            onMouseLeave={scheduleClose}
+            onFocus={() => openForSlug(c.slug)}
+            onBlur={scheduleClose}
+          >
+            {c.name}
+          </HoverPrefetchLink>
+        );
+      })}
+    </nav>
+  );
+}
 
 function dispatchCloseMenus() {
   if (typeof window === "undefined") return;
@@ -434,58 +526,17 @@ export function HeaderNavV2() {
 
       {/* Category strip stays with the header when sticky */}
       <div className="hidden border-t border-neutral-100/80 lg:block">
-        <div className="flex items-center gap-1 py-1.5">
-          <AllCategoriesMegaMenu />
-          <nav
-            className="flex min-w-0 flex-1 items-center gap-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            aria-label="Department links"
-          >
-            {headerNavItems.map((item) => {
-              const isSale = item.slug === "sale" || /sale|deal/i.test(item.label);
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-              return (
-                <HoverPrefetchLink
-                  key={item.id}
-                  href={item.href}
-                  prefetch
-                  className={
-                    isSale || active
-                      ? "inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold transition-colors hover:opacity-90"
-                      : stripHover
-                  }
-                  style={isSale || active ? { color: NAV2_ACCENT } : undefined}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {isSale ? (
-                    <SaleBoltIcon className="h-[14px] w-[14px] shrink-0" aria-hidden />
-                  ) : null}
-                  {item.label}
-                </HoverPrefetchLink>
-              );
-            })}
-            {visibleCollections.map((c) => {
-              const href = `/collections/${c.slug}`;
-              const active = pathname === href || pathname.startsWith(`${href}/`);
-              return (
-                <HoverPrefetchLink
-                  key={c.slug}
-                  href={href}
-                  prefetch
-                  className={
-                    active
-                      ? "inline-flex shrink-0 items-center whitespace-nowrap px-3 py-[7px] text-[13px] font-semibold"
-                      : stripHover
-                  }
-                  style={active ? { color: NAV2_ACCENT } : undefined}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {c.name}
-                </HoverPrefetchLink>
-              );
-            })}
-          </nav>
-          <MoreCategoriesMenu items={moreCollections} />
-        </div>
+        <CategoriesMegaMenuProvider>
+          <div className="flex items-center gap-1 py-1.5">
+            <AllCategoriesMegaMenu />
+            <DesktopCategoryStrip
+              headerNavItems={headerNavItems}
+              visibleCollections={visibleCollections}
+              pathname={pathname}
+            />
+            <MoreCategoriesMenu items={moreCollections} />
+          </div>
+        </CategoriesMegaMenuProvider>
       </div>
     </div>
   );

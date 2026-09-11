@@ -405,6 +405,29 @@ body {
     animation: none;
   }
 }
+
+/* Compact homepage collections marquee — seamless infinite loop (-50%). */
+@keyframes home-collections-marquee-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.home-collections-marquee-track {
+  animation: home-collections-marquee-x 32s linear infinite;
+  will-change: transform;
+}
+.home-collections-marquee-shell:hover .home-collections-marquee-track,
+.home-collections-marquee-shell:focus-within .home-collections-marquee-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-collections-marquee-track {
+    animation: none;
+  }
+}
 .policy-prose li {
   margin-top: 0.35rem;
   margin-bottom: 0.35rem;

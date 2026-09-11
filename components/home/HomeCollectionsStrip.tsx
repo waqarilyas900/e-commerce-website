@@ -5,8 +5,8 @@ import {
   getCachedProductsByCollectionSlug,
 } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
+import { HomeCollectionsMarquee } from "@/components/home/home-collections-marquee";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 import {
   collectionDisplayName,
@@ -162,7 +162,7 @@ export function CollectionImageTiles({ tiles }: { tiles: HomeCollectionTile[] })
   );
 }
 
-/** Compact collection grid under the featured band — image-first overlay tiles. */
+/** Compact collection strip under the featured band — infinite marquee banners. */
 export function HomeCollectionsStrip({
   tiles,
 }: {
@@ -173,53 +173,41 @@ export function HomeCollectionsStrip({
   return (
     <section
       aria-labelledby="home-collections-heading"
-      className="relative overflow-hidden border-b border-[#e8e8e1] bg-[linear-gradient(180deg,#f7f5f2_0%,#ffffff_42%,#ffffff_100%)]"
+      className="relative overflow-hidden border-b border-[#e8e8e1] bg-[linear-gradient(180deg,#f7f5f2_0%,#ffffff_55%,#ffffff_100%)]"
     >
       <div
-        className="pointer-events-none absolute -left-24 top-8 h-56 w-56 rounded-full bg-[#E0703A]/[0.07] blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute -right-16 bottom-0 h-48 w-48 rounded-full bg-[#1c1d1d]/[0.04] blur-3xl"
+        className="pointer-events-none absolute -left-16 top-4 h-32 w-32 rounded-full bg-[#E0703A]/[0.06] blur-3xl"
         aria-hidden
       />
 
-      <ScrollReveal className="relative mx-auto max-w-7xl shell-x py-8 sm:py-12">
-        <div className="relative mb-6 sm:mb-10">
-          <div className="flex flex-col items-center gap-2.5 text-center sm:gap-0">
-            <div className="flex w-full items-center justify-between gap-3 sm:justify-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#E0703A] sm:w-auto">
-                Browse
-              </p>
-              <Link
-                href="/collections"
-                className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[#E0703A] transition hover:text-[#c85f2f] sm:hidden"
-              >
-                View all
-                <span aria-hidden>→</span>
-              </Link>
-            </div>
-
-            <HomeSectionTitle id="home-collections-heading" center>
+      <div className="relative mx-auto max-w-7xl shell-x pb-2.5 pt-4 sm:pb-3 sm:pt-5">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#E0703A] sm:text-[11px]">
+              Browse
+            </p>
+            <HomeSectionTitle
+              id="home-collections-heading"
+              center={false}
+              className="!mt-0.5 text-[1.05rem] sm:!text-[1.25rem] sm:!leading-tight"
+            >
               Shop collections
             </HomeSectionTitle>
-
-            <p className="mx-auto max-w-md text-center text-[13px] leading-snug text-neutral-500 sm:mt-2 sm:text-sm sm:leading-relaxed">
-              Drinkware, kitchen, beauty &amp; home for everyday&nbsp;Pakistan.
-            </p>
           </div>
-
           <Link
             href="/collections"
-            className="absolute right-0 top-1/2 hidden -translate-y-1/2 items-center gap-1.5 rounded-full border border-[#1c1d1d]/15 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#1c1d1d] shadow-sm backdrop-blur-sm transition hover:border-[#E0703A] hover:text-[#E0703A] sm:inline-flex"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#1c1d1d]/12 bg-white/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#1c1d1d] shadow-sm transition hover:border-[#E0703A] hover:text-[#E0703A] sm:px-3.5 sm:text-[11px]"
           >
             View all
             <span aria-hidden>→</span>
           </Link>
         </div>
+      </div>
 
-        <CollectionImageTiles tiles={tiles} />
-      </ScrollReveal>
+      {/* Full-bleed marquee — edge to edge (no shell gutters) */}
+      <div className="relative pb-4 sm:pb-5">
+        <HomeCollectionsMarquee tiles={tiles} />
+      </div>
     </section>
   );
 }

@@ -1,7 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavCollections } from "@/app/providers/nav-collections-provider";
@@ -10,10 +21,11 @@ import { HoverPrefetchLink } from "@/components/ui/hover-prefetch-link";
 import { NAV2_ACCENT } from "@/components/navigation/nav2-theme";
 
 const menuEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const CLOSE_MENUS = "storefront:close-mega-menus";
 
 function CategoryGlyph({ slug }: { slug: string }) {
   const s = slug.toLowerCase();
-  const cls = "h-[18px] w-[18px]";
+  const cls = "h-5 w-5";
   const stroke = {
     fill: "none" as const,
     stroke: "currentColor",
@@ -113,19 +125,42 @@ function Thumb({
   );
 }
 
+type CategoriesMegaMenuApi = {
+  open: boolean;
+  menuId: string;
+  openAll: () => void;
+  openForSlug: (slug: string) => void;
+  keepOpen: () => void;
+  scheduleClose: () => void;
+  closeNow: () => void;
+  registerTrigger: (el: HTMLAnchorElement | null) => void;
+};
+
+const CategoriesMegaMenuContext = createContext<CategoriesMegaMenuApi | null>(null);
+
+export function useCategoriesMegaMenu(): CategoriesMegaMenuApi {
+  const ctx = useContext(CategoriesMegaMenuContext);
+  if (!ctx) {
+    throw new Error("useCategoriesMegaMenu must be used within CategoriesMegaMenuProvider");
+  }
+  return ctx;
+}
+
 /**
- * AliExpress-style “All Categories” — hamburger pill + wide mega panel.
- * No chevron on the trigger (matches AE). Left rail keeps › affordance only.
+ * Owns the shared mega panel so All Categories + top strip category links
+ * open the same left-aligned menu (with the hovered collection selected).
  */
-export function AllCategoriesMegaMenu() {
+export function CategoriesMegaMenuProvider({ children }: { children: ReactNode }) {
   const links = useNavCollections();
   const [open, setOpen] = useState(false);
   const [activeSlug, setActiveSlug] = useState("");
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = useState(false);
-  const triggerRef = useRef<HTMLAnchorElement>(null);
+  const triggerElRef = useRef<HTMLAnchorElement | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLElement | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ignoreCloseEventRef = useRef(false);
   const menuId = useId();
 
   const active: NavCollectionLink | undefined =
@@ -141,35 +176,71 @@ export function AllCategoriesMegaMenu() {
     }
   }, [links, activeSlug]);
 
-  function clearCloseTimer() {
+  const clearCloseTimer = useCallback(() => {
     if (!closeTimerRef.current) return;
     clearTimeout(closeTimerRef.current);
     closeTimerRef.current = null;
-  }
+  }, []);
 
-  function measure() {
-    const el = triggerRef.current;
+  const measure = useCallback(() => {
+    const el = triggerElRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    setPos({ top: r.bottom + 4, left: r.left });
-  }
-
-  function openMenu() {
-    clearCloseTimer();
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("storefront:close-mega-menus"));
+    const margin = 16;
+    const estimatedWidth = Math.min(1120, window.innerWidth - margin * 2);
+    let left = r.left;
+    if (left + estimatedWidth > window.innerWidth - margin) {
+      left = Math.max(margin, window.innerWidth - margin - estimatedWidth);
     }
-    measure();
-    setOpen(true);
-  }
+    setPos({ top: r.bottom + 6, left });
+  }, []);
 
-  function scheduleClose() {
+  const openMenu = useCallback(
+    (slug?: string) => {
+      clearCloseTimer();
+      if (slug) setActiveSlug(slug);
+      ignoreCloseEventRef.current = true;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event(CLOSE_MENUS));
+      }
+      ignoreCloseEventRef.current = false;
+      measure();
+      setOpen(true);
+    },
+    [clearCloseTimer, measure],
+  );
+
+  const scheduleClose = useCallback(() => {
     clearCloseTimer();
     closeTimerRef.current = setTimeout(() => {
       setOpen(false);
       closeTimerRef.current = null;
-    }, 200);
-  }
+    }, 220);
+  }, [clearCloseTimer]);
+
+  const keepOpen = useCallback(() => {
+    clearCloseTimer();
+  }, [clearCloseTimer]);
+
+  const closeNow = useCallback(() => {
+    clearCloseTimer();
+    setOpen(false);
+  }, [clearCloseTimer]);
+
+  const openAll = useCallback(() => {
+    openMenu();
+  }, [openMenu]);
+
+  const openForSlug = useCallback(
+    (slug: string) => {
+      openMenu(slug);
+    },
+    [openMenu],
+  );
+
+  const registerTrigger = useCallback((el: HTMLAnchorElement | null) => {
+    triggerElRef.current = el;
+  }, []);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -181,12 +252,14 @@ export function AllCategoriesMegaMenu() {
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onScroll);
     };
-  }, [open]);
+  }, [open, measure]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       const t = e.target as Node;
-      if (triggerRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      if (triggerElRef.current?.contains(t)) return;
+      if (panelRef.current?.contains(t)) return;
+      if (stripRef.current?.contains(t)) return;
       setOpen(false);
     }
     if (open) document.addEventListener("mousedown", onDoc);
@@ -194,14 +267,31 @@ export function AllCategoriesMegaMenu() {
   }, [open]);
 
   useEffect(() => {
-    const onCloseMega = () => setOpen(false);
-    window.addEventListener("storefront:close-mega-menus", onCloseMega);
-    return () => window.removeEventListener("storefront:close-mega-menus", onCloseMega);
+    const onCloseMega = () => {
+      if (ignoreCloseEventRef.current) return;
+      setOpen(false);
+    };
+    window.addEventListener(CLOSE_MENUS, onCloseMega);
+    return () => window.removeEventListener(CLOSE_MENUS, onCloseMega);
   }, []);
 
-  useEffect(() => () => clearCloseTimer(), []);
+  useEffect(() => () => clearCloseTimer(), [clearCloseTimer]);
 
-  const recommended = active?.products?.slice(0, 8) ?? [];
+  const api = useMemo<CategoriesMegaMenuApi>(
+    () => ({
+      open,
+      menuId,
+      openAll,
+      openForSlug,
+      keepOpen,
+      scheduleClose,
+      closeNow,
+      registerTrigger,
+    }),
+    [open, menuId, openAll, openForSlug, keepOpen, scheduleClose, closeNow, registerTrigger],
+  );
+
+  const recommended = active?.products?.slice(0, 10) ?? [];
 
   const panel =
     mounted
@@ -213,29 +303,30 @@ export function AllCategoriesMegaMenu() {
                 ref={panelRef}
                 id={menuId}
                 role="menu"
+                data-categories-mega-panel=""
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 2 }}
                 transition={{ duration: 0.15, ease: menuEase }}
                 className="fixed z-[200]"
                 style={{ top: pos.top, left: pos.left }}
-                onMouseEnter={openMenu}
+                onMouseEnter={keepOpen}
                 onMouseLeave={scheduleClose}
               >
-                <div className="flex overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
-                  <div className="w-[232px] shrink-0 border-r border-neutral-100 py-1.5">
-                    <div className="max-h-[min(70dvh,440px)] overflow-y-auto overscroll-contain">
+                <div className="flex max-w-[min(1120px,calc(100vw-32px))] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.16)]">
+                  <div className="w-[min(300px,32vw)] shrink-0 border-r border-neutral-100 py-2">
+                    <div className="max-h-[min(82dvh,620px)] overflow-y-auto overscroll-contain">
                       <HoverPrefetchLink
                         href="/collections"
                         role="menuitem"
-                        className="mb-1 flex w-full items-center gap-2.5 border-b border-neutral-100 px-3.5 py-[9px] text-left text-[13px] font-semibold text-neutral-900 transition-colors hover:bg-[rgba(224,112,58,0.06)] hover:text-[#E0703A]"
+                        className="mb-1.5 flex w-full items-center gap-3 border-b border-neutral-100 px-4 py-3 text-left text-[14px] font-semibold text-neutral-900 transition-colors hover:bg-[rgba(224,112,58,0.06)] hover:text-[#E0703A]"
                         onClick={() => {
                           clearCloseTimer();
                           setOpen(false);
                         }}
                       >
                         <span className="min-w-0 flex-1 truncate">All collections</span>
-                        <span className="shrink-0 text-[11px] text-neutral-400" aria-hidden>
+                        <span className="shrink-0 text-[12px] text-neutral-400" aria-hidden>
                           ›
                         </span>
                       </HoverPrefetchLink>
@@ -246,11 +337,11 @@ export function AllCategoriesMegaMenu() {
                             key={l.slug}
                             href={`/collections/${l.slug}`}
                             role="menuitem"
-                          className={`flex w-full items-center gap-2.5 px-3.5 py-[9px] text-left text-[13px] transition-colors ${
-                            isActive
-                              ? "bg-[rgba(224,112,58,0.1)] font-medium text-[#E0703A]"
-                              : "font-normal text-neutral-800 hover:bg-[rgba(224,112,58,0.06)] hover:text-[#E0703A]"
-                          }`}
+                            className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[14px] transition-colors ${
+                              isActive
+                                ? "bg-[rgba(224,112,58,0.1)] font-medium text-[#E0703A]"
+                                : "font-normal text-neutral-800 hover:bg-[rgba(224,112,58,0.06)] hover:text-[#E0703A]"
+                            }`}
                             onMouseEnter={() => setActiveSlug(l.slug)}
                             onFocus={() => setActiveSlug(l.slug)}
                             onClick={() => {
@@ -259,13 +350,13 @@ export function AllCategoriesMegaMenu() {
                             }}
                           >
                             {l.imageUrl ? (
-                              <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-md bg-neutral-50">
+                              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-neutral-50">
                                 <Thumb
                                   src={l.imageUrl}
                                   alt={l.name}
                                   className="h-full w-full object-cover"
-                                  width={28}
-                                  height={28}
+                                  width={36}
+                                  height={36}
                                 />
                               </span>
                             ) : (
@@ -274,7 +365,7 @@ export function AllCategoriesMegaMenu() {
                               </span>
                             )}
                             <span className="min-w-0 flex-1 truncate">{l.name}</span>
-                            <span className="shrink-0 text-[11px] text-neutral-400" aria-hidden>
+                            <span className="shrink-0 text-[12px] text-neutral-400" aria-hidden>
                               ›
                             </span>
                           </HoverPrefetchLink>
@@ -283,16 +374,16 @@ export function AllCategoriesMegaMenu() {
                     </div>
                   </div>
 
-                  <div className="w-[min(560px,calc(100vw-280px))] min-w-[380px] p-4">
+                  <div className="min-w-0 flex-1 p-5 sm:min-w-[480px] sm:p-6 lg:min-w-[560px]">
                     {active ? (
                       <>
-                        <div className="mb-3 flex items-baseline justify-between gap-3">
-                          <h3 className="text-[13px] font-semibold text-neutral-900">
+                        <div className="mb-4 flex items-baseline justify-between gap-3">
+                          <h3 className="text-[15px] font-semibold text-neutral-900">
                             Recommended in {active.name}
                           </h3>
                           <Link
                             href={`/collections/${active.slug}`}
-                            className="text-[12px] font-semibold hover:underline"
+                            className="text-[13px] font-semibold hover:underline"
                             style={{ color: NAV2_ACCENT }}
                             onClick={() => {
                               clearCloseTimer();
@@ -304,27 +395,27 @@ export function AllCategoriesMegaMenu() {
                         </div>
 
                         {recommended.length > 0 ? (
-                          <div className="grid grid-cols-4 gap-x-3 gap-y-4">
+                          <div className="grid grid-cols-4 gap-x-4 gap-y-5 lg:grid-cols-5 lg:gap-x-5 lg:gap-y-6">
                             {recommended.map((p) => (
                               <HoverPrefetchLink
                                 key={p.slug}
                                 href={p.href}
-                                className="group flex flex-col gap-1.5"
+                                className="group flex flex-col gap-2"
                                 onClick={() => {
                                   clearCloseTimer();
                                   setOpen(false);
                                 }}
                               >
-                                <span className="relative aspect-square overflow-hidden rounded-md bg-neutral-50 ring-1 ring-neutral-100">
+                                <span className="relative aspect-square overflow-hidden rounded-lg bg-neutral-50 ring-1 ring-neutral-100">
                                   <Thumb
                                     src={p.image}
                                     alt={p.name}
                                     className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
-                                    width={80}
-                                    height={80}
+                                    width={140}
+                                    height={140}
                                   />
                                 </span>
-                                <span className="line-clamp-2 text-[11px] leading-snug text-neutral-700 transition-colors group-hover:text-[#E0703A]">
+                                <span className="line-clamp-2 text-[12px] leading-snug text-neutral-700 transition-colors group-hover:text-[#E0703A] lg:text-[13px]">
                                   {p.name}
                                 </span>
                               </HoverPrefetchLink>
@@ -333,7 +424,7 @@ export function AllCategoriesMegaMenu() {
                         ) : (
                           <Link
                             href={`/collections/${active.slug}`}
-                            className="inline-flex items-center gap-3 rounded-lg bg-neutral-50 p-3 hover:bg-neutral-100"
+                            className="inline-flex items-center gap-4 rounded-xl bg-neutral-50 p-4 hover:bg-neutral-100"
                             onClick={() => {
                               clearCloseTimer();
                               setOpen(false);
@@ -343,12 +434,12 @@ export function AllCategoriesMegaMenu() {
                               <Thumb
                                 src={active.imageUrl}
                                 alt={active.name}
-                                className="h-14 w-14 rounded-md object-cover"
-                                width={56}
-                                height={56}
+                                className="h-16 w-16 rounded-lg object-cover"
+                                width={64}
+                                height={64}
                               />
                             ) : null}
-                            <span className="text-sm font-medium text-neutral-900">
+                            <span className="text-base font-medium text-neutral-900">
                               Shop {active.name}
                             </span>
                           </Link>
@@ -365,9 +456,31 @@ export function AllCategoriesMegaMenu() {
       : null;
 
   return (
-    <div className="relative shrink-0" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
+    <CategoriesMegaMenuContext.Provider value={api}>
+      <div
+        ref={(node) => {
+          stripRef.current = node;
+        }}
+      >
+        {children}
+      </div>
+      {panel}
+    </CategoriesMegaMenuContext.Provider>
+  );
+}
+
+/**
+ * AliExpress-style “All Categories” — hamburger pill.
+ * Panel is owned by CategoriesMegaMenuProvider (shared with strip links).
+ */
+export function AllCategoriesMegaMenu() {
+  const { open, menuId, openAll, scheduleClose, closeNow, registerTrigger } =
+    useCategoriesMegaMenu();
+
+  return (
+    <div className="relative shrink-0" onMouseEnter={openAll} onMouseLeave={scheduleClose}>
       <Link
-        ref={triggerRef}
+        ref={registerTrigger}
         href="/collections"
         className={`inline-flex h-[30px] items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-neutral-900 transition-colors ${
           open ? "bg-neutral-200" : "bg-[#f5f5f5] hover:bg-neutral-200/90"
@@ -376,8 +489,7 @@ export function AllCategoriesMegaMenu() {
         aria-haspopup="true"
         aria-controls={menuId}
         onClick={() => {
-          clearCloseTimer();
-          setOpen(false);
+          closeNow();
         }}
       >
         <svg
@@ -392,7 +504,6 @@ export function AllCategoriesMegaMenu() {
         </svg>
         All Categories
       </Link>
-      {panel}
     </div>
   );
 }

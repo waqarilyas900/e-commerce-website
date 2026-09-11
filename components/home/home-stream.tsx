@@ -16,16 +16,16 @@ import { RecentlyViewedSection } from "@/components/product/recently-viewed-sect
 export function HomeFirstStripSkeleton() {
   return (
     <div className="border-b border-[#e8e8e1] bg-white" aria-busy="true" aria-label="Loading collections">
-      <div className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
-        <div className="mx-auto mb-5 h-7 w-48 animate-pulse rounded bg-neutral-100 sm:mb-6" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-[4/3] animate-pulse rounded-lg bg-neutral-100"
-            />
-          ))}
-        </div>
+      <div className="mx-auto max-w-7xl shell-x pb-2.5 pt-4 sm:pb-3 sm:pt-5">
+        <div className="mb-0 h-6 w-40 animate-pulse rounded bg-neutral-100" />
+      </div>
+      <div className="flex gap-2.5 overflow-hidden pb-4 md:gap-3.5 sm:pb-5">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-[80px] w-[160px] shrink-0 animate-pulse rounded-2xl bg-neutral-100 md:h-[140px] md:w-[280px] lg:h-[156px] lg:w-[300px]"
+          />
+        ))}
       </div>
     </div>
   );
