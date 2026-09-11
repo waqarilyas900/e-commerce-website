@@ -432,15 +432,15 @@ export function ProductPdp({
         setCtaScrolledPast(false);
         return;
       }
-      const fullyBelowViewport = r.top >= vh;
-      const fullyAboveViewport = r.bottom <= 0;
-      setCtaScrolledPast(fullyAboveViewport && !fullyBelowViewport);
+      // Show sticky once primary CTAs have left the lower viewport (earlier than fully off-screen).
+      const scrolledPast = r.bottom < Math.min(120, vh * 0.18);
+      setCtaScrolledPast(scrolledPast);
     }
 
     const io = new IntersectionObserver(([entry]) => updateCta(entry), {
       root: null,
-      rootMargin: "0px",
-      threshold: [0, 0.01, 0.99, 1],
+      rootMargin: "0px 0px -72px 0px",
+      threshold: [0, 0.01, 0.25, 0.5, 1],
     });
     io.observe(el);
     return () => io.disconnect();
@@ -1281,6 +1281,11 @@ export function ProductPdp({
                         </span>
                       )}
                     </div>
+                  ) : null}
+                  {matchedVariant && maxQty > 0 ? (
+                    <p className="mt-0.5 text-[9px] font-medium tracking-wide text-neutral-500 max-[360px]:hidden sm:text-[10px]">
+                      Cash on delivery
+                    </p>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">

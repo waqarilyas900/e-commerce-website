@@ -127,9 +127,14 @@ export default async function Home() {
         ) : null}
         <TopStrip />
         <section className="border-b border-[#e8e8e1] bg-white">
-          <div className="mx-auto max-w-7xl shell-x py-4 text-center sm:py-5">
-            <HomeSectionTitle as="h1">{homeDisplayTitle}</HomeSectionTitle>
-            <p className="mx-auto mt-1.5 max-w-2xl text-sm text-neutral-600 sm:text-[15px]">
+          <div className="mx-auto max-w-7xl shell-x py-2.5 text-center sm:py-4">
+            <HomeSectionTitle
+              as="h1"
+              className="!text-[1.2rem] !leading-tight sm:!text-[clamp(1.35rem,2.4vw,1.75rem)]"
+            >
+              {homeDisplayTitle}
+            </HomeSectionTitle>
+            <p className="mx-auto mt-1 max-w-xl text-[12px] leading-snug text-neutral-600 line-clamp-2 sm:mt-1.5 sm:max-w-2xl sm:text-[15px] sm:leading-normal sm:line-clamp-none">
               {homeDisplayDescription}
             </p>
           </div>

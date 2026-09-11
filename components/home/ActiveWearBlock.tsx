@@ -106,12 +106,12 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
   return (
     <section
       id="shopify-section-template-collection-callout"
-      className="shopify-section index-section border-b border-[#e8e8e1] bg-white py-10 md:py-16"
+      className="shopify-section index-section border-b border-[#e8e8e1] bg-white py-5 md:py-10"
       data-section-type="collection-callout"
     >
       <ScrollReveal className="page-width mx-auto max-w-7xl shell-x">
         <div
-          className={`feature-row flex flex-col items-center gap-10 lg:min-h-[520px] lg:flex-row lg:items-center lg:gap-8 xl:gap-0 ${
+          className={`feature-row flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:gap-8 xl:gap-0 ${
             hasImage ? "" : ""
           }`}
         >
@@ -136,14 +136,14 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
                           height={dims.height}
                           sizes={
                             n === 1
-                              ? "(min-width: 590px) 380px, 195px"
+                              ? "(min-width: 590px) 380px, 150px"
                               : n === 2
-                                ? "(min-width: 590px) 245px, 125px"
+                                ? "(min-width: 590px) 245px, 95px"
                                 : n === 3
-                                  ? "(min-width: 590px) 220px, 112px"
+                                  ? "(min-width: 590px) 220px, 88px"
                                   : n === 4
-                                    ? "(min-width: 590px) 270px, 140px"
-                                    : "(min-width: 590px) 135px, 70px"
+                                    ? "(min-width: 590px) 270px, 110px"
+                                    : "(min-width: 590px) 135px, 56px"
                           }
                         />
                       );
@@ -151,45 +151,48 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
                   </div>
                 </div>
               ) : (
-                <div className="relative mx-auto aspect-square w-full max-w-[360px] overflow-hidden bg-neutral-100 md:max-w-[420px]">
+                <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden bg-neutral-100 md:max-w-[420px]">
                   <CalloutImg
                     src={slots[0]!.src}
                     alt={slots[0]!.alt}
                     className="h-full w-full object-cover object-center"
                     width={420}
                     height={420}
-                    sizes="(max-width: 768px) 90vw, 420px"
+                    sizes="(max-width: 768px) 70vw, 420px"
                   />
                 </div>
               )}
             </div>
           ) : null}
 
-          <div className="feature-row__item feature-row__callout-text feature-row__text flex w-full min-w-0 flex-col justify-center px-0 py-2 lg:w-1/2 lg:max-w-[50%] lg:px-6 lg:py-10 xl:px-14 xl:py-16">
+          <div className="feature-row__item feature-row__callout-text feature-row__text flex w-full min-w-0 flex-col justify-center px-0 py-0 lg:w-1/2 lg:max-w-[50%] lg:px-6 lg:py-8 xl:px-14 xl:py-12">
             <div className="feature-row__content larger-text mx-auto max-w-lg text-center lg:mx-0 lg:text-left">
               {featured.eyebrow.trim() ? (
-                <p className="subtitle text-xs font-semibold capitalize tracking-[0.2em] text-neutral-500">
+                <p className="subtitle text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500 sm:text-xs sm:capitalize sm:tracking-[0.2em]">
                   {featured.eyebrow}
                 </p>
               ) : null}
               {featured.title.trim() ? (
-                <div className="mt-3">
-                  <HomeSectionTitle center={false} className="text-center lg:text-left">
+                <div className="mt-1.5 sm:mt-3">
+                  <HomeSectionTitle
+                    center={false}
+                    className="text-center !text-[1.2rem] !leading-tight sm:!text-[29.7px] sm:!leading-[35.64px] lg:text-left"
+                  >
                     {featured.title}
                   </HomeSectionTitle>
                 </div>
               ) : null}
               {featured.description.trim() ? (
-                <div className="rte mt-4 text-[15px] leading-relaxed text-[#1c1d1d] md:text-base">
+                <div className="rte mt-2 line-clamp-3 text-[13px] leading-snug text-[#1c1d1d] sm:mt-4 sm:line-clamp-none sm:text-[15px] sm:leading-relaxed md:text-base">
                   <p>{featured.description}</p>
                 </div>
               ) : null}
               {featured.primaryLabel.trim() || featured.secondaryLabel.trim() ? (
-                <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
+                <div className="mt-4 flex flex-wrap justify-center gap-2 sm:mt-6 sm:gap-3 lg:justify-start">
                   {featured.primaryLabel.trim() ? (
                     <Link
                       href={featured.primaryHref}
-                      className="btn btn--no-animate inline-flex items-center justify-center border border-[#111] bg-[#111] text-white transition hover:bg-[#040404]"
+                      className="btn btn--no-animate inline-flex items-center justify-center border border-[#111] bg-[#111] px-3 py-2 text-[12px] text-white transition hover:bg-[#040404] sm:px-4 sm:py-2.5 sm:text-sm"
                     >
                       {featured.primaryLabel}
                     </Link>
@@ -197,7 +200,7 @@ export function ActiveWearBlock({ calloutImages = [] }: Props) {
                   {featured.secondaryLabel.trim() ? (
                     <Link
                       href={featured.secondaryHref}
-                      className="btn btn--no-animate inline-flex items-center justify-center border border-[#111] bg-[#111] text-white transition hover:bg-[#040404]"
+                      className="btn btn--no-animate inline-flex items-center justify-center border border-[#111] bg-white px-3 py-2 text-[12px] text-[#111] transition hover:bg-neutral-50 sm:px-4 sm:py-2.5 sm:text-sm"
                     >
                       {featured.secondaryLabel}
                     </Link>
