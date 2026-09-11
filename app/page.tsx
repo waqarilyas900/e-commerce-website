@@ -1,24 +1,17 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getImageProps } from "next/image";
-import {
-  ProductSection,
-  TopStrip,
-  WhyShop,
-} from "@/components/storefront";
-import { ActiveWearBlock } from "@/components/home/ActiveWearBlock";
+import { TopStrip } from "@/components/storefront";
 import { HeroBanner } from "@/components/home/HeroBanner";
-import {
-  HomeCollectionsStrip,
-  loadHomeCollectionTiles,
-} from "@/components/home/HomeCollectionsStrip";
 import { MissionStrip } from "@/components/home/MissionStrip";
 import { SkipToContent } from "@/components/home/SkipToContent";
-import { TrustRatingStrip } from "@/components/home/TrustRatingStrip";
-import { getHomeCalloutImages } from "@/app/lib/home-callout-images";
+import {
+  HomeDeferredSections,
+  HomeDeferredSkeleton,
+  HomeFirstStrip,
+  HomeFirstStripSkeleton,
+} from "@/components/home/home-stream";
 import { getHomeMarketingData } from "@/app/lib/home-marketing";
-import { getHomeRailSections } from "@/app/lib/home-rails";
-import { getCachedHomeReviewHighlights } from "@/lib/cache/home-review-highlights";
-import { getCachedStoreReviewAggregate } from "@/lib/cache/store-review-aggregate";
 import {
   buildPageMetadata,
   canonicalUrlFor,
@@ -31,7 +24,6 @@ import { JsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { HomeSectionTitle } from "@/components/ui/home-section-title";
 import { HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from "@/lib/images/hero";
 import { HomeStickyProductVideo } from "@/components/home/HomeStickyProductVideo";
-import { RecentlyViewedSection } from "@/components/product/recently-viewed-section";
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await loadSiteIdentity();
@@ -50,24 +42,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Await catalog sections with the rest of the home payload (no Suspense).
- * Warm `unstable_cache` keeps this fast; the first paint includes collections
- * + rails so grey skeletons never flash between shell and content.
+ * Stream the homepage: hero (+ title) paints as soon as marketing is ready.
+ * Collections strip and product rails/reviews stream in behind Suspense skeletons
+ * so users see content quickly instead of waiting on the slowest home query.
  */
 export default async function Home() {
-  const [homeMarketing, storeReviews, reviewHighlights, identityBundle, collectionTiles, railSections, calloutImages] =
-    await Promise.all([
-      getHomeMarketingData(),
-      getCachedStoreReviewAggregate(),
-      getCachedHomeReviewHighlights(),
-      loadSiteIdentity().then(async (identity) => ({
-        identity,
-        override: await loadSeoOverrideForRoute("/", identity.locale),
-      })),
-      loadHomeCollectionTiles(),
-      getHomeRailSections(),
-      getHomeCalloutImages(),
-    ]);
+  const [homeMarketing, identityBundle] = await Promise.all([
+    getHomeMarketingData(),
+    loadSiteIdentity().then(async (identity) => ({
+      identity,
+      override: await loadSeoOverrideForRoute("/", identity.locale),
+    })),
+  ]);
   const { identity, override } = identityBundle;
   const firstHeroImage = homeMarketing.slides[0]?.image ?? "";
   const canonical = resolveSeoCanonicalOverride(
@@ -151,24 +137,18 @@ export default async function Home() {
         {homeMarketing.missionParagraph ? (
           <MissionStrip missionHtml={homeMarketing.missionParagraph} />
         ) : null}
-        <ActiveWearBlock calloutImages={calloutImages} />
-        <HomeCollectionsStrip tiles={collectionTiles} />
-        {railSections.map((rail) => (
-          <ProductSection
-            key={rail.viewAllHref}
-            title={rail.title}
-            items={rail.items}
-            viewAllHref={rail.viewAllHref}
-            showAddToCart={false}
-            layout="rail"
-            totalProductCount={rail.totalProductCount}
-          />
-        ))}
-        <RecentlyViewedSection className="mx-auto max-w-7xl shell-x" />
-        <WhyShop />
-        <TrustRatingStrip aggregate={storeReviews} reviews={reviewHighlights} />
+
+        <Suspense fallback={<HomeFirstStripSkeleton />}>
+          <HomeFirstStrip />
+        </Suspense>
+
+        <Suspense fallback={<HomeDeferredSkeleton />}>
+          <HomeDeferredSections />
+        </Suspense>
       </main>
-      <HomeStickyProductVideo />
+      <Suspense fallback={null}>
+        <HomeStickyProductVideo />
+      </Suspense>
     </>
   );
 }
