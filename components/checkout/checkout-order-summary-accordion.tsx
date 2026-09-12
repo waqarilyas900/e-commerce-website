@@ -244,7 +244,7 @@ function CheckoutOrderSummaryBody({
             </span>
           </div>
         </div>
-        <p className="mt-1 text-right text-xs text-neutral-500">All prices in PKR</p>
+        <p className="mt-1 text-right text-xs text-neutral-500">Taxes included</p>
       </div>
 
       <ModalShell

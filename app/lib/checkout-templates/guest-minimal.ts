@@ -61,14 +61,7 @@ export const GUEST_MINIMAL_CHECKOUT: CheckoutTemplateDef = {
           label: "City",
           type: "text",
           required: true,
-          colSpan: 1,
-        },
-        {
-          id: "shipping_postal_code",
-          label: "Postal code",
-          type: "text",
-          required: true,
-          colSpan: 1,
+          colSpan: 2,
         },
         {
           id: "shipping_province",

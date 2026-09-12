@@ -1,15 +1,26 @@
 import { toast } from "sonner";
 
-export function toastAddedToCart(options?: { title?: string; description?: string; quantity?: number }) {
+export function toastAddedToCart(options?: {
+  title?: string;
+  description?: string;
+  quantity?: number;
+  /** Drawer already opens — keep toast short so it doesn’t compete. */
+  brief?: boolean;
+}) {
   const q = options?.quantity ?? 1;
   const title = options?.title ?? "Added to cart";
+  const brief = options?.brief === true;
   const desc =
     options?.description ??
-    (q > 1 ? `${q} items are in your bag.` : "Item is in your bag — open the cart when you’re ready.");
+    (brief
+      ? undefined
+      : q > 1
+        ? `${q} items are in your bag.`
+        : "Item is in your bag — open the cart when you’re ready.");
 
   toast.success(title, {
-    description: desc,
-    duration: 3800,
+    ...(desc ? { description: desc } : {}),
+    duration: brief ? 1600 : 3800,
   });
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import type { GroupBase, StylesConfig } from "react-select";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/app/lib/catalog/types";
@@ -14,6 +15,7 @@ import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import type { AppSelectOption } from "@/components/ui/app-select";
 import { AppSelect } from "@/components/ui/app-select";
 import { CollectionFilterDrawer } from "./collection-filter-drawer";
+import { useListScrollRestore } from "@/hooks/use-list-scroll-restore";
 
 /** Flat react-select: no box shadows (collection toolbar). */
 const sortSelectStyles: StylesConfig<AppSelectOption, false, GroupBase<AppSelectOption>> = {
@@ -127,6 +129,8 @@ function buildParams(
 export function CollectionListingControls({
   maxPriceCeil,
   parsed,
+  currentSlug,
+  navLinks,
   products,
   cardShowAddToCart = false,
 }: Props) {
@@ -135,9 +139,18 @@ export function CollectionListingControls({
   const searchParams = useSearchParams();
   const [filterOpen, setFilterOpen] = useState(false);
   const [isListPending, startListTransition] = useTransition();
+  useListScrollRestore(`list-scroll:${pathname}`);
 
   const spString = searchParams.toString();
   const baseParams = useMemo(() => new URLSearchParams(spString), [spString]);
+  const hasActiveFilters =
+    parsed.availability !== "all" ||
+    (parsed.priceMin != null && parsed.priceMin > 0) ||
+    parsed.priceMax != null;
+  const relatedChips = useMemo(
+    () => navLinks.filter((l) => l.slug !== currentSlug).slice(0, 6),
+    [navLinks, currentSlug],
+  );
 
   const pushInTransition = useCallback(
     (next: string) => {
@@ -219,8 +232,46 @@ export function CollectionListingControls({
       </div>
 
       {!isListPending && products.length === 0 ? (
-        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-12 text-center text-sm text-neutral-600">
-          No products match your filters.
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-10 text-center sm:py-12">
+          <p className="text-sm font-medium text-neutral-900">
+            {hasActiveFilters ? "No products match your filters." : "No products in this collection yet."}
+          </p>
+          <p className="mx-auto mt-1.5 max-w-md text-sm text-neutral-600">
+            {hasActiveFilters
+              ? "Clear filters or try another collection."
+              : "Browse a related collection below."}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={() => pushInTransition("")}
+                className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+              >
+                Clear filters
+              </button>
+            ) : null}
+            <Link
+              href="/collections"
+              className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+            >
+              All collections
+            </Link>
+          </div>
+          {relatedChips.length > 0 ? (
+            <ul className="mt-5 flex list-none flex-wrap justify-center gap-2">
+              {relatedChips.map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/collections/${c.slug}`}
+                    className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[12px] font-medium text-neutral-800 transition hover:border-neutral-400"
+                  >
+                    {c.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : (
         <div

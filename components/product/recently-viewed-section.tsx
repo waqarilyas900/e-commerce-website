@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Product } from "@/app/lib/catalog/types";
-import { ProductCard } from "@/components/storefront";
+import { ProductCard, PRODUCT_RAIL_ITEM } from "@/components/storefront";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { getRecentlyViewedSlugs } from "@/lib/recently-viewed";
 
@@ -44,7 +44,7 @@ export function RecentlyViewedSection({ excludeSlug, className = "" }: Props) {
         <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">
           Recently viewed
         </h2>
-        <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 md:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-1 sm:mt-8 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
           {Array.from({ length: 4 }).map((_, idx) => (
             <ProductCardSkeleton key={idx} />
           ))}
@@ -66,10 +66,7 @@ export function RecentlyViewedSection({ excludeSlug, className = "" }: Props) {
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {items.map((item, idx) => (
-            <li
-              key={item.id}
-              className="flex w-[calc((100vw-1.25rem)/1.5)] min-w-[172px] max-w-[232px] shrink-0 snap-start snap-always flex-col sm:w-[200px] sm:max-w-none"
-            >
+            <li key={item.id} className={PRODUCT_RAIL_ITEM}>
               <div className="flex h-full min-h-0 flex-1 flex-col">
                 <ProductCard
                   product={item}

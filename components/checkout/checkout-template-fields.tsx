@@ -137,7 +137,7 @@ export function CheckoutTemplateFields({
                       }}
                     />
                     <p className="mt-1 text-xs text-neutral-500">
-                      Required for delivery updates (COD).
+                      Order updates go to this number (COD).
                     </p>
                     {saveAddressErrors[field.id] ? (
                       <p className="mt-2 text-xs text-red-600" role="alert">

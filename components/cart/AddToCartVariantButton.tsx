@@ -60,6 +60,7 @@ export function AddToCartVariantButton({
   const router = useRouter();
   const { addVariant, openCart, waitForCartResolution } = useCart();
   const [adding, setAdding] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
   const q = Math.min(maxQuantity, Math.max(1, Math.floor(quantity)));
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export function AddToCartVariantButton({
         ariaLabel ?? (typeof label === "string" ? label : undefined)
       }
       onClick={async () => {
-        if (disabled || adding) return;
+        if (disabled || adding || justAdded) return;
         setAdding(true);
         try {
           if (!seed) await delayMs(ADD_TO_CART_BUTTON_MS);
@@ -95,27 +96,36 @@ export function AddToCartVariantButton({
             value: trackedValue,
             num_items: q,
           });
+          const opensDrawer = Boolean(openDrawer) && !redirectHref;
           toastAddedToCart({
             description:
-              itemName != null
-                ? q > 1
-                  ? `${itemName} · ${q} added`
-                  : itemName
-                : undefined,
+              opensDrawer
+                ? undefined
+                : itemName != null
+                  ? q > 1
+                    ? `${itemName} · ${q} added`
+                    : itemName
+                  : undefined,
             quantity: q,
+            brief: opensDrawer,
           });
           if (redirectHref) {
             if (!seed) await waitForCartResolution();
             router.push(redirectHref);
           } else if (openDrawer) {
             openCart();
+            setJustAdded(true);
+            window.setTimeout(() => setJustAdded(false), 900);
+          } else {
+            setJustAdded(true);
+            window.setTimeout(() => setJustAdded(false), 900);
           }
         } finally {
           setAdding(false);
         }
       }}
     >
-      {label}
+      {justAdded && typeof label === "string" ? "Added" : label}
     </PrimaryActionButton>
   );
 }

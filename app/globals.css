@@ -420,7 +420,8 @@ body {
   will-change: transform;
 }
 .home-collections-marquee-shell:hover .home-collections-marquee-track,
-.home-collections-marquee-shell:focus-within .home-collections-marquee-track {
+.home-collections-marquee-shell:focus-within .home-collections-marquee-track,
+.home-collections-marquee-shell.is-paused .home-collections-marquee-track {
   animation-play-state: paused;
 }
 @media (prefers-reduced-motion: reduce) {

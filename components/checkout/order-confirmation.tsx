@@ -157,30 +157,44 @@ export function OrderConfirmation({
 
         <motion.h1
           variants={item}
-          className="mt-8 text-center text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
+          className="mt-4 text-center text-2xl font-bold tracking-tight text-neutral-900 sm:mt-6 sm:text-4xl"
         >
           Your order is confirmed
         </motion.h1>
         <motion.p
           variants={item}
-          className="mx-auto mt-3 max-w-md text-center text-base leading-relaxed text-neutral-600"
+          className="mx-auto mt-2 max-w-md text-center text-sm leading-relaxed text-neutral-600 sm:mt-3 sm:text-base"
         >
-          Thank you for shopping with us. We&apos;re preparing your package and will keep you
-          updated.
+          Cash on delivery — we may call or WhatsApp to confirm, then pack and ship.
+          Keep your order number below for tracking.
         </motion.p>
 
         <motion.div
           variants={item}
-          className="mt-10 overflow-hidden rounded-3xl border border-neutral-200/90 bg-white shadow-[0_24px_60px_-12px_rgba(0,0,0,0.08),0_12px_24px_-8px_rgba(0,0,0,0.06)] ring-1 ring-neutral-950/[0.04]"
+          className="mt-6 overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-[0_24px_60px_-12px_rgba(0,0,0,0.08),0_12px_24px_-8px_rgba(0,0,0,0.06)] ring-1 ring-neutral-950/[0.04] sm:mt-8 sm:rounded-3xl"
         >
           <div className="border-b border-neutral-100 bg-gradient-to-br from-neutral-50/90 to-white px-6 py-5 sm:px-8">
             <p className="text-[11px] font-semibold capitalize tracking-[0.2em] text-neutral-500">
               Order reference
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-mono text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
-                {orderNumber ?? "—"}
-              </p>
+              {orderNumber ? (
+                <button
+                  type="button"
+                  onClick={() => void copyOrderNumber()}
+                  className="group text-left font-mono text-xl font-semibold tracking-tight text-neutral-900 transition hover:text-neutral-700 sm:text-2xl"
+                  title="Tap to copy"
+                >
+                  {orderNumber}
+                  <span className="mt-1 block text-[11px] font-sans font-medium normal-case tracking-normal text-neutral-500 group-hover:text-neutral-600 sm:hidden">
+                    {copied ? "Copied" : "Tap to copy"}
+                  </span>
+                </button>
+              ) : (
+                <p className="font-mono text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
+                  —
+                </p>
+              )}
               {orderNumber ? (
                 <button
                   type="button"
@@ -279,9 +293,9 @@ export function OrderConfirmation({
                 1
               </span>
               <span>
-                <span className="font-semibold text-emerald-950">We process your order</span>
+                <span className="font-semibold text-emerald-950">We confirm your order</span>
                 <span className="mt-0.5 block text-emerald-900/85">
-                  Our team confirms stock and packs your items carefully.
+                  You may get a call or WhatsApp to verify details, then we pack your items.
                 </span>
               </span>
             </li>
@@ -314,22 +328,22 @@ export function OrderConfirmation({
           variants={item}
           className="mt-10 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center"
         >
-          <Link
-            href="/collections"
-            replace
-            className="inline-flex items-center justify-center btn rounded-none bg-neutral-950 text-white shadow-lg shadow-neutral-900/20 transition hover:bg-neutral-800"
-          >
-            Continue shopping
-          </Link>
           {orderNumber ? (
             <Link
               href={`/track-order?order=${encodeURIComponent(orderNumber)}`}
               replace
-              className="inline-flex items-center justify-center rounded-full border-2 border-emerald-600 bg-emerald-50 px-8 py-3.5 text-sm font-semibold text-emerald-950 transition hover:border-emerald-700 hover:bg-emerald-100"
+              className="inline-flex items-center justify-center btn rounded-none bg-neutral-950 text-white shadow-lg shadow-neutral-900/20 transition hover:bg-neutral-800"
             >
               Track this order
             </Link>
           ) : null}
+          <Link
+            href="/collections"
+            replace
+            className="inline-flex items-center justify-center rounded-full border-2 border-neutral-200 bg-white px-8 py-3.5 text-sm font-semibold text-neutral-900 transition hover:border-neutral-300 hover:bg-neutral-50"
+          >
+            Continue shopping
+          </Link>
           {signedIn ? (
             <Link
               href="/account/orders"
@@ -353,8 +367,11 @@ export function OrderConfirmation({
           variants={item}
           className="mt-8 text-center text-xs leading-relaxed text-neutral-500"
         >
-          Questions? Reply to your confirmation email or contact support with your order number
-          above.
+          Save your order number above. Questions? Contact support or use{" "}
+          <Link href="/track-order" className="font-medium text-neutral-700 underline underline-offset-2">
+            Track order
+          </Link>
+          .
         </motion.p>
       </motion.div>
     </div>

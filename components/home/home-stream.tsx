@@ -101,6 +101,7 @@ export async function HomeDeferredSections() {
 
   return (
     <>
+      <RecentlyViewedSection className="mx-auto max-w-7xl shell-x" />
       {railSections.map((rail) => (
         <ProductSection
           key={rail.viewAllHref}
@@ -112,7 +113,6 @@ export async function HomeDeferredSections() {
           totalProductCount={rail.totalProductCount}
         />
       ))}
-      <RecentlyViewedSection className="mx-auto max-w-7xl shell-x" />
       <WhyShop />
       <TrustRatingStrip aggregate={storeReviews} reviews={reviewHighlights} />
     </>

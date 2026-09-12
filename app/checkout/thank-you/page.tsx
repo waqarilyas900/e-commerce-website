@@ -264,7 +264,7 @@ function CheckoutThankYouInner() {
 
   return (
     <CheckoutChrome mode="complete">
-      <main id="MainContent">
+      <main id="MainContent" className="shell-x mx-auto max-w-3xl pb-10 pt-6 sm:pt-8">
         <OrderConfirmation
           orderNumber={order}
           orderTotalCents={totalCents}

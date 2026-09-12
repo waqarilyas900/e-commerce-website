@@ -5,7 +5,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { ProductPdp } from "@/components/product/product-pdp";
 import { RecentlyViewedSection } from "@/components/product/recently-viewed-section";
 import { CustomerReviews } from "@/components/product/customer-reviews";
-import { ProductCard } from "@/components/storefront";
+import { ProductCard, PRODUCT_RAIL_ITEM } from "@/components/storefront";
 import { ProductCardSkeleton } from "@/components/ui/product-card-skeleton";
 import { dbListProductReviewsForPdp } from "@/app/lib/db/catalog";
 import {
@@ -272,7 +272,7 @@ export default async function ProductPage({ params }: Props) {
       {faqLd ? <JsonLd id="ld-faq" data={faqLd} /> : null}
       <main
         id="MainContent"
-        className="main-content mx-auto max-w-7xl shell-x py-5 sm:py-6"
+        className="main-content mx-auto max-w-7xl shell-x py-3.5 sm:py-6"
       >
         <PageBreadcrumbs
           items={[
@@ -343,12 +343,12 @@ async function RelatedProductsSection({
   const related = relatedDb.filter((item) => item.slug !== currentSlug).slice(0, 8);
   if (related.length === 0) return null;
   const viewAllHref = `/collections/${collectionSlug}`;
-  const heading = collectionName?.trim() || "Related products";
+  const heading = collectionName?.trim() || "Similar products";
   return (
-    <section className="mt-8 sm:mt-10">
+    <section className="mt-8 sm:mt-10" id="similar-products">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-x-6 sm:gap-y-3">
         <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">
-          More from {heading}
+          Similar products
         </h2>
         <Link
           href={viewAllHref}
@@ -363,10 +363,7 @@ async function RelatedProductsSection({
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {related.map((item, idx) => (
-            <li
-              key={item.id}
-              className="w-[calc((100vw-1.25rem)/1.5)] min-w-[172px] max-w-[232px] shrink-0 snap-start snap-always flex flex-col sm:w-[200px] sm:max-w-none"
-            >
+            <li key={item.id} className={PRODUCT_RAIL_ITEM}>
               <div className="flex h-full min-h-0 flex-1 flex-col">
                 <ProductCard
                   product={item}
@@ -399,7 +396,7 @@ function RelatedProductsFallback() {
   return (
     <section className="mt-8 sm:mt-10">
       <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">Related products</h2>
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 md:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-1 sm:mt-8 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
         {Array.from({ length: 4 }).map((_, idx) => (
           <ProductCardSkeleton key={idx} />
         ))}

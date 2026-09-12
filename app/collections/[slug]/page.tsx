@@ -239,7 +239,7 @@ export default async function CollectionDetailsPage({ params, searchParams }: Pr
             </p>
           ) : null}
           <p className="mx-auto mt-2 text-xs font-medium text-neutral-500 sm:text-sm">
-            Cash on delivery available at checkout
+            {list.length} {list.length === 1 ? "item" : "items"} · Cash on delivery available at checkout
           </p>
         </header>
 

@@ -189,7 +189,7 @@ export function HomeCollectionsStrip({
             <HomeSectionTitle
               id="home-collections-heading"
               center={false}
-              className="!mt-0.5 text-[1.05rem] sm:!text-[1.25rem] sm:!leading-tight"
+              className="!mt-0.5"
             >
               Shop collections
             </HomeSectionTitle>

@@ -461,20 +461,18 @@ export function ProductPdp({
         (keys.length > 0 &&
           keys.every((k) => (selection[k] ?? "").trim() !== ""))),
     );
-  /** Hide while cart drawer is open (full-screen on mobile) so it does not stack on top of the drawer. */
-  const showMobileStickyBar = showStickyPurchase && !cartDrawerOpen;
+  /** Sticky purchase bar (all breakpoints); hide while cart drawer is open. */
+  const showStickyBar = showStickyPurchase && !cartDrawerOpen;
 
   const stickyBarRef = useRef<HTMLDivElement | null>(null);
 
-  /** Reserve space at the bottom of the page so footer / copyright can scroll above the fixed bar (mobile & tablet). */
+  /** Reserve space at the bottom so footer / copyright can scroll above the fixed bar. */
   useLayoutEffect(() => {
     const page = document.getElementById("PageContainer");
     if (!page) return;
 
-    const mq = window.matchMedia("(max-width: 1023px)");
-
     const syncPadding = () => {
-      if (!mq.matches || !showStickyPurchase || cartDrawerOpen) {
+      if (!showStickyPurchase || cartDrawerOpen) {
         page.style.paddingBottom = "";
         return;
       }
@@ -499,13 +497,11 @@ export function ProductPdp({
     const t = window.setTimeout(attach, 0);
 
     window.addEventListener("resize", syncPadding);
-    mq.addEventListener("change", syncPadding);
 
     return () => {
       clearTimeout(t);
       ro?.disconnect();
       window.removeEventListener("resize", syncPadding);
-      mq.removeEventListener("change", syncPadding);
       page.style.paddingBottom = "";
     };
   }, [showStickyPurchase, cartDrawerOpen]);
@@ -565,9 +561,9 @@ export function ProductPdp({
 
   return (
     <>
-      <section className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 *:min-w-0">
-        <div className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-neutral-100">
+      <section className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-8 *:min-w-0">
+        <div className="min-w-0 space-y-2.5 lg:sticky lg:top-24 lg:space-y-3 lg:self-start">
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-neutral-100 sm:rounded-2xl">
             {showImageOosBadge ? (
               <div
                 className="absolute right-3 top-3 z-10 max-w-[min(calc(100%-1.5rem),16rem)] rounded-lg border border-white/15 bg-neutral-950/95 px-3 py-2 text-center shadow-lg backdrop-blur-sm"
@@ -691,9 +687,9 @@ export function ProductPdp({
             </div>
           ) : null}
         </div>
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0 space-y-3 sm:space-y-4">
           {showCollectionLabel ? (
-            <p className="text-sm capitalize tracking-wide text-neutral-500">
+            <p className="text-xs capitalize tracking-wide text-neutral-500 sm:text-sm">
               {collectionHref ? (
                 <Link
                   href={collectionHref}
@@ -706,7 +702,7 @@ export function ProductPdp({
               )}
             </p>
           ) : null}
-          <h1 className="text-[1.50rem] font-semibold tracking-tight sm:text-3xl">
+          <h1 className="text-[1.35rem] font-semibold leading-snug tracking-tight sm:text-3xl sm:leading-tight">
             {(heading ?? "").trim() || product.name}
           </h1>
           {product.free_delivery ? (
@@ -877,48 +873,48 @@ export function ProductPdp({
           ) : null}
 
           {variants.length > 0 && priceVariant ? (
-            <div ref={purchaseBlockRef} className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-baseline gap-2">
+            <div ref={purchaseBlockRef} className="space-y-3 sm:space-y-4">
+              <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                   {matchedVariant ? (
                     priceVariant.compare_at_price != null &&
                     priceVariant.compare_at_price > priceVariant.price ? (
                       <>
-                        <span className="text-lg text-neutral-500 line-through">
+                        <span className="text-base text-neutral-500 line-through sm:text-lg">
                           {formatPkr(Number(priceVariant.compare_at_price))}
                         </span>
-                        <p className="text-2xl font-semibold">
+                        <p className="text-xl font-semibold leading-none sm:text-2xl">
                           {formatPkr(Number(priceVariant.price))}
                         </p>
                         {purchaseDiscountPct && purchaseDiscountPct > 0 ? (
-                          <span className="inline-flex items-center rounded-none bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
+                          <span className="inline-flex items-center rounded-none bg-red-600 px-2 py-0.5 text-[10px] font-semibold leading-none text-white sm:px-2.5 sm:py-1 sm:text-xs">
                             {purchaseDiscountPct}% OFF
                           </span>
                         ) : null}
                       </>
                     ) : (
-                      <p className="text-2xl font-semibold">
+                      <p className="text-xl font-semibold leading-none sm:text-2xl">
                         {formatPkr(Number(priceVariant.price))}
                       </p>
                     )
                   ) : (
                     <div className="space-y-1">
-                      <p className="text-2xl font-semibold text-neutral-900">
+                      <p className="text-xl font-semibold leading-none text-neutral-900 sm:text-2xl">
                         {formatPkr(Number(priceVariant.price))}
                       </p>
                       <p className="text-sm text-neutral-500">
-                        Select all options to see stock and add to cart.
+                        Select options to check stock and continue.
                       </p>
                     </div>
                   )}
                 </div>
-              </div>
-              <div
-                role="status"
-                aria-live="polite"
-                className={`inline-block w-fit max-w-full rounded-lg border px-3 py-2 text-center text-[11px] font-semibold leading-snug normal-case tracking-normal sm:text-xs ${purchaseStockBadgeClass}`}
-              >
-                <p className="font-semibold">{purchaseStockMessage}</p>
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className={`inline-flex shrink-0 items-center rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold leading-none normal-case tracking-normal sm:px-3 sm:py-2 sm:text-xs ${purchaseStockBadgeClass}`}
+                >
+                  {purchaseStockMessage}
+                </div>
               </div>
 
               {matchedVariant ? (
@@ -1139,7 +1135,7 @@ export function ProductPdp({
               posterUrl: stickyPoster,
             },
           ]}
-          bottomClassName={showMobileStickyBar ? "bottom-24" : "bottom-4"}
+          bottomClassName={showStickyBar ? "bottom-24" : "bottom-4"}
         />
       ) : null}
 
@@ -1217,15 +1213,15 @@ export function ProductPdp({
         ) : null}
       </AnimatePresence>
 
-      {/* Mobile / tablet: compact sticky bar — thumbnail left, small actions right; page gets bottom padding so copyright clears the bar */}
-      <div className="lg:hidden" aria-hidden={!showMobileStickyBar}>
+      {/* Sticky purchase bar — shows when price/CTAs leave the viewport (mobile + desktop) */}
+      <div aria-hidden={!showStickyBar}>
         <AnimatePresence
           onExitComplete={() => {
             const page = document.getElementById("PageContainer");
             if (page) page.style.paddingBottom = "";
           }}
         >
-          {showMobileStickyBar &&
+          {showStickyBar &&
           (matchedVariant ||
             (keys.length > 0 &&
               keys.every((k) => (selection[k] ?? "").trim() !== ""))) ? (
@@ -1243,7 +1239,7 @@ export function ProductPdp({
                 paddingTop: "0.375rem",
               }}
             >
-              <div className="mx-auto flex max-w-lg items-center gap-1.5 px-2 sm:gap-3 sm:px-4">
+              <div className="mx-auto flex max-w-lg items-center gap-1.5 px-2 sm:gap-3 sm:px-4 lg:max-w-3xl lg:gap-4 lg:px-6">
                 <div
                   className="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:h-14 sm:w-14"
                   style={
@@ -1254,7 +1250,7 @@ export function ProductPdp({
                   aria-hidden
                 />
                 <div className="min-w-0 flex-1 max-[360px]:max-w-[5.5rem] sm:max-w-none">
-                  <p className="truncate text-[11px] font-medium leading-tight text-neutral-900 max-[360px]:hidden sm:text-xs">
+                  <p className="truncate text-[11px] font-medium leading-tight text-neutral-900 max-[360px]:hidden sm:text-xs lg:text-sm">
                     {product.name}
                   </p>
                   {priceVariant ? (
@@ -1282,11 +1278,6 @@ export function ProductPdp({
                       )}
                     </div>
                   ) : null}
-                  {matchedVariant && maxQty > 0 ? (
-                    <p className="mt-0.5 text-[9px] font-medium tracking-wide text-neutral-500 max-[360px]:hidden sm:text-[10px]">
-                      Cash on delivery
-                    </p>
-                  ) : null}
                 </div>
                 <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
                   {matchedVariant && maxQty > 0 ? (
@@ -1305,7 +1296,7 @@ export function ProductPdp({
                         seed={cartSeed}
                         ariaLabel="Add to cart"
                         label="Add to cart"
-                        className="min-h-10 !px-2.5 !py-2 !text-[11px] leading-none tracking-tight max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
+                        className="min-h-10 !px-2.5 !py-2 !text-[11px] leading-none tracking-tight max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal lg:!px-5 lg:!text-sm"
                       />
                       <AddToCartVariantButton
                         variantId={matchedVariant.id}
@@ -1322,7 +1313,7 @@ export function ProductPdp({
                         seed={cartSeed}
                         ariaLabel="Order now"
                         label="Order now"
-                        className="min-h-10 !border-2 !border-neutral-900 !bg-white !px-2.5 !py-2 !text-[11px] !text-neutral-900 leading-none tracking-tight hover:!bg-neutral-50 max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal"
+                        className="min-h-10 !border-2 !border-neutral-900 !bg-white !px-2.5 !py-2 !text-[11px] !text-neutral-900 leading-none tracking-tight hover:!bg-neutral-50 max-[400px]:!text-[10px] max-[360px]:!px-2 max-[360px]:!text-[9px] max-[330px]:!text-[8px] sm:min-h-11 sm:!px-4 sm:!text-xs sm:tracking-normal lg:!px-5 lg:!text-sm"
                       />
                     </>
                   ) : (

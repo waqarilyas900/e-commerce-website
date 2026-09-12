@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   CHECKOUT_PENDING_CART_CLEAR_KEY,
@@ -28,6 +28,7 @@ import { useCart } from "@/app/providers/cart-provider";
 import { useAuth } from "@/app/providers/auth-provider";
 import { useStoreBrand } from "@/app/providers/store-brand-provider";
 import { SiteLogoMark } from "@/components/site-logo";
+import { focusCheckoutField, scrollElementIntoView } from "@/lib/ux/focus-checkout-field";
 import { computeDeliveryPkr, nextFreeDeliveryGapPkr } from "@/app/lib/delivery-pricing";
 type SignInModalReason = "save-address" | "voucher" | "general";
 
@@ -164,6 +165,27 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [redirectingToConfirmation, setRedirectingToConfirmation] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  /** Lift sticky bar above iOS/Android keyboard when focused on inputs. */
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const stickyCheckoutBarRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const sync = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset(inset > 48 ? inset : 0);
+    };
+
+    sync();
+    vv.addEventListener("resize", sync);
+    vv.addEventListener("scroll", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+    };
+  }, []);
 
   const [formValues, setFormValues] = useState<Record<string, string>>(defaultFormValues);
   const setField = useCallback((id: string, value: string) => {
@@ -205,8 +227,6 @@ export default function CheckoutPage() {
   const [applyingVoucher, setApplyingVoucher] = useState(false);
   const [discountNotice, setDiscountNotice] = useState<string | null>(null);
   const [discountNoticeIsError, setDiscountNoticeIsError] = useState(false);
-  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
-
   const clearDiscountNotice = useCallback(() => {
     setDiscountNotice(null);
     setDiscountNoticeIsError(false);
@@ -280,6 +300,36 @@ export default function CheckoutPage() {
       : 0;
 
   const grandTotal = Math.max(0, subtotal + deliveryPkr - discountPkr);
+
+  /** Match sticky bar height so content (and last fields) clear it on mobile. */
+  useLayoutEffect(() => {
+    const main = document.getElementById("MainContent");
+    const bar = stickyCheckoutBarRef.current;
+    if (!main || !bar) return;
+
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => {
+      if (!mq.matches) {
+        main.style.paddingBottom = "";
+        return;
+      }
+      const h = Math.ceil(bar.getBoundingClientRect().height);
+      main.style.paddingBottom = h > 0 ? `${h + 12}px` : "";
+    };
+
+    sync();
+    const ro =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(sync) : undefined;
+    ro?.observe(bar);
+    window.addEventListener("resize", sync);
+    mq.addEventListener("change", sync);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", sync);
+      mq.removeEventListener("change", sync);
+      main.style.paddingBottom = "";
+    };
+  }, [keyboardInset, placing, grandTotal, ready, redirectingToConfirmation]);
 
   const freeShippingThresholdPkr = useMemo(() => {
     const tiers = deliverySettings.freeThresholdsPaisa.filter((t) => t > 0);
@@ -726,9 +776,27 @@ export default function CheckoutPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (placing || redirectingToConfirmation) return;
+
+    const form = e.currentTarget;
+    if (form instanceof HTMLFormElement && !form.checkValidity()) {
+      form.reportValidity();
+      const invalid = form.querySelector(":invalid");
+      if (invalid instanceof HTMLElement) {
+        try {
+          invalid.focus({ preventScroll: true });
+        } catch {
+          invalid.focus();
+        }
+        invalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
     const phoneError = pakistanCheckoutPhoneError(formValues.phone);
     if (phoneError) {
       setFormError(phoneError);
+      focusCheckoutField("phone");
       return;
     }
     setFormError(null);
@@ -767,7 +835,6 @@ export default function CheckoutPage() {
           ...(discountApplied && discountCode.trim() !== ""
             ? { voucher_code: discountCode.trim() }
             : {}),
-          ...(newsletterOptIn ? { newsletter_opt_in: true } : {}),
         }),
       });
       const data = (await res.json()) as {
@@ -781,10 +848,12 @@ export default function CheckoutPage() {
         setSubmitError(
           voucherErrorMessage(data.error_code, data.error ?? "Could not place order. Please try again."),
         );
+        window.setTimeout(() => scrollElementIntoView("checkout-submit-error"), 40);
         return;
       }
       if (!data.order_number || data.total_cents == null) {
         setSubmitError("Unexpected response from server.");
+        window.setTimeout(() => scrollElementIntoView("checkout-submit-error"), 40);
         return;
       }
       skipEmptyCartRedirectOnce.current = true;
@@ -855,6 +924,7 @@ export default function CheckoutPage() {
       );
     } catch {
       setSubmitError("Network error. Please try again.");
+      window.setTimeout(() => scrollElementIntoView("checkout-submit-error"), 40);
     } finally {
       if (!successNavigation) setPlacing(false);
     }
@@ -910,7 +980,7 @@ export default function CheckoutPage() {
 
   return (
     <CheckoutChrome mode="checkout">
-      <main id="MainContent" className="pb-12 md:pb-0">
+      <main id="MainContent" className="md:pb-0">
         <div className="mx-auto w-full max-w-[1140px] md:grid md:min-h-screen md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="w-full bg-white shell-x py-6 md:min-h-screen md:py-8">
             <div className="mb-5 border-b border-neutral-200 pb-4 md:mb-6">
@@ -945,7 +1015,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div className="mt-6 space-y-5 md:mt-8">
+            <div className="mt-4 space-y-5 md:mt-6">
               <div className="md:hidden">
                 <CheckoutOrderSummaryAccordion
                   id="co-summary-top"
@@ -1051,20 +1121,9 @@ export default function CheckoutPage() {
               </p>
             </section>
 
-              {signedIn ? (
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-left text-sm text-neutral-800">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
-                  checked={newsletterOptIn}
-                  onChange={(e) => setNewsletterOptIn(e.target.checked)}
-                />
-                <span>Email me with news and offers</span>
-              </label>
-              ) : null}
-
               {submitError ? (
                 <p
+                  id="checkout-submit-error"
                   className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
                   role="alert"
                 >
@@ -1085,7 +1144,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={placing || resolvedLines.length === 0 || cartResolveFailed || pendingCartCatalog}
-                className="btn w-full !rounded-none bg-neutral-950 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn hidden w-full !rounded-none bg-neutral-950 text-white disabled:cursor-not-allowed disabled:opacity-60 md:inline-flex"
               >
                 {placing ? "Placing order…" : "Complete order"}
               </button>
@@ -1121,6 +1180,38 @@ export default function CheckoutPage() {
               />
             </div>
           </aside>
+        </div>
+
+        {/* Mobile sticky total + place order (lifts above soft keyboard) */}
+        <div
+          ref={stickyCheckoutBarRef}
+          className="fixed inset-x-0 z-40 border-t border-neutral-200 bg-white/95 px-3 pt-2.5 shadow-[0_-8px_24px_-10px_rgba(0,0,0,0.15)] backdrop-blur-md md:hidden"
+          style={{
+            bottom: keyboardInset > 0 ? keyboardInset : 0,
+            paddingBottom:
+              keyboardInset > 0
+                ? "0.5rem"
+                : "max(0.5rem, env(safe-area-inset-bottom, 0px))",
+          }}
+        >
+          <div className="mx-auto flex max-w-lg items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-neutral-500">
+                Total (COD)
+              </p>
+              <p className="truncate text-base font-semibold tabular-nums text-neutral-950">
+                {formatPkr(grandTotal)}
+              </p>
+            </div>
+            <button
+              type="submit"
+              form="checkout-form"
+              disabled={placing || resolvedLines.length === 0 || cartResolveFailed || pendingCartCatalog}
+              className="btn shrink-0 !rounded-none bg-neutral-950 px-4 py-2.5 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {placing ? "Placing…" : "Complete order"}
+            </button>
+          </div>
         </div>
       </main>
       <ConfirmationModal

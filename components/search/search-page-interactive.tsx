@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -8,6 +8,7 @@ import { SearchNoResultsFallback } from "@/components/search/search-no-results-f
 import { SearchResultsSkeleton } from "@/components/search/search-results-skeleton";
 import type { Product } from "@/app/lib/catalog/types";
 import { trackMetaPixel } from "@/lib/seo/meta-pixel-client";
+import { useListScrollRestore } from "@/hooks/use-list-scroll-restore";
 
 type Props = {
   initialQuery: string;
@@ -34,6 +35,11 @@ export function SearchPageInteractive({ initialQuery, initialProducts }: Props) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchTrackedQueries = useRef<Set<string>>(new Set());
+  const scrollKey = useMemo(
+    () => `list-scroll:/search:${initialQuery.trim().toLowerCase()}`,
+    [initialQuery],
+  );
+  useListScrollRestore(scrollKey);
 
   function fireSearchEvent(query: string, resultProducts: Product[]) {
     const q = query.trim();

@@ -220,7 +220,7 @@ function productImageUseNativeImg(src: string): boolean {
 function ProductCardStarRow({ rating }: { rating: number }) {
   return (
     <div className="leading-none">
-      <StarRating value={rating} size={16} labeled />
+      <StarRating value={rating} size={13} labeled />
     </div>
   );
 }
@@ -230,18 +230,19 @@ export function ProductCard({
   showAddToCart = true,
   rail = false,
   revealDelay = 0,
-  /** Grids (collections, search): 2-line title clamp so row heights stay even with stretch layout. */
-  clampTitle = false,
+  /** 2-line title clamp so row heights stay even (default on — home density). */
+  clampTitle = true,
 }: {
   product: Product;
   /** Set false on the home page to hide quick-add (use PDP or other pages to purchase). */
   showAddToCart?: boolean;
-  /** Home horizontal rail: stable card height + 2-line title clamp. */
+  /** Home horizontal rail: tighter image `sizes` hint. */
   rail?: boolean;
   revealDelay?: number;
   clampTitle?: boolean;
 }) {
   const { openPreview } = useProductPreview();
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   if (!product?.slug) {
     return null;
@@ -257,16 +258,19 @@ export function ProductCard({
     ? "bg-black text-white"
     : "bg-red-600 text-white";
   const badgeSizeClass =
-    "whitespace-nowrap px-2.5 py-1.5 text-[11px] font-semibold tracking-wide sm:px-3.5 sm:py-2 sm:text-xs";
+    "whitespace-nowrap px-1.5 py-1 text-[10px] font-semibold tracking-wide sm:px-2.5 sm:py-1.5 sm:text-[11px]";
 
   const useNativeProductImg = Boolean(product.image && productImageUseNativeImg(product.image));
   /**
    * `object-cover` + `object-top` fills the tile edge-to-edge (no grey band under the photo).
    * Top alignment keeps packshots/labeled tops visible; a sliver of the bottom may crop — same
    * trade-off as typical listing grids when the photo isn’t exactly the tile aspect ratio.
+   * Image frame is always square (home rail density) site-wide.
    */
   const productImgClassName =
-    "object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]";
+    `object-cover object-top transition-[transform,opacity] duration-500 group-hover:scale-[1.02] ${
+      imageLoaded ? "opacity-100" : "opacity-0"
+    }`;
   const productImgFitStyle = {
     objectFit: "cover" as const,
     objectPosition: "top center" as const,
@@ -293,25 +297,20 @@ export function ProductCard({
           prefetch
           className="group relative block"
         >
-          <div
-            className={
-              rail
-                ? "relative aspect-square w-full overflow-hidden bg-neutral-100"
-                : "relative aspect-4/5 w-full overflow-hidden bg-neutral-50 sm:aspect-auto sm:h-64 md:h-72 lg:h-80"
-            }
-          >
+          <div className="relative aspect-square w-full overflow-hidden bg-neutral-100">
             {product.image ? (
               useNativeProductImg ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={optimizeSupplierImageUrl(product.image, rail ? 400 : 400)}
+                  src={optimizeSupplierImageUrl(product.image, 400)}
                   alt={product.name}
                   loading="lazy"
                   decoding="async"
                   width={400}
-                  height={500}
+                  height={400}
                   style={productImgFitStyle}
                   className={`absolute inset-0 h-full w-full ${productImgClassName}`}
+                  onLoad={() => setImageLoaded(true)}
                 />
               ) : (
                 <Image
@@ -321,10 +320,11 @@ export function ProductCard({
                   sizes={
                     rail
                       ? "(max-width: 767px) 40vw, 300px"
-                      : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 340px"
+                      : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 25vw"
                   }
                   style={productImgFitStyle}
                   className={productImgClassName}
+                  onLoad={() => setImageLoaded(true)}
                 />
               )
             ) : null}
@@ -344,7 +344,7 @@ export function ProductCard({
           type="button"
           onClick={openQuickPreview}
           aria-label={`Preview ${product.name}`}
-          className="absolute bottom-2 right-2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1c1d1d] shadow-md ring-1 ring-black/5 transition hover:bg-[#E0703A] hover:text-white sm:bottom-12 sm:opacity-0 sm:pointer-events-none sm:group-hover/card:opacity-100 sm:group-hover/card:pointer-events-auto"
+          className="absolute bottom-2 right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1c1d1d] shadow-md ring-1 ring-black/5 transition hover:bg-[#E0703A] hover:text-white sm:bottom-12 sm:h-9 sm:w-9 sm:opacity-0 sm:pointer-events-none sm:group-hover/card:opacity-100 sm:group-hover/card:pointer-events-auto"
         >
           <CartGlyph className="h-[18px] w-[18px]" />
         </button>
@@ -359,14 +359,8 @@ export function ProductCard({
         </button>
       </div>
 
-      {/* Tight, even stack: image → title → stars → price (no forced title min-height gap). */}
-      <div
-        className={
-          rail
-            ? "flex min-h-0 flex-1 flex-col gap-0.5 px-1.5 pb-1.5 pt-1 text-[12px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm"
-            : "flex min-h-0 flex-1 flex-col gap-1 px-2 pb-2 pt-1.5 text-[13px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm"
-        }
-      >
+      {/* Tight stack — same density as home rails (square image + compact copy). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-0.5 px-1.5 pb-1.5 pt-1 text-[12px] leading-snug text-neutral-900 sm:gap-1 sm:px-2.5 sm:pb-2.5 sm:pt-1.5 sm:text-sm">
         <div className="flex flex-col gap-0">
           <HoverPrefetchLink
             href={`/products/${product.slug}`}
@@ -402,14 +396,15 @@ export function ProductCard({
 }
 
 /**
- * Mobile: ~2.15 cards + peek (shorter section). sm+: wider tiles for tablet rail.
- * Desktop home uses the grid branch, not these widths.
+ * Mobile: ~2.15 cards + peek (home density). sm+: wider tiles for tablet rail.
+ * Shared by home, PDP related, recently viewed — keep one system size.
  */
-const RAIL_COL =
+export const PRODUCT_RAIL_COL =
   "w-[calc((100vw-1rem)/2.15)] min-w-[128px] max-w-[152px] shrink-0 sm:w-[168px] sm:max-w-[180px]";
 const RAIL_SNAP = "snap-start snap-always";
-/** Product tile in the home rail (same as `${RAIL_COL} ${RAIL_SNAP} flex flex-col`). */
-const RAIL_ITEM = `${RAIL_COL} ${RAIL_SNAP} flex flex-col`;
+/** Product tile in horizontal rails (home / PDP / recently viewed). */
+export const PRODUCT_RAIL_ITEM = `${PRODUCT_RAIL_COL} ${RAIL_SNAP} flex flex-col`;
+const RAIL_ITEM = PRODUCT_RAIL_ITEM;
 const RAIL_PREVIEW = 6;
 
 /** Trailing rail tile — blurred product photo + “View all products” (shop-collections style). */

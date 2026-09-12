@@ -35,6 +35,7 @@ export function AddToCartButton({
 }: Props) {
   const { addVariant, openCart } = useCart();
   const [adding, setAdding] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
   const q = Math.min(99, Math.max(1, Math.floor(quantity)));
 
   if (!product) {
@@ -60,7 +61,7 @@ export function AddToCartButton({
       className={className}
       loading={adding}
       onClick={async () => {
-        if (adding) return;
+        if (adding || justAdded) return;
         setAdding(true);
         try {
           const seed = cartSeedFromProduct(product);
@@ -84,16 +85,23 @@ export function AddToCartButton({
             num_items: q,
           });
           toastAddedToCart({
-            description: q > 1 ? `${product.name} · ${q} added` : product.name,
+            description: openDrawer
+              ? undefined
+              : q > 1
+                ? `${product.name} · ${q} added`
+                : product.name,
             quantity: q,
+            brief: openDrawer,
           });
           if (openDrawer) openCart();
+          setJustAdded(true);
+          window.setTimeout(() => setJustAdded(false), 900);
         } finally {
           setAdding(false);
         }
       }}
     >
-      {label}
+      {justAdded ? "Added" : label}
     </PrimaryActionButton>
   );
 }

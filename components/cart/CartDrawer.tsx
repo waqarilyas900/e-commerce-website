@@ -429,7 +429,7 @@ export function CartDrawer() {
                     resolvedLines.map(({ line, product, unitPrice, compareAtPrice, variantLabel }) => (
                       <motion.article
                         key={line.variantId}
-                        className="flex gap-4"
+                        className="flex gap-2.5 sm:gap-4"
                         variants={{
                           hidden: { opacity: 0, y: 14, scale: 0.98 },
                           visible: {
@@ -446,7 +446,7 @@ export function CartDrawer() {
                         <Link
                           href={`/products/${product.slug}`}
                           onClick={closeCart}
-                          className="size-24 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:size-28"
+                          className="size-16 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:size-24"
                           style={{ backgroundImage: `url(${product.image})` }}
                         />
                         <div className="min-w-0 flex-1">
@@ -454,7 +454,7 @@ export function CartDrawer() {
                             <Link
                               href={`/products/${product.slug}`}
                               onClick={closeCart}
-                              className="min-w-0 flex-1 wrap-break-word text-sm font-medium leading-5 text-neutral-900 hover:underline"
+                              className="line-clamp-2 min-w-0 flex-1 text-[13px] font-medium leading-snug text-neutral-900 hover:underline sm:text-sm"
                             >
                               {product.name}
                             </Link>
@@ -580,12 +580,14 @@ export function CartDrawer() {
                     disabled={checkoutNavigating}
                     onClick={() => {
                       void (async () => {
+                        if (checkoutNavigating) return;
                         setCheckoutNavigating(true);
                         try {
                           await waitForCartResolution();
                           closeCart();
                           router.push("/checkout");
-                        } finally {
+                          // Keep loading until navigation unmounts the drawer.
+                        } catch {
                           setCheckoutNavigating(false);
                         }
                       })();

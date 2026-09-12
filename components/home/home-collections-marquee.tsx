@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { HomeCollectionTile } from "@/components/home/HomeCollectionsStrip";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
@@ -32,13 +32,17 @@ function TileCard({
     ? optimizeSupplierImageUrl(tile.imageUrl, 360) || tile.imageUrl
     : "";
   const native = src ? isNativeImg(src) : false;
+  const [loaded, setLoaded] = useState(false);
+  const imgClass = `absolute inset-0 h-full w-full object-cover object-center transition-[transform,opacity] duration-500 group-hover:scale-105 ${
+    loaded ? "opacity-100" : "opacity-0"
+  }`;
 
   return (
     <Link
       href={tile.href}
       tabIndex={duplicate ? -1 : undefined}
       aria-hidden={duplicate ? true : undefined}
-      className="group relative block h-[80px] w-[160px] shrink-0 overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_4px_14px_-8px_rgba(28,29,29,0.45)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-[#E0703A]/45 md:h-[140px] md:w-[280px] lg:h-[156px] lg:w-[300px]"
+      className="group relative block h-[170px] w-[320px] shrink-0 overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_4px_14px_-8px_rgba(28,29,29,0.45)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-[#E0703A]/45 md:h-[200px] md:w-[372px] lg:h-[220px] lg:w-[400px]"
     >
       {src ? (
         native ? (
@@ -46,21 +50,23 @@ function TileCard({
           <img
             src={src}
             alt={duplicate ? "" : `${tile.name} collection`}
-            className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
+            className={imgClass}
             loading="lazy"
             decoding="async"
-            width={240}
-            height={120}
+            width={400}
+            height={200}
             draggable={false}
+            onLoad={() => setLoaded(true)}
           />
         ) : (
           <Image
             src={src}
             alt={duplicate ? "" : `${tile.name} collection`}
             fill
-            className="object-cover object-center transition duration-500 group-hover:scale-105"
-            sizes="(min-width: 1024px) 300px, (min-width: 768px) 280px, 160px"
+            className={imgClass}
+            sizes="(min-width: 1024px) 400px, (min-width: 768px) 372px, 320px"
             draggable={false}
+            onLoad={() => setLoaded(true)}
           />
         )
       ) : (
@@ -86,7 +92,7 @@ function TileCard({
 
 /**
  * Compact infinite-loop category banners — short height, low scroll cost.
- * Pauses on hover; reduced-motion users get a manual horizontal scroller.
+ * Pauses on hover / touch; reduced-motion users get a manual horizontal scroller.
  */
 export function HomeCollectionsMarquee({ tiles }: { tiles: HomeCollectionTile[] }) {
   /** One visual lap; duplicated in the DOM for a seamless -50% CSS loop. */
@@ -97,11 +103,18 @@ export function HomeCollectionsMarquee({ tiles }: { tiles: HomeCollectionTile[] 
     if (tiles.length < 8) return [...tiles, ...tiles];
     return tiles;
   }, [tiles]);
+  const [paused, setPaused] = useState(false);
 
   if (tiles.length === 0) return null;
 
   return (
-    <div className="home-collections-marquee-shell relative w-full">
+    <div
+      className={`home-collections-marquee-shell relative w-full${paused ? " is-paused" : ""}`}
+      onPointerDown={() => setPaused(true)}
+      onPointerUp={() => setPaused(false)}
+      onPointerCancel={() => setPaused(false)}
+      onPointerLeave={() => setPaused(false)}
+    >
       <div className="home-collections-marquee-mask overflow-hidden py-0.5 motion-reduce:hidden">
         <div className="home-collections-marquee-track flex w-max gap-2.5 md:gap-3.5">
           {lap.map((tile, i) => (
