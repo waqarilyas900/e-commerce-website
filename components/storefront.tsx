@@ -232,6 +232,8 @@ export function ProductCard({
   revealDelay = 0,
   /** 2-line title clamp so row heights stay even (default on — home density). */
   clampTitle = true,
+  /** Above-the-fold tiles: skip lazy load for faster LCP. */
+  priorityImage = false,
 }: {
   product: Product;
   /** Set false on the home page to hide quick-add (use PDP or other pages to purchase). */
@@ -240,6 +242,7 @@ export function ProductCard({
   rail?: boolean;
   revealDelay?: number;
   clampTitle?: boolean;
+  priorityImage?: boolean;
 }) {
   const { openPreview } = useProductPreview();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -304,8 +307,9 @@ export function ProductCard({
                 <img
                   src={optimizeSupplierImageUrl(product.image, rail ? 360 : 400)}
                   alt={product.name}
-                  loading="lazy"
+                  loading={priorityImage ? "eager" : "lazy"}
                   decoding="async"
+                  fetchPriority={priorityImage ? "high" : "auto"}
                   width={rail ? 360 : 400}
                   height={rail ? 360 : 400}
                   style={productImgFitStyle}
@@ -317,6 +321,7 @@ export function ProductCard({
                   src={product.image}
                   alt={product.name}
                   fill
+                  priority={priorityImage}
                   sizes={
                     rail
                       ? "(max-width: 767px) 40vw, 300px"

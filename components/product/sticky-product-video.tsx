@@ -21,6 +21,8 @@ export type StickyProductVideoProps = {
   reels: ProductReelItem[];
   startIndex?: number;
   bottomClassName?: string;
+  /** Hide + pause the floating mini player (e.g. while PDP sticky buy bar is visible). */
+  suppressMini?: boolean;
 };
 
 /** Rad: --rvw-edge aligns chrome to the contained 9:16 video column. */
@@ -67,6 +69,7 @@ export function StickyProductVideo({
   reels,
   startIndex = 0,
   bottomClassName = "bottom-4",
+  suppressMini = false,
 }: StickyProductVideoProps) {
   const titleId = useId();
   const reduceMotion = useReducedMotion();
@@ -142,18 +145,18 @@ export function StickyProductVideo({
       if (cancelled || el.paused) return;
       revealedRef.current = true;
       // Only show sticky while collapsed and cart drawer is closed.
-      if (!expanded && !cartDrawerOpen && pageVisible) setMiniReady(true);
+      if (!expanded && !cartDrawerOpen && pageVisible && !suppressMini) setMiniReady(true);
     };
 
     const tryPlay = () => {
-      if (cancelled || expanded || cartDrawerOpen || !pageVisible) return;
+      if (cancelled || expanded || cartDrawerOpen || !pageVisible || suppressMini) return;
       el.muted = true;
       el.defaultMuted = true;
       void el
         .play()
         .then(reveal)
         .catch(() => {
-          if (cancelled || expanded || cartDrawerOpen || !pageVisible) return;
+          if (cancelled || expanded || cartDrawerOpen || !pageVisible || suppressMini) return;
           retryTimer = window.setTimeout(() => {
             void el.play().then(reveal).catch(() => {});
           }, 600);
@@ -163,9 +166,9 @@ export function StickyProductVideo({
     el.addEventListener("playing", reveal);
     el.addEventListener("canplay", tryPlay);
 
-    if (expanded || cartDrawerOpen || !pageVisible) {
+    if (expanded || cartDrawerOpen || !pageVisible || suppressMini) {
       el.pause();
-      if (expanded || !pageVisible) setMiniReady(false);
+      if (expanded || !pageVisible || suppressMini) setMiniReady(false);
     } else {
       if (loadedMiniSrcRef.current !== miniSrc) {
         loadedMiniSrcRef.current = miniSrc;
@@ -185,18 +188,18 @@ export function StickyProductVideo({
       el.removeEventListener("playing", reveal);
       el.removeEventListener("canplay", tryPlay);
     };
-  }, [miniSrc, expanded, dismissed, cartDrawerOpen, pageVisible]);
+  }, [miniSrc, expanded, dismissed, cartDrawerOpen, pageVisible, suppressMini]);
 
   // Collapsed sticky: rotate to the next product video when one finishes.
   useEffect(() => {
-    if (!rotateMini || dismissed || expanded || !pageVisible) return;
+    if (!rotateMini || dismissed || expanded || !pageVisible || suppressMini) return;
     const el = miniVideoRef.current;
     if (!el) return;
 
     const onEnded = () => advanceMini();
     el.addEventListener("ended", onEnded);
     return () => el.removeEventListener("ended", onEnded);
-  }, [rotateMini, dismissed, expanded, pageVisible, miniSrc, advanceMini]);
+  }, [rotateMini, dismissed, expanded, pageVisible, suppressMini, miniSrc, advanceMini]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -258,7 +261,7 @@ export function StickyProductVideo({
   if (!parsed.length || dismissed || !mini) return null;
 
   const counterLabel = `${activeIndex + 1} / ${parsed.length}`;
-  const showMini = miniReady && !expanded && !cartDrawerOpen;
+  const showMini = miniReady && !expanded && !cartDrawerOpen && !suppressMini;
 
   return (
     <>

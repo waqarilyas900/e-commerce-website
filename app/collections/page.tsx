@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { ProductCard } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
   HomeCollectionsStrip,
   loadHomeCollectionTiles,
 } from "@/components/home/HomeCollectionsStrip";
+import { CollectionsAllProducts } from "@/components/collections/collections-all-products";
 import { getCachedAllActiveProductTiles } from "@/lib/cache/catalog-data";
 import { hasCatalogDb } from "@/app/lib/db/env";
 import { notFound } from "next/navigation";
@@ -98,24 +98,9 @@ export default async function CollectionsPage() {
           showViewAll={false}
         />
 
-        {/* Full catalog — every product, same as before */}
+        {/* Full catalog — progressive load for faster first paint */}
         <ScrollReveal className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
-          <section>
-            <h2 className="text-center text-[1.50rem] font-semibold tracking-tight sm:text-2xl">
-              All products
-            </h2>
-            <div className="mt-5 grid grid-cols-2 gap-1 sm:mt-6 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
-              {allProducts.map((product, idx) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  showAddToCart={false}
-                  revealDelay={Math.min(idx * 0.08, 0.36)}
-                  clampTitle
-                />
-              ))}
-            </div>
-          </section>
+          <CollectionsAllProducts products={allProducts} />
         </ScrollReveal>
       </main>
     </>

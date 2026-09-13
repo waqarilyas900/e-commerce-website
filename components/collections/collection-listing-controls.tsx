@@ -16,6 +16,7 @@ import type { AppSelectOption } from "@/components/ui/app-select";
 import { AppSelect } from "@/components/ui/app-select";
 import { CollectionFilterDrawer } from "./collection-filter-drawer";
 import { useListScrollRestore } from "@/hooks/use-list-scroll-restore";
+import { formatPkr } from "@/app/lib/format-currency";
 
 /** Flat react-select: no box shadows (collection toolbar). */
 const sortSelectStyles: StylesConfig<AppSelectOption, false, GroupBase<AppSelectOption>> = {
@@ -191,16 +192,35 @@ export function CollectionListingControls({
     [baseParams, pushInTransition],
   );
 
+  const clearAvailability = useCallback(() => {
+    pushInTransition(buildParams(baseParams, { stock: "all" }));
+  }, [baseParams, pushInTransition]);
+
+  const clearPriceMin = useCallback(() => {
+    pushInTransition(buildParams(baseParams, { min: null }));
+  }, [baseParams, pushInTransition]);
+
+  const clearPriceMax = useCallback(() => {
+    pushInTransition(buildParams(baseParams, { max: null }));
+  }, [baseParams, pushInTransition]);
+
+  const clearAllFilters = useCallback(() => {
+    pushInTransition(buildParams(baseParams, { stock: "all", min: null, max: null }));
+  }, [baseParams, pushInTransition]);
+
   const skeletonCount = Math.max(8, products.length > 0 ? products.length : 8);
+
+  const chipClass =
+    "inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white py-1.5 pl-3 pr-2 text-[12px] font-medium text-neutral-800 transition hover:border-neutral-500 hover:bg-neutral-50 active:scale-[0.98]";
 
   return (
     <>
-      <div className="mb-8 flex items-center justify-between gap-3">
+      <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
           disabled={isListPending}
-          className="inline-flex w-fit min-w-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+          className="inline-flex w-fit min-w-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -215,6 +235,15 @@ export function CollectionListingControls({
             <path d="M3 6h18M7 12h10M10 18h4" />
           </svg>
           Filter
+          {hasActiveFilters ? (
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-neutral-900 px-1.5 text-[10px] font-semibold text-white">
+              {[
+                parsed.availability !== "all" ? 1 : 0,
+                parsed.priceMin != null && parsed.priceMin > 0 ? 1 : 0,
+                parsed.priceMax != null ? 1 : 0,
+              ].reduce((a, b) => a + b, 0)}
+            </span>
+          ) : null}
         </button>
         <div className="w-[min(58vw,220px)] min-w-[160px]">
           <AppSelect
@@ -230,6 +259,50 @@ export function CollectionListingControls({
           />
         </div>
       </div>
+
+      {hasActiveFilters ? (
+        <div className="mb-5 flex flex-wrap items-center gap-2" aria-label="Active filters">
+          {parsed.availability === "in_stock" ? (
+            <button type="button" className={chipClass} onClick={clearAvailability}>
+              In stock
+              <span aria-hidden className="text-neutral-500">
+                ×
+              </span>
+            </button>
+          ) : null}
+          {parsed.availability === "out_of_stock" ? (
+            <button type="button" className={chipClass} onClick={clearAvailability}>
+              Out of stock
+              <span aria-hidden className="text-neutral-500">
+                ×
+              </span>
+            </button>
+          ) : null}
+          {parsed.priceMin != null && parsed.priceMin > 0 ? (
+            <button type="button" className={chipClass} onClick={clearPriceMin}>
+              Min {formatPkr(parsed.priceMin)}
+              <span aria-hidden className="text-neutral-500">
+                ×
+              </span>
+            </button>
+          ) : null}
+          {parsed.priceMax != null ? (
+            <button type="button" className={chipClass} onClick={clearPriceMax}>
+              Max {formatPkr(parsed.priceMax)}
+              <span aria-hidden className="text-neutral-500">
+                ×
+              </span>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-[12px] font-semibold text-neutral-700 underline-offset-2 transition hover:text-neutral-950 hover:underline"
+          >
+            Clear all
+          </button>
+        </div>
+      ) : null}
 
       {!isListPending && products.length === 0 ? (
         <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-10 text-center sm:py-12">
@@ -292,6 +365,7 @@ export function CollectionListingControls({
                     showAddToCart={cardShowAddToCart}
                     clampTitle
                     revealDelay={Math.min(idx * 0.07, 0.35)}
+                    priorityImage={idx < 8}
                   />
                 </div>
               ))}

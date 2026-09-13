@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { HomeCollectionTile } from "@/components/home/HomeCollectionsStrip";
 import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
@@ -104,12 +104,22 @@ export function HomeCollectionsMarquee({ tiles }: { tiles: HomeCollectionTile[] 
     return tiles;
   }, [tiles]);
   const [paused, setPaused] = useState(false);
+  const [tabHidden, setTabHidden] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setTabHidden(document.visibilityState === "hidden");
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
+  }, []);
 
   if (tiles.length === 0) return null;
 
+  const isPaused = paused || tabHidden;
+
   return (
     <div
-      className={`home-collections-marquee-shell relative w-full${paused ? " is-paused" : ""}`}
+      className={`home-collections-marquee-shell relative w-full${isPaused ? " is-paused" : ""}`}
       onPointerDown={() => setPaused(true)}
       onPointerUp={() => setPaused(false)}
       onPointerCancel={() => setPaused(false)}

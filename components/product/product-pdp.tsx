@@ -1135,6 +1135,7 @@ export function ProductPdp({
               posterUrl: stickyPoster,
             },
           ]}
+          suppressMini={showStickyBar}
           bottomClassName={showStickyBar ? "bottom-24" : "bottom-4"}
         />
       ) : null}
