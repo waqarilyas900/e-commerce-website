@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/storefront";
 
 const PAGE_SIZE = 24;
 /** First row(s) on mobile 2-col + a bit of next — load eagerly for LCP. */
-const EAGER_COUNT = 8;
+const EAGER_COUNT = 10;
 
 /** Progressive reveal for the /collections hub “All products” grid. */
 export function CollectionsAllProducts({ products }: { products: Product[] }) {
@@ -36,7 +36,7 @@ export function CollectionsAllProducts({ products }: { products: Product[] }) {
       <p className="mt-1.5 text-center text-xs text-neutral-500 sm:text-sm">
         {products.length} {products.length === 1 ? "item" : "items"}
       </p>
-      <div className="mt-5 grid grid-cols-2 gap-1 sm:mt-6 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+      <div className="mt-5 grid grid-cols-2 gap-1 sm:mt-6 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2">
         {visible.map((product, idx) => (
           <ProductCard
             key={product.id}

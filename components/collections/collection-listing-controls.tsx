@@ -348,7 +348,7 @@ export function CollectionListingControls({
         </div>
       ) : (
         <div
-          className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2"
+          className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2"
           aria-busy={isListPending}
           aria-live="polite"
         >
@@ -365,7 +365,7 @@ export function CollectionListingControls({
                     showAddToCart={cardShowAddToCart}
                     clampTitle
                     revealDelay={Math.min(idx * 0.07, 0.35)}
-                    priorityImage={idx < 8}
+                    priorityImage={idx < 10}
                   />
                 </div>
               ))}

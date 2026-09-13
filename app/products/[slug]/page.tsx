@@ -377,7 +377,7 @@ async function RelatedProductsSection({
           ))}
         </ul>
       </div>
-      <div className="mt-6 hidden md:mt-8 md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+      <div className="mt-6 hidden md:mt-8 md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2">
         {related.map((item, idx) => (
           <ProductCard
             key={item.id}
@@ -396,7 +396,7 @@ function RelatedProductsFallback() {
   return (
     <section className="mt-8 sm:mt-10">
       <h2 className="text-[1.50rem] font-semibold tracking-tight sm:text-2xl">Related products</h2>
-      <div className="mt-6 grid grid-cols-2 gap-1 sm:mt-8 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+      <div className="mt-6 grid grid-cols-2 gap-1 sm:mt-8 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2">
         {Array.from({ length: 4 }).map((_, idx) => (
           <ProductCardSkeleton key={idx} />
         ))}

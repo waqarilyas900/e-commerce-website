@@ -87,7 +87,7 @@ function ListingFallback({ cardShowAddToCart = false }: { cardShowAddToCart?: bo
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
         <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
       </div>
-      <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+      <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2">
         {Array.from({ length: 6 }).map((_, i) => (
           <ProductCardSkeleton key={i} showAddToCart={cardShowAddToCart} />
         ))}

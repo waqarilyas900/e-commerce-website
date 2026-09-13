@@ -116,9 +116,9 @@ export function CollectionListingSkeleton({
               <ProductCardSkeleton key={i} showAddToCart={showAddToCart} />
             ))}
           </div>
-          <div className="hidden gap-2 lg:grid lg:grid-cols-4 lg:gap-2">
+          <div className="hidden gap-2 lg:grid lg:grid-cols-[minmax(200px,240px)_minmax(0,1fr)] lg:gap-2">
             <SkeletonBox className="h-40" />
-            <div className="grid min-w-0 grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:col-span-3 lg:grid-cols-3 lg:gap-2">
+            <div className="grid min-w-0 grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2">
               {Array.from({ length: count }).map((_, i) => (
                 <ProductCardSkeleton key={i} showAddToCart={showAddToCart} />
               ))}
@@ -126,7 +126,7 @@ export function CollectionListingSkeleton({
           </div>
         </>
       ) : (
-        grid("grid-cols-2 md:grid-cols-3 lg:grid-cols-4")
+        grid("grid-cols-2 md:grid-cols-3 lg:grid-cols-5")
       )}
     </main>
   );
@@ -193,7 +193,7 @@ export function SearchPageSkeleton() {
     >
       <SkeletonBox className="h-9 w-32 sm:w-40" />
       <SkeletonBox className="mt-4 h-12 w-full" />
-      <div className="mt-6 grid grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5">
         {Array.from({ length: 8 }).map((_, i) => (
           <ProductCardSkeleton key={i} showAddToCart={false} />
         ))}
@@ -276,7 +276,7 @@ export function GenericPageSkeleton() {
         <SkeletonBox className="h-4 w-11/12" />
         <SkeletonBox className="h-4 w-3/4" />
       </div>
-      <div className="mt-8 grid grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5">
         {Array.from({ length: 4 }).map((_, i) => (
           <ProductCardSkeleton key={i} showAddToCart={false} />
         ))}

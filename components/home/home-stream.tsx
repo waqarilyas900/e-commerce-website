@@ -54,8 +54,8 @@ export function HomeDeferredSkeleton() {
                 </div>
               ))}
             </div>
-            <div className="hidden gap-2 md:grid md:grid-cols-3 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div className="hidden gap-2 md:grid md:grid-cols-3 lg:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <ProductCardSkeleton key={i} variant="rail" showAddToCart={false} />
               ))}
             </div>

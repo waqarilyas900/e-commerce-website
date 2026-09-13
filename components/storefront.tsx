@@ -324,8 +324,8 @@ export function ProductCard({
                   priority={priorityImage}
                   sizes={
                     rail
-                      ? "(max-width: 767px) 40vw, 300px"
-                      : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 25vw"
+                      ? "(max-width: 767px) 40vw, (max-width: 1023px) 30vw, 20vw"
+                      : "(max-width: 767px) 50vw, (max-width: 1023px) 34vw, 20vw"
                   }
                   style={productImgFitStyle}
                   className={productImgClassName}
@@ -401,6 +401,16 @@ export function ProductCard({
 }
 
 /**
+ * Site-wide product card density: 2 cols mobile → 3 tablet → 5 desktop.
+ * Use everywhere product cards sit in a grid (home, collections, search, PDP, etc.).
+ */
+export const PRODUCT_GRID_CLASS =
+  "grid grid-cols-2 items-stretch gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2";
+/** Same as PRODUCT_GRID_CLASS but hidden until md (mobile uses horizontal rail). */
+export const PRODUCT_GRID_DESKTOP_CLASS =
+  "hidden items-stretch gap-1 sm:gap-1.5 md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-5 lg:gap-2";
+
+/**
  * Mobile: ~2.15 cards + peek (home density). sm+: wider tiles for tablet rail.
  * Shared by home, PDP related, recently viewed — keep one system size.
  */
@@ -410,7 +420,7 @@ const RAIL_SNAP = "snap-start snap-always";
 /** Product tile in horizontal rails (home / PDP / recently viewed). */
 export const PRODUCT_RAIL_ITEM = `${PRODUCT_RAIL_COL} ${RAIL_SNAP} flex flex-col`;
 const RAIL_ITEM = PRODUCT_RAIL_ITEM;
-const RAIL_PREVIEW = 6;
+const RAIL_PREVIEW = 5;
 
 /** Trailing rail tile — blurred product photo + “View all products” (shop-collections style). */
 function ViewAllRailTile({
@@ -598,7 +608,7 @@ export function ProductSection({
               </li>
             </RailScrollStrip>
           </div>
-          <div className="hidden items-stretch gap-1 sm:gap-1.5 md:grid md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2">
+          <div className={PRODUCT_GRID_DESKTOP_CLASS}>
             {railItems.map((product, idx) => (
               <ProductCard
                 key={product.id}
@@ -625,7 +635,7 @@ export function ProductSection({
             View all
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:grid-cols-3 md:gap-2 lg:grid-cols-4 lg:gap-2 items-stretch">
+        <div className={PRODUCT_GRID_CLASS}>
           {items.map((product, idx) => (
             <ProductCard
               key={product.id}
