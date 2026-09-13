@@ -141,7 +141,7 @@ async function loadBreakdownUncached(): Promise<StoreReviewBreakdown> {
 }
 
 export async function getCachedStoreReviewBreakdown(): Promise<StoreReviewBreakdown> {
-  return unstable_cache(loadBreakdownUncached, ["store-review-breakdown-v1"], {
+  return unstable_cache(loadBreakdownUncached, ["store-review-breakdown-v2"], {
     revalidate: TTL_SECONDS,
     tags: [CATALOG_CACHE_TAGS.storeReviewAggregate, CATALOG_CACHE_TAGS.products],
   })();
@@ -234,7 +234,7 @@ export async function getCachedStoreReviewsPage(opts: {
   const pageSize = opts.pageSize ?? DEFAULT_PAGE_SIZE;
   const sort = opts.sort ?? "newest";
   const star = opts.star ?? null;
-  const key = `store-reviews-page-v1-${page}-${pageSize}-${sort}-${star ?? "all"}`;
+  const key = `store-reviews-page-v2-${page}-${pageSize}-${sort}-${star ?? "all"}`;
   return unstable_cache(
     () => loadReviewsPageUncached(page, pageSize, sort, star),
     [key],

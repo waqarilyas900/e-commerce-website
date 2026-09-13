@@ -1,6 +1,7 @@
 /**
  * Store-wide review headline stats for the homepage trust strip.
- * Uses denormalized `products.rating` × `products.reviews_count` (same signals as PLP cards).
+ * Source of truth: approved rows in `reviews` (not denormalized product counters,
+ * which stay 0 when stats are locked or after bulk imports).
  */
 
 import { unstable_cache } from "next/cache";
@@ -20,20 +21,26 @@ const ZERO_AGGREGATE: StoreReviewAggregate = { averageRating: 0, totalReviews: 0
 async function loadStoreReviewAggregateUncached(): Promise<StoreReviewAggregate> {
   if (!hasCatalogDb()) return ZERO_AGGREGATE;
   const supabase = createAnonServerSupabase();
-  const { data, error } = await supabase
-    .from("products")
-    .select("rating, reviews_count")
-    .eq("status", "active");
-  if (error || !data?.length) return ZERO_AGGREGATE;
+
+  // Same approach as store review breakdown — 5 cheap HEAD counts, no row scan.
+  const stars = [5, 4, 3, 2, 1] as const;
+  const results = await Promise.all(
+    stars.map((star) =>
+      supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "approved")
+        .eq("rating", star),
+    ),
+  );
 
   let totalReviews = 0;
   let weighted = 0;
-  for (const row of data) {
-    const c = Math.max(0, Math.floor(Number(row.reviews_count ?? 0)));
-    const r = Number(row.rating ?? 0);
-    if (c <= 0 || !Number.isFinite(r) || r <= 0) continue;
+  for (let i = 0; i < stars.length; i++) {
+    const c = results[i]?.count ?? 0;
+    if (c <= 0) continue;
     totalReviews += c;
-    weighted += r * c;
+    weighted += stars[i] * c;
   }
   if (totalReviews <= 0) return ZERO_AGGREGATE;
 
@@ -41,9 +48,9 @@ async function loadStoreReviewAggregateUncached(): Promise<StoreReviewAggregate>
   return { averageRating, totalReviews };
 }
 
-/** Tagged with `catalog:products` so admin product saves refresh homepage rating bar. Always resolves (uses 0 / 0 when there is no review data). */
+/** Tagged so admin / storefront review changes refresh the homepage rating bar. */
 export async function getCachedStoreReviewAggregate(): Promise<StoreReviewAggregate> {
-  return unstable_cache(loadStoreReviewAggregateUncached, ["store-review-aggregate-v2"], {
+  return unstable_cache(loadStoreReviewAggregateUncached, ["store-review-aggregate-v3"], {
     revalidate: TTL_SECONDS,
     tags: [CATALOG_CACHE_TAGS.storeReviewAggregate, CATALOG_CACHE_TAGS.products],
   })();
