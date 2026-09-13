@@ -412,7 +412,8 @@ async function _loadHomeHeroAndMission(): Promise<{
     const slides = rows.flatMap((r) => {
       const title = (r.title ?? "").trim();
       const image = (r.image_url ?? "").trim();
-      if (!title || !image) return [];
+      // Image is required; title is optional (overlay text on the banner).
+      if (!image) return [];
       return [
         {
           id: r.id,
@@ -690,7 +691,7 @@ export const getCachedAnnouncementBar = unstable_cache(
 
 export const getCachedHomeHeroAndMission = unstable_cache(
   _loadHomeHeroAndMission,
-  ["layout-home-hero-mission-v2"],
+  ["layout-home-hero-mission-v3"],
   {
     revalidate: DEFAULT_REVALIDATE_SECONDS,
     tags: [LAYOUT_CACHE_TAGS.storeBrand, LAYOUT_CACHE_TAGS.announcementBar],
