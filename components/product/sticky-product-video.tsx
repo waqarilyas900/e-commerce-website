@@ -75,6 +75,7 @@ export function StickyProductVideo({
   const miniVideoRef = useRef<HTMLVideoElement>(null);
   const slideVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const revealedRef = useRef(false);
+  const loadedMiniSrcRef = useRef("");
 
   const parsed = useMemo(() => {
     return reels
@@ -89,7 +90,9 @@ export function StickyProductVideo({
   const [miniIndex, setMiniIndex] = useState(safeStart);
   const mini = parsed[miniIndex] ?? parsed[0];
   const miniSrc = mini?.src ?? "";
-  const rotateMini = parsed.length > 1;
+  const nextMini = parsed.length > 1 ? parsed[(miniIndex + 1) % parsed.length] : null;
+  /** Rotate only when multiple reels and user allows motion. */
+  const rotateMini = parsed.length > 1 && reduceMotion !== true;
 
   const [dismissed, setDismissed] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -100,6 +103,14 @@ export function StickyProductVideo({
   /** Sticky chrome only after playback has started — no empty / buffering shell. */
   const [miniReady, setMiniReady] = useState(false);
   const [slidePlaying, setSlidePlaying] = useState<Record<number, boolean>>({});
+  const [pageVisible, setPageVisible] = useState(true);
+
+  useEffect(() => {
+    const sync = () => setPageVisible(document.visibilityState === "visible");
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
+  }, []);
 
   // Keep mini index valid if reel list shrinks.
   useEffect(() => {
@@ -131,18 +142,18 @@ export function StickyProductVideo({
       if (cancelled || el.paused) return;
       revealedRef.current = true;
       // Only show sticky while collapsed and cart drawer is closed.
-      if (!expanded && !cartDrawerOpen) setMiniReady(true);
+      if (!expanded && !cartDrawerOpen && pageVisible) setMiniReady(true);
     };
 
     const tryPlay = () => {
-      if (cancelled || expanded || cartDrawerOpen) return;
+      if (cancelled || expanded || cartDrawerOpen || !pageVisible) return;
       el.muted = true;
       el.defaultMuted = true;
       void el
         .play()
         .then(reveal)
         .catch(() => {
-          if (cancelled || expanded || cartDrawerOpen) return;
+          if (cancelled || expanded || cartDrawerOpen || !pageVisible) return;
           retryTimer = window.setTimeout(() => {
             void el.play().then(reveal).catch(() => {});
           }, 600);
@@ -152,10 +163,18 @@ export function StickyProductVideo({
     el.addEventListener("playing", reveal);
     el.addEventListener("canplay", tryPlay);
 
-    if (expanded || cartDrawerOpen) {
+    if (expanded || cartDrawerOpen || !pageVisible) {
       el.pause();
-      if (expanded) setMiniReady(false);
+      if (expanded || !pageVisible) setMiniReady(false);
     } else {
+      if (loadedMiniSrcRef.current !== miniSrc) {
+        loadedMiniSrcRef.current = miniSrc;
+        try {
+          el.load();
+        } catch {
+          /* ignore */
+        }
+      }
       tryPlay();
       if (revealedRef.current) setMiniReady(true);
     }
@@ -166,18 +185,18 @@ export function StickyProductVideo({
       el.removeEventListener("playing", reveal);
       el.removeEventListener("canplay", tryPlay);
     };
-  }, [miniSrc, expanded, dismissed, cartDrawerOpen]);
+  }, [miniSrc, expanded, dismissed, cartDrawerOpen, pageVisible]);
 
   // Collapsed sticky: rotate to the next product video when one finishes.
   useEffect(() => {
-    if (!rotateMini || dismissed || expanded) return;
+    if (!rotateMini || dismissed || expanded || !pageVisible) return;
     const el = miniVideoRef.current;
     if (!el) return;
 
     const onEnded = () => advanceMini();
     el.addEventListener("ended", onEnded);
     return () => el.removeEventListener("ended", onEnded);
-  }, [rotateMini, dismissed, expanded, miniSrc, advanceMini]);
+  }, [rotateMini, dismissed, expanded, pageVisible, miniSrc, advanceMini]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -281,6 +300,18 @@ export function StickyProductVideo({
             preload="auto"
             poster={mini.posterUrl || undefined}
           />
+          {/* Warm the next clip so rotation doesn’t stall on mid-range phones. */}
+          {rotateMini && nextMini && nextMini.src !== miniSrc ? (
+            <video
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              src={nextMini.src}
+              muted
+              playsInline
+              preload="auto"
+              aria-hidden
+              tabIndex={-1}
+            />
+          ) : null}
           {showMini ? (
             <>
               <button

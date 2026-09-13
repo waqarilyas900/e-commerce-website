@@ -29,11 +29,11 @@ function TileCard({
   duplicate?: boolean;
 }) {
   const src = tile.imageUrl
-    ? optimizeSupplierImageUrl(tile.imageUrl, 360) || tile.imageUrl
+    ? optimizeSupplierImageUrl(tile.imageUrl, 240) || tile.imageUrl
     : "";
   const native = src ? isNativeImg(src) : false;
   const [loaded, setLoaded] = useState(false);
-  const imgClass = `absolute inset-0 h-full w-full object-cover object-center transition-[transform,opacity] duration-500 group-hover:scale-105 ${
+  const imgClass = `absolute inset-0 h-full w-full object-cover object-center transition-[transform,opacity] duration-500 motion-reduce:transition-none group-hover:scale-105 motion-reduce:group-hover:scale-100 ${
     loaded ? "opacity-100" : "opacity-0"
   }`;
 
@@ -42,7 +42,7 @@ function TileCard({
       href={tile.href}
       tabIndex={duplicate ? -1 : undefined}
       aria-hidden={duplicate ? true : undefined}
-      className="group relative block size-[112px] shrink-0 overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_4px_14px_-8px_rgba(28,29,29,0.45)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-[#E0703A]/45 sm:size-[140px] md:size-[168px] lg:size-[188px]"
+      className="group relative block size-[112px] shrink-0 overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_4px_14px_-8px_rgba(28,29,29,0.45)] ring-1 ring-black/5 transition duration-300 motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:ring-[#E0703A]/45 sm:size-[140px] md:size-[168px] lg:size-[188px]"
     >
       {src ? (
         native ? (
@@ -134,5 +134,20 @@ export function HomeCollectionsMarquee({ tiles }: { tiles: HomeCollectionTile[] 
         ))}
       </ul>
     </div>
+  );
+}
+
+/** Same square tiles as the homepage strip — static wrap grid for `/collections`. */
+export function CollectionSquareGrid({ tiles }: { tiles: HomeCollectionTile[] }) {
+  if (tiles.length === 0) return null;
+
+  return (
+    <ul className="flex list-none flex-wrap gap-2.5 md:gap-3.5">
+      {tiles.map((tile) => (
+        <li key={tile.slug} className="shrink-0">
+          <TileCard tile={tile} />
+        </li>
+      ))}
+    </ul>
   );
 }

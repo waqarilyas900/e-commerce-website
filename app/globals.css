@@ -416,7 +416,7 @@ body {
   }
 }
 .home-collections-marquee-track {
-  animation: home-collections-marquee-x 32s linear infinite;
+  animation: home-collections-marquee-x 36s linear infinite;
   will-change: transform;
 }
 .home-collections-marquee-shell:hover .home-collections-marquee-track,
@@ -427,6 +427,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .home-collections-marquee-track {
     animation: none;
+    will-change: auto;
   }
 }
 .policy-prose li {

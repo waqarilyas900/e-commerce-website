@@ -302,12 +302,12 @@ export function ProductCard({
               useNativeProductImg ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={optimizeSupplierImageUrl(product.image, 400)}
+                  src={optimizeSupplierImageUrl(product.image, rail ? 360 : 400)}
                   alt={product.name}
                   loading="lazy"
                   decoding="async"
-                  width={400}
-                  height={400}
+                  width={rail ? 360 : 400}
+                  height={rail ? 360 : 400}
                   style={productImgFitStyle}
                   className={`absolute inset-0 h-full w-full ${productImgClassName}`}
                   onLoad={() => setImageLoaded(true)}

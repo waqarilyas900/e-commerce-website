@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ProductCard } from "@/components/storefront";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import {
-  CollectionImageTiles,
+  HomeCollectionsStrip,
   loadHomeCollectionTiles,
 } from "@/components/home/HomeCollectionsStrip";
 import { getCachedAllActiveProductTiles } from "@/lib/cache/catalog-data";
@@ -47,8 +47,6 @@ export default async function CollectionsPage() {
   ]);
   const override = await loadSeoOverrideForRoute("/collections", identity.locale);
   const heading = "Shop collections";
-  const intro =
-    "Drinkware, kitchen, beauty & home for everyday Pakistan.";
   const canonical = resolveSeoCanonicalOverride(
     override?.canonicalUrl,
     canonicalUrlFor("/collections"),
@@ -66,7 +64,10 @@ export default async function CollectionsPage() {
     "@id": `${canonical}#collections-hub`,
     url: canonical,
     name: heading,
-    description: intro,
+    description:
+      override?.description?.trim() ||
+      identity.siteDescription ||
+      `Browse collections at ${identity.storeName || identity.siteTitle || "our shop"}.`,
     breadcrumb: { "@id": breadcrumbId },
     mainEntity: {
       "@type": "ItemList",
@@ -89,38 +90,15 @@ export default async function CollectionsPage() {
           <PageBreadcrumbs items={[{ name: "Home", href: "/" }, { name: "Collections" }]} />
         </div>
 
-        <section
-          aria-labelledby="collections-hub-heading"
-          className="relative overflow-hidden border-b border-[#e8e8e1] bg-[linear-gradient(180deg,#f7f5f2_0%,#ffffff_42%,#ffffff_100%)]"
-        >
-          <div
-            className="pointer-events-none absolute -left-24 top-8 h-56 w-56 rounded-full bg-[#E0703A]/[0.07] blur-3xl"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -right-16 bottom-0 h-48 w-48 rounded-full bg-[#1c1d1d]/[0.04] blur-3xl"
-            aria-hidden
-          />
+        {/* Same marquee banners as homepage Shop collections */}
+        <HomeCollectionsStrip
+          tiles={tiles}
+          headingId="collections-hub-heading"
+          headingAs="h1"
+          showViewAll={false}
+        />
 
-          <ScrollReveal className="relative mx-auto max-w-7xl shell-x pb-8 pt-4 sm:pb-12 sm:pt-6">
-            <div className="mb-5 max-w-2xl sm:mb-7">
-              <h1
-                id="collections-hub-heading"
-                className="text-[1.50rem] font-semibold tracking-tight text-neutral-900 sm:text-3xl"
-              >
-                {heading}
-              </h1>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-600 sm:text-base">
-                {intro}
-              </p>
-              <p className="mt-1.5 text-xs font-medium text-neutral-500 sm:text-sm">
-                Cash on delivery available at checkout
-              </p>
-            </div>
-            <CollectionImageTiles tiles={tiles} />
-          </ScrollReveal>
-        </section>
-
+        {/* Full catalog — every product, same as before */}
         <ScrollReveal className="mx-auto max-w-7xl shell-x py-8 sm:py-10">
           <section>
             <h2 className="text-center text-[1.50rem] font-semibold tracking-tight sm:text-2xl">

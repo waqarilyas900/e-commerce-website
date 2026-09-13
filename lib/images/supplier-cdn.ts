@@ -7,7 +7,7 @@
 const SIZED_ALREADY =
   /_\d+x\d+q\d+(\.jpg)?_\.webp$/i;
 
-export type SupplierThumbEdge = 360 | 400 | 720 | 800;
+export type SupplierThumbEdge = 200 | 240 | 360 | 400 | 720 | 800;
 
 export function optimizeSupplierImageUrl(
   raw: string | null | undefined,

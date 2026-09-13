@@ -165,14 +165,21 @@ export function CollectionImageTiles({ tiles }: { tiles: HomeCollectionTile[] })
 /** Compact collection strip under the featured band — infinite marquee banners. */
 export function HomeCollectionsStrip({
   tiles,
+  headingId = "home-collections-heading",
+  headingAs = "h2",
+  showViewAll = true,
 }: {
   tiles: HomeCollectionTile[];
+  headingId?: string;
+  headingAs?: "h1" | "h2";
+  /** Hide on `/collections` itself (already the hub). */
+  showViewAll?: boolean;
 }) {
   if (tiles.length === 0) return null;
 
   return (
     <section
-      aria-labelledby="home-collections-heading"
+      aria-labelledby={headingId}
       className="relative overflow-hidden border-b border-[#e8e8e1] bg-[linear-gradient(180deg,#f7f5f2_0%,#ffffff_55%,#ffffff_100%)]"
     >
       <div
@@ -187,20 +194,23 @@ export function HomeCollectionsStrip({
               Browse
             </p>
             <HomeSectionTitle
-              id="home-collections-heading"
+              id={headingId}
+              as={headingAs}
               center={false}
               className="!mt-0.5"
             >
               Shop collections
             </HomeSectionTitle>
           </div>
-          <Link
-            href="/collections"
-            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#1c1d1d]/12 bg-white/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#1c1d1d] shadow-sm transition hover:border-[#E0703A] hover:text-[#E0703A] sm:px-3.5 sm:text-[11px]"
-          >
-            View all
-            <span aria-hidden>→</span>
-          </Link>
+          {showViewAll ? (
+            <Link
+              href="/collections"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#1c1d1d]/12 bg-white/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#1c1d1d] shadow-sm transition hover:border-[#E0703A] hover:text-[#E0703A] sm:px-3.5 sm:text-[11px]"
+            >
+              View all
+              <span aria-hidden>→</span>
+            </Link>
+          ) : null}
         </div>
       </div>
 

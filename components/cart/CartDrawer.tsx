@@ -24,10 +24,17 @@ import { FALLBACK_STANDARD_DELIVERY_PAISA } from "@/lib/checkout-constants";
 import { CartFreeDeliveryProgress } from "@/components/cart/cart-free-delivery-progress";
 import { CartSavingsRow } from "@/components/cart/cart-savings-row";
 import { computeCompareAtSavingsPkr } from "@/lib/cart-savings";
+import { optimizeSupplierImageUrl } from "@/lib/images/supplier-cdn";
 
 const easeSilk: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const easeSoftIn: [number, number, number, number] = [0.4, 0, 0.2, 1];
 /** Snappy cart drawer — ~2× faster than the previous silk timings. */
+
+function cartThumbUrl(image: string | null | undefined, edge: 200 | 360 = 360): string {
+  const raw = (image ?? "").trim();
+  if (!raw) return "";
+  return optimizeSupplierImageUrl(raw, edge) || raw;
+}
 const DRAWER_FADE_S = 0.2;
 const DRAWER_SLIDE_S = 0.2;
 const DRAWER_CONTENT_S = 0.18;
@@ -57,6 +64,7 @@ function DrawerRecoTile({ product }: { product: Product }) {
   const { addVariant, closeCart } = useCart();
   const seed = cartSeedFromProduct(product);
   const canQuickAdd = Boolean(product.defaultVariantId);
+  const thumb = cartThumbUrl(product.image, 360);
 
   return (
     <div className="col-span-6 flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
@@ -64,7 +72,7 @@ function DrawerRecoTile({ product }: { product: Product }) {
         href={`/products/${product.slug}`}
         onClick={closeCart}
         className="relative block aspect-square w-full overflow-hidden bg-neutral-100 bg-cover bg-center transition hover:opacity-95"
-        style={{ backgroundImage: `url(${product.image})` }}
+        style={thumb ? { backgroundImage: `url(${thumb})` } : undefined}
       />
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-2.5">
         <p className="line-clamp-2 text-xs font-semibold leading-snug text-neutral-900">
@@ -447,7 +455,13 @@ export function CartDrawer() {
                           href={`/products/${product.slug}`}
                           onClick={closeCart}
                           className="size-16 shrink-0 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 bg-cover bg-center sm:size-24"
-                          style={{ backgroundImage: `url(${product.image})` }}
+                          style={
+                            product.image
+                              ? {
+                                  backgroundImage: `url(${cartThumbUrl(product.image, 200)})`,
+                                }
+                              : undefined
+                          }
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex w-full min-w-0 items-center justify-between gap-2">
