@@ -42,7 +42,7 @@ function TileCard({
       href={tile.href}
       tabIndex={duplicate ? -1 : undefined}
       aria-hidden={duplicate ? true : undefined}
-      className="group relative block h-[170px] w-[320px] shrink-0 overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_4px_14px_-8px_rgba(28,29,29,0.45)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-[#E0703A]/45 md:h-[200px] md:w-[372px] lg:h-[220px] lg:w-[400px]"
+      className="group relative block size-[112px] shrink-0 overflow-hidden rounded-2xl bg-neutral-200 shadow-[0_4px_14px_-8px_rgba(28,29,29,0.45)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-0.5 hover:ring-[#E0703A]/45 sm:size-[140px] md:size-[168px] lg:size-[188px]"
     >
       {src ? (
         native ? (
@@ -53,7 +53,7 @@ function TileCard({
             className={imgClass}
             loading="lazy"
             decoding="async"
-            width={400}
+            width={200}
             height={200}
             draggable={false}
             onLoad={() => setLoaded(true)}
@@ -64,7 +64,7 @@ function TileCard({
             alt={duplicate ? "" : `${tile.name} collection`}
             fill
             className={imgClass}
-            sizes="(min-width: 1024px) 400px, (min-width: 768px) 372px, 320px"
+            sizes="(min-width: 1024px) 188px, (min-width: 768px) 168px, (min-width: 640px) 140px, 112px"
             draggable={false}
             onLoad={() => setLoaded(true)}
           />
@@ -78,11 +78,11 @@ function TileCard({
         aria-hidden
       />
 
-      <div className="absolute inset-x-0 bottom-0 z-10 p-1.5 md:p-3">
-        <p className="truncate text-[11px] font-semibold leading-tight text-white drop-shadow-sm md:text-[14px]">
+      <div className="absolute inset-x-0 bottom-0 z-10 p-1.5 sm:p-2 md:p-2.5">
+        <p className="truncate text-[10px] font-semibold leading-tight text-white drop-shadow-sm sm:text-[11px] md:text-[13px]">
           {tile.name}
         </p>
-        <p className="mt-0.5 text-[9px] font-medium text-white/75 md:text-[11px]">
+        <p className="mt-0.5 text-[8px] font-medium text-white/75 sm:text-[9px] md:text-[11px]">
           {tile.count} {tile.count === 1 ? "item" : "items"}
         </p>
       </div>

@@ -28,7 +28,8 @@ export async function HomeStickyProductVideo() {
     .filter((r): r is NonNullable<typeof r> => Boolean(r));
 
   if (!playable.length) return null;
-  const startIndex = 0;
+  // Vary first clip on each request so the sticky doesn’t always start on the same product.
+  const startIndex = Math.floor(Math.random() * playable.length);
 
   // Resolve Instagram CDN before HTML reaches the browser — first play is much faster.
   const startSrc = parseProductVideoSource(playable[startIndex]?.videoUrl ?? "");

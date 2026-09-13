@@ -86,8 +86,10 @@ export function StickyProductVideo({
   }, [reels]);
 
   const safeStart = Math.min(Math.max(0, startIndex), Math.max(0, parsed.length - 1));
-  const mini = parsed[safeStart] ?? parsed[0];
+  const [miniIndex, setMiniIndex] = useState(safeStart);
+  const mini = parsed[miniIndex] ?? parsed[0];
   const miniSrc = mini?.src ?? "";
+  const rotateMini = parsed.length > 1;
 
   const [dismissed, setDismissed] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -98,6 +100,17 @@ export function StickyProductVideo({
   /** Sticky chrome only after playback has started — no empty / buffering shell. */
   const [miniReady, setMiniReady] = useState(false);
   const [slidePlaying, setSlidePlaying] = useState<Record<number, boolean>>({});
+
+  // Keep mini index valid if reel list shrinks.
+  useEffect(() => {
+    if (parsed.length === 0) return;
+    setMiniIndex((i) => Math.min(i, parsed.length - 1));
+  }, [parsed.length]);
+
+  const advanceMini = useCallback(() => {
+    if (parsed.length <= 1) return;
+    setMiniIndex((i) => (i + 1) % parsed.length);
+  }, [parsed.length]);
 
   // Reset reveal only when the source actually changes.
   useEffect(() => {
@@ -154,6 +167,17 @@ export function StickyProductVideo({
       el.removeEventListener("canplay", tryPlay);
     };
   }, [miniSrc, expanded, dismissed, cartDrawerOpen]);
+
+  // Collapsed sticky: rotate to the next product video when one finishes.
+  useEffect(() => {
+    if (!rotateMini || dismissed || expanded) return;
+    const el = miniVideoRef.current;
+    if (!el) return;
+
+    const onEnded = () => advanceMini();
+    el.addEventListener("ended", onEnded);
+    return () => el.removeEventListener("ended", onEnded);
+  }, [rotateMini, dismissed, expanded, miniSrc, advanceMini]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -251,7 +275,7 @@ export function StickyProductVideo({
             className="pointer-events-none block h-full w-full object-cover"
             src={miniSrc}
             muted
-            loop
+            loop={!rotateMini}
             autoPlay
             playsInline
             preload="auto"

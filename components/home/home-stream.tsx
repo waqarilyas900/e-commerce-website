@@ -23,7 +23,7 @@ export function HomeFirstStripSkeleton() {
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
-            className="h-[80px] w-[160px] shrink-0 animate-pulse rounded-2xl bg-neutral-100 md:h-[140px] md:w-[280px] lg:h-[156px] lg:w-[300px]"
+            className="size-[112px] shrink-0 animate-pulse rounded-2xl bg-neutral-100 sm:size-[140px] md:size-[168px] lg:size-[188px]"
           />
         ))}
       </div>
