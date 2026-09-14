@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { Product } from "@/app/lib/catalog/types";
 import { ProductCard } from "@/components/storefront";
 
 const PAGE_SIZE = 24;
-/** First row(s) on mobile 2-col + a bit of next — load eagerly for LCP. */
+/** First two desktop rows (5-col) — load eagerly for LCP. */
 const EAGER_COUNT = 10;
 
 /** Progressive reveal for the /collections hub “All products” grid. */
@@ -14,6 +14,7 @@ export function CollectionsAllProducts({ products }: { products: Product[] }) {
     Math.min(PAGE_SIZE, products.length),
   );
   const [isPending, startTransition] = useTransition();
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const visible = useMemo(
     () => products.slice(0, visibleCount),
@@ -27,6 +28,21 @@ export function CollectionsAllProducts({ products }: { products: Product[] }) {
       setVisibleCount((n) => Math.min(products.length, n + PAGE_SIZE));
     });
   }, [isPending, remaining, products.length]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || remaining <= 0) return;
+    if (typeof IntersectionObserver === "undefined") return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) onLoadMore();
+      },
+      { root: null, rootMargin: "480px 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [onLoadMore, remaining, visibleCount]);
 
   return (
     <section>
@@ -49,7 +65,8 @@ export function CollectionsAllProducts({ products }: { products: Product[] }) {
         ))}
       </div>
       {remaining > 0 ? (
-        <div className="mt-6 flex justify-center sm:mt-8">
+        <div className="mt-6 flex flex-col items-center gap-3 sm:mt-8">
+          <div ref={sentinelRef} className="h-px w-full" aria-hidden />
           <button
             type="button"
             onClick={onLoadMore}

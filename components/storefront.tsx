@@ -287,7 +287,9 @@ export function ProductCard({
 
   return (
     <article
-      className="product-card-reveal group/card flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white"
+      className={`product-card-reveal group/card flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-neutral-200 bg-white ${
+        soldOut ? "opacity-[0.92]" : ""
+      }`}
       style={
         revealDelay > 0
           ? ({ ["--card-reveal-delay"]: `${revealDelay}s` } as CSSProperties)
@@ -300,7 +302,11 @@ export function ProductCard({
           prefetch
           className="group relative block"
         >
-          <div className="relative aspect-square w-full overflow-hidden bg-neutral-100">
+          <div
+            className={`relative aspect-square w-full overflow-hidden bg-neutral-100 ${
+              soldOut ? "grayscale-[0.35]" : ""
+            }`}
+          >
             {product.image ? (
               useNativeProductImg ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -344,24 +350,28 @@ export function ProductCard({
           </span>
         ) : null}
 
-        {/* AliExpress-style rounded cart — always on mobile, hover on desktop */}
-        <button
-          type="button"
-          onClick={openQuickPreview}
-          aria-label={`Preview ${product.name}`}
-          className="absolute bottom-2 right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1c1d1d] shadow-md ring-1 ring-black/5 transition hover:bg-[#E0703A] hover:text-white sm:bottom-12 sm:h-9 sm:w-9 sm:opacity-0 sm:pointer-events-none sm:group-hover/card:opacity-100 sm:group-hover/card:pointer-events-auto"
-        >
-          <CartGlyph className="h-[18px] w-[18px]" />
-        </button>
+        {!soldOut ? (
+          <>
+            {/* AliExpress-style rounded cart — always on mobile, hover on desktop */}
+            <button
+              type="button"
+              onClick={openQuickPreview}
+              aria-label={`Preview ${product.name}`}
+              className="absolute bottom-2 right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1c1d1d] shadow-md ring-1 ring-black/5 transition hover:bg-[#E0703A] hover:text-white sm:bottom-12 sm:h-9 sm:w-9 sm:opacity-0 sm:pointer-events-none sm:group-hover/card:opacity-100 sm:group-hover/card:pointer-events-auto"
+            >
+              <CartGlyph className="h-[18px] w-[18px]" />
+            </button>
 
-        {/* AliExpress-style See preview — desktop hover only */}
-        <button
-          type="button"
-          onClick={openQuickPreview}
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden h-10 translate-y-full items-center justify-center bg-black/70 text-[12px] font-semibold uppercase tracking-wide text-white opacity-0 transition hover:bg-black/80 sm:flex sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
-        >
-          See preview
-        </button>
+            {/* AliExpress-style See preview — desktop hover only */}
+            <button
+              type="button"
+              onClick={openQuickPreview}
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden h-10 translate-y-full items-center justify-center bg-black/70 text-[12px] font-semibold uppercase tracking-wide text-white opacity-0 transition hover:bg-black/80 sm:flex sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
+            >
+              See preview
+            </button>
+          </>
+        ) : null}
       </div>
 
       {/* Tight stack — same density as home rails (square image + compact copy). */}
@@ -378,12 +388,34 @@ export function ProductCard({
           >
             {product.name}
           </HoverPrefetchLink>
-          {product.reviews > 0 || product.rating > 0 ? (
+          {product.reviews > 0 ? (
             <ProductCardStarRow rating={product.rating} />
           ) : null}
         </div>
         <ProductCardPrice price={product.price} compareAtPrice={product.compareAtPrice} />
-        {showAddToCart ? (
+        {soldOut ? (
+          <div className="mt-auto pt-1 sm:pt-1.5">
+            {product.collection &&
+            product.collection !== "uncategorized" &&
+            product.collection !== "sale" ? (
+              <HoverPrefetchLink
+                href={`/collections/${product.collection}`}
+                prefetch
+                className="inline-flex min-h-9 w-full items-center justify-center border border-neutral-300 bg-white text-[11px] font-semibold text-neutral-800 transition hover:border-neutral-900 hover:bg-neutral-50 sm:min-h-10 sm:text-xs"
+              >
+                Similar in collection
+              </HoverPrefetchLink>
+            ) : (
+              <HoverPrefetchLink
+                href={`/products/${product.slug}`}
+                prefetch
+                className="inline-flex min-h-9 w-full items-center justify-center border border-neutral-300 bg-white text-[11px] font-semibold text-neutral-800 transition hover:border-neutral-900 hover:bg-neutral-50 sm:min-h-10 sm:text-xs"
+              >
+                View details
+              </HoverPrefetchLink>
+            )}
+          </div>
+        ) : showAddToCart ? (
           <div className="mt-auto pt-1 sm:pt-1.5">
             <AddToCartButton
               product={product}
@@ -420,7 +452,7 @@ const RAIL_SNAP = "snap-start snap-always";
 /** Product tile in horizontal rails (home / PDP / recently viewed). */
 export const PRODUCT_RAIL_ITEM = `${PRODUCT_RAIL_COL} ${RAIL_SNAP} flex flex-col`;
 const RAIL_ITEM = PRODUCT_RAIL_ITEM;
-const RAIL_PREVIEW = 5;
+const RAIL_PREVIEW = 10;
 
 /** Trailing rail tile — blurred product photo + “View all products” (shop-collections style). */
 function ViewAllRailTile({

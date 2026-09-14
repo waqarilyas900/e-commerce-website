@@ -848,7 +848,28 @@ export default function CheckoutPage() {
         setSubmitError(
           voucherErrorMessage(data.error_code, data.error ?? "Could not place order. Please try again."),
         );
-        window.setTimeout(() => scrollElementIntoView("checkout-submit-error"), 40);
+        const code = (data.error_code ?? "").toLowerCase();
+        const errText = (data.error ?? "").toLowerCase();
+        window.setTimeout(() => {
+          if (code.includes("phone") || errText.includes("phone")) {
+            focusCheckoutField("phone");
+          } else if (code.includes("email") || errText.includes("email")) {
+            focusCheckoutField("email");
+          } else if (
+            code.includes("street") ||
+            code.includes("address") ||
+            errText.includes("street") ||
+            errText.includes("address")
+          ) {
+            focusCheckoutField("shipping_street");
+          } else if (code.includes("city") || errText.includes("city")) {
+            focusCheckoutField("shipping_city");
+          } else if (code.includes("province") || errText.includes("province")) {
+            focusCheckoutField("shipping_province");
+          } else {
+            scrollElementIntoView("checkout-submit-error");
+          }
+        }, 40);
         return;
       }
       if (!data.order_number || data.total_cents == null) {

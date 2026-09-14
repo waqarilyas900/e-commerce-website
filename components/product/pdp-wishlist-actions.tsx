@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { SignInModal } from "@/components/auth/sign-in-modal";
 import { clientOptionFingerprint } from "@/lib/wishlist-fingerprint";
 import type { DbProductVariantRow } from "@/app/lib/db/types";
+import { toast } from "sonner";
 import { toastWishlistAdded, toastWishlistRemoved } from "@/lib/wishlist-toast";
 
 export type PdpWishlistBulkChange = {
@@ -147,6 +148,7 @@ export function PdpWishlistActions({
       }
       if (!res.ok) {
         setOptimisticInWishlist(null);
+        toast.error("Could not update wishlist. Try again.");
         return;
       }
 

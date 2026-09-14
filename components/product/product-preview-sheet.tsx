@@ -193,7 +193,7 @@ export function ProductPreviewSheet() {
                     >
                       {product.name}
                     </h2>
-                    {product.reviews > 0 || product.rating > 0 ? (
+                    {product.reviews > 0 ? (
                       <div className="mt-1.5">
                         <StarRating value={product.rating} size={16} labeled />
                       </div>
@@ -283,15 +283,17 @@ export function ProductPreviewSheet() {
                               value: toPkrValue(product.price * qty),
                               num_items: qty,
                             });
+                            openCart();
                             toastAddedToCart({
                               description:
                                 qty > 1
                                   ? `${product.name} · ${qty} added`
                                   : product.name,
                               quantity: qty,
+                              brief: true,
+                              onViewCart: openCart,
                             });
                             closePreview();
-                            openCart();
                           } finally {
                             setAdding(false);
                           }

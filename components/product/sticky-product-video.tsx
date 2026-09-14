@@ -115,6 +115,23 @@ export function StickyProductVideo({
     return () => document.removeEventListener("visibilitychange", sync);
   }, []);
 
+  useEffect(() => {
+    try {
+      const nav = navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      };
+      const c = nav.connection;
+      const slow = Boolean(
+        c?.saveData ||
+          c?.effectiveType === "slow-2g" ||
+          c?.effectiveType === "2g",
+      );
+      if (slow) setDismissed(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   // Keep mini index valid if reel list shrinks.
   useEffect(() => {
     if (parsed.length === 0) return;

@@ -452,6 +452,16 @@ export function ProductPdp({
     return firstImg?.url ?? "";
   }, [main, gallery]);
 
+  /** Warm the next gallery still so swipes feel instant. */
+  useEffect(() => {
+    if (gallery.length < 2 || typeof window === "undefined") return;
+    const next = gallery[(activeMedia + 1) % gallery.length];
+    if (!next || next.kind !== "image" || !next.url) return;
+    const img = new window.Image();
+    img.decoding = "async";
+    img.src = next.url;
+  }, [activeMedia, gallery]);
+
   /** Sticky bar: in-stock cart, OOS wishlist, or option-snapshot wishlist (no matching SKU yet). */
   const showStickyPurchase =
     ctaScrolledPast &&

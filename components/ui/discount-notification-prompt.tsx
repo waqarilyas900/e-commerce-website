@@ -5,7 +5,11 @@ import { SiteLogoMark } from "@/components/site-logo";
 
 const DISMISS_KEY = "discount-notification-prompt-dismissed-v1";
 const ALLOWED_KEY = "discount-notification-prompt-allowed-v1";
+const VISIT_KEY = "discount-notification-prompt-visits-v1";
 
+/**
+ * Quiet permission prompt — waits for a return visit + scroll, never on first paint.
+ */
 export function DiscountNotificationPrompt() {
   const [open, setOpen] = useState(false);
 
@@ -16,9 +20,43 @@ export function DiscountNotificationPrompt() {
     if (localStorage.getItem(ALLOWED_KEY) === "1") return;
     if (localStorage.getItem(DISMISS_KEY) === "1") return;
 
-    const delayMs = 5000 + Math.floor(Math.random() * 5001);
-    const timer = window.setTimeout(() => setOpen(true), delayMs);
-    return () => window.clearTimeout(timer);
+    let visits = 0;
+    try {
+      visits = Number(localStorage.getItem(VISIT_KEY) || "0") || 0;
+      visits += 1;
+      localStorage.setItem(VISIT_KEY, String(visits));
+    } catch {
+      visits = 1;
+    }
+
+    // First visit: never interrupt. From 2nd visit onward, wait for scroll + delay.
+    if (visits < 2) return;
+
+    let shown = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let scrolled = false;
+
+    const tryShow = () => {
+      if (shown || !scrolled) return;
+      shown = true;
+      const delayMs = 12000 + Math.floor(Math.random() * 8000);
+      timer = setTimeout(() => setOpen(true), delayMs);
+    };
+
+    const onScroll = () => {
+      if (window.scrollY < Math.min(420, window.innerHeight * 0.45)) return;
+      scrolled = true;
+      window.removeEventListener("scroll", onScroll);
+      tryShow();
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (timer !== undefined) clearTimeout(timer);
+    };
   }, []);
 
   const close = () => {

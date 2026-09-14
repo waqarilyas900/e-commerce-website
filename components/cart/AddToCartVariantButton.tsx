@@ -97,26 +97,39 @@ export function AddToCartVariantButton({
             num_items: q,
           });
           const opensDrawer = Boolean(openDrawer) && !redirectHref;
-          toastAddedToCart({
-            description:
-              opensDrawer
-                ? undefined
-                : itemName != null
+          if (redirectHref) {
+            if (!seed) await waitForCartResolution();
+            toastAddedToCart({
+              description:
+                itemName != null
                   ? q > 1
                     ? `${itemName} · ${q} added`
                     : itemName
                   : undefined,
-            quantity: q,
-            brief: opensDrawer,
-          });
-          if (redirectHref) {
-            if (!seed) await waitForCartResolution();
+              quantity: q,
+              brief: true,
+            });
             router.push(redirectHref);
-          } else if (openDrawer) {
+          } else if (opensDrawer) {
             openCart();
+            toastAddedToCart({
+              quantity: q,
+              brief: true,
+              onViewCart: openCart,
+            });
             setJustAdded(true);
             window.setTimeout(() => setJustAdded(false), 900);
           } else {
+            toastAddedToCart({
+              description:
+                itemName != null
+                  ? q > 1
+                    ? `${itemName} · ${q} added`
+                    : itemName
+                  : undefined,
+              quantity: q,
+              onViewCart: openCart,
+            });
             setJustAdded(true);
             window.setTimeout(() => setJustAdded(false), 900);
           }

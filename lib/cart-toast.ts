@@ -6,6 +6,8 @@ export function toastAddedToCart(options?: {
   quantity?: number;
   /** Drawer already opens — keep toast short so it doesn’t compete. */
   brief?: boolean;
+  /** Optional “View bag” action (opens cart if drawer was closed). */
+  onViewCart?: () => void;
 }) {
   const q = options?.quantity ?? 1;
   const title = options?.title ?? "Added to cart";
@@ -20,11 +22,22 @@ export function toastAddedToCart(options?: {
 
   toast.success(title, {
     ...(desc ? { description: desc } : {}),
-    duration: brief ? 1600 : 3800,
+    duration: brief ? 1800 : 3800,
+    ...(options?.onViewCart
+      ? {
+          action: {
+            label: "View bag",
+            onClick: () => options.onViewCart?.(),
+          },
+        }
+      : {}),
   });
 }
 
-export function toastBundleAddedToCart(options?: { lineCount?: number }) {
+export function toastBundleAddedToCart(options?: {
+  lineCount?: number;
+  onViewCart?: () => void;
+}) {
   const n = options?.lineCount ?? 0;
   toast.success("Bundle added to cart", {
     description:
@@ -32,5 +45,13 @@ export function toastBundleAddedToCart(options?: { lineCount?: number }) {
         ? `${n} item${n === 1 ? "" : "s"} from the bundle ${n === 1 ? "is" : "are"} in your bag.`
         : "Items from the bundle are in your bag.",
     duration: 4000,
+    ...(options?.onViewCart
+      ? {
+          action: {
+            label: "View bag",
+            onClick: () => options.onViewCart?.(),
+          },
+        }
+      : {}),
   });
 }

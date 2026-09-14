@@ -35,8 +35,8 @@ export function AddBundleButton({
           for (const line of lines) {
             addVariant(line.variantId, line.productId, 1);
           }
-          toastBundleAddedToCart({ lineCount: lines.length });
           openCart();
+          toastBundleAddedToCart({ lineCount: lines.length, onViewCart: openCart });
         } finally {
           setAdding(false);
         }

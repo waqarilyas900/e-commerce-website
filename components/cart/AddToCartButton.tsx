@@ -84,6 +84,7 @@ export function AddToCartButton({
             value: toPkrValue(product.price * q),
             num_items: q,
           });
+          if (openDrawer) openCart();
           toastAddedToCart({
             description: openDrawer
               ? undefined
@@ -92,8 +93,8 @@ export function AddToCartButton({
                 : product.name,
             quantity: q,
             brief: openDrawer,
+            onViewCart: openCart,
           });
-          if (openDrawer) openCart();
           setJustAdded(true);
           window.setTimeout(() => setJustAdded(false), 900);
         } finally {

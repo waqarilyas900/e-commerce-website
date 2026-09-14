@@ -311,22 +311,22 @@ export function CollectionListingControls({
           </p>
           <p className="mx-auto mt-1.5 max-w-md text-sm text-neutral-600">
             {hasActiveFilters
-              ? "Clear filters or try another collection."
-              : "Browse a related collection below."}
+              ? "Try clearing filters to see everything in this collection."
+              : "Browse all collections for more options."}
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
             {hasActiveFilters ? (
               <button
                 type="button"
                 onClick={() => pushInTransition("")}
-                className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+                className="inline-flex min-h-11 items-center rounded-none bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
               >
                 Clear filters
               </button>
             ) : null}
             <Link
               href="/collections"
-              className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+              className="inline-flex min-h-11 items-center rounded-none border border-neutral-900 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-950 hover:text-white"
             >
               All collections
             </Link>

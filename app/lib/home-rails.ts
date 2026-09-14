@@ -24,7 +24,7 @@ export type HomeRailSection = HomeCategoryRail & {
 };
 
 /** Must match `RAIL_PREVIEW` in ProductSection — home shows this many cards per category. */
-const HOME_RAIL_PREVIEW = 5;
+const HOME_RAIL_PREVIEW = 10;
 
 function parseCollectionSlugFromHref(href: string): string | null {
   const m = href.trim().match(/^\/collections\/([^/?#]+)\/?$/);

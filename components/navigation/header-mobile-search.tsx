@@ -389,7 +389,7 @@ export function HeaderMobileSearch({ onOpenChange }: { onOpenChange?: (open: boo
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }
-    }, 220);
+    }, 300);
 
     return () => {
       window.clearTimeout(timer);

@@ -92,9 +92,18 @@ function TrackOrderInner() {
           />
         </div>
         {error ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-            {error}
-          </p>
+          <div className="space-y-3" role="alert">
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              {error}
+            </p>
+            <p className="text-sm text-neutral-600">
+              Double-check the order number and phone, or{" "}
+              <Link href="/contact" className="font-semibold text-neutral-900 underline-offset-2 hover:underline">
+                contact us
+              </Link>{" "}
+              for help.
+            </p>
+          </div>
         ) : null}
         <button
           type="submit"
