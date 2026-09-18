@@ -418,15 +418,10 @@ function CustomerReviewsInner({
       ratingBreakdown.length === 5 &&
       ratingBreakdown.every((n) => Number.isFinite(Number(n)))
     ) {
-      const mapped = ratingBreakdown.map((n) => Math.max(0, Math.round(Number(n))));
-      const breakdownSum = mapped.reduce((a, b) => a + b, 0);
-      // Prefer live histogram when the tag was left over from an inflated marketplace sync.
-      if (breakdownSum === 0 || Math.abs(breakdownSum - reviewsCount) <= 2) {
-        return mapped;
-      }
+      return ratingBreakdown.map((n) => Math.max(0, Math.round(Number(n))));
     }
     return starHistogram(approvedOnly);
-  }, [ratingBreakdown, approvedOnly, reviewsCount]);
+  }, [ratingBreakdown, approvedOnly]);
   const maxDist = Math.max(1, ...dist);
 
   const nextPathWithReviewFlag = useMemo(() => {

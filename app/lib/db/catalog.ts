@@ -261,8 +261,8 @@ const PRODUCT_CARD_SELECT =
 
 /**
  * Rating / review-count / tags for a product.
- * Count + average come from approved `reviews` rows (source of truth).
- * Tags still come from `products` (includes rating_breakdown when synced).
+ * Prefer denormalized `products` counters (includes locked marketplace totals)
+ * so PDP stars match the catalog cards and homepage trust strip.
  * Prefer `getCachedProductReviewAggregates` on the storefront (short TTL).
  */
 export async function dbGetProductReviewAggregates(productId: string): Promise<{
@@ -273,36 +273,16 @@ export async function dbGetProductReviewAggregates(productId: string): Promise<{
   if (!hasCatalogDb() || !productId) return null;
   try {
     const supabase = catalogClient();
-    const stars = [5, 4, 3, 2, 1] as const;
-    const [tagRes, ...starResults] = await Promise.all([
-      supabase.from("products").select("tags").eq("id", productId).maybeSingle(),
-      ...stars.map((star) =>
-        supabase
-          .from("reviews")
-          .select("id", { count: "exact", head: true })
-          .eq("product_id", productId)
-          .eq("status", "approved")
-          .eq("rating", star),
-      ),
-    ]);
-
-    let total = 0;
-    let weighted = 0;
-    for (let i = 0; i < stars.length; i++) {
-      const c = starResults[i]?.count ?? 0;
-      if (c <= 0) continue;
-      total += c;
-      weighted += stars[i] * c;
-    }
-
-    const tags = (tagRes.data as { tags: string[] | null } | null)?.tags ?? null;
-    if (total <= 0) {
-      return { rating: 0, reviews_count: 0, tags };
-    }
+    const { data, error } = await supabase
+      .from("products")
+      .select("rating, reviews_count, tags")
+      .eq("id", productId)
+      .maybeSingle();
+    if (error || !data) return null;
     return {
-      rating: Math.round((weighted / total) * 100) / 100,
-      reviews_count: total,
-      tags,
+      rating: (data as { rating: number | null }).rating ?? null,
+      reviews_count: (data as { reviews_count: number | null }).reviews_count ?? null,
+      tags: (data as { tags: string[] | null }).tags ?? null,
     };
   } catch {
     return null;

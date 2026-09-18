@@ -95,7 +95,7 @@ const REVIEW_AGGREGATE_TTL = 60; // 1 minute — fresher than full product detai
 export function getCachedProductReviewAggregates(productId: string) {
   return unstable_cache(
     async () => dbGetProductReviewAggregates(productId),
-    ["catalog:product-review-aggregates-v2", productId],
+    ["catalog:product-review-aggregates-v3", productId],
     {
       revalidate: REVIEW_AGGREGATE_TTL,
       tags: [CATALOG_CACHE_TAGS.products, CATALOG_CACHE_TAGS.storeReviewAggregate],
