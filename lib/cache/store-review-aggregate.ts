@@ -50,7 +50,7 @@ async function loadStoreReviewAggregateUncached(): Promise<StoreReviewAggregate>
 
 /** Tagged so admin / storefront review changes refresh the homepage rating bar. */
 export async function getCachedStoreReviewAggregate(): Promise<StoreReviewAggregate> {
-  return unstable_cache(loadStoreReviewAggregateUncached, ["store-review-aggregate-v3"], {
+  return unstable_cache(loadStoreReviewAggregateUncached, ["store-review-aggregate-v4"], {
     revalidate: TTL_SECONDS,
     tags: [CATALOG_CACHE_TAGS.storeReviewAggregate, CATALOG_CACHE_TAGS.products],
   })();

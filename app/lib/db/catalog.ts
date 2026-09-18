@@ -261,8 +261,9 @@ const PRODUCT_CARD_SELECT =
 
 /**
  * Rating / review-count / tags for a product.
- * Prefer `getCachedProductReviewAggregates` on the storefront (short TTL) so
- * PDP clicks are not blocked on an uncached round-trip every time.
+ * Count + average come from approved `reviews` rows (source of truth).
+ * Tags still come from `products` (includes rating_breakdown when synced).
+ * Prefer `getCachedProductReviewAggregates` on the storefront (short TTL).
  */
 export async function dbGetProductReviewAggregates(productId: string): Promise<{
   rating: number | null;
@@ -272,16 +273,36 @@ export async function dbGetProductReviewAggregates(productId: string): Promise<{
   if (!hasCatalogDb() || !productId) return null;
   try {
     const supabase = catalogClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("rating, reviews_count, tags")
-      .eq("id", productId)
-      .maybeSingle();
-    if (error || !data) return null;
+    const stars = [5, 4, 3, 2, 1] as const;
+    const [tagRes, ...starResults] = await Promise.all([
+      supabase.from("products").select("tags").eq("id", productId).maybeSingle(),
+      ...stars.map((star) =>
+        supabase
+          .from("reviews")
+          .select("id", { count: "exact", head: true })
+          .eq("product_id", productId)
+          .eq("status", "approved")
+          .eq("rating", star),
+      ),
+    ]);
+
+    let total = 0;
+    let weighted = 0;
+    for (let i = 0; i < stars.length; i++) {
+      const c = starResults[i]?.count ?? 0;
+      if (c <= 0) continue;
+      total += c;
+      weighted += stars[i] * c;
+    }
+
+    const tags = (tagRes.data as { tags: string[] | null } | null)?.tags ?? null;
+    if (total <= 0) {
+      return { rating: 0, reviews_count: 0, tags };
+    }
     return {
-      rating: (data as { rating: number | null }).rating ?? null,
-      reviews_count: (data as { reviews_count: number | null }).reviews_count ?? null,
-      tags: (data as { tags: string[] | null }).tags ?? null,
+      rating: Math.round((weighted / total) * 100) / 100,
+      reviews_count: total,
+      tags,
     };
   } catch {
     return null;
@@ -1068,11 +1089,50 @@ function parseReviewMedia(raw: unknown): { url: string; kind: "image" | "video" 
   return out;
 }
 
+/** First-page size for SSR; client loads further pages on demand. */
+export const PDP_REVIEWS_INITIAL_LIMIT = 48;
+
+function mapProductReviewPdpRow(row: Record<string, unknown>): ProductReviewPdpRow {
+  const rawU = row.users;
+  const u = (
+    Array.isArray(rawU) ? rawU[0] : rawU
+  ) as { first_name?: string; last_name?: string } | null | undefined;
+  const userId = row.user_id as string | null | undefined;
+  const attributedName =
+    typeof row.attributed_display_name === "string" ? row.attributed_display_name.trim() : "";
+  const fromProfile = [u?.first_name, u?.last_name].filter(Boolean).join(" ").trim();
+  const reviewer_name =
+    attributedName ||
+    fromProfile ||
+    (typeof row.attributed_display_email === "string" && row.attributed_display_email.trim()
+      ? row.attributed_display_email.trim()
+      : "Customer");
+  const st = row.status as string;
+  const status: ProductReviewPdpRow["status"] =
+    st === "approved" || st === "rejected" || st === "pending" ? st : "pending";
+  const show_verified_buyer = status === "approved" && Boolean(userId);
+  return {
+    id: String(row.id),
+    product_id: String(row.product_id),
+    rating: Number(row.rating ?? 0),
+    title: String(row.title ?? ""),
+    body: String(row.body ?? ""),
+    status,
+    created_at: String(row.created_at ?? ""),
+    media: parseReviewMedia(row.media),
+    reviewer_name,
+    show_verified_buyer,
+  };
+}
+
 export async function dbListProductReviewsForPdp(
   productId: string,
+  options?: { offset?: number; limit?: number },
 ): Promise<ProductReviewPdpRow[]> {
   if (!hasCatalogDb()) return [];
   const supabase = await createClient();
+  const limit = Math.min(Math.max(options?.limit ?? PDP_REVIEWS_INITIAL_LIMIT, 1), 100);
+  const offset = Math.max(options?.offset ?? 0, 0);
   const { data, error } = await supabase
     .from("reviews")
     .select(
@@ -1093,43 +1153,12 @@ export async function dbListProductReviewsForPdp(
     )
     .eq("product_id", productId)
     .order("created_at", { ascending: false })
-    .limit(250);
+    .range(offset, offset + limit - 1);
 
   if (error) {
     logDbCatalogIssue("dbListProductReviewsForPdp", error.message);
     return [];
   }
 
-  return (data ?? []).map((row: Record<string, unknown>) => {
-    const rawU = row.users;
-    const u = (
-      Array.isArray(rawU) ? rawU[0] : rawU
-    ) as { first_name?: string; last_name?: string } | null | undefined;
-    const userId = row.user_id as string | null | undefined;
-    const attributedName =
-      typeof row.attributed_display_name === "string" ? row.attributed_display_name.trim() : "";
-    const fromProfile = [u?.first_name, u?.last_name].filter(Boolean).join(" ").trim();
-    const reviewer_name =
-      attributedName ||
-      fromProfile ||
-      (typeof row.attributed_display_email === "string" && row.attributed_display_email.trim()
-        ? row.attributed_display_email.trim()
-        : "Customer");
-    const st = row.status as string;
-    const status: ProductReviewPdpRow["status"] =
-      st === "approved" || st === "rejected" || st === "pending" ? st : "pending";
-    const show_verified_buyer = status === "approved" && Boolean(userId);
-    return {
-      id: String(row.id),
-      product_id: String(row.product_id),
-      rating: Number(row.rating ?? 0),
-      title: String(row.title ?? ""),
-      body: String(row.body ?? ""),
-      status,
-      created_at: String(row.created_at ?? ""),
-      media: parseReviewMedia(row.media),
-      reviewer_name,
-      show_verified_buyer,
-    };
-  });
+  return (data ?? []).map((row: Record<string, unknown>) => mapProductReviewPdpRow(row));
 }

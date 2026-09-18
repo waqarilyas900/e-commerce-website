@@ -287,25 +287,128 @@ function CustomerReviewsInner({
     [reviews],
   );
 
+  /** Keep created_at desc so page offsets match Supabase `.range` fetches. */
   const sortedApproved = useMemo(() => {
-    return [...approvedOnly].sort((a, b) => {
-      const aImg = a.media?.length ? 1 : 0;
-      const bImg = b.media?.length ? 1 : 0;
-      if (bImg !== aImg) return bImg - aImg;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+    return [...approvedOnly].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   }, [approvedOnly]);
 
-  const reviewPageCount = Math.max(1, Math.ceil(sortedApproved.length / REVIEWS_PER_PAGE));
+  /** Prefer denormalized total so pagination covers every approved review, not just the SSR page. */
+  const totalApprovedForPaging = Math.max(reviewsCount, sortedApproved.length);
+  const reviewPageCount = Math.max(1, Math.ceil(totalApprovedForPaging / REVIEWS_PER_PAGE));
   const safeReviewPage = Math.min(reviewPage, reviewPageCount);
   const pagedReviews = useMemo(() => {
     const start = (safeReviewPage - 1) * REVIEWS_PER_PAGE;
     return sortedApproved.slice(start, start + REVIEWS_PER_PAGE);
   }, [sortedApproved, safeReviewPage]);
 
+  const loadingMoreRef = useRef(false);
+  const [loadingMoreReviews, setLoadingMoreReviews] = useState(false);
+
   useEffect(() => {
     setReviewPage(1);
   }, [productId, initialReviews]);
+
+  /** Load further approved reviews when the user pages past the SSR window. */
+  useEffect(() => {
+    const start = (safeReviewPage - 1) * REVIEWS_PER_PAGE;
+    const needThrough = start + REVIEWS_PER_PAGE;
+    if (sortedApproved.length >= needThrough || sortedApproved.length >= reviewsCount) {
+      return;
+    }
+    if (loadingMoreRef.current) return;
+
+    let cancelled = false;
+    loadingMoreRef.current = true;
+    setLoadingMoreReviews(true);
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const chunk = 48;
+        const from = sortedApproved.length;
+        const to = Math.min(from + chunk - 1, Math.max(reviewsCount - 1, from));
+        const { data, error } = await supabase
+          .from("reviews")
+          .select(
+            `
+            id,
+            product_id,
+            user_id,
+            attributed_display_name,
+            attributed_display_email,
+            rating,
+            title,
+            body,
+            status,
+            created_at,
+            media,
+            users ( first_name, last_name )
+          `,
+          )
+          .eq("product_id", productId)
+          .eq("status", "approved")
+          .order("created_at", { ascending: false })
+          .range(from, to);
+        if (cancelled || error || !data?.length) return;
+
+        const mapped: ProductReviewPdpRow[] = data.map((row: Record<string, unknown>) => {
+          const rawU = row.users;
+          const u = (
+            Array.isArray(rawU) ? rawU[0] : rawU
+          ) as { first_name?: string; last_name?: string } | null | undefined;
+          const userId = row.user_id as string | null | undefined;
+          const attributedName =
+            typeof row.attributed_display_name === "string"
+              ? row.attributed_display_name.trim()
+              : "";
+          const fromProfile = [u?.first_name, u?.last_name].filter(Boolean).join(" ").trim();
+          const reviewer_name =
+            attributedName ||
+            fromProfile ||
+            (typeof row.attributed_display_email === "string" &&
+            row.attributed_display_email.trim()
+              ? row.attributed_display_email.trim()
+              : "Customer");
+          return {
+            id: String(row.id),
+            product_id: String(row.product_id),
+            rating: Number(row.rating ?? 0),
+            title: String(row.title ?? ""),
+            body: String(row.body ?? ""),
+            status: "approved" as const,
+            created_at: String(row.created_at ?? ""),
+            media: Array.isArray(row.media)
+              ? (row.media as { url?: string; kind?: string }[])
+                  .filter((m) => m && typeof m.url === "string" && m.url)
+                  .map((m) => ({
+                    url: String(m.url),
+                    kind: m.kind === "video" ? ("video" as const) : ("image" as const),
+                  }))
+              : [],
+            reviewer_name,
+            show_verified_buyer: Boolean(userId),
+          };
+        });
+
+        setReviews((prev) => {
+          const seen = new Set(prev.map((r) => r.id));
+          const next = [...prev];
+          for (const r of mapped) {
+            if (!seen.has(r.id)) next.push(r);
+          }
+          return next;
+        });
+      } finally {
+        loadingMoreRef.current = false;
+        if (!cancelled) setLoadingMoreReviews(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [safeReviewPage, sortedApproved.length, reviewsCount, productId]);
 
   const displayRating = Number.isFinite(rating) ? rating : 0;
   const hasReviewsAggregate = reviewsCount > 0;
@@ -315,10 +418,15 @@ function CustomerReviewsInner({
       ratingBreakdown.length === 5 &&
       ratingBreakdown.every((n) => Number.isFinite(Number(n)))
     ) {
-      return ratingBreakdown.map((n) => Math.max(0, Math.round(Number(n))));
+      const mapped = ratingBreakdown.map((n) => Math.max(0, Math.round(Number(n))));
+      const breakdownSum = mapped.reduce((a, b) => a + b, 0);
+      // Prefer live histogram when the tag was left over from an inflated marketplace sync.
+      if (breakdownSum === 0 || Math.abs(breakdownSum - reviewsCount) <= 2) {
+        return mapped;
+      }
     }
     return starHistogram(approvedOnly);
-  }, [ratingBreakdown, approvedOnly]);
+  }, [ratingBreakdown, approvedOnly, reviewsCount]);
   const maxDist = Math.max(1, ...dist);
 
   const nextPathWithReviewFlag = useMemo(() => {
@@ -799,7 +907,7 @@ function CustomerReviewsInner({
               >
                 <button
                   type="button"
-                  disabled={safeReviewPage <= 1}
+                  disabled={safeReviewPage <= 1 || loadingMoreReviews}
                   onClick={() => setReviewPage((p) => Math.max(1, p - 1))}
                   className="cursor-pointer rounded-sm border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
@@ -807,10 +915,11 @@ function CustomerReviewsInner({
                 </button>
                 <span className="px-2 text-sm text-neutral-600">
                   Page {safeReviewPage} of {reviewPageCount}
+                  {loadingMoreReviews ? " · Loading…" : ""}
                 </span>
                 <button
                   type="button"
-                  disabled={safeReviewPage >= reviewPageCount}
+                  disabled={safeReviewPage >= reviewPageCount || loadingMoreReviews}
                   onClick={() => setReviewPage((p) => Math.min(reviewPageCount, p + 1))}
                   className="cursor-pointer rounded-sm border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
