@@ -299,8 +299,7 @@ export function StickyProductVideo({
         }}
       >
         <div
-          className="relative overflow-hidden bg-black shadow-[0_8px_28px_rgba(0,0,0,0.35)]"
-          style={{ width: 120, height: 213, borderRadius: 12 }}
+          className="relative h-[156px] w-[88px] overflow-hidden rounded-[10px] bg-black shadow-[0_8px_28px_rgba(0,0,0,0.35)] md:h-[213px] md:w-[120px] md:rounded-xl"
         >
           <button
             type="button"
