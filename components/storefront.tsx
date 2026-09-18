@@ -452,7 +452,7 @@ const RAIL_SNAP = "snap-start snap-always";
 /** Product tile in horizontal rails (home / PDP / recently viewed). */
 export const PRODUCT_RAIL_ITEM = `${PRODUCT_RAIL_COL} ${RAIL_SNAP} flex flex-col`;
 const RAIL_ITEM = PRODUCT_RAIL_ITEM;
-const RAIL_PREVIEW = 10;
+const RAIL_PREVIEW = 5;
 
 /** Trailing rail tile — blurred product photo + “View all products” (shop-collections style). */
 function ViewAllRailTile({

@@ -24,7 +24,7 @@ export type HomeRailSection = HomeCategoryRail & {
 };
 
 /** Must match `RAIL_PREVIEW` in ProductSection — home shows this many cards per category. */
-const HOME_RAIL_PREVIEW = 10;
+const HOME_RAIL_PREVIEW = 5;
 
 function parseCollectionSlugFromHref(href: string): string | null {
   const m = href.trim().match(/^\/collections\/([^/?#]+)\/?$/);
@@ -49,8 +49,8 @@ async function getTotalProductsForViewAllHref(viewAllHref: string): Promise<numb
 
 /**
  * Build home rails from `home_page_sections`.
- * Prefer tag-matched products; if tags return nothing, fill from the same-slug collection
- * so the homepage never shows empty “0 products” category rails.
+ * Prefer collection membership (same source as the mega menu) so products land in the
+ * correct category; fall back to section tags only when the collection has no products.
  */
 async function loadRailsFromHomeSections(
   sections: Awaited<ReturnType<typeof getCachedActiveHomePageSectionsWithTags>>,
@@ -78,7 +78,8 @@ async function loadRailsFromHomeSections(
     const s = sections[i]!;
     const tagged = taggedLists[i] ?? [];
     const fromCollection = collectionLists[i] ?? [];
-    const useCollection = tagged.length === 0 && fromCollection.length > 0;
+    // Same source as mega menu — collection first; tags only if collection is empty.
+    const useCollection = fromCollection.length > 0;
     const source = useCollection ? fromCollection : tagged;
     if (source.length === 0) continue;
 
